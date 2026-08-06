@@ -1,0 +1,19 @@
+ZIMPORT PROGRAM — SUPABASE SETUP
+
+A. DATABASE
+Run supabase-schema.sql once in the Supabase SQL Editor.
+
+B. FIRST ADMINISTRATOR
+Create your first user in Authentication > Users. Find the matching row in public.profiles and set role to admin. This manual bootstrap is required only once.
+
+C. BROWSER CONFIGURATION
+Edit online-config.js and paste only the Project URL and anon/publishable key. Never paste the service_role key.
+
+D. SECURE USER ADMINISTRATION
+Deploy supabase/functions/manage-users/index.ts as the manage-users Edge Function. The browser calls this function using the signed-in administrator's JWT. The service-role key remains only in the server environment.
+
+E. HOSTING
+Upload index.html, online-config.js, online-adapter.js, and admin-management.js to an HTTPS static host. Add that URL to Supabase Authentication URL Configuration.
+
+F. MIGRATION
+In the old program, export a JSON backup. Log into the online program as administrator, import the JSON backup, and press Sync Now. Test the result from another browser before retiring the offline copy.

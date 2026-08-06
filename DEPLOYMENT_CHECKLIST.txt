@@ -1,0 +1,24 @@
+ZIMPORT ONLINE — DEPLOYMENT CHECKLIST
+
+1. Create a Supabase project.
+2. Open SQL Editor and run supabase-schema.sql.
+3. Authentication > Users: create the first owner account.
+4. Table Editor > profiles: change the owner's role to admin.
+5. Project Settings > API: copy Project URL and anon/publishable key into online-config.js.
+6. Install Supabase CLI, log in, link the project, and deploy the function:
+   supabase login
+   supabase link --project-ref YOUR_PROJECT_REF
+   supabase functions deploy manage-users
+7. Upload all application files to Cloudflare Pages, Netlify, or another HTTPS static host.
+8. Add the final website URL to Authentication > URL Configuration:
+   Site URL and Redirect URLs.
+9. Log in as owner, open Setting > Program Setting, and create other users.
+10. Export the old offline backup, import it while logged in, and press Sync Now.
+11. Verify from a second browser that the same data appears.
+12. Before production use, enable an appropriate Supabase paid backup plan and test a restore procedure.
+
+SECURITY
+- Never place the service_role key in online-config.js or any browser file.
+- Use a unique password for each user.
+- Disable accounts immediately when staff leave.
+- Keep the private storage bucket private.

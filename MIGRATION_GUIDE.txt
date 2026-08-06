@@ -1,0 +1,12 @@
+EXISTING DATA MIGRATION
+
+1. Open the old offline program in the browser that contains the latest data.
+2. Click Export Backup and save the JSON file.
+3. Deploy and configure the online program.
+4. Sign in as Administrator.
+5. Click Import Backup and select the JSON file.
+6. Wait until the header says Cloud connected.
+7. Refresh the page and confirm the same records load from Supabase.
+8. Check agencies, suppliers, items, tenders, submissions, POs, shipments, invoices, settings and Recycle Bin.
+9. Reattach files that were stored only in the old browser's IndexedDB.
+10. Keep the original backup and old program until verification is complete.
