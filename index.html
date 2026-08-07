@@ -194,8 +194,8 @@
 <nav class="subnav active" data-section-nav="heads-page">
   <button class="tab active" data-tab="dashboard">Dashboard</button>
   <button class="tab" data-tab="financial">LCBO to Agent Tender Invoices</button>
-  <button class="tab" data-tab="financial-rso">LCBO to Agent REGU / SEAS / OTHER Invoices</button>
-<button class="tab" data-tab="all-other-invoices">All Other Invoices</button>
+<button class="tab" data-tab="all-other-invoices">SEAS/REGU/OTHER TO AGENT INVOICES</button>
+  <button class="tab" data-tab="other-invoices-new">OTHER INVOICES</button>
   <button class="tab" data-tab="supplier-payments">Paying to Suppliers Invoices</button>
   <button class="tab" data-tab="supplier-payments-2">Suppliers to Agent Fee Payment</button>
   <button class="tab" data-tab="recycle-bin">Recycle Bin</button>
@@ -608,7 +608,7 @@
 
 
 <section id="all-other-invoices" class="panel"><div class="box">
-  <div class="section-head"><div><h2>All Other Invoices</h2><p class="note">Create and manage invoices that do not belong to the supplier-payment or agency-fee pages.</p></div><button type="button" id="createOtherInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleOtherInvoiceSearch">Search</button><div class="page-search-panel" id="otherInvoiceSearchPanel"><label>Search Invoices<input id="otherInvoicePageSearch" type="search" placeholder="Invoice name, number, date, status, notes or amount"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearOtherInvoicePageSearch">Clear Search</button></div></div>
+  <div class="section-head"><div><h2>SEAS/REGU/OTHER TO AGENT INVOICES</h2><p class="note">Create and manage invoices that do not belong to the supplier-payment or agency-fee pages.</p></div><button type="button" id="createOtherInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleOtherInvoiceSearch">Search</button><div class="page-search-panel" id="otherInvoiceSearchPanel"><label>Search Invoices<input id="otherInvoicePageSearch" type="search" placeholder="Invoice name, number, date, status, notes or amount"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearOtherInvoicePageSearch">Clear Search</button></div></div>
   <div id="otherInvoiceList"><div class="table-wrap"><table><thead><tr><th>Invoice Name</th><th>Invoice Number</th><th>Invoice Date</th><th>Amount</th><th>Paid Status</th><th>Attachment</th><th>Notes</th><th>Actions</th></tr></thead><tbody id="otherInvoiceRows"></tbody></table></div></div>
   <div id="otherInvoiceEditor" class="hidden">
     <div class="section-head"><div><h2 id="otherInvoiceEditorTitle">Create Invoice</h2><p class="note">Enter invoice details. Attached files are saved with the invoice.</p></div><button type="button" class="secondary" id="backToOtherInvoiceList">Back to Invoice List</button></div>
@@ -627,6 +627,28 @@
       </div>
     </div>
     <div class="financial-actions"><button type="button" class="danger" id="deleteOtherInvoice">Delete Invoice</button><button type="button" class="secondary" id="cancelOtherInvoice">Cancel</button><button type="button" id="saveOtherInvoice">Save Invoice</button></div>
+  </div>
+</div></section>
+<section id="other-invoices-new" class="panel"><div class="box">
+  <div class="section-head"><div><h2>OTHER INVOICES</h2><p class="note">Create and manage invoices that do not belong to the supplier-payment or agency-fee pages.</p></div><button type="button" id="createOtherNewInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleOtherNewInvoiceSearch">Search</button><div class="page-search-panel" id="otherNewInvoiceSearchPanel"><label>Search Invoices<input id="otherNewInvoicePageSearch" type="search" placeholder="Invoice name, number, date, status, notes or amount"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearOtherInvoicePageSearch">Clear Search</button></div></div>
+  <div id="otherNewInvoiceList"><div class="table-wrap"><table><thead><tr><th>Invoice Name</th><th>Invoice Number</th><th>Invoice Date</th><th>Amount</th><th>Paid Status</th><th>Attachment</th><th>Notes</th><th>Actions</th></tr></thead><tbody id="otherNewInvoiceRows"></tbody></table></div></div>
+  <div id="otherNewInvoiceEditor" class="hidden">
+    <div class="section-head"><div><h2 id="otherNewInvoiceEditorTitle">Create Invoice</h2><p class="note">Enter invoice details. Attached files are saved with the invoice.</p></div><button type="button" class="secondary" id="backToOtherNewInvoiceList">Back to Invoice List</button></div>
+    <input type="hidden" id="otherNewInvoiceId">
+    <div class="supplier-payment-grid">
+      <div class="supplier-payment-card"><h3>Invoice Information</h3>
+        <label>Invoice Name *<input id="otherNewInvoiceName" placeholder="Enter invoice name"></label>
+        <label>Invoice Number<input id="otherNewInvoiceNumber" placeholder="Enter invoice number"></label>
+        <label>Invoice Date<input id="otherNewInvoiceDate" type="date"></label>
+        <div class="amount-currency-row"><label>Invoice Amount<input id="otherNewInvoiceAmount" type="number" min="0" step="0.01"></label><label class="currency-mini">Currency<select id="otherNewInvoiceCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option></select></label></div>
+        <label>Invoice Notes<textarea id="otherNewInvoiceNotes" placeholder="Add invoice notes"></textarea></label>
+      </div>
+      <div class="supplier-payment-card"><h3>Invoice Paid Status</h3>
+        <label>Paid Status<select id="otherNewInvoicePaidStatus"><option>Not Paid</option><option>Partially Paid</option><option>Fully Paid</option><option>Other</option></select></label>
+        <label>Attach Invoice<input id="otherNewInvoiceFile" type="file"><div id="otherNewInvoiceFileStatus" class="payment-file-status">No invoice attached</div><button type="button" class="secondary small" onclick="openOtherInvoiceFile()">Open Invoice</button> <button type="button" class="danger small" onclick="removeOtherInvoiceFile()">Remove</button></label>
+      </div>
+    </div>
+    <div class="financial-actions"><button type="button" class="danger" id="deleteOtherNewInvoice">Delete Invoice</button><button type="button" class="secondary" id="cancelOtherInvoice">Cancel</button><button type="button" id="saveOtherNewInvoice">Save Invoice</button></div>
   </div>
 </div></section>
 <section id="supplier-payments" class="panel"><div class="box">
@@ -798,10 +820,10 @@ if(!Array.isArray(state.tenders))state.tenders=[];
 if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
 if(!Array.isArray(state.shipments))state.shipments=[];
 if(!Array.isArray(state.financialInvoices))state.financialInvoices=[];
-if(!Array.isArray(state.financialRSOInvoices))state.financialRSOInvoices=[];
 if(!Array.isArray(state.supplierPaymentInvoices))state.supplierPaymentInvoices=[];
 if(!Array.isArray(state.supplierPaymentInvoices2))state.supplierPaymentInvoices2=[];
 if(!Array.isArray(state.otherInvoices))state.otherInvoices=[];
+if(!Array.isArray(state.otherNewInvoices))state.otherNewInvoices=[];
 if(!Array.isArray(state.recycleBin))state.recycleBin=[];
 if(!state.recycleRetentionDays)state.recycleRetentionDays=90;
 if(state.financial&&typeof state.financial==='object'&&Object.keys(state.financial).length&&!state.financialInvoices.length){state.financialInvoices.push({...state.financial,id:uid(),poNumber:'',invoiceNumber:''});}
@@ -1936,83 +1958,71 @@ document.addEventListener('click',e=>{
 
 
 
+
+
 (function(){
-  const RSO_FIELDS = [
-    'PoNumber','InvoiceNumber','SubmissionNumber','LcboInvoiceCad','LcboCurrency','LcboApproxDate','LcboPayDate','LcboPaidStatus',
-    'TransportInvoiceName','TotalBottles','CostPerBottle','PoBottleQuantity','PoTransportationCost',
-    'SupplierItemPrice','SupplierCurrency','SupplierItemsInCase','SupplierCasePrice','SupplierCaseCurrency','SupplierRate',
-    'SupplierItemCad','SupplierTotalCad','NettedAmount1','NettedDescription1','NettedAmount2','NettedDescription2','NettedAmount3','NettedDescription3',
-    'AdAmount1','AdDescription1','AdAmount2','AdDescription2','AdAmount3','AdDescription3','AdAmount4','AdDescription4','AdAmount5','AdDescription5','AdAmount6','AdDescription6',
-    'FailedSalesPercent','FailedSalesAmount','OtherExpenseAmount','OtherExpenseDescription','Notes'
+  const NEW_OTHER_FIELDS = [
+    'InvoiceNumber','InvoiceDate','InvoiceAmount','Currency','InvoiceNotes','PaidStatus','PaidStatusOther'
   ];
-  function rsoEl(suffix){return document.getElementById('rsoFin'+suffix)}
-  function rsoBack(){
-    document.getElementById('financialRSOInvoiceEditor')?.classList.add('hidden');
-    document.getElementById('financialRSOInvoiceList')?.classList.remove('hidden');
-    document.getElementById('financialRSOInvoiceDetails')?.classList.add('hidden');
-    rsoRender();
+  function nEl(s){return document.getElementById('otherNewInvoice'+s)}
+  function nBack(){
+    document.getElementById('otherNewInvoiceEditor')?.classList.add('hidden');
+    document.getElementById('otherNewInvoiceList')?.classList.remove('hidden');
+    renderOtherNewInvoices();
   }
-  function rsoOpenEditor(id=''){
-    document.getElementById('financialRSOInvoiceList')?.classList.add('hidden');
-    document.getElementById('financialRSOInvoiceEditor')?.classList.remove('hidden');
-    const rec=(state.financialRSOInvoices||[]).find(x=>x.id===id)||{};
-    const idEl=document.getElementById('rsoFinInvoiceId'); if(idEl)idEl.value=rec.id||'';
-    RSO_FIELDS.forEach(k=>{
-      const el=rsoEl(k);
-      if(el)el.value=rec[k.charAt(0).toLowerCase()+k.slice(1)]??'';
-    });
-    const title=document.getElementById('financialRSOEditorTitle');
-    if(title)title.textContent=rec.id?'Edit Invoice':'Create Invoice';
+  function openOtherNewInvoice(id=''){
+    document.getElementById('otherNewInvoiceList')?.classList.add('hidden');
+    document.getElementById('otherNewInvoiceEditor')?.classList.remove('hidden');
+    const rec=(state.otherNewInvoices||[]).find(x=>x.id===id)||{};
+    const idEl=document.getElementById('otherNewInvoiceId');if(idEl)idEl.value=rec.id||'';
+    NEW_OTHER_FIELDS.forEach(k=>{const el=nEl(k);if(el)el.value=rec[k.charAt(0).toLowerCase()+k.slice(1)]??''});
+    const t=document.getElementById('otherNewInvoiceEditorTitle');if(t)t.textContent=rec.id?'Edit Invoice':'Create Invoice';
   }
-  function rsoSave(){
-    const poNumber=rsoEl('PoNumber')?.value.trim()||'';
-    if(!poNumber){alert('PO # is required.');rsoEl('PoNumber')?.focus();return}
-    const id=document.getElementById('rsoFinInvoiceId')?.value||uid();
+  function saveOtherNewInvoice(){
+    const id=document.getElementById('otherNewInvoiceId')?.value||uid();
     const rec={id};
-    RSO_FIELDS.forEach(k=>{
-      const el=rsoEl(k);
-      rec[k.charAt(0).toLowerCase()+k.slice(1)]=el?.value??'';
-    });
-    const i=(state.financialRSOInvoices||[]).findIndex(x=>x.id===id);
-    if(i>=0)state.financialRSOInvoices[i]=rec; else state.financialRSOInvoices.push(rec);
-    save(); rsoBack();
+    NEW_OTHER_FIELDS.forEach(k=>{const el=nEl(k);rec[k.charAt(0).toLowerCase()+k.slice(1)]=el?.value??''});
+    if(!String(rec.invoiceNumber||'').trim()){alert('Invoice Number is required.');nEl('InvoiceNumber')?.focus();return}
+    const i=(state.otherNewInvoices||[]).findIndex(x=>x.id===id);
+    if(i>=0)state.otherNewInvoices[i]=rec;else state.otherNewInvoices.push(rec);
+    save();nBack();
   }
-  function rsoDelete(){
-    const id=document.getElementById('rsoFinInvoiceId')?.value;
-    if(!id||!confirm('Delete this invoice?'))return;
-    state.financialRSOInvoices=(state.financialRSOInvoices||[]).filter(x=>x.id!==id);
-    save(); rsoBack();
+  function deleteOtherNewInvoice(){
+    const id=document.getElementById('otherNewInvoiceId')?.value;if(!id)return;
+    if(!confirm('Delete this invoice?'))return;
+    state.otherNewInvoices=(state.otherNewInvoices||[]).filter(x=>x.id!==id);
+    save();nBack();
   }
-  function rsoRender(){
-    const tbody=document.getElementById('financialRSOInvoiceRows'); if(!tbody)return;
-    const q=(document.getElementById('financialRSOPageSearch')?.value||'').trim().toLowerCase();
-    const rows=(state.financialRSOInvoices||[]).filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q)).map(r=>`
+  function renderOtherNewInvoices(){
+    const tbody=document.getElementById('otherNewInvoiceRows');if(!tbody)return;
+    const q=(document.getElementById('otherNewInvoicePageSearch')?.value||'').trim().toLowerCase();
+    const rows=(state.otherNewInvoices||[]).filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q)).map(r=>`
       <tr>
-        <td>${escapeHtml(r.poNumber||'—')}</td>
         <td>${escapeHtml(r.invoiceNumber||'—')}</td>
-        <td>${escapeHtml(r.submissionNumber||'—')}</td>
-        <td>${escapeHtml(r.lcboInvoiceCad||'—')}</td>
-        <td>${escapeHtml(r.lcboCurrency||'CAD')}</td>
-        <td>${escapeHtml(r.lcboPaidStatus||'—')}</td>
-        <td><button type="button" class="secondary small" onclick="openFinancialRSOInvoice('${r.id}')">Edit</button></td>
+        <td>${escapeHtml(r.invoiceDate||'—')}</td>
+        <td>${escapeHtml(r.invoiceAmount||'—')}</td>
+        <td>${escapeHtml(r.currency||'CAD')}</td>
+        <td>${escapeHtml(r.invoiceNotes||'—')}</td>
+        <td>${escapeHtml(r.paidStatus||'—')}</td>
+        <td><button type="button" class="secondary small" onclick="openOtherNewInvoice('${r.id}')">Edit</button></td>
       </tr>`).join('');
-    tbody.innerHTML=rows||'<tr><td colspan="7">No REGU / SEAS / OTHER invoices.</td></tr>';
+    tbody.innerHTML=rows||'<tr><td colspan="7">No invoices.</td></tr>';
   }
-  function bindRSO(){
-    document.getElementById('createFinancialRSOInvoiceBtn')?.addEventListener('click',()=>rsoOpenEditor(''));
-    document.getElementById('backToFinancialRSOList')?.addEventListener('click',rsoBack);
-    document.getElementById('saveFinancialRSOInvoice')?.addEventListener('click',rsoSave);
-    document.getElementById('deleteFinancialRSOInvoice')?.addEventListener('click',rsoDelete);
-    document.getElementById('financialRSOPageSearch')?.addEventListener('input',rsoRender);
-    document.getElementById('toggleFinancialRSOSearch')?.addEventListener('click',()=>document.getElementById('financialRSOSearchPanel')?.classList.toggle('open'));
-    document.getElementById('clearFinancialRSOSearch')?.addEventListener('click',()=>{
-      const e=document.getElementById('financialRSOPageSearch'); if(e)e.value=''; rsoRender();
+  function bindOtherNew(){
+    document.getElementById('createOtherNewInvoiceBtn')?.addEventListener('click',()=>openOtherNewInvoice(''));
+    document.getElementById('backToOtherNewInvoiceList')?.addEventListener('click',nBack);
+    document.getElementById('saveOtherNewInvoice')?.addEventListener('click',saveOtherNewInvoice);
+    document.getElementById('deleteOtherNewInvoice')?.addEventListener('click',deleteOtherNewInvoice);
+    document.getElementById('otherNewInvoicePageSearch')?.addEventListener('input',renderOtherNewInvoices);
+    document.getElementById('toggleOtherNewInvoiceSearch')?.addEventListener('click',()=>document.getElementById('otherNewInvoiceSearchPanel')?.classList.toggle('open'));
+    document.getElementById('clearOtherNewInvoiceSearch')?.addEventListener('click',()=>{
+      const e=document.getElementById('otherNewInvoicePageSearch');if(e)e.value='';renderOtherNewInvoices();
     });
-    rsoRender();
+    renderOtherNewInvoices();
   }
-  window.openFinancialRSOInvoice=rsoOpenEditor;
-  document.addEventListener('DOMContentLoaded',bindRSO);
-  setTimeout(bindRSO,0);
+  window.openOtherNewInvoice=openOtherNewInvoice;
+  document.addEventListener('DOMContentLoaded',bindOtherNew);
+  setTimeout(bindOtherNew,0);
 })();
 </script>
 </body></html>
