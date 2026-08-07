@@ -1370,8 +1370,11 @@ function ensureTenderInvoiceForPo(po){
 function ensureInvoiceForPo(po){
   if(!po)return;
   const program=String(po.program||'').toUpperCase();
-  if(program==='TENDER')ensureTenderInvoiceForPo(po);
-  else if(['REGU','SEAS','OTHER'].includes(program))ensureReguSeasOtherInvoiceForPo(po);
+  if(program==='TENDER'){
+    ensureTenderInvoiceForPo(po);
+  }else if(['REGU','SEAS','OTHER'].includes(program)){
+    ensureReguSeasOtherInvoiceForPo(po);
+  }
 }
 
 
@@ -1382,30 +1385,66 @@ function ensureReguSeasOtherInvoiceForPo(po){
   const program=String(po.program||'').toUpperCase();
   if(!['REGU','SEAS','OTHER'].includes(program))return;
   if(!Array.isArray(state.otherInvoices))state.otherInvoices=[];
+
   const poNo=String(po.number||'').trim();
   if(!poNo)return;
-  let inv=state.otherInvoices.find(x=>String(x.poNumber||'').trim().toLowerCase()===poNo.toLowerCase()&&x.autoCreatedFromPo);
-  const bottleQty=(po.lines||[]).reduce((sum,line)=>sum+(line.bottleQuantity!==''&&line.bottleQuantity!=null?num(line.bottleQuantity):num(line.totalQuantity)*num(line.unitsPerCase)),0);
+
+  // Prefer the permanent PO link; fall back to PO number for older records.
+  let inv=state.otherInvoices.find(x=>x.sourcePoId===po.id);
+  if(!inv){
+    inv=state.otherInvoices.find(x=>
+      x.autoCreatedFromPo &&
+      String(x.poNumber||'').trim().toLowerCase()===poNo.toLowerCase()
+    );
+  }
+
+  const bottleQty=(po.lines||[]).reduce((sum,line)=>
+    sum+(line.bottleQuantity!==''&&line.bottleQuantity!=null
+      ?num(line.bottleQuantity)
+      :num(line.totalQuantity)*num(line.unitsPerCase)),0);
+
   const totalCases=(po.lines||[]).reduce((sum,line)=>sum+num(line.totalQuantity),0);
-  const itemDescription=(po.lines||[]).map(line=>line.yearProductName||line.itemNo||'').filter(Boolean).join(' / ');
+  const itemDescription=(po.lines||[])
+    .map(line=>line.yearProductName||line.itemNo||'')
+    .filter(Boolean)
+    .join(' / ');
+
+  const supplierNames=(po.supplierNames||[]).join(', ');
+
   const base={
+    name:inv?.name||(`${program} PO ${poNo}`),
     poNumber:poNo,
     poProgram:program,
     poStatus:po.poStatus||'',
-    invoiceNumber:inv?.invoiceNumber||'',
-    invoiceDate:inv?.invoiceDate||'',
-    invoiceAmount:inv?.invoiceAmount||'',
+    number:inv?.number||inv?.invoiceNumber||'',
+    invoiceNumber:inv?.invoiceNumber||inv?.number||'',
+    date:inv?.date||inv?.invoiceDate||'',
+    invoiceDate:inv?.invoiceDate||inv?.date||'',
+    amount:inv?.amount??inv?.invoiceAmount??'',
+    invoiceAmount:inv?.invoiceAmount??inv?.amount??'',
     currency:inv?.currency||'CAD',
-    invoiceNotes:inv?.invoiceNotes||('Automatically created from '+program+' PO.'),
+    notes:inv?.notes||inv?.invoiceNotes||('Automatically created from '+program+' PO '+poNo+'.'),
+    invoiceNotes:inv?.invoiceNotes||inv?.notes||('Automatically created from '+program+' PO '+poNo+'.'),
     paidStatus:normalizeRsoInvoiceStatus(inv?.paidStatus||'Not Paid'),
     totalBottles:bottleQty,
     totalCases:totalCases,
     itemDescription:itemDescription,
+    supplierNames:supplierNames,
     sourcePoId:po.id,
     autoCreatedFromPo:true
   };
-  if(inv)Object.assign(inv,base);
-  else state.otherInvoices.push({id:uid(),...base});
+
+  // PO status drives invoice status when appropriate.
+  if((po.poStatus||'')==='CLEARED OUT FROM THE WAREHOUSE' &&
+     normalizeRsoInvoiceStatus(base.paidStatus)!=='Fully Paid'){
+    base.paidStatus='Upcoming Payment in Next 14 Days';
+  }
+
+  if(inv){
+    Object.assign(inv,base);
+  }else{
+    state.otherInvoices.push({id:uid(),...base});
+  }
 }
 async function savePoRecord(){
   if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
