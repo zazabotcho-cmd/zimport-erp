@@ -1233,7 +1233,14 @@ function editAgency(id){openAgency(id)}
 function closeAgency(){$('#agencyModal').classList.add('hidden')}
 function renderCalculator(r=defaults()){const f=[['productType','Product Type','select','Wine|Sparkling Wine|Fortified Wine|Dessert Wine|Sake|Vodka|Whisky|Brandy|Gin|Rum|Liqueur|Tequila|Cooler RTD|Beer|Craft Beer|Keg Beer|Gift Pack Wine|Gift Pack Spirit|Other'],['offeredQuoteCurrency','Offered Quote Currency','select','CAD|USD|GBP|EUR'],['offeredQuote','Offered Quote / Case','number'],['bottles','Bottles in Case','number'],['unitLitres','Bottle Size Litres','number'],['freight','Transportation / Freight CAD per Case','number']];$('#calcForm').innerHTML=f.map(([k,l,t,o])=>`<label>${l}${t==='select'?`<select id="c_${k}">${o.split('|').map(v=>`<option ${v===r[k]?'selected':''}>${v}</option>`).join('')}</select>`:`<input id="c_${k}" type="number" step="any" value="${r[k]??0}">`}</label>`).join('');showCalc(r)}
 function showCalc(r){const x=calculateLCBO(r);$('#calcResults').innerHTML=[['Case Quote',x.quote],['Transportation / Freight',x.freight],['Landed Cost',x.landed],['LCBO Markup',x.markup],['Wine / Volume Levy',x.levy],['Basic Price / Bottle',x.basic],['HST',x.tax],['Container Deposit',x.deposit],['Estimated Final ERP',x.finalRetail]].map(([k,v],i)=>`<div class="row ${i===8?'total':''}"><span>${k}</span><b>${money(v)}</b></div>`).join('')}
+function isAdminOnlyTab(tab){return ['dashboard','financial','all-other-invoices','supplier-payments','supplier-payments-2','recycle-bin','settings','program-settings'].includes(tab)}
+function isAdminUser(){return (window.ZIMPORT_CURRENT_ROLE||'readonly')==='admin'}
 function activate(tab,preferredSection=''){
+  if(!isAdminUser() && isAdminOnlyTab(tab)){
+    alert('Administrator access only.');
+    activateMainSection('tender-niss');
+    return;
+  }
   $$('.tab,.panel').forEach(x=>x.classList.remove('active'));
   let tabBtn=null;
   if(preferredSection) tabBtn=$(`.subnav[data-section-nav="${preferredSection}"] .tab[data-tab="${tab}"]`);
@@ -1266,10 +1273,15 @@ function openPoPage(section='po-section',title="PO'S #"){
   renderPurchaseOrders();
 }
 function activateMainSection(section){
+  if(!isAdminUser() && section==='heads-page'){
+    alert('Administrator access only.');
+    section='tender-niss';
+  }
   if(section==='po-section'){openPoPage('po-section',"PO'S #");return;}
   $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
   $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav===section));
-  const first=$(`.subnav[data-section-nav="${section}"] .tab`);
+  const tabs=[...document.querySelectorAll(`.subnav[data-section-nav="${section}"] .tab`)];
+  const first=tabs.find(el=>el.style.display!=='none' && !(!isAdminUser() && isAdminOnlyTab(el.dataset.tab)));
   if(first){
     if(first.dataset.tab==='po-page')openPoPage(section,first.dataset.poTitle||"PO'S #");
     else activate(first.dataset.tab,section);
@@ -1614,7 +1626,14 @@ function applyOnlinePermissions(){
  document.querySelectorAll('#addAgencyBtn,#addSupplierBtn,#addPoBtn,#addShipmentBtn,#createFinancialInvoiceBtn,#createOtherInvoiceBtn').forEach(el=>{if(el)el.disabled=!canManage});
  document.querySelectorAll('input,select,textarea').forEach(el=>{if(role==='readonly' && !['onlineEmail','onlinePassword'].includes(el.id))el.disabled=true});
  const roleEl=document.getElementById('cloudCurrentRole');if(roleEl)roleEl.textContent=role;
- const agencyTab=document.querySelector('[data-tab="agencies"]');if(agencyTab)agencyTab.style.display=canAdmin?'':'none';
+ const headsBtn=document.querySelector('.main-section-btn[data-section="heads-page"]');if(headsBtn)headsBtn.style.display=canAdmin?'':'none';
+ const currencyTab=document.querySelector('.subnav[data-section-nav="setting-section"] .tab[data-tab="settings"]');if(currencyTab)currencyTab.style.display=canAdmin?'':'none';
+ const programTab=document.querySelector('.subnav[data-section-nav="setting-section"] .tab[data-tab="program-settings"]');if(programTab)programTab.style.display=canAdmin?'':'none';
+ const agencyTab=document.querySelector('[data-tab="agencies"]');if(agencyTab)agencyTab.style.display='';
+ if(!canAdmin){
+   const activePanel=document.querySelector('.panel.active');
+   if(activePanel && isAdminOnlyTab(activePanel.id)) activateMainSection('tender-niss');
+ }
 }
 window.applyOnlinePermissions=applyOnlinePermissions;
 </script>
