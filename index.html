@@ -1351,7 +1351,7 @@ function ensureTenderInvoiceForPo(po){
     lcboCurrency:inv?.lcboCurrency||'CAD',
     lcboApproxDate:inv?.lcboApproxDate||'',
     lcboPayDate:inv?.lcboPayDate||'',
-    lcboPaidStatus:inv?.lcboPaidStatus||'No',
+    lcboPaidStatus:inv?.lcboPaidStatus||'Not Paid',
     transportInvoiceName:inv?.transportInvoiceName||'',
     totalBottles:bottleQty,
     poBottleQuantity:bottleQty,
@@ -1366,6 +1366,14 @@ function ensureTenderInvoiceForPo(po){
   if(inv)Object.assign(inv,base);
   else state.financialInvoices.push({id:uid(),...base});
 }
+function ensureInvoiceForPo(po){
+  if(!po)return;
+  const program=String(po.program||'').toUpperCase();
+  if(program==='TENDER'){
+    ensureTenderInvoiceForPo(po);
+  }
+}
+
 
 
 async function savePoRecord(){
