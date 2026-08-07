@@ -194,8 +194,8 @@
 <nav class="subnav active" data-section-nav="heads-page">
   <button class="tab active" data-tab="dashboard">Dashboard</button>
   <button class="tab" data-tab="financial">LCBO to Agent Tender Invoices</button>
-  <button class="tab" data-tab="financial-ss">LCBO to Agent SS Invoices</button>
-  <button class="tab" data-tab="all-other-invoices">All Other Invoices</button>
+  <button class="tab" data-tab="financial-rso">LCBO to Agent REGU / SEAS / OTHER Invoices</button>
+<button class="tab" data-tab="all-other-invoices">All Other Invoices</button>
   <button class="tab" data-tab="supplier-payments">Paying to Suppliers Invoices</button>
   <button class="tab" data-tab="supplier-payments-2">Suppliers to Agent Fee Payment</button>
   <button class="tab" data-tab="recycle-bin">Recycle Bin</button>
@@ -419,6 +419,67 @@
   <div class="card"><span>Supplier Payment CAD</span><strong id="finSummarySupplier">$0.00</strong></div>
   <div class="card"><span>Total Other Expenses CAD</span><strong id="finSummaryExpenses">$0.00</strong></div>
   <div class="card"><span>NET PROFIT CAD</span><strong id="finNetProfit" class="financial-net">$0.00</strong></div>
+</div>
+<div class="financial-actions"><button type="button" id="deleteFinancialInvoice" class="danger">Delete Invoice</button><button type="button" id="saveFinancialInvoice">Save Invoice</button></div>
+</div></div></section>
+<section id="financialRSO-rso" class="panel"><div class="box"><div class="section-head"><div><h2>LCBO to Agent REGU / SEAS / OTHER Invoices</h2><p class="note">Create and manage REGU, SEAS, and OTHER LCBO to Agent invoice records.</p></div><button type="button" id="createFinancialInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleFinancialRSOSearch">Search</button><div class="page-search-panel" id="financialRSOSearchPanel"><label>Search Invoices<input id="financialRSOPageSearch" type="search" placeholder="PO, invoice, submission, status, amount or currency"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearFinancialPageSearch">Clear Search</button></div></div>
+<div id="financialRSOInvoiceList"><div class="table-wrap"><table><thead><tr><th>PO #</th><th>Invoice Number</th><th>Submission #</th><th>LCBO Invoice Amount</th><th>Total Netted Expenses</th><th>Total Advertising Expenses</th><th>Failed Sales LCBO Rebate</th><th>Other Expense Amount</th><th>Transportation Cost CAD</th><th>Supplier Payment CAD</th><th>LCBO Paid</th><th>NET PROFIT CAD</th><th>Actions</th></tr></thead><tbody id="financialRSOInvoiceRows"></tbody></table></div></div>
+<div id="financialRSOInvoiceDetails" class="hidden"><div class="invoice-detail-actions"><button type="button" class="secondary" id="backFromFinancialDetails">Back to Invoice List</button><button type="button" class="secondary" id="copyAllFinancialDetails">Copy All Invoice Information</button><button type="button" id="editFromFinancialDetails">Edit Invoice</button></div><div id="financialRSOInvoiceDetailsContent"></div></div>
+<div id="financialRSOInvoiceEditor" class="hidden">
+<div class="section-head"><div><h2 id="financialRSOEditorTitle">Create Invoice</h2><p class="note">Select the PO, enter the invoice details, and review the automatically calculated transportation cost.</p></div><button type="button" class="secondary" id="backToFinancialList">Back to Invoice List</button></div>
+<input type="hidden" id="rsoFinInvoiceId">
+<div class="financial-grid">
+  <div class="financial-group"><h3>Invoice Identification</h3>
+    <label>PO # *<input id="rsoFinPoNumber" required list="financialPoNumbers" placeholder="Select or enter PO number"></label>
+    <datalist id="financialRSOPoNumbers"></datalist>
+    <label>Invoice Number<input id="rsoFinInvoiceNumber" placeholder="Enter invoice number"></label>
+    <label>Submission # *<input id="rsoFinSubmissionNumber" required placeholder="Enter submission number"></label>
+  </div>
+  <div class="financial-group"><h3>LCBO Invoice</h3>
+    <div class="amount-currency-row"><label>LCBO INVOICE AMOUNT<input id="rsoFinLcboInvoiceCad" type="number" min="0" step="0.01"></label><label class="currency-mini">Invoice Currency<select id="rsoFinLcboCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option></select></label></div>
+    <label>LCBO Invoice Approximate Date<input id="rsoFinLcboApproxDate" type="text" placeholder="Example: March/April 2027 or End of March 2028"></label>
+    <label>LCBO Invoice Pay Date Confirmed<input id="rsoFinLcboPayDate" type="date"></label>
+    <label>LCBO Invoice Paid Status<select id="rsoFinLcboPaidStatus"><option>No</option><option>Yes</option></select></label>
+  </div>
+  <div class="financial-group"><h3>Transportation Invoice</h3>
+    <label>PO TRANSPORTATION INVOICE NAME<input id="rsoFinTransportInvoiceName" placeholder="Enter transportation invoice name"></label>
+    <label>Total Transported Bottles<input id="rsoFinTotalBottles" type="number" readonly></label>
+    <label>Cost per Bottle CAD<input id="rsoFinCostPerBottle" type="number" readonly></label>
+    <label>PO Bottle Quantity<input id="rsoFinPoBottleQuantity" type="number" readonly></label>
+    <label>The PO Transportation Cost CAD<input id="rsoFinPoTransportationCost" type="number" readonly></label>
+  </div>
+  <div class="financial-group"><h3>Supplier Payment</h3>
+    <div class="amount-currency-row"><label>SUPPLIER ITEM PRICE<input id="rsoFinSupplierItemPrice" type="number" min="0" step="0.0001"></label><label class="currency-mini">Currency<select id="rsoFinSupplierCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option></select></label></div>
+    <label>ITEMS IN CASE<input id="rsoFinSupplierItemsInCase" type="number" min="0" step="1"></label>
+    <div class="amount-currency-row"><label>SUPPLIER CASE PRICE<input id="rsoFinSupplierCasePrice" type="number" readonly></label><label class="currency-mini">Currency<input id="rsoFinSupplierCaseCurrency" value="CAD" readonly></label></div>
+    <label>Currency Calculator — CAD to Supplier Currency<div class="converter-inline"><span>1 CAD =</span><input id="rsoFinSupplierRate" type="number" min="0.00000001" step="0.0001" placeholder="Enter manually"><strong id="rsoFinSupplierRateCurrency">CAD</strong></div></label>
+    <label>Supplier Item Price CAD<input id="rsoFinSupplierItemCad" type="number" readonly></label>
+    <label>Total Supplier Payment Amount<input id="rsoFinSupplierTotalCad" type="number" readonly></label>
+  </div>
+  <div class="financial-group"><h3>Expenses</h3>
+    <h4>Netted Expenses</h4>
+    <div class="expense-amount-description-row"><label>Netted Amount 1<input id="rsoFinNettedAmount1" type="number" min="0" step="0.01"></label><label>Description<input id="rsoFinNettedDescription1" type="text" placeholder="Lab cost, damage, or other"></label></div>
+    <div class="expense-amount-description-row"><label>Netted Amount 2<input id="rsoFinNettedAmount2" type="number" min="0" step="0.01"></label><label>Description<input id="rsoFinNettedDescription2" type="text" placeholder="Lab cost, damage, or other"></label></div>
+    <div class="expense-amount-description-row"><label>Netted Amount 3<input id="rsoFinNettedAmount3" type="number" min="0" step="0.01"></label><label>Description<input id="rsoFinNettedDescription3" type="text" placeholder="Lab cost, damage, or other"></label></div>
+    <h4>Advertising Expenses</h4>
+    <div class="expense-amount-description-row"><label>Advertising Amount 1<input id="rsoFinAdAmount1" type="number" min="0" step="0.01"></label><label>Advertising Description 1<input id="rsoFinAdDescription1" type="text" placeholder="Example: Social media"></label></div>
+    <div class="expense-amount-description-row"><label>Advertising Amount 2<input id="rsoFinAdAmount2" type="number" min="0" step="0.01"></label><label>Advertising Description 2<input id="rsoFinAdDescription2" type="text"></label></div>
+    <div class="expense-amount-description-row"><label>Advertising Amount 3<input id="rsoFinAdAmount3" type="number" min="0" step="0.01"></label><label>Advertising Description 3<input id="rsoFinAdDescription3" type="text"></label></div>
+    <div class="expense-amount-description-row"><label>Advertising Amount 4<input id="rsoFinAdAmount4" type="number" min="0" step="0.01"></label><label>Advertising Description 4<input id="rsoFinAdDescription4" type="text"></label></div>
+    <div class="expense-amount-description-row"><label>Advertising Amount 5<input id="rsoFinAdAmount5" type="number" min="0" step="0.01"></label><label>Advertising Description 5<input id="rsoFinAdDescription5" type="text"></label></div>
+    <div class="expense-amount-description-row"><label>Advertising Amount 6<input id="rsoFinAdAmount6" type="number" min="0" step="0.01"></label><label>Advertising Description 6<input id="rsoFinAdDescription6" type="text"></label></div>
+    <h4>Failed Sales LCBO Rebate</h4>
+    <div class="amount-currency-row"><label>Rebate Percentage %<input id="rsoFinFailedSalesPercent" type="number" min="0" step="0.01" placeholder="Enter manually"></label><label>Calculated Rebate Amount CAD<input id="rsoFinFailedSalesAmount" type="number" readonly></label></div>
+    <h4>Other Expenses</h4>
+    <div class="amount-currency-row"><label>Other Expense Amount<input id="rsoFinOtherExpenseAmount" type="number" min="0" step="0.01"></label><label>Other Expense Description<input id="rsoFinOtherExpenseDescription" type="text"></label></div>
+  </div>
+  <div class="financial-group"><h3>Notes</h3><label>Financial Notes<textarea id="rsoFinNotes" placeholder="Add comments or calculation notes"></textarea></label></div>
+</div>
+<div class="financial-summary">
+  <div class="card"><span>Transportation Total CAD</span><strong id="rsoFinSummaryTransport">$0.00</strong></div>
+  <div class="card"><span>Supplier Payment CAD</span><strong id="rsoFinSummarySupplier">$0.00</strong></div>
+  <div class="card"><span>Total Other Expenses CAD</span><strong id="rsoFinSummaryExpenses">$0.00</strong></div>
+  <div class="card"><span>NET PROFIT CAD</span><strong id="rsoFinNetProfit" class="financial-net">$0.00</strong></div>
 </div>
 <div class="financial-actions"><button type="button" id="deleteFinancialInvoice" class="danger">Delete Invoice</button><button type="button" id="saveFinancialInvoice">Save Invoice</button></div>
 </div></div></section>
@@ -737,7 +798,7 @@ if(!Array.isArray(state.tenders))state.tenders=[];
 if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
 if(!Array.isArray(state.shipments))state.shipments=[];
 if(!Array.isArray(state.financialInvoices))state.financialInvoices=[];
-if(!Array.isArray(state.financialSSInvoices))state.financialSSInvoices=[];
+if(!Array.isArray(state.financialRSOInvoices))state.financialRSOInvoices=[];
 if(!Array.isArray(state.supplierPaymentInvoices))state.supplierPaymentInvoices=[];
 if(!Array.isArray(state.supplierPaymentInvoices2))state.supplierPaymentInvoices2=[];
 if(!Array.isArray(state.otherInvoices))state.otherInvoices=[];
@@ -1268,40 +1329,8 @@ function ensureTenderInvoiceForPo(po){
   if(inv)Object.assign(inv,base);
   else state.financialInvoices.push({id:uid(),...base});
 }
-function ensureSSInvoiceForPo(po){
-  if(!po||String(po.program||'').toUpperCase()==='TENDER')return;
-  if(!Array.isArray(state.financialSSInvoices))state.financialSSInvoices=[];
-  const poNo=String(po.number||'').trim();if(!poNo)return;
-  let inv=state.financialSSInvoices.find(x=>String(x.poNumber||'').trim().toLowerCase()===poNo.toLowerCase()&&x.autoCreatedFromSsPo);
-  const linkedRecord=linkedSubmissionForPo(poNo);
-  const bottleQty=poInvoiceBottleQty(po);
-  const base={
-    poNumber:poNo,
-    submissionNumber:linkedRecord?.submissionNumber||'',
-    invoiceNumber:inv?.invoiceNumber||'',
-    lcboInvoiceCad:inv?.lcboInvoiceCad||'',
-    lcboCurrency:inv?.lcboCurrency||'CAD',
-    lcboApproxDate:inv?.lcboApproxDate||'',
-    lcboPayDate:inv?.lcboPayDate||'',
-    lcboPaidStatus:inv?.lcboPaidStatus||'No',
-    transportInvoiceName:inv?.transportInvoiceName||'',
-    totalBottles:bottleQty,
-    poBottleQuantity:bottleQty,
-    supplierItemPrice:inv?.supplierItemPrice||'',
-    supplierCurrency:inv?.supplierCurrency||'USD',
-    supplierItemsInCase:inv?.supplierItemsInCase||'',
-    supplierRate:inv?.supplierRate||'',
-    notes:inv?.notes||'Automatically created from SS / Private Order PO.',
-    autoCreatedFromSsPo:true,
-    sourcePoId:po.id
-  };
-  if(inv)Object.assign(inv,base);
-  else state.financialSSInvoices.push({id:uid(),...base});
-}
-function ensureInvoiceForPo(po){
-  if(String(po?.program||'').toUpperCase()==='TENDER')ensureTenderInvoiceForPo(po);
-  else ensureSSInvoiceForPo(po);
-}
+
+
 async function savePoRecord(){
   if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
   const number=$('#poNumberInput').value.trim();if(!number){alert('Enter the PO number.');return}if(number.length>25){alert('PO number cannot exceed 25 characters.');return}
@@ -1905,8 +1934,10 @@ document.addEventListener('click',e=>{
   if(tab)setTimeout(renderArchivedPurchaseOrders,0);
 });
 
+
+
 (function(){
-  const SS_FIELDS = [
+  const RSO_FIELDS = [
     'PoNumber','InvoiceNumber','SubmissionNumber','LcboInvoiceCad','LcboCurrency','LcboApproxDate','LcboPayDate','LcboPaidStatus',
     'TransportInvoiceName','TotalBottles','CostPerBottle','PoBottleQuantity','PoTransportationCost',
     'SupplierItemPrice','SupplierCurrency','SupplierItemsInCase','SupplierCasePrice','SupplierCaseCurrency','SupplierRate',
@@ -1914,85 +1945,74 @@ document.addEventListener('click',e=>{
     'AdAmount1','AdDescription1','AdAmount2','AdDescription2','AdAmount3','AdDescription3','AdAmount4','AdDescription4','AdAmount5','AdDescription5','AdAmount6','AdDescription6',
     'FailedSalesPercent','FailedSalesAmount','OtherExpenseAmount','OtherExpenseDescription','Notes'
   ];
-  function ssEl(suffix){return document.getElementById('ssFin'+suffix)}
-  function ssListEl(id){return document.getElementById(id)}
-  function ssMoney(v){return '$'+(Number(v)||0).toFixed(2)}
-  function ssCalc(){
-    const supplierItem=Number(ssEl('SupplierItemPrice')?.value)||0;
-    const itemsCase=Number(ssEl('SupplierItemsInCase')?.value)||0;
-    const supplierCase=supplierItem*itemsCase;
-    if(ssEl('SupplierCasePrice'))ssEl('SupplierCasePrice').value=supplierCase.toFixed(2);
-    const rate=Number(ssEl('SupplierRate')?.value)||1;
-    const supplierCad=(ssEl('SupplierCurrency')?.value||'CAD')==='CAD'?supplierItem:(rate? supplierItem/rate : supplierItem);
-    if(ssEl('SupplierItemCad'))ssEl('SupplierItemCad').value=supplierCad.toFixed(4);
-    const poBottle=Number(ssEl('PoBottleQuantity')?.value)||0;
-    if(ssEl('SupplierTotalCad'))ssEl('SupplierTotalCad').value=(supplierCad*poBottle).toFixed(2);
-    const lcbo=Number(ssEl('LcboInvoiceCad')?.value)||0;
-    const transport=Number(ssEl('PoTransportationCost')?.value)||0;
-    const supplierTotal=Number(ssEl('SupplierTotalCad')?.value)||0;
-    const netted=[1,2,3].reduce((s,n)=>s+(Number(ssEl('NettedAmount'+n)?.value)||0),0);
-    const ads=[1,2,3,4,5,6].reduce((s,n)=>s+(Number(ssEl('AdAmount'+n)?.value)||0),0);
-    const failed=Number(ssEl('FailedSalesAmount')?.value)||0;
-    const other=Number(ssEl('OtherExpenseAmount')?.value)||0;
-    const profit=lcbo-transport-supplierTotal-netted-ads-failed-other;
-    const np=document.getElementById('financialSSNetProfit')||document.getElementById('ssFinNetProfit');
-    if(np)np.textContent=ssMoney(profit);
-    const s1=document.getElementById('financialSSSummaryTransport'); if(s1)s1.textContent=ssMoney(transport);
-    const s2=document.getElementById('financialSSSummarySupplier'); if(s2)s2.textContent=ssMoney(supplierTotal);
-    const s3=document.getElementById('financialSSSummaryExpenses'); if(s3)s3.textContent=ssMoney(netted+ads+failed+other);
+  function rsoEl(suffix){return document.getElementById('rsoFin'+suffix)}
+  function rsoBack(){
+    document.getElementById('financialRSOInvoiceEditor')?.classList.add('hidden');
+    document.getElementById('financialRSOInvoiceList')?.classList.remove('hidden');
+    document.getElementById('financialRSOInvoiceDetails')?.classList.add('hidden');
+    rsoRender();
   }
-  function ssOpenEditor(id=''){
-    const list=document.getElementById('financialSSInvoiceList'), editor=document.getElementById('financialSSInvoiceEditor');
-    if(list)list.classList.add('hidden'); if(editor)editor.classList.remove('hidden');
-    const rec=(state.financialSSInvoices||[]).find(x=>x.id===id)||{};
-    const idEl=document.getElementById('ssFinInvoiceId'); if(idEl)idEl.value=rec.id||'';
-    SS_FIELDS.forEach(k=>{const el=ssEl(k);if(el)el.value=rec[k.charAt(0).toLowerCase()+k.slice(1)]??''});
-    const title=document.getElementById('financialSSEditorTitle'); if(title)title.textContent=rec.id?'Edit SS Invoice':'Create SS Invoice';
-    ssCalc();
+  function rsoOpenEditor(id=''){
+    document.getElementById('financialRSOInvoiceList')?.classList.add('hidden');
+    document.getElementById('financialRSOInvoiceEditor')?.classList.remove('hidden');
+    const rec=(state.financialRSOInvoices||[]).find(x=>x.id===id)||{};
+    const idEl=document.getElementById('rsoFinInvoiceId'); if(idEl)idEl.value=rec.id||'';
+    RSO_FIELDS.forEach(k=>{
+      const el=rsoEl(k);
+      if(el)el.value=rec[k.charAt(0).toLowerCase()+k.slice(1)]??'';
+    });
+    const title=document.getElementById('financialRSOEditorTitle');
+    if(title)title.textContent=rec.id?'Edit Invoice':'Create Invoice';
   }
-  function ssBack(){
-    const list=document.getElementById('financialSSInvoiceList'), editor=document.getElementById('financialSSInvoiceEditor'), details=document.getElementById('financialSSInvoiceDetails');
-    if(list)list.classList.remove('hidden'); if(editor)editor.classList.add('hidden'); if(details)details.classList.add('hidden');
-    ssRender();
-  }
-  function ssSave(){
-    const id=document.getElementById('ssFinInvoiceId')?.value||uid();
+  function rsoSave(){
+    const poNumber=rsoEl('PoNumber')?.value.trim()||'';
+    if(!poNumber){alert('PO # is required.');rsoEl('PoNumber')?.focus();return}
+    const id=document.getElementById('rsoFinInvoiceId')?.value||uid();
     const rec={id};
-    SS_FIELDS.forEach(k=>{const el=ssEl(k);rec[k.charAt(0).toLowerCase()+k.slice(1)]=el?.value??''});
-    const idx=(state.financialSSInvoices||[]).findIndex(x=>x.id===id);
-    if(idx>=0)state.financialSSInvoices[idx]=rec; else state.financialSSInvoices.push(rec);
-    save(); ssBack();
+    RSO_FIELDS.forEach(k=>{
+      const el=rsoEl(k);
+      rec[k.charAt(0).toLowerCase()+k.slice(1)]=el?.value??'';
+    });
+    const i=(state.financialRSOInvoices||[]).findIndex(x=>x.id===id);
+    if(i>=0)state.financialRSOInvoices[i]=rec; else state.financialRSOInvoices.push(rec);
+    save(); rsoBack();
   }
-  function ssDelete(){
-    const id=document.getElementById('ssFinInvoiceId')?.value;if(!id)return;
-    if(!confirm('Delete this SS invoice?'))return;
-    state.financialSSInvoices=(state.financialSSInvoices||[]).filter(x=>x.id!==id);save();ssBack();
+  function rsoDelete(){
+    const id=document.getElementById('rsoFinInvoiceId')?.value;
+    if(!id||!confirm('Delete this invoice?'))return;
+    state.financialRSOInvoices=(state.financialRSOInvoices||[]).filter(x=>x.id!==id);
+    save(); rsoBack();
   }
-  function ssRender(){
-    const tbody=document.getElementById('financialSSInvoiceRows');if(!tbody)return;
-    const q=(document.getElementById('financialSSPageSearch')?.value||'').trim().toLowerCase();
-    const rows=(state.financialSSInvoices||[]).filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q)).map(r=>`
+  function rsoRender(){
+    const tbody=document.getElementById('financialRSOInvoiceRows'); if(!tbody)return;
+    const q=(document.getElementById('financialRSOPageSearch')?.value||'').trim().toLowerCase();
+    const rows=(state.financialRSOInvoices||[]).filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q)).map(r=>`
       <tr>
-        <td>${escapeHtml(r.poNumber||'—')}</td><td>${escapeHtml(r.invoiceNumber||'—')}</td><td>${escapeHtml(r.submissionNumber||'—')}</td>
-        <td>${escapeHtml(r.lcboInvoiceCad||'—')}</td><td>—</td><td>—</td><td>${escapeHtml(r.failedSalesAmount||'—')}</td><td>${escapeHtml(r.otherExpenseAmount||'—')}</td>
-        <td>${escapeHtml(r.poTransportationCost||'—')}</td><td>${escapeHtml(r.supplierTotalCad||'—')}</td><td>${escapeHtml(r.lcboPaidStatus||'—')}</td><td>—</td>
-        <td><button type="button" class="secondary small" onclick="window.openFinancialSSInvoice('${r.id}')">Edit</button></td>
+        <td>${escapeHtml(r.poNumber||'—')}</td>
+        <td>${escapeHtml(r.invoiceNumber||'—')}</td>
+        <td>${escapeHtml(r.submissionNumber||'—')}</td>
+        <td>${escapeHtml(r.lcboInvoiceCad||'—')}</td>
+        <td>${escapeHtml(r.lcboCurrency||'CAD')}</td>
+        <td>${escapeHtml(r.lcboPaidStatus||'—')}</td>
+        <td><button type="button" class="secondary small" onclick="openFinancialRSOInvoice('${r.id}')">Edit</button></td>
       </tr>`).join('');
-    tbody.innerHTML=rows||'<tr><td colspan="13">No LCBO to Agent SS invoices.</td></tr>';
+    tbody.innerHTML=rows||'<tr><td colspan="7">No REGU / SEAS / OTHER invoices.</td></tr>';
   }
-  window.openFinancialSSInvoice=ssOpenEditor;
-  function bindSS(){
-    document.getElementById('createFinancialSSInvoiceBtn')?.addEventListener('click',()=>ssOpenEditor(''));
-    document.getElementById('backToFinancialSSList')?.addEventListener('click',ssBack);
-    document.getElementById('saveFinancialSSInvoice')?.addEventListener('click',ssSave);
-    document.getElementById('deleteFinancialSSInvoice')?.addEventListener('click',ssDelete);
-    document.getElementById('financialSSPageSearch')?.addEventListener('input',ssRender);
-    document.getElementById('toggleFinancialSSSearch')?.addEventListener('click',()=>document.getElementById('financialSSSearchPanel')?.classList.toggle('open'));
-    document.getElementById('clearFinancialSSSearch')?.addEventListener('click',()=>{const e=document.getElementById('financialSSPageSearch');if(e)e.value='';ssRender()});
-    SS_FIELDS.forEach(k=>ssEl(k)?.addEventListener('input',ssCalc));
-    ssRender();
+  function bindRSO(){
+    document.getElementById('createFinancialRSOInvoiceBtn')?.addEventListener('click',()=>rsoOpenEditor(''));
+    document.getElementById('backToFinancialRSOList')?.addEventListener('click',rsoBack);
+    document.getElementById('saveFinancialRSOInvoice')?.addEventListener('click',rsoSave);
+    document.getElementById('deleteFinancialRSOInvoice')?.addEventListener('click',rsoDelete);
+    document.getElementById('financialRSOPageSearch')?.addEventListener('input',rsoRender);
+    document.getElementById('toggleFinancialRSOSearch')?.addEventListener('click',()=>document.getElementById('financialRSOSearchPanel')?.classList.toggle('open'));
+    document.getElementById('clearFinancialRSOSearch')?.addEventListener('click',()=>{
+      const e=document.getElementById('financialRSOPageSearch'); if(e)e.value=''; rsoRender();
+    });
+    rsoRender();
   }
-  document.addEventListener('DOMContentLoaded',bindSS); setTimeout(bindSS,0);
+  window.openFinancialRSOInvoice=rsoOpenEditor;
+  document.addEventListener('DOMContentLoaded',bindRSO);
+  setTimeout(bindRSO,0);
 })();
 </script>
 </body></html>
