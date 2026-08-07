@@ -217,6 +217,7 @@
 </nav>
 <nav class="subnav" data-section-nav="transportations">
   <button class="tab" data-tab="transportation">Transportation</button>
+  <button class="tab" data-tab="archived-transportation">Archived Transportation</button>
 </nav>
 <nav class="subnav" data-section-nav="po-section">
   <button class="tab" data-tab="po-page" data-po-title="PO'S #">PO'S #</button>
@@ -360,6 +361,17 @@
 <section id="calculator" class="panel"><div class="box"><div class="section-head"><div><h2>Suppliers</h2><p class="note">Add suppliers, open a supplier to view or copy its information, and manage multiple items for each supplier.</p></div><button id="addSupplierBtn">+ Add Supplier</button></div><button type="button" class="secondary page-search-toggle" id="toggleSupplierSearch">Search</button><div class="page-search-panel" id="supplierSearchPanel"><label>Search Suppliers<input id="supplierPageSearch" type="search" placeholder="Supplier name, number, country, currency or agency"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearSupplierPageSearch">Clear Search</button></div></div><div id="supplierList"></div></div></section>
 <section id="supplier-items-page" class="panel"><div class="box"><div class="section-head"><div><h2>Items</h2><p class="note">Supplier items are managed separately from the Tender Item Database. Creating an item here will not create a Tender Item Database record.</p></div><button id="addSupplierItemFromItemsBtn" type="button">+ Add New Item</button></div><div class="toolbar"><input id="supplierItemsSearch" placeholder="Search item description, item number, supplier, product type, varietal or year"></div><div class="table-wrap"><table class="supplier-all-items-table"><thead><tr><th>Item</th><th>Item #</th><th>Supplier</th><th>Product Type</th><th>Varietal</th><th>Year</th><th>Currency</th><th>Supplier Case Price</th><th>Organic / Status</th><th>Action</th></tr></thead><tbody id="supplierAllItemRows"></tbody></table></div></div></section>
 <section id="transportation" class="panel"><div class="box"><div class="section-head"><div><h2>Transportation</h2><p class="note">Create shipments, assign saved POs, and calculate transportation cost per bottle.</p></div><button id="addShipmentBtn" type="button">+ Create Shipment</button></div><button type="button" class="secondary page-search-toggle" id="toggleTransportationSearch">Search</button><div class="page-search-panel" id="transportationSearchPanel"><label>Search Transportation<input id="transportationPageSearch" type="search" placeholder="Shipment, company, PO, route, status or payment"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearTransportationPageSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th>Shipment</th><th>Transport Company</th><th>POs</th><th>Total Bottles</th><th>Pallets</th><th>Transportation Cost</th><th>Cost / Bottle</th><th>CAD Currency Converter</th><th>Bottle Cost in CAD</th><th>Shipment Status</th><th>Approximate Pickup Date</th><th>Delivery Date</th><th>Consolidation Warehouse Status</th><th>Payment Status</th><th>Actions</th></tr></thead><tbody id="shipmentRows"></tbody></table></div></div></section>
+
+<section id="archived-transportation" class="panel"><div class="box">
+  <div class="section-head"><div><h2>Archived Transportation</h2><p class="note">Shipments moved from the active Transportation page.</p></div></div>
+  <button type="button" class="secondary page-search-toggle" id="toggleArchivedTransportationSearch">Search</button>
+  <div class="page-search-panel" id="archivedTransportationSearchPanel">
+    <label>Search Archived Transportation<input id="archivedTransportationPageSearch" type="search" placeholder="Shipment, company, PO, status or payment"></label>
+    <div class="page-search-actions"><button type="button" class="secondary" id="clearArchivedTransportationSearch">Clear Search</button></div>
+  </div>
+  <div class="table-wrap"><table><thead><tr><th>Shipment</th><th>PO'S</th><th>Transport Company</th><th>Pallets</th><th>Shipment Status</th><th>Actions</th></tr></thead><tbody id="archivedShipmentRows"></tbody></table></div>
+</div></section>
+
 <section id="po-page" class="panel"><div class="box"><div class="section-head"><div><h2 id="poPageTitle">PO'S #</h2><p class="note">Create and manage active purchase-order records. POs with status LCBO PAYED automatically move to Archived PO'S.</p></div><button id="addPoBtn" type="button">+ Create New PO</button></div><button type="button" class="secondary page-search-toggle" id="togglePoSearch">Search</button><div class="page-search-panel" id="poSearchPanel"><label>PO #<input id="poNumberSearch" type="search" placeholder="Type PO number"></label><label>PO Program<input id="poProgramSearch" type="search" placeholder="TENDER, REGU, SEAS or OTHER"></label><label>Supplier<input id="poSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item Description<input id="poItemSearch" type="search" placeholder="Type item description"></label><label>PO Status<select id="poStatusSearch"><option value="">All statuses</option><option>ARRIVED IN CANADA</option><option>CLEARED OUT FROM THE WAREHOUSE</option></select></label><div class="page-search-actions"><button type="button" class="secondary" id="clearPoSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th>PO #</th><th>PO Program</th><th>Suppliers</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>PO Status</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="poRows"></tbody></table></div></div></section>
 <section id="archived-pos" class="panel"><div class="box"><div class="section-head"><div><h2>ARCHIVED PO'S</h2><p class="note">POs move here automatically when PO Status is LCBO PAYED.</p></div></div><button type="button" class="secondary page-search-toggle" id="toggleArchivedPoSearch">Search</button><div class="page-search-panel" id="archivedPoSearchPanel"><label>PO #<input id="archivedPoNumberSearch" type="search" placeholder="Type PO number"></label><label>Supplier<input id="archivedPoSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item Description<input id="archivedPoItemSearch" type="search" placeholder="Type item description"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearArchivedPoSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th>PO #</th><th>PO Program</th><th>Suppliers</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>PO Status</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="archivedPoRows"></tbody></table></div></div></section>
 <section id="financial" class="panel"><div class="box"><div class="section-head"><div><h2>LCBO to Agent Tender Invoices</h2><p class="note">Create and manage separate financial invoice records by PO number and invoice number.</p></div><button type="button" id="createFinancialInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleFinancialSearch">Search</button><div class="page-search-panel" id="financialSearchPanel"><label>Search Invoices<input id="financialPageSearch" type="search" placeholder="PO, invoice, submission, status, amount or currency"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearFinancialPageSearch">Clear Search</button></div></div>
@@ -831,7 +843,9 @@ if(!Array.isArray(state.records))state.records=[];
 if(!Array.isArray(state.items))state.items=[];
 if(!Array.isArray(state.tenders))state.tenders=[];
 if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
+if(!Array.isArray(state.manuallyArchivedPurchaseOrders))state.manuallyArchivedPurchaseOrders=[];
 if(!Array.isArray(state.shipments))state.shipments=[];
+if(!Array.isArray(state.archivedShipments))state.archivedShipments=[];
 if(!Array.isArray(state.financialInvoices))state.financialInvoices=[];
 if(!Array.isArray(state.supplierPaymentInvoices))state.supplierPaymentInvoices=[];
 if(!Array.isArray(state.supplierPaymentInvoices2))state.supplierPaymentInvoices2=[];
@@ -2318,6 +2332,123 @@ document.addEventListener('click',e=>{
     el?.addEventListener('change',refreshRsoEditorStatusColor);
     refreshRsoEditorStatusColor();
   });
+})();
+
+(function(){
+  function archiveShipment(id){
+    const i=(state.shipments||[]).findIndex(x=>x.id===id);if(i<0)return;
+    if(!Array.isArray(state.archivedShipments))state.archivedShipments=[];
+    state.archivedShipments.push(state.shipments[i]);
+    state.shipments.splice(i,1);
+    save();
+    try{renderShipments()}catch(e){}
+    renderArchivedShipments();
+  }
+  function restoreShipment(id){
+    const i=(state.archivedShipments||[]).findIndex(x=>x.id===id);if(i<0)return;
+    state.shipments.push(state.archivedShipments[i]);
+    state.archivedShipments.splice(i,1);
+    save();renderArchivedShipments();try{renderShipments()}catch(e){}
+  }
+  function deleteArchivedShipment(id){
+    if(!confirm('Delete this archived transportation record?'))return;
+    state.archivedShipments=(state.archivedShipments||[]).filter(x=>x.id!==id);
+    save();renderArchivedShipments();
+  }
+  function renderArchivedShipments(){
+    const tbody=document.getElementById('archivedShipmentRows');if(!tbody)return;
+    const q=(document.getElementById('archivedTransportationPageSearch')?.value||'').trim().toLowerCase();
+    const rows=(state.archivedShipments||[]).filter(sh=>!q||JSON.stringify(sh).toLowerCase().includes(q)).map(sh=>{
+      const pos=(sh.poLinks||[]).map(x=>x.poNumber||x.number||'').filter(Boolean).join(', ');
+      return `<tr><td>${escapeHtml(sh.name||'—')}</td><td>${escapeHtml(pos||'—')}</td><td>${escapeHtml(sh.company||'—')}</td><td>${escapeHtml(sh.palletQty??'—')}</td><td>${escapeHtml(sh.status||'—')}</td><td><button type="button" class="secondary small" onclick="restoreArchivedShipment('${sh.id}')">Restore</button> <button type="button" class="danger small" onclick="deleteArchivedShipment('${sh.id}')">Delete</button></td></tr>`;
+    }).join('');
+    tbody.innerHTML=rows||'<tr><td colspan="6">No archived transportation records.</td></tr>';
+  }
+
+  function archivePo(id){
+    const i=(state.purchaseOrders||[]).findIndex(x=>x.id===id);if(i<0)return;
+    if(!Array.isArray(state.manuallyArchivedPurchaseOrders))state.manuallyArchivedPurchaseOrders=[];
+    state.manuallyArchivedPurchaseOrders.push(state.purchaseOrders[i]);
+    state.purchaseOrders.splice(i,1);
+    save();
+    try{renderPurchaseOrders()}catch(e){}
+    renderManualArchivedPos();
+  }
+  function restorePo(id){
+    const i=(state.manuallyArchivedPurchaseOrders||[]).findIndex(x=>x.id===id);if(i<0)return;
+    state.purchaseOrders.push(state.manuallyArchivedPurchaseOrders[i]);
+    state.manuallyArchivedPurchaseOrders.splice(i,1);
+    save();renderManualArchivedPos();try{renderPurchaseOrders()}catch(e){}
+  }
+  function deleteArchivedPo(id){
+    if(!confirm('Delete this archived PO?'))return;
+    state.manuallyArchivedPurchaseOrders=(state.manuallyArchivedPurchaseOrders||[]).filter(x=>x.id!==id);
+    save();renderManualArchivedPos();
+  }
+  function poCases(po){return (po.lines||[]).reduce((s,x)=>s+num(x.totalQuantity),0)}
+  function poBottles(po){return (po.lines||[]).reduce((s,x)=>s+(x.bottleQuantity!==''&&x.bottleQuantity!=null?num(x.bottleQuantity):num(x.totalQuantity)*num(x.unitsPerCase)),0)}
+  function poItems(po){return (po.lines||[]).map(x=>x.yearProductName||x.itemNo||'').filter(Boolean).join(' / ')}
+  function renderManualArchivedPos(){
+    const tbody=document.getElementById('archivedPoRows');if(!tbody)return;
+    const q=(document.getElementById('archivedPoPageSearch')?.value||'').trim().toLowerCase();
+    const manual=(state.manuallyArchivedPurchaseOrders||[]).filter(po=>!q||JSON.stringify(po).toLowerCase().includes(q));
+    const rows=manual.map(po=>`<tr><td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(po.program||'—')}</td><td>${escapeHtml((po.supplierNames||[]).join(', ')||'—')}</td><td>${escapeHtml(poItems(po)||'—')}</td><td>${poCases(po).toLocaleString()}</td><td>${poBottles(po).toLocaleString()}</td><td>${escapeHtml(po.poStatus||'—')}</td><td><button type="button" class="secondary small" onclick="restoreArchivedPo('${po.id}')">Restore</button> <button type="button" class="danger small" onclick="deleteArchivedPo('${po.id}')">Delete</button></td></tr>`).join('');
+    tbody.innerHTML=rows||'<tr><td colspan="8">No manually archived POs.</td></tr>';
+  }
+
+  function addArchiveActions(){
+    document.querySelectorAll('#shipmentRows tr').forEach(tr=>{
+      if(tr.querySelector('.archive-shipment-btn'))return;
+      const edit=tr.querySelector('button[onclick*="openShipmentEditor"]');
+      if(edit){
+        const m=edit.getAttribute('onclick')?.match(/'([^']+)'/),id=m?.[1];
+        if(id){
+          const b=document.createElement('button');
+          b.type='button';b.className='secondary small archive-shipment-btn';
+          b.textContent='Move to Archived Transportation';
+          b.onclick=()=>archiveShipment(id);
+          edit.parentElement?.append(' ',b);
+        }
+      }
+    });
+
+    document.querySelectorAll('#poRows tr').forEach(tr=>{
+      if(tr.querySelector('.archive-po-btn'))return;
+      const edit=tr.querySelector('button[onclick*="openPoEditor"]');
+      if(edit){
+        const m=edit.getAttribute('onclick')?.match(/'([^']+)'/),id=m?.[1];
+        if(id){
+          const b=document.createElement('button');
+          b.type='button';b.className='secondary small archive-po-btn';
+          b.textContent="Move to Archived PO'S";
+          b.onclick=()=>archivePo(id);
+          edit.parentElement?.append(' ',b);
+        }
+      }
+    });
+  }
+
+  window.archiveShipment=archiveShipment;
+  window.restoreArchivedShipment=restoreShipment;
+  window.deleteArchivedShipment=deleteArchivedShipment;
+  window.archivePo=archivePo;
+  window.restoreArchivedPo=restorePo;
+  window.deleteArchivedPo=deleteArchivedPo;
+  window.renderArchivedShipments=renderArchivedShipments;
+  window.renderManualArchivedPos=renderManualArchivedPos;
+
+  const obs=new MutationObserver(addArchiveActions);
+  document.addEventListener('DOMContentLoaded',()=>{
+    const main=document.querySelector('main');if(main)obs.observe(main,{childList:true,subtree:true});
+    document.getElementById('toggleArchivedTransportationSearch')?.addEventListener('click',()=>document.getElementById('archivedTransportationSearchPanel')?.classList.toggle('open'));
+    document.getElementById('archivedTransportationPageSearch')?.addEventListener('input',renderArchivedShipments);
+    document.getElementById('clearArchivedTransportationSearch')?.addEventListener('click',()=>{const e=document.getElementById('archivedTransportationPageSearch');if(e)e.value='';renderArchivedShipments()});
+    document.getElementById('toggleArchivedPoSearch')?.addEventListener('click',()=>document.getElementById('archivedPoSearchPanel')?.classList.toggle('open'));
+    document.getElementById('archivedPoPageSearch')?.addEventListener('input',renderManualArchivedPos);
+    document.getElementById('clearArchivedPoSearch')?.addEventListener('click',()=>{const e=document.getElementById('archivedPoPageSearch');if(e)e.value='';renderManualArchivedPos()});
+    renderArchivedShipments();renderManualArchivedPos();addArchiveActions();
+  });
+  setTimeout(()=>{renderArchivedShipments();renderManualArchivedPos();addArchiveActions()},0);
 })();
 </script>
 </body></html>
