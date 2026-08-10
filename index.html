@@ -2561,11 +2561,35 @@ function italyCandidateGroupsHtml(){
  const core=groups.map(g=>{
   if(g.title==='Identification'){
    const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
-   return `<fieldset class="item-group"><legend>${g.title}</legend><div class="form-grid">${italyCandidateFieldHtml(byId.previousSubmissionNumber)}${italyCandidateFieldHtml(byId.productCategory)}<div class="purchase-row full">${italyCandidateFieldHtml(byId.previouslyPurchased)}${italyCandidateFieldHtml(byId.lcboItemNumber)}</div>${italyCandidateFieldHtml(byId.upcNumber)}${italyCandidateFieldHtml(byId.sccNumber)}</div></fieldset>`;
+   const prev=[...byId.previousSubmissionNumber];prev[1]='Previous Submission Number (if applicable)';
+   return `<fieldset class="item-group"><legend>${g.title}</legend><div class="form-grid">${italyCandidateFieldHtml(prev)}${italyCandidateFieldHtml(byId.productCategory)}<div class="purchase-row full">${italyCandidateFieldHtml(byId.previouslyPurchased)}${italyCandidateFieldHtml(byId.lcboItemNumber)}</div>${italyCandidateFieldHtml(byId.upcNumber)}${italyCandidateFieldHtml(byId.sccNumber)}</div></fieldset>`;
   }
   if(g.layout==='supplierProducer'){
    const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
-   return `<fieldset class="item-group"><legend>Supplier Information</legend><div class="form-grid three">${supplierIds.map(id=>byId[id]?italyCandidateFieldHtml(byId[id]):'').join('')}</div></fieldset>`;
+   const supplierHtml=supplierIds.map(id=>{
+     if(!byId[id])return '';
+     const f=[...byId[id]];
+     if(id==='lcboSupplierNumber')f[1]='LCBO Supplier Number (if applicable)';
+     return italyCandidateFieldHtml(f);
+   }).join('');
+   return `<fieldset class="item-group"><legend>Supplier Information</legend><div class="form-grid three">${supplierHtml}</div></fieldset>`;
+  }
+  if(g.title==='Origin and Product Details'){
+   const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
+   return `<fieldset class="item-group"><legend>${g.title}</legend><div class="form-grid three">
+    ${['producingCountry','producingRegion','purchasingCountry','purchasingRegion','manufacturingCountry','manufacturingRegion','vintage'].map(id=>italyCandidateFieldHtml(byId[id])).join('')}
+    ${italyCandidateFieldHtml(byId.percentAlcohol)}
+    <label>Sweetness / Sugar<input id="c_sweetnessSugar" type="text" placeholder="e.g. Semi-Sweet — 30 g/L"></label>
+    ${['grapeVarietal1','grapeVarietal2','grapeVarietal3'].map(id=>italyCandidateFieldHtml(byId[id])).join('')}
+   </div></fieldset>`;
+  }
+  if(g.title==='Submission Details'){
+   const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
+   const pickup=[...byId.pickupPoint];pickup[1]='Pickup Point * (consolidation warehouse name, city, country code)';
+   return `<fieldset class="item-group"><legend>${g.title}</legend><div class="form-grid three">
+    ${italyCandidateFieldHtml(pickup)}
+    ${g.fields.filter(f=>f[0]!=='pickupPoint').map(italyCandidateFieldHtml).join('')}
+   </div></fieldset>`;
   }
   if(g.layout==='caseInfo'){
    const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
@@ -2579,15 +2603,23 @@ function italyCandidateGroupsHtml(){
     <label>Product Description *<input id="c_productDescription" type="text"></label>
     <div><label>Item Photos — 3 Images</label><div id="italyCandidatePhotoSlots" class="italy-photo-slots"></div></div>
   </div>
+
   <div class="italy-source-price-row">
-    <label>Supplier Price Per Offered Case<input id="itCanPrice" type="number" min="0" step="0.01" placeholder="Case price"></label>
-    <label>Bottles Per Case<input id="itCanBottlesPerCase" type="number" min="1" step="1" placeholder="e.g. 12"></label>
-    <label>Currency<select id="itCanCurrency"><option>EUR</option><option>CAD</option><option>USD</option><option>GBP</option></select></label>
+    <label>Supplier Price Per Offered Case *<input id="itCanPrice" type="number" min="0" step="0.01" required placeholder="Case price"></label>
+    <label>Bottles Per Case *<input id="itCanBottlesPerCase" type="number" min="1" step="1" required placeholder="e.g. 12"></label>
+    <label>Currency *<select id="itCanCurrency" required><option value="">Select</option><option>EUR</option><option>CAD</option><option>USD</option><option>GBP</option></select></label>
     <label>Supplier Bottle Price<input id="itCanBottlePrice" readonly placeholder="Case Price ÷ Bottles Per Case"></label>
   </div>
-  <label>Local Retail Price Per Bottle<input id="itCanRetail" placeholder="e.g. €8.99"></label>
-  <label>Ontario Exclusivity<select id="itCanExclusive"><option>Unknown</option><option>Available</option><option>Not Available</option><option>Negotiating</option><option>Confirmed Exclusive</option></select></label>
-  <label class="full">Why I Recommend This Wine<textarea id="itCanWhy"></textarea></label>
+
+  <label>Supplier Quote Type *<select id="itCanQuoteType" required><option value="">Select</option><option>FOB</option><option>FCA</option><option>EX-CELLAR</option></select></label>
+  <label id="itCanExCellarDeliveryWrap" class="field-hidden">Delivery to Closest Consolidation Price Per Case *<input id="itCanExCellarDelivery" type="number" min="0" step="0.01" placeholder="Delivery cost per case"></label>
+  <label>Local Retail Price Per Bottle *<input id="itCanRetail" required placeholder="e.g. €8.99"></label>
+
+  <label>Product Ontario Exclusivity *<select id="itCanExclusive" required><option value="">Select</option><option>Unknown</option><option>Available</option><option>Not Available</option><option>Negotiating</option><option>Confirmed Exclusive</option></select></label>
+  <label>Item in Gift Box?<select id="itCanGiftBox"><option>No</option><option>Yes</option></select></label>
+  <label id="itCanGiftBoxDescriptionWrap" class="field-hidden">Gift Box Description *<input id="itCanGiftBoxDescription" placeholder="Describe the gift box"></label>
+
+  <label class="full">Why I Recommend This Wine *<textarea id="itCanWhy" required></textarea></label>
   <label class="full">Local Market / Competitor Intelligence<textarea id="itCanIntel"></textarea></label>
  </div></fieldset>`;
  return sourcing+core;
@@ -2602,6 +2634,16 @@ function handleItalyCandidateAttachments(e){for(const file of [...e.target.files
 function calcItalyCandidateCaseVolume(){const v=num(document.getElementById('c_caseLengthCm')?.value)*num(document.getElementById('c_caseWidthCm')?.value)*num(document.getElementById('c_caseHeightCm')?.value);const out=document.getElementById('c_calculatedCaseVolume');if(out)out.value=v?v.toFixed(2):''}
 function syncItalyCandidateLcboItemVisibility(){const input=document.getElementById('c_lcboItemNumber'),label=input?.closest('label'),show=document.getElementById('c_previouslyPurchased')?.value==='Yes';if(label)label.classList.toggle('field-hidden',!show);if(input){input.disabled=!show;if(!show)input.value=''}}
 function populateItalyCandidateOpportunitySelect(selected=''){const o=document.getElementById('itCanOpp');if(o){o.innerHTML='<option value="">General Portfolio Candidate</option>'+italyOnly(state.countryOpportunities).map(x=>`<option value="${x.id}">${esc(x.name)} — ${esc(x.category)}</option>`).join('');o.value=selected||''}}
+
+function syncItalyCandidateQuoteType(){
+ const type=document.getElementById('itCanQuoteType')?.value||'',wrap=document.getElementById('itCanExCellarDeliveryWrap'),input=document.getElementById('itCanExCellarDelivery');
+ const show=type==='EX-CELLAR';if(wrap)wrap.classList.toggle('field-hidden',!show);if(input){input.required=show;if(!show)input.value=''}
+}
+function syncItalyCandidateGiftBox(){
+ const yes=document.getElementById('itCanGiftBox')?.value==='Yes',wrap=document.getElementById('itCanGiftBoxDescriptionWrap'),input=document.getElementById('itCanGiftBoxDescription');
+ if(wrap)wrap.classList.toggle('field-hidden',!yes);if(input){input.required=yes;if(!yes)input.value=''}
+}
+
 window.openItalyCandidateForm=async(id='')=>{
  const x=(state.countryCandidates||[]).find(v=>v.id===id)||{};
  document.getElementById('italyCandidateFields').innerHTML=italyCandidateGroupsHtml();
@@ -2610,9 +2652,9 @@ window.openItalyCandidateForm=async(id='')=>{
  const defaults=itemDefaults();
  const normalized={...defaults,...x,productDescription:x.productDescription||x.name||'',vintage:x.vintage||'',grapeVarietal1:x.grapeVarietal1||x.grape||'',score:x.score||'',supplierName:x.supplierName||'',producerName:x.producerName||''};
  itemGroups.filter(g=>g.title!=='Pricing Information').forEach(g=>g.fields.filter(f=>f[0]!=='producerSameAsSupplier').forEach(([k,,t])=>{if(['calculated','websites','attachments'].includes(t))return;const el=document.getElementById('c_'+k);if(el)el.value=k==='productCategory'?normalizeProductCategory(normalized[k]??'Wine'):(normalized[k]??'')}));
- document.getElementById('itCanPrice').value=x.supplierPricePerCase??x.price??'';document.getElementById('itCanBottlesPerCase').value=x.bottlesPerCase??'';document.getElementById('itCanCurrency').value=x.supplierCurrency||'EUR';document.getElementById('itCanRetail').value=x.localRetailPricePerBottle??x.localRetail??'';document.getElementById('itCanExclusive').value=x.ontarioExclusivity||x.exclusive||'Unknown';document.getElementById('itCanWhy').value=x.why||'';document.getElementById('itCanIntel').value=x.intelligence||'';
- currentItalyCandidatePhotos=[...(x.itemPhotos||[])].slice(0,3);while(currentItalyCandidatePhotos.length<3)currentItalyCandidatePhotos.push(null);removedItalyCandidatePhotoPaths=[];renderItalyCandidatePhotoSlots();calcItalyCandidateBottlePrice();
- document.getElementById('itCanPrice')?.addEventListener('input',calcItalyCandidateBottlePrice);document.getElementById('itCanBottlesPerCase')?.addEventListener('input',calcItalyCandidateBottlePrice);
+ document.getElementById('itCanPrice').value=x.supplierPricePerCase??x.price??'';document.getElementById('itCanBottlesPerCase').value=x.bottlesPerCase??'';document.getElementById('itCanCurrency').value=x.supplierCurrency||'';document.getElementById('itCanQuoteType').value=x.supplierQuoteType||'';document.getElementById('itCanExCellarDelivery').value=x.exCellarDeliveryPerCase??'';document.getElementById('itCanRetail').value=x.localRetailPricePerBottle??x.localRetail??'';document.getElementById('itCanExclusive').value=x.ontarioExclusivity||x.exclusive||'';document.getElementById('itCanGiftBox').value=x.giftBoxYesNo||'No';document.getElementById('itCanGiftBoxDescription').value=x.giftBoxDescription||'';document.getElementById('itCanWhy').value=x.why||'';document.getElementById('itCanIntel').value=x.intelligence||'';document.getElementById('c_sweetnessSugar').value=x.sweetnessSugar||'';
+ currentItalyCandidatePhotos=[...(x.itemPhotos||[])].slice(0,3);while(currentItalyCandidatePhotos.length<3)currentItalyCandidatePhotos.push(null);removedItalyCandidatePhotoPaths=[];renderItalyCandidatePhotoSlots();calcItalyCandidateBottlePrice();syncItalyCandidateQuoteType();syncItalyCandidateGiftBox();
+ document.getElementById('itCanPrice')?.addEventListener('input',calcItalyCandidateBottlePrice);document.getElementById('itCanBottlesPerCase')?.addEventListener('input',calcItalyCandidateBottlePrice);document.getElementById('itCanQuoteType')?.addEventListener('change',syncItalyCandidateQuoteType);document.getElementById('itCanGiftBox')?.addEventListener('change',syncItalyCandidateGiftBox);
  const webBox=document.getElementById('italyCandidateWebsiteRows');if(webBox)webBox.innerHTML='';(x.websites||[]).forEach(addItalyCandidateWebsiteRow);
  try{currentItalyCandidateAttachments=x.id?await loadItemAttachments(x.id):[]}catch(e){currentItalyCandidateAttachments=[]}
  renderItalyCandidateAttachments();
@@ -2631,9 +2673,19 @@ window.saveItalyCandidate=async()=>{
  const data={};itemGroups.filter(g=>g.title!=='Pricing Information').forEach(g=>g.fields.filter(f=>!['producerSameAsSupplier','producerName','producerAddress1','producerAddress2','producerCity','producerRegionCountry','producerPostalCode'].includes(f[0])).forEach(([k,,t])=>{if(['calculated','websites','attachments'].includes(t))return;const el=document.getElementById('c_'+k);if(!el)return;data[k]=t==='number'?num(el.value):(k==='productCategory'?normalizeProductCategory(el.value||'Wine'):(el.value||''))}));
  data.websites=[...document.querySelectorAll('.italy-candidate-website-url')].map(el=>el.value.trim()).filter(Boolean);data.attachments=currentItalyCandidateAttachments.map(({id,name,size,type,lastModified})=>({id,name,size,type,lastModified}));
  const bottlesPerCase=num(document.getElementById('itCanBottlesPerCase').value),casePrice=num(document.getElementById('itCanPrice').value),supplierBottlePrice=bottlesPerCase>0?casePrice/bottlesPerCase:0;
+ const supplierCurrency=document.getElementById('itCanCurrency').value,supplierQuoteType=document.getElementById('itCanQuoteType').value,localRetail=document.getElementById('itCanRetail').value.trim(),ontarioExclusive=document.getElementById('itCanExclusive').value,why=document.getElementById('itCanWhy').value.trim(),giftBoxYesNo=document.getElementById('itCanGiftBox').value,giftBoxDescription=document.getElementById('itCanGiftBoxDescription').value.trim(),exCellarDeliveryPerCase=num(document.getElementById('itCanExCellarDelivery').value);
+ if(!(casePrice>0))return alert('Supplier Price Per Offered Case is mandatory.');
+ if(!(bottlesPerCase>0))return alert('Bottles Per Case is mandatory.');
+ if(!supplierCurrency)return alert('Currency is mandatory.');
+ if(!supplierQuoteType)return alert('Supplier Quote Type is mandatory.');
+ if(supplierQuoteType==='EX-CELLAR'&&document.getElementById('itCanExCellarDelivery').value==='')return alert('Enter Delivery to Closest Consolidation Price Per Case.');
+ if(!localRetail)return alert('Local Retail Price Per Bottle is mandatory.');
+ if(!ontarioExclusive)return alert('Product Ontario Exclusivity is mandatory.');
+ if(!why)return alert('Why I Recommend This Wine is mandatory.');
+ if(giftBoxYesNo==='Yes'&&!giftBoxDescription)return alert('Gift Box Description is mandatory when Item in Gift Box is Yes.');
  try{
   const itemPhotos=await persistItalyCandidatePhotos(id);
-  const rec={...existing,...data,id,country:'Italy',name:data.productDescription,opportunityId:document.getElementById('itCanOpp').value,supplierPricePerCase:casePrice,bottlesPerCase,supplierCurrency:document.getElementById('itCanCurrency').value,supplierBottlePrice,itemPhotos,localRetailPricePerBottle:document.getElementById('itCanRetail').value.trim(),ontarioExclusivity:document.getElementById('itCanExclusive').value,why:document.getElementById('itCanWhy').value.trim(),intelligence:document.getElementById('itCanIntel').value.trim(),status:existing.status||'Proposed to Head Office',headOfficeScore:existing.headOfficeScore??'',createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  const rec={...existing,...data,id,country:'Italy',name:data.productDescription,opportunityId:document.getElementById('itCanOpp').value,supplierPricePerCase:casePrice,bottlesPerCase,supplierCurrency,supplierBottlePrice,supplierQuoteType,exCellarDeliveryPerCase:supplierQuoteType==='EX-CELLAR'?exCellarDeliveryPerCase:'',giftBoxYesNo,giftBoxDescription:giftBoxYesNo==='Yes'?giftBoxDescription:'',sweetnessSugar:document.getElementById('c_sweetnessSugar').value.trim(),itemPhotos,localRetailPricePerBottle:localRetail,ontarioExclusivity:ontarioExclusive,why,intelligence:document.getElementById('itCanIntel').value.trim(),status:existing.status||'Proposed to Head Office',headOfficeScore:existing.headOfficeScore??'',createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
   await saveItemAttachments(id,currentItalyCandidateAttachments);const i=state.countryCandidates.findIndex(x=>x.id===id);if(i>=0)state.countryCandidates[i]=rec;else state.countryCandidates.push(rec);save();closeItalyCandidateForm();renderItalySourcing()
  }catch(e){console.error(e);alert('The wine candidate, item photos, or attachments could not be saved.')}
 };
