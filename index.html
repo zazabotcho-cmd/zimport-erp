@@ -2817,7 +2817,14 @@ function italyCandidateGroupsHtml(){
 }
 function addItalyCandidateWebsiteRow(value=''){
  const box=document.getElementById('italyCandidateWebsiteRows');if(!box)return;
- const row=document.createElement('div');row.className='website-row';row.innerHTML=`<input type="url" class="italy-candidate-website-url" value="${esc(value)}" placeholder="https://..."><button type="button" class="danger small">Remove</button>`;row.querySelector('button').onclick=()=>row.remove();box.appendChild(row);
+ const row=document.createElement('div');row.className='website-row';
+ row.innerHTML=`<input type="url" class="italy-candidate-website-url" value="${esc(value)}" placeholder="https://..."><button type="button" class="danger small">Remove</button>`;
+ const removeBtn=row.querySelector('button');
+ removeBtn.addEventListener('click',event=>{
+  event.preventDefault();event.stopPropagation();
+  if(row.parentNode)row.parentNode.removeChild(row);
+ });
+ box.appendChild(row);
 }
 function renderItalyCandidateAttachments(){const box=document.getElementById('italyCandidateAttachmentRows');if(!box)return;box.innerHTML=currentItalyCandidateAttachments.length?currentItalyCandidateAttachments.map((f,i)=>`<div class="attachment-row"><span><button type="button" class="file-link" onclick="openItalyCandidateAttachment(${i})">${esc(f.name)}</button> <small>(${(num(f.size)/1024/1024).toFixed(2)} MB)</small></span><span><button type="button" class="secondary small" onclick="openItalyCandidateAttachment(${i})">Open</button> <button type="button" class="danger small" data-candidate-remove="${i}">Remove</button></span></div>`).join(''):'<small>No files attached.</small>';box.querySelectorAll('[data-candidate-remove]').forEach(b=>b.onclick=()=>{currentItalyCandidateAttachments.splice(num(b.dataset.candidateRemove),1);renderItalyCandidateAttachments()})}
 window.openItalyCandidateAttachment=i=>{const f=currentItalyCandidateAttachments[i];if(!f)return alert('Attachment not available.');if(f.blob){const url=URL.createObjectURL(f.blob);window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000)}else alert('Attachment data is not available in this browser.')};
@@ -2870,6 +2877,8 @@ window.openItalyCandidateForm=async(id='')=>{
  try{currentItalyCandidateAttachments=x.id?await loadItemAttachments(x.id):[]}catch(e){currentItalyCandidateAttachments=[]}
  renderItalyCandidateAttachments();
  document.getElementById('addItalyCandidateWebsiteBtn')?.addEventListener('click',()=>addItalyCandidateWebsiteRow());document.getElementById('italyCandidateAttachmentInput')?.addEventListener('change',handleItalyCandidateAttachments);['c_caseLengthCm','c_caseWidthCm','c_caseHeightCm'].forEach(id=>document.getElementById(id)?.addEventListener('input',calcItalyCandidateCaseVolume));document.getElementById('c_previouslyPurchased')?.addEventListener('change',syncItalyCandidateLcboItemVisibility);calcItalyCandidateCaseVolume();syncItalyCandidateLcboItemVisibility();
+ const proposeBtn=document.getElementById('proposeItalyCandidateBtn');
+ if(proposeBtn){proposeBtn.disabled=false;proposeBtn.style.background='';proposeBtn.textContent=x.id?'Update Proposal to Head Office':'Propose to Head Office';}
  document.getElementById('italyCandidateModalTitle').textContent=x.id?'Edit Wine Candidate — Italy':'Add Wine Candidate — Italy';document.getElementById('deleteItalyCandidateBtn').style.visibility=x.id?'visible':'hidden';show('italyCandidateModal');
 };
 window.closeItalyCandidateForm=()=>show('italyCandidateModal',false);
@@ -2878,7 +2887,9 @@ window.openItalyBonusForm=()=>{const d=document.getElementById('itBonusDate');if
 window.saveItalyWinery=()=>{const name=document.getElementById('itWinName').value.trim();if(!name)return alert('Enter winery name.');state.countryWineries.push({id:uid(),country:'Italy',name,region:document.getElementById('itWinRegion').value.trim(),appellation:document.getElementById('itWinApp').value.trim(),contact:document.getElementById('itWinContact').value.trim(),email:document.getElementById('itWinEmail').value.trim(),phone:document.getElementById('itWinPhone').value.trim(),website:document.getElementById('itWinWeb').value.trim(),ontario:document.getElementById('itWinOntario').value,exclusive:document.getElementById('itWinExclusive').value,relationship:document.getElementById('itWinRelationship').value,strength:num(document.getElementById('itWinStrength').value),notes:document.getElementById('itWinNotes').value.trim(),createdAt:new Date().toISOString()});save();closeItalyWineryForm();renderItalySourcing()};
 
 window.saveItalyCandidate=async()=>{
- const id=document.getElementById('itCanRecordId').value||uid(),existing=(state.countryCandidates||[]).find(x=>x.id===id)||{};
+ if(!state||typeof state!=='object')state={};
+ if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
+ const id=document.getElementById('itCanRecordId').value||uid(),existing=state.countryCandidates.find(x=>x.id===id)||{};
  const productDescription=document.getElementById('c_productDescription')?.value.trim();if(!productDescription)return (alert('Enter Product Description.'),false);
  const data={};itemGroups.filter(g=>g.title!=='Pricing Information').forEach(g=>g.fields.filter(f=>!['producerSameAsSupplier','producerName','producerAddress1','producerAddress2','producerCity','producerRegionCountry','producerPostalCode'].includes(f[0])).forEach(([k,,t])=>{if(['calculated','websites','attachments'].includes(t))return;const el=document.getElementById('c_'+k);if(!el)return;data[k]=t==='number'?num(el.value):(k==='productCategory'?normalizeProductCategory(el.value||'Wine'):(el.value||''))}));
  data.websites=[...document.querySelectorAll('.italy-candidate-website-url')].map(el=>el.value.trim()).filter(Boolean);data.attachments=currentItalyCandidateAttachments.map(({id,name,size,type,lastModified})=>({id,name,size,type,lastModified}));
@@ -2908,6 +2919,7 @@ window.saveItalyCandidate=async()=>{
  try{
   const itemPhotos=await persistItalyCandidatePhotos(id);
   const rec={...existing,...data,id,country:'Italy',name:data.productDescription,opportunityId:document.getElementById('itCanOpp').value,supplierPricePerCase:casePrice,bottlesPerCase,supplierCurrency,supplierBottlePrice,supplierQuoteType,exCellarDeliveryPerCase:supplierQuoteType==='EX-CELLAR'?exCellarDeliveryPerCase:'',giftBoxYesNo,giftBoxDescription:giftBoxYesNo==='Yes'?giftBoxDescription:'',ontarioExportDetails:ontarioExclusive==='Yes'?ontarioExportDetails:'',protectedAppellation,appellationName:protectedAppellation==='Yes'?appellationName:'',appellationDescription:protectedAppellation==='Yes'?appellationDescription:'',outstandingLocation,supplierOntarioAgent,supplierOntarioAgentDetails:supplierOntarioAgent==='Yes'?supplierOntarioAgentDetails:'',supplierOtherProvinceExporter,supplierOtherProvinceExporterDetails:supplierOtherProvinceExporter==='Yes'?supplierOtherProvinceExporterDetails:'',sweetnessSugar:document.getElementById('c_sweetnessSugar').value.trim(),itemPhotos,localRetailPricePerBottle:localRetail,ontarioExclusivity:ontarioExclusive,why,intelligence:document.getElementById('itCanIntel').value.trim(),status:existing.id?(existing.status||'Action Required'):'Action Required',headOfficeActionStatus:existing.id?(existing.headOfficeActionStatus||existing.status||'Action Required'):'Action Required',createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
   const i=state.countryCandidates.findIndex(x=>x.id===id);
   if(i>=0)state.countryCandidates[i]=rec;else state.countryCandidates.push(rec);
 
@@ -2934,12 +2946,13 @@ window.saveItalyCandidate=async()=>{
 
 window.proposeItalyCandidateToHeadOffice=async function(button){
  if(button?.disabled)return false;
- const original=button?.textContent||'Propose to Head Office';
+ const isEdit=!!document.getElementById('itCanRecordId')?.value;
+ const original=isEdit?'Update Proposal to Head Office':'Propose to Head Office';
  try{
   if(button){button.disabled=true;button.textContent='Proposing...'}
   const ok=await window.saveItalyCandidate();
   if(ok){
-   if(button){button.textContent='Proposed to Head Office';button.style.background='var(--green)'}
+   if(button){button.textContent=isEdit?'Proposal Updated':'Proposed to Head Office';button.style.background='var(--green)'}
    return true;
   }
   if(button){button.disabled=false;button.textContent=original;button.style.background=''}
@@ -2974,7 +2987,7 @@ function headProposalTenderName(candidate){
 }
 function renderHeadOfficeProposals(){
  const body=document.getElementById('headProposalRows');if(!body)return;
- const all=(state.countryCandidates||[]).filter(Boolean);
+ if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];const all=state.countryCandidates.filter(Boolean);
  const q=(document.getElementById('headProposalSearch')?.value||'').trim().toLowerCase();
  const statusFilter=document.getElementById('headProposalStatusFilter')?.value||'';
  const rows=all.filter(x=>{
@@ -3013,7 +3026,7 @@ function renderHeadOfficeProposals(){
 window.renderHeadOfficeProposals=renderHeadOfficeProposals;
 window.updateHeadProposalAction=function(button,id){
  try{
-  const x=(state.countryCandidates||[]).find(v=>v.id===id);
+  if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];const x=state.countryCandidates.find(v=>v.id===id);
   if(!x){alert('Wine proposal was not found.');return false}
   const box=button?.closest('.head-proposal-action');
   const status=box?.querySelector('.head-action-status')?.value||'';
