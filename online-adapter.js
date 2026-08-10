@@ -18,7 +18,32 @@
     out.recycle_bin=state.recycleBin||[];out.settings=[{id:'main',settings,recycleRetentionDays:state.recycleRetentionDays||90}];return out;
   }
   async function log(action,table,id,details={}){await client.from('activity_log').insert({organization_id:cfg.organizationId,user_id:user.id,action,entity_type:table,entity_id:String(id),details});}
-  async function insertRow(table,row){const payload={id:String(row.id),organization_id:cfg.organizationId,data:cleanData(row),updated_by:user.id,version:1};const r=await client.from(table).insert(payload).select('version,updated_at').single();if(r.error)throw r.error;baseline.set(key(table,row.id),{data:cleanData(row),version:r.data.version,updatedAt:r.data.updated_at});await log('CREATE',table,row.id);}
+  async function insertRow(table,row){
+    const payload={id:String(row.id),organization_id:cfg.organizationId,data:cleanData(row),updated_by:user.id,version:1};
+    const r=await client.from(table).insert(payload).select('version,updated_at').single();
+    if(r.error){
+      // A prior cloud row can exist even when this browser has no baseline yet
+      // (for example worker_submissions from an older session). Adopt that row
+      // instead of failing on worker_submissions_pkey / other primary keys.
+      if(String(r.error.code||'')==='23505'){
+        const existing=await client.from(table)
+          .select('id,data,version,updated_at')
+          .eq('organization_id',cfg.organizationId)
+          .eq('id',String(row.id))
+          .maybeSingle();
+        if(existing.error)throw existing.error;
+        if(existing.data){
+          const b={data:existing.data.data||{},version:existing.data.version||1,updatedAt:existing.data.updated_at};
+          baseline.set(key(table,row.id),b);
+          if(JSON.stringify(cleanData(row))!==JSON.stringify(b.data))await updateRow(table,row,b);
+          return;
+        }
+      }
+      throw r.error;
+    }
+    baseline.set(key(table,row.id),{data:cleanData(row),version:r.data.version,updatedAt:r.data.updated_at});
+    await log('CREATE',table,row.id);
+  }
   async function updateRow(table,row,base){const nextVersion=(base?.version||1)+1;const q=await client.from(table).update({data:cleanData(row),updated_by:user.id,version:nextVersion}).eq('organization_id',cfg.organizationId).eq('id',String(row.id)).eq('version',base.version).select('version,updated_at');if(q.error)throw q.error;if(!q.data?.length){const e=new Error('CONFLICT');e.code='CONFLICT';e.table=table;e.id=row.id;throw e;}baseline.set(key(table,row.id),{data:cleanData(row),version:q.data[0].version,updatedAt:q.data[0].updated_at});await log('UPDATE',table,row.id,{fromVersion:base.version,toVersion:nextVersion});}
   async function deleteRow(table,id,base){const q=await client.from(table).delete().eq('organization_id',cfg.organizationId).eq('id',String(id)).eq('version',base.version).select('id');if(q.error)throw q.error;if(!q.data?.length){const e=new Error('CONFLICT');e.code='CONFLICT';e.table=table;e.id=id;throw e;}baseline.delete(key(table,id));await log('DELETE',table,id,{version:base.version});}
   async function syncState(state,settings){if(!configured()||!user||syncing)return;if(profile?.role==='readonly'){status('Read-only account','error');return;}syncing=true;dirty=false;status('Saving changes…');try{
@@ -29,10 +54,14 @@
       for(const [k,b] of [...baseline]){const [bt,id]=k.split(':');if(bt===table&&!current.has(id))await deleteRow(table,id,b);}
     }
     status('All changes saved','connected');
-  }catch(e){console.error(e);if(e.code==='CONFLICT'){status('Conflict detected — reloading latest data','error');alert('Another user changed the same record before your save. The latest cloud version will now load. Please review and enter your change again.');await loadState();}else status('Sync error: '+(e.message||'Unknown error'),'error');}finally{syncing=false;}
+  }catch(e){console.error(e);if(e.code==='CONFLICT'){status('Conflict detected — reloading latest data','error');alert('Another user changed the same record before your save. The latest cloud version will now load. Please review and enter your change again.');await loadState();}else if(String(e.code||'')==='23505'){status('Sync error: duplicate cloud record detected. Reloading shared data…','error');await loadState();}else status('Sync error: '+(e.message||'Unknown error'),'error');}finally{syncing=false;}
   }
   async function loadTable(table){const r=await client.from(table).select('id,data,created_by,created_at,updated_by,updated_at,deleted_by,restore_date,version').eq('organization_id',cfg.organizationId);if(r.error)throw r.error;return (r.data||[]).map(x=>{baseline.set(key(table,x.id),{data:x.data||{},version:x.version||1,updatedAt:x.updated_at});return {...x.data,id:x.id,_cloudVersion:x.version||1,_audit:{createdBy:x.created_by,createdAt:x.created_at,updatedBy:x.updated_by,updatedAt:x.updated_at,deletedBy:x.deleted_by,restoreDate:x.restore_date}};});}
-  async function loadState(){if(syncing)return;status('Loading shared data…');try{baseline=new Map();const out={};for(const [k,t] of Object.entries(collectionMap))out[k]=await loadTable(t);const [a,w,ar,inv,rec,set]=await Promise.all([loadTable('submitted_items'),loadTable('winners'),loadTable('archived_tenders'),loadTable('supplier_invoices'),loadTable('recycle_bin'),loadTable('settings')]);out.records=[...a,...w,...ar];out.recycleBin=rec;out.financialInvoices=inv.filter(x=>x.invoice_group==='financialInvoices');out.supplierPaymentInvoices=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices');out.supplierPaymentInvoices2=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices2');out.otherInvoices=inv.filter(x=>x.invoice_group==='otherInvoices');const s=set.find(x=>x.id==='main')||{};out.recycleRetentionDays=s.recycleRetentionDays||90;window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:out,settings:s.settings||{}}}));status('Cloud connected','connected');}catch(e){console.error(e);status('Load error: '+(e.message||''),'error');}}
+  async function loadState(){if(syncing)return;status('Loading shared data…');try{baseline=new Map();const out={};for(const [k,t] of Object.entries(collectionMap))out[k]=await loadTable(t);
+    // worker_submissions are already represented inside tender.workItems in the app state,
+    // but their cloud rows must still be loaded so sync knows they already exist.
+    await loadTable('worker_submissions');
+    const [a,w,ar,inv,rec,set]=await Promise.all([loadTable('submitted_items'),loadTable('winners'),loadTable('archived_tenders'),loadTable('supplier_invoices'),loadTable('recycle_bin'),loadTable('settings')]);out.records=[...a,...w,...ar];out.recycleBin=rec;out.financialInvoices=inv.filter(x=>x.invoice_group==='financialInvoices');out.supplierPaymentInvoices=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices');out.supplierPaymentInvoices2=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices2');out.otherInvoices=inv.filter(x=>x.invoice_group==='otherInvoices');const s=set.find(x=>x.id==='main')||{};out.recycleRetentionDays=s.recycleRetentionDays||90;window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:out,settings:s.settings||{}}}));status('Cloud connected','connected');}catch(e){console.error(e);status('Load error: '+(e.message||''),'error');}}
   function scheduleRealtimeReload(){if(syncing||dirty)return;clearTimeout(realtimeTimer);realtimeTimer=setTimeout(loadState,700);}
   function subscribeRealtime(){const ch=client.channel('zimport-shared-changes');allTables.forEach(t=>ch.on('postgres_changes',{event:'*',schema:'public',table:t,filter:`organization_id=eq.${cfg.organizationId}`},payload=>{if(payload.new?.updated_by===user?.id||payload.old?.updated_by===user?.id)return;scheduleRealtimeReload();}));ch.subscribe();}
   async function getProfile(){const r=await client.from('profiles').select('*').eq('id',user.id).maybeSingle();if(r.error)throw r.error;profile=r.data||{role:'readonly',full_name:user.email};window.ZIMPORT_CURRENT_ROLE=profile.role||'readonly';window.dispatchEvent(new CustomEvent('zimport-online-role',{detail:{role:window.ZIMPORT_CURRENT_ROLE}}));if($('onlineUserLabel'))$('onlineUserLabel').textContent=`${profile.full_name||user.email} · ${window.ZIMPORT_CURRENT_ROLE}`;}

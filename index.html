@@ -236,7 +236,7 @@
 </nav>
 <nav class="subnav" data-section-nav="tender-niss">
   <button class="tab" data-tab="tenders">Tenders</button>
-  <button class="tab" data-tab="worker-list">Worker Submission List</button>
+  <button class="tab" data-tab="worker-list">LCBO SUBMISSIONS LIST</button>
   <button class="tab" data-tab="items">Tender Item Database</button>
   <button class="tab" data-tab="submissions">All Submitted in Progress Items</button>
   <button class="tab" data-tab="tender-winners">TENDER WINNER - SUBMISSIONS</button>
@@ -301,7 +301,7 @@
           <th>Country</th><th>Wine Candidate</th><th>Tender</th><th>Product Needs</th><th>Supplier</th>
           <th>Score</th><th>Score Source</th><th>Supplier Quote</th><th>Currency</th>
           <th>Agency Margin</th><th>ERP CAD</th><th>Potential Winner Quantity</th>
-          <th>Head Office Comment</th><th>Head Office Action</th><th>History</th>
+          <th>Offered to LCBO Case Price</th><th>Head Office Action</th><th>History</th>
         </tr></thead>
         <tbody id="headProposalRows"></tbody>
       </table>
@@ -401,7 +401,7 @@
 </section>
 
 <section id="worker-list" class="panel">
-  <div class="box worker-list" id="worker-list"><div class="section-head"><div><h2>Worker Submission List</h2><p class="note">Manager-created list of items workers must register. Choose items directly from the Tender Item Database.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>To Register</option><option>In Progress</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Work Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Item</button></div></div>
+  <div class="box worker-list" id="worker-list"><div class="section-head"><div><h2>LCBO SUBMISSIONS LIST</h2><p class="note">All products approved by Head Office for LCBO Submission appear here automatically. Additional items can still be added manually when needed.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>To Register</option><option>In Progress</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Work Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Item</button></div></div>
 </section>
 
 <section id="tenders" class="panel">
@@ -1217,7 +1217,7 @@ function saveWorkerListItem(){updateAutomaticTenderStatuses();const tenderId=$('
 function removeWorkerItemFromEditor(){const tenderId=$('#workerEditTenderId').value,workId=$('#workerEditWorkId').value;if(tenderId&&workId){deleteWorkerItem(tenderId,workId);closeWorkerItemEditor();}}
 function updateWorkerSubmissionNumber(tenderId,itemId,value){const t=state.tenders.find(x=>x.id===tenderId),w=t?.workItems?.find(x=>x.id===itemId);if(!w)return;w.submissionNumber=value.trim();state.records.filter(r=>r.tenderRecordId===tenderId&&r.itemId===w.itemId&&(!w.agencyId||r.agencyId===w.agencyId)).forEach(r=>r.submissionNumber=w.submissionNumber);save();}
 function updateWorkStatus(tenderId,itemId,status){updateAutomaticTenderStatuses();const t=state.tenders.find(x=>x.id===tenderId),w=t?.workItems?.find(x=>x.id===itemId);if(!w)return;if(t.status==='Closed'){alert('This tender is closed. The item cannot be registered or updated.');renderWorkerList();return;}w.status=status;const isRegistered=status==='Registered in LCBO NISS';let matches=state.records.filter(r=>r.tenderRecordId===tenderId&&r.itemId===w.itemId&&(!w.agencyId||r.agencyId===w.agencyId));if(isRegistered&&!matches.length){const i=findDatabaseItem(w),r=defaults();r.id=uid();r.tenderRecordId=t.id;r.tenderId=t.code||'';r.tenderName=t.name||'';r.tenderDate=t.presubDate||'';r.productNeeds=t.productNeeds||'VINTAGES';r.agencyId=w.agencyId||state.agencies[0]?.id||'';r.itemId=w.itemId||'';r.itemName=i?.productDescription||w.itemName||'';r.supplier=i?.supplierName||'';r.brand=i?.brandName||'';r.year=i?.vintage||new Date().getFullYear();r.productType=i?.productType||'Wine';r.caseKg=num(i?.caseWeightKg)||18.9;r.bottles=num(i?.sellingUnitsPerShippingCase||i?.unitsPerSellingPack)||12;r.offeredQuoteCurrency=w.currency||i?.quotationCurrency||'CAD';r.offeredQuote=num(w.offeredPrice);r.erpManual=num(i?.estimatedRetailPrice);r.registered='Yes';r.finalDecision='In Progress';r.submissionNumber=w.submissionNumber||'';state.records.push(r);matches=[r];}matches.forEach(r=>{r.registered=isRegistered?'Yes':'No';r.submissionNumber=w.submissionNumber||r.submissionNumber||'';if(!isRegistered)r.finalDecision='In Progress';});save();}
-function deleteWorkerItem(tenderId,itemId){const t=state.tenders.find(x=>x.id===tenderId);if(!t)return;const w=t.workItems?.find(x=>x.id===itemId);if(!w)return;if(confirm(`Move ${w.itemName||'this item'} to the Recycle Bin?`)){moveToRecycleBin('workerItem','Worker Submission List',w,{tenderId});t.workItems=t.workItems.filter(x=>x.id!==itemId);save();}}
+function deleteWorkerItem(tenderId,itemId){const t=state.tenders.find(x=>x.id===tenderId);if(!t)return;const w=t.workItems?.find(x=>x.id===itemId);if(!w)return;if(confirm(`Move ${w.itemName||'this item'} to the Recycle Bin?`)){moveToRecycleBin('workerItem','LCBO SUBMISSIONS LIST',w,{tenderId});t.workItems=t.workItems.filter(x=>x.id!==itemId);save();}}
 function syncTenderOtherNeed(){const other=$('#tenderProductNeeds').value==='Other';$('#tenderOtherNeedWrap').classList.toggle('hidden',!other);if(!other)$('#tenderOtherNeed').value='';}
 function openTender(id=''){const t=normalizeTender(state.tenders.find(x=>x.id===id)||{id:'',code:'',name:'',productNeeds:'',productNeedsOther:'',presubDate:'',tastingDate:'',status:'',notes:'',workItems:[],sourcingRepresentatives:[]});$('#tenderRecordId').value=t.id;$('#tenderCode').value=t.code||'';$('#tenderNameInput').value=t.name||'';$('#tenderProductNeeds').value=t.productNeeds||'';$('#tenderOtherNeed').value=t.productNeedsOther||'';syncTenderOtherNeed();$('#tenderPresubDate').value=t.presubDate||'';$('#tenderTastingDate').value=t.tastingDate||'';$('#tenderStatus').value=t.status||'';$('#tenderNotes').value=t.notes||'';const reps=Array.isArray(t.sourcingRepresentatives)?t.sourcingRepresentatives:[];$$('.tender-representative').forEach(cb=>cb.checked=reps.includes(cb.value));if($('#tenderRepresentativeError'))$('#tenderRepresentativeError').style.display='none';const saveBtn=$('#saveTender');saveBtn.textContent='Announce Tender';saveBtn.style.background='';saveBtn.disabled=false;$('#tenderModalTitle').textContent=t.id?'Edit Tender':'Create a Tender';$('#deleteTender').style.visibility=t.id?'visible':'hidden';$('#tenderModal').classList.remove('hidden');}
 function autofillTenderById(){const code=$('#tenderCode').value.trim();if(!code)return;const t=normalizeTender(state.tenders.find(x=>String(x.code||'').trim()===code));if(!t)return;$('#tenderRecordId').value=t.id;$('#tenderNameInput').value=t.name||'';$('#tenderProductNeeds').value=t.productNeeds||'VINTAGES';$('#tenderOtherNeed').value=t.productNeedsOther||'';syncTenderOtherNeed();$('#tenderPresubDate').value=t.presubDate||'';$('#tenderTastingDate').value=t.tastingDate||'';$('#tenderStatus').value=t.status||'Active';$('#tenderNotes').value=t.notes||'';const reps=Array.isArray(t.sourcingRepresentatives)?t.sourcingRepresentatives:[];$$('.tender-representative').forEach(cb=>cb.checked=reps.includes(cb.value));if($('#tenderRepresentativeError'))$('#tenderRepresentativeError').style.display='none';const saveBtn=$('#saveTender');saveBtn.textContent='Announce Tender';saveBtn.style.background='';saveBtn.disabled=false;$('#tenderModalTitle').textContent='Edit Tender';$('#deleteTender').style.visibility='visible';}
@@ -3007,7 +3007,7 @@ function renderHeadOfficeProposals(){
     <td><input class="head-financial-input" type="number" step="0.01" min="0" value="${esc(x.headAgencyMargin??'')}" placeholder="Margin" onchange="saveHeadProposalFinancial('${x.id}','headAgencyMargin',this.value)"></td>
     <td><input class="head-financial-input" type="number" step="0.01" min="0" value="${esc(x.headErpCad??'')}" placeholder="ERP CAD" onchange="saveHeadProposalFinancial('${x.id}','headErpCad',this.value)"></td>
     <td><input class="head-financial-input" type="number" step="1" min="0" value="${esc(x.headPotentialWinnerQuantity??'')}" placeholder="Qty" onchange="saveHeadProposalFinancial('${x.id}','headPotentialWinnerQuantity',this.value)"></td>
-    <td class="head-comment-box">${esc(latest)}</td>
+    <td><input class="head-financial-input" type="number" step="0.01" min="0" value="${esc(x.headOfferedLcboCasePrice??'')}" placeholder="Case Price" onchange="saveHeadProposalFinancial('${x.id}','headOfferedLcboCasePrice',this.value)"></td>
     <td><div class="head-proposal-action" data-head-proposal-id="${esc(x.id)}">
       <select class="head-action-status"><option value="">Select Head Office Action</option>${HEAD_PROPOSAL_STATUSES.filter(s=>s!=='Action Required').map(s=>`<option value="${esc(s)}" ${status===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
       <textarea class="head-action-comment" placeholder="Head Office comment for this action"></textarea>
@@ -3029,13 +3029,17 @@ window.saveHeadProposalFinancial=function(id,field,value){
   if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
   const x=state.countryCandidates.find(v=>v.id===id);
   if(!x)return false;
-  const allowed=['headAgencyMargin','headErpCad','headPotentialWinnerQuantity'];
+  const allowed=['headAgencyMargin','headErpCad','headPotentialWinnerQuantity','headOfferedLcboCasePrice'];
   if(!allowed.includes(field))return false;
   const raw=String(value??'').trim();
   x[field]=raw===''?'':Math.max(0,Number(raw)||0);
   x.headOfficeFinancialUpdatedAt=new Date().toISOString();
+  if(field==='headOfferedLcboCasePrice'&&normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status)==='Approved for LCBO Submission'){
+    ensureApprovedCandidateInLcboSubmissions(x);
+  }
   safeStorage.setItem(DATA_KEY,JSON.stringify(state));
   if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
+  if(field==='headOfferedLcboCasePrice'&&typeof renderWorkerList==='function')renderWorkerList();
   return true;
  }catch(err){
   console.error('Head Office proposal financial update failed:',err);
@@ -3043,6 +3047,43 @@ window.saveHeadProposalFinancial=function(id,field,value){
   return false;
  }
 };
+
+
+function ensureApprovedCandidateInLcboSubmissions(candidate){
+ if(!candidate||normalizeHeadProposalStatus(candidate.headOfficeActionStatus||candidate.status)!=='Approved for LCBO Submission')return null;
+ if(!Array.isArray(state.tenders))state.tenders=[];
+ const tender=state.tenders.find(t=>t.id===candidate.opportunityId);
+ if(!tender)return null;
+ if(!Array.isArray(tender.workItems))tender.workItems=[];
+
+ const existing=tender.workItems.find(w=>w.sourceCandidateId===candidate.id);
+ const offeredPrice=(candidate.headOfferedLcboCasePrice!==''&&candidate.headOfferedLcboCasePrice!=null)
+   ? num(candidate.headOfferedLcboCasePrice)
+   : num(candidate.supplierPricePerCase);
+ const workItem=existing||{
+   id:'candidate-'+candidate.id,
+   sourceCandidateId:candidate.id,
+   createdFrom:'Head Office Approved Wine Candidate',
+   createdAt:new Date().toISOString(),
+   status:'To Register',
+   submissionNumber:'',
+   agencyId:'',
+   instructions:'Approved by Head Office for LCBO Submission.'
+ };
+ workItem.itemName=candidate.productDescription||candidate.name||'Wine Candidate';
+ workItem.supplierName=candidate.supplierName||candidate.producerName||'';
+ workItem.offeredPrice=offeredPrice;
+ workItem.currency='CAD';
+ workItem.headOfferedLcboCasePrice=candidate.headOfferedLcboCasePrice??'';
+ workItem.candidateCountry=candidate.country||'';
+ workItem.candidateScore=candidate.score||'';
+ workItem.candidateScoreSource=candidate.scoreSource||candidate.scoreSourceOther||'';
+ workItem.updatedAt=new Date().toISOString();
+
+ if(!existing)tender.workItems.push(workItem);
+ return workItem;
+}
+window.ensureApprovedCandidateInLcboSubmissions=ensureApprovedCandidateInLcboSubmissions;
 
 window.updateHeadProposalAction=function(button,id){
  try{
@@ -3079,13 +3120,17 @@ window.updateHeadProposalAction=function(button,id){
   if(!Array.isArray(x.headOfficeActions))x.headOfficeActions=[];
   x.headOfficeActions.push({status,comment,date:stamp});
 
+  // Approved proposals automatically enter the LCBO SUBMISSIONS LIST.
+  if(status==='Approved for LCBO Submission')ensureApprovedCandidateInLcboSubmissions(x);
+
   // Persist before rendering either page.
   safeStorage.setItem(DATA_KEY,JSON.stringify(state));
   if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
 
-  // Refresh both connected pages after successful persistence.
+  // Refresh all connected pages after successful persistence.
   renderHeadOfficeProposals();
   renderItalySourcing();
+  if(typeof renderWorkerList==='function')renderWorkerList();
   return true;
  }catch(err){
   console.error('Head Office action update failed:',err);
