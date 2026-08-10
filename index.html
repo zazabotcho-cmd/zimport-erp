@@ -279,7 +279,7 @@
     <div class="section-head">
       <div>
         <h2>ALL PROPOSALS — Head Office Review</h2>
-        <p class="note">All wine candidates proposed by Country Portfolio &amp; Sourcing Representatives appear here for Head Office action. Head Office status and comments are automatically visible to the representative in Wine Candidates.</p>
+        <p class="note">All wine candidates proposed by Country Portfolio &amp; Sourcing Representatives appear here for Head Office review. Every Head Office Action and comment is saved to the proposal history and is automatically visible in Wine Candidates.</p>
       </div>
       <span class="badge">ACTION REQUIRED</span>
     </div>
@@ -3029,7 +3029,7 @@ function renderHeadOfficeProposals(){
     <td><input class="head-financial-input" type="number" step="1" min="0" value="${esc(x.headPotentialWinnerQuantity??'')}" placeholder="Qty" onchange="saveHeadProposalFinancial('${x.id}','headPotentialWinnerQuantity',this.value)"></td>
     <td class="head-comment-box">${esc(latest)}</td>
     <td><div class="head-proposal-action" data-head-proposal-id="${esc(x.id)}">
-      <select class="head-action-status">${HEAD_PROPOSAL_STATUSES.filter(s=>s!=='Action Required').map(s=>`<option ${status===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
+      <select class="head-action-status"><option value="">Select Head Office Action</option>${HEAD_PROPOSAL_STATUSES.filter(s=>s!=='Action Required').map(s=>`<option value="${esc(s)}" ${status===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
       <textarea class="head-action-comment" placeholder="Head Office comment for this action"></textarea>
       <button type="button" class="head-action-update-btn" onclick="updateHeadProposalAction(this,'${x.id}')">Update Head Office Action</button>
       <small class="head-action-result" aria-live="polite"></small>
@@ -3066,50 +3066,54 @@ window.saveHeadProposalFinancial=function(id,field,value){
 
 window.updateHeadProposalAction=function(button,id){
  try{
-  if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];const x=state.countryCandidates.find(v=>v.id===id);
+  if(button?.disabled)return false;
+  if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
+  const x=state.countryCandidates.find(v=>v.id===id);
   if(!x){alert('Wine proposal was not found.');return false}
+
   const box=button?.closest('.head-proposal-action');
-  const status=box?.querySelector('.head-action-status')?.value||'';
-  const comment=(box?.querySelector('.head-action-comment')?.value||'').trim();
-  const result=box?.querySelector('.head-action-result');
+  if(!box){alert('Head Office Action controls were not found.');return false}
+  const status=box.querySelector('.head-action-status')?.value||'';
+  const comment=(box.querySelector('.head-action-comment')?.value||'').trim();
 
   if(!['In Progress','Approved for LCBO Submission','Additional Information Required','Declined'].includes(status)){
-   alert('Select a Head Office action status.');
+   alert('Select a Head Office Action.');
+   box.querySelector('.head-action-status')?.focus();
    return false;
   }
   if(!comment){
    alert('Enter a Head Office comment for this action.');
-   box?.querySelector('.head-action-comment')?.focus();
+   box.querySelector('.head-action-comment')?.focus();
    return false;
   }
 
+  button.disabled=true;
+  const previousText=button.textContent;
+  button.textContent='Updating...';
+
+  const stamp=new Date().toISOString();
   x.status=status;
   x.headOfficeActionStatus=status;
   x.headOfficeComment=comment;
+  x.headOfficeUpdatedAt=stamp;
   if(!Array.isArray(x.headOfficeActions))x.headOfficeActions=[];
-  x.headOfficeActions.push({status,comment,date:new Date().toISOString()});
-  x.headOfficeUpdatedAt=new Date().toISOString();
+  x.headOfficeActions.push({status,comment,date:stamp});
 
-  // Persist immediately before any page refresh.
+  // Persist before rendering either page.
   safeStorage.setItem(DATA_KEY,JSON.stringify(state));
   if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
 
-  if(result){result.textContent='Head Office action updated.';result.style.color='var(--green)'}
-  button.disabled=true;
-  button.textContent='Updated';
-
-  // Refresh both Head Office and Country Representative views.
+  // Refresh both connected pages after successful persistence.
   renderHeadOfficeProposals();
   renderItalySourcing();
-
   return true;
  }catch(err){
   console.error('Head Office action update failed:',err);
-  alert('Head Office action could not be updated. '+(err?.message||''));
+  alert('Head Office Action could not be updated. '+(err?.message||''));
   if(button){button.disabled=false;button.textContent='Update Head Office Action'}
   return false;
  }
-};
+}
 window.updateHeadProposal=window.updateHeadProposalAction;
 
 
@@ -3117,7 +3121,7 @@ function populateItalySelects(){}
 window.renderItalySourcing=function(){if(!state.countryWineries)state.countryWineries=[];if(!state.countryCandidates)state.countryCandidates=[];if(!state.countryBonuses)state.countryBonuses=[];const tenders=(state.tenders||[]).filter(t=>(t.sourcingRepresentatives||[]).includes('Italy')),wins=italyOnly(state.countryWineries),can=italyOnly(state.countryCandidates),bon=italyOnly(state.countryBonuses),approved=can.filter(x=>/Approved|Submitted|Winner/.test(x.status)).length,winners=can.filter(x=>x.status==='Winner').length;const k=document.getElementById('italyKpis');if(k)k.innerHTML=[['Active Tenders',tenders.filter(x=>x.status==='Active').length],['Wineries',wins.length],['Wine Candidates',can.length],['Approved / Submitted',approved],['Winners',winners],['Potential Bottles',can.reduce((a,x)=>a+num(x.volume),0).toLocaleString()]].map(x=>`<div class="card"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('');
 const or=document.getElementById('italyOpportunityRows');if(or)or.innerHTML=tenders.map(t=>{const productNeed=t.productNeeds==='Other'?(t.productNeedsOther||'Other'):t.productNeeds;return `<tr><td>${esc(t.code||'—')}</td><td><b>${esc(t.name||'—')}</b></td><td>${esc(productNeed||'—')}</td><td>${esc(t.presubDate||'—')}</td><td>${esc(t.tastingDate||'—')}</td><td><span class="badge ${esc(t.status||'')}">${esc(t.status||'—')}</span></td><td style="max-width:340px;white-space:normal">${esc(t.notes||'—')}</td><td>${can.filter(c=>c.opportunityId===t.id).length}</td></tr>`}).join('')||'<tr><td colspan="8">No tenders have been created in TENDER NISS yet.</td></tr>';
 const q=(document.getElementById('italyWinerySearch')?.value||'').toLowerCase();const wr=document.getElementById('italyWineryRows');if(wr)wr.innerHTML=wins.filter(x=>JSON.stringify(x).toLowerCase().includes(q)).map(x=>`<tr><td><b>${esc(x.name)}</b></td><td>${esc(x.region||'—')}</td><td>${esc(x.appellation||'—')}</td><td>${esc(x.contact||'—')}<br><small>${esc(x.email||x.phone||'')}</small></td><td>${esc(x.ontario)}</td><td>${esc(x.exclusive)}</td><td><span class="badge">${esc(x.relationship)}</span></td><td>${x.strength?'★'.repeat(Math.min(5,x.strength)):'—'}</td><td style="max-width:300px;white-space:normal">${esc(x.notes||'—')}</td><td><button class="danger small" onclick="deleteItalySource('win','${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="10">No Italian wineries added yet.</td></tr>';
-const cr=document.getElementById('italyCandidateRows');if(cr)cr.innerHTML=can.map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',exclusive=x.ontarioExclusivity||x.exclusive||'Unknown',status=normalizeHeadProposalStatus(x.status),latestComment=x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—';return `<tr><td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td>${esc(exclusive)}</td><td><span class="badge candidate-head-status">${esc(status)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td><button class="small" onclick="openItalyCandidateForm('${x.id}')">Edit</button> <button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="9">No wine candidates proposed yet.</td></tr>';
+const cr=document.getElementById('italyCandidateRows');if(cr)cr.innerHTML=can.map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',exclusive=x.ontarioExclusivity||x.exclusive||'Unknown',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—';return `<tr><td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td>${esc(exclusive)}</td><td><span class="badge candidate-head-status">${esc(status)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td><button class="small" onclick="openItalyCandidateForm('${x.id}')">Edit</button> <button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="9">No wine candidates proposed yet.</td></tr>';
 const br=document.getElementById('italyBonusRows');if(br)br.innerHTML=bon.map(x=>`<tr><td>${esc(x.date||'—')}</td><td>${esc(x.type)}</td><td>${esc(x.related||'—')}</td><td><b>${esc(x.currency)} ${num(x.amount).toFixed(2)}</b></td><td><span class="badge">${esc(x.status)}</span></td><td>${esc(x.notes||'—')}</td><td><button class="danger small" onclick="deleteItalySource('bonus','${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="7">No bonus records yet.</td></tr>';const pk=document.getElementById('italyPerformanceKpis');if(pk){const paid=bon.filter(x=>x.status==='Paid').reduce((a,x)=>a+num(x.amount),0),pending=bon.filter(x=>x.status!=='Paid').reduce((a,x)=>a+num(x.amount),0);pk.innerHTML=[['Candidates Proposed',can.length],['Approved',approved],['Winners',winners],['Win Rate',can.length?((winners/can.length)*100).toFixed(1)+'%':'0%'],['Bonus Records',bon.length],['Pending Bonus Value*',pending.toFixed(2)]].map(x=>`<div class="card"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('')}
 const ra=document.getElementById('italyRecentActivity');if(ra)ra.innerHTML=`<div class="row"><span>Newest winery</span><b>${esc(wins.at(-1)?.name||'—')}</b></div><div class="row"><span>Newest candidate</span><b>${esc(can.at(-1)?.name||'—')}</b></div><div class="row"><span>Active Tenders</span><b>${tenders.filter(x=>x.status==='Active').length}</b></div>`;renderHeadOfficeProposals();populateItalySelects()};
 document.addEventListener('DOMContentLoaded',renderItalySourcing);setTimeout(renderItalySourcing,0);
