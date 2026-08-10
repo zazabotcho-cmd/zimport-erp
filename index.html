@@ -185,6 +185,8 @@
 
 .head-financial-input{min-width:95px;width:110px;padding:7px 8px}
 
+
+.head-agency-select{min-width:190px;max-width:240px}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -300,7 +302,7 @@
         <thead><tr>
           <th>Country</th><th>Wine Candidate</th><th>Tender</th><th>Product Needs</th><th>Supplier</th>
           <th>Score</th><th>Score Source</th><th>Supplier Quote</th><th>Currency</th>
-          <th>Agency Margin</th><th>ERP CAD</th><th>Potential Winner Quantity</th>
+          <th>Agency to Register</th><th>Agency Margin</th><th>ERP CAD</th><th>Potential Winner Quantity</th>
           <th>Offered to LCBO Case Price</th><th>Head Office Action</th><th>History</th>
         </tr></thead>
         <tbody id="headProposalRows"></tbody>
@@ -3004,6 +3006,10 @@ function renderHeadOfficeProposals(){
     <td>${esc(String(x.scoreSource||x.scoreSourceOther||'—').replace(/^★\s*/,''))}</td>
     <td>${x.supplierPricePerCase!==undefined&&x.supplierPricePerCase!==''?esc(Number(x.supplierPricePerCase).toFixed(2)):'—'}</td>
     <td>${esc(x.supplierCurrency||'—')}</td>
+    <td><select class="head-agency-select" onchange="saveHeadProposalAgency('${x.id}',this.value)">
+      <option value="">Select Agency</option>
+      ${(state.agencies||[]).map(a=>`<option value="${esc(a.id)}" ${x.headAgencyToRegisterId===a.id?'selected':''}>${esc(a.name||a.short||'Agency')}${a.short?' — '+esc(a.short):''}</option>`).join('')}
+    </select></td>
     <td><input class="head-financial-input" type="number" step="0.01" min="0" value="${esc(x.headAgencyMargin??'')}" placeholder="Margin" onchange="saveHeadProposalFinancial('${x.id}','headAgencyMargin',this.value)"></td>
     <td><input class="head-financial-input" type="number" step="0.01" min="0" value="${esc(x.headErpCad??'')}" placeholder="ERP CAD" onchange="saveHeadProposalFinancial('${x.id}','headErpCad',this.value)"></td>
     <td><input class="head-financial-input" type="number" step="1" min="0" value="${esc(x.headPotentialWinnerQuantity??'')}" placeholder="Qty" onchange="saveHeadProposalFinancial('${x.id}','headPotentialWinnerQuantity',this.value)"></td>
@@ -3016,13 +3022,39 @@ function renderHeadOfficeProposals(){
     </div></td>
     <td class="head-history">${history}</td>
    </tr>`;
- }).join('')||'<tr><td colspan="15">No wine proposals match the selected filters.</td></tr>';
+ }).join('')||'<tr><td colspan="16">No wine proposals match the selected filters.</td></tr>';
  const k=document.getElementById('headProposalKpis');if(k){
    const count=s=>all.filter(x=>normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status)===s).length;
    k.innerHTML=[['Action Required',count('Action Required')],['In Progress',count('In Progress')],['Approved',count('Approved for LCBO Submission')],['Additional Info',count('Additional Information Required')],['Declined',count('Declined')]].map(([a,b])=>`<div class="card"><span>${a}</span><strong>${b}</strong></div>`).join('');
  }
 }
 window.renderHeadOfficeProposals=renderHeadOfficeProposals;
+
+
+window.saveHeadProposalAgency=function(id,agencyId){
+ try{
+  if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
+  const x=state.countryCandidates.find(v=>v.id===id);
+  if(!x)return false;
+  const agency=(state.agencies||[]).find(a=>a.id===agencyId);
+  x.headAgencyToRegisterId=agency?.id||'';
+  x.headAgencyToRegisterName=agency?.name||agency?.short||'';
+  x.headOfficeFinancialUpdatedAt=new Date().toISOString();
+
+  // If already approved, immediately synchronize the selected agency to LCBO SUBMISSIONS LIST.
+  if(normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status)==='Approved for LCBO Submission'){
+    ensureApprovedCandidateInLcboSubmissions(x);
+  }
+  safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+  if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
+  if(typeof renderWorkerList==='function')renderWorkerList();
+  return true;
+ }catch(err){
+  console.error('Head Office agency selection failed:',err);
+  alert('Agency to Register could not be saved.');
+  return false;
+ }
+};
 
 window.saveHeadProposalFinancial=function(id,field,value){
  try{
@@ -3074,6 +3106,8 @@ function ensureApprovedCandidateInLcboSubmissions(candidate){
  workItem.supplierName=candidate.supplierName||candidate.producerName||'';
  workItem.offeredPrice=offeredPrice;
  workItem.currency='CAD';
+ workItem.agencyId=candidate.headAgencyToRegisterId||workItem.agencyId||'';
+ workItem.agencyName=candidate.headAgencyToRegisterName||agencyName(workItem.agencyId)||'';
  workItem.headOfferedLcboCasePrice=candidate.headOfferedLcboCasePrice??'';
  workItem.candidateCountry=candidate.country||'';
  workItem.candidateScore=candidate.score||'';
