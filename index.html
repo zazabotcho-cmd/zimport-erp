@@ -855,7 +855,7 @@
 <div class="modal-actions"><button id="deletePoBtn" type="button" class="danger">Delete PO</button><span></span><button id="cancelPoBtn" type="button" class="secondary">Cancel</button><button id="savePoBtn" type="button">Save PO</button></div></div></div></div>
 <div id="itemSelectModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2>Select Item from Tender Item Database</h2><p>Search by item description, LCBO item number, supplier, producer, vintage, or product type.</p></div><button id="closeItemSelect" class="icon">×</button></div><div class="toolbar"><input id="itemSelectSearch" placeholder="Search item description, LCBO item number, supplier or producer"><select id="itemSelectType"><option value="">All product types</option></select><button id="goToItems" type="button" class="secondary">+ Add New Item</button></div><div class="table-wrap"><table><thead><tr><th>Item Description</th><th>Brand</th><th>Vintage</th><th>Supplier</th><th>Producer</th><th>LCBO Item #</th><th>Product Type</th><th>Action</th></tr></thead><tbody id="itemSelectRows"></tbody></table></div><div class="modal-actions"><span></span><span></span><button id="cancelItemSelect" type="button" class="secondary">Cancel</button></div></div></div>
 <div id="itemModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="itemModalTitle">Add Tender Item</h2><p>Create the permanent LCBO product profile. Fields marked * are required for LCBO submissions.</p></div><button id="closeItemModal" class="icon">×</button></div><form id="itemForm"><input type="hidden" id="itemRecordId"><div id="itemFields" class="item-form"></div><div class="modal-actions"><button type="button" id="deleteItem" class="danger">Delete</button><span></span><button type="button" id="cancelItem" class="secondary">Cancel</button><button type="submit">Save Item</button></div></form></div></div>
-<div id="italyCandidateModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="italyCandidateModalTitle">Add Wine Candidate — Italy</h2><p>Product information follows Add Tender Item, with dedicated Country Representative Sourcing Information and item photos.</p></div><button type="button" class="icon" onclick="closeItalyCandidateForm()">×</button></div><form id="italyCandidateDetailedForm"><input type="hidden" id="itCanRecordId"><div id="italyCandidateFields" class="item-form"></div><div class="modal-actions"><button type="button" id="deleteItalyCandidateBtn" class="danger" onclick="deleteItalyCandidateFromModal()">Delete</button><span></span><button type="button" class="secondary" onclick="closeItalyCandidateForm()">Cancel</button><button type="submit">Propose to Head Office</button></div></form></div></div>
+<div id="italyCandidateModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="italyCandidateModalTitle">Add Wine Candidate — Italy</h2><p>Product information follows Add Tender Item, with dedicated Country Representative Sourcing Information and item photos.</p></div><button type="button" class="icon" onclick="closeItalyCandidateForm()">×</button></div><form id="italyCandidateDetailedForm"><input type="hidden" id="itCanRecordId"><div id="italyCandidateFields" class="item-form"></div><div class="modal-actions"><button type="button" id="deleteItalyCandidateBtn" class="danger" onclick="deleteItalyCandidateFromModal()">Delete</button><span></span><button type="button" class="secondary" onclick="closeItalyCandidateForm()">Cancel</button><button type="button" id="proposeItalyCandidateBtn" onclick="proposeItalyCandidateToHeadOffice(this)">Propose to Head Office</button></div></form></div></div>
 <div id="itemInfoModal" class="modal hidden"><div class="modal-card item-info-page"><div class="modal-head"><div><h2 id="itemInfoTitle">Item Information</h2><p>Database information prepared for easy copying into the registration system.</p></div><button id="closeItemInfo" class="icon">×</button></div><div class="info-toolbar"><button type="button" id="copyAllItemInfo" class="secondary">Copy All Information</button><button type="button" id="editItemFromInfo">OPEN IN TENDER ITEM DATABASE</button></div><div id="itemInfoContent"></div><div class="modal-actions"><span></span><button type="button" id="closeItemInfoBottom" class="secondary">Close</button></div></div></div>
 
 <div id="workerItemModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="workerItemModalTitle">Add Item to Worker Registration List</h2><p>Select an item from the Tender Item Database and assign registration details.</p></div><button id="closeWorkerItemModal" class="icon">×</button></div><input type="hidden" id="workerEditTenderId"><input type="hidden" id="workerEditWorkId"><div class="form-grid"><label>Tender *<select id="workerItemTender"></select></label><label class="full">Select item from Tender Item Database *<select id="workerDatabaseItem"></select></label><label>Offered Price<input id="workerOfferedPrice" type="number" step="0.01"></label><label>Currency<select id="workerCurrency"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></label><label>Agency / Where to Register<select id="workerAgency"></select></label><label>Work Status<select id="workerStatus"><option>To Register</option><option>In Progress</option><option>Registered in LCBO NISS</option><option>On Hold</option></select></label><label class="full">Instructions<textarea id="workerInstructions"></textarea></label></div><div class="modal-actions"><button type="button" id="removeWorkerItem" class="danger">Remove Item</button><span></span><button type="button" id="cancelWorkerItem" class="secondary">Cancel</button><button type="button" id="saveWorkerItem">Add Item</button></div></div></div>
@@ -2879,40 +2879,81 @@ window.saveItalyWinery=()=>{const name=document.getElementById('itWinName').valu
 
 window.saveItalyCandidate=async()=>{
  const id=document.getElementById('itCanRecordId').value||uid(),existing=(state.countryCandidates||[]).find(x=>x.id===id)||{};
- const productDescription=document.getElementById('c_productDescription')?.value.trim();if(!productDescription)return alert('Enter Product Description.');
+ const productDescription=document.getElementById('c_productDescription')?.value.trim();if(!productDescription)return (alert('Enter Product Description.'),false);
  const data={};itemGroups.filter(g=>g.title!=='Pricing Information').forEach(g=>g.fields.filter(f=>!['producerSameAsSupplier','producerName','producerAddress1','producerAddress2','producerCity','producerRegionCountry','producerPostalCode'].includes(f[0])).forEach(([k,,t])=>{if(['calculated','websites','attachments'].includes(t))return;const el=document.getElementById('c_'+k);if(!el)return;data[k]=t==='number'?num(el.value):(k==='productCategory'?normalizeProductCategory(el.value||'Wine'):(el.value||''))}));
  data.websites=[...document.querySelectorAll('.italy-candidate-website-url')].map(el=>el.value.trim()).filter(Boolean);data.attachments=currentItalyCandidateAttachments.map(({id,name,size,type,lastModified})=>({id,name,size,type,lastModified}));
  const bottlesPerCase=num(document.getElementById('itCanBottlesPerCase').value),casePrice=num(document.getElementById('itCanPrice').value),supplierBottlePrice=bottlesPerCase>0?casePrice/bottlesPerCase:0;
  const supplierCurrency=document.getElementById('itCanCurrency').value,supplierQuoteType=document.getElementById('itCanQuoteType').value,localRetail=document.getElementById('itCanRetail').value.trim(),ontarioExclusive=document.getElementById('itCanExclusive').value,ontarioExportDetails=document.getElementById('itCanOntarioExportDetails').value.trim(),why=document.getElementById('itCanWhy').value.trim(),giftBoxYesNo=document.getElementById('itCanGiftBox').value,giftBoxDescription=document.getElementById('itCanGiftBoxDescription').value.trim(),protectedAppellation=document.getElementById('itCanProtectedAppellation').value,appellationName=document.getElementById('itCanAppellationName').value.trim(),appellationDescription=document.getElementById('itCanAppellationDescription').value.trim(),outstandingLocation=document.getElementById('itCanOutstandingLocation').value.trim(),supplierOntarioAgent=document.getElementById('c_supplierOntarioAgent').value,supplierOntarioAgentDetails=document.getElementById('c_supplierOntarioAgentDetails').value.trim(),supplierOtherProvinceExporter=document.getElementById('c_supplierOtherProvinceExporter').value,supplierOtherProvinceExporterDetails=document.getElementById('c_supplierOtherProvinceExporterDetails').value.trim(),exCellarDeliveryPerCase=num(document.getElementById('itCanExCellarDelivery').value);
- if(!(casePrice>0))return alert('Supplier Price Per Offered Case is mandatory.');
- if(!(bottlesPerCase>0))return alert('Bottles Per Case is mandatory.');
- if(!supplierCurrency)return alert('Currency is mandatory.');
- if(!supplierQuoteType)return alert('Supplier Quote Type is mandatory.');
- if(supplierQuoteType==='EX-CELLAR'&&document.getElementById('itCanExCellarDelivery').value==='')return alert('Enter Delivery to Closest Consolidation Price Per Case.');
- if(!localRetail)return alert('Local Retail Price Per Bottle is mandatory.');
- if(!ontarioExclusive)return alert('Product Ontario Exclusivity question is mandatory.');
- if(ontarioExclusive==='Yes'&&!ontarioExportDetails)return alert('Please provide detailed Ontario / Canadian province export information.');
- if(!giftBoxYesNo)return alert('Item in Gift Box? is mandatory.');
- if(!why)return alert('Why I Recommend This Wine is mandatory.');
- if(giftBoxYesNo==='Yes'&&!giftBoxDescription)return alert('Gift Box Description is mandatory when Item in Gift Box is Yes.');
- if(!protectedAppellation)return alert('Protected Appellation? is mandatory.');
- if(protectedAppellation==='Yes'&&!appellationName)return alert('Appellation Name is mandatory when Protected Appellation is Yes.');
- if(protectedAppellation==='Yes'&&!appellationDescription)return alert('Appellation Description is mandatory when Protected Appellation is Yes.');
- if(!outstandingLocation)return alert('Location or other information that makes this product popular or outstanding is mandatory.');
- if(!supplierOntarioAgent)return alert('Please answer whether the supplier has a designated agent in Ontario / LCBO.');
- if(supplierOntarioAgent==='Yes'&&!supplierOntarioAgentDetails)return alert('Detailed information about the designated Ontario / LCBO agent is mandatory.');
- if(!supplierOtherProvinceExporter)return alert('Please answer whether the supplier exports to other Canadian provinces.');
- if(supplierOtherProvinceExporter==='Yes'&&!supplierOtherProvinceExporterDetails)return alert('Detailed information about exports to other Canadian provinces is mandatory.');
- if(!document.getElementById('c_pressCoverage')?.value.trim())return alert('Press Coverage / Other Information is mandatory.');
- if(document.getElementById('c_previouslyPurchased')?.value==='Yes'&&!document.getElementById('c_lcboItemNumber')?.value.trim())return alert('LCBO Item Number is mandatory when the product was previously purchased by the LCBO.');
+ if(!(casePrice>0))return (alert('Supplier Price Per Offered Case is mandatory.'),false);
+ if(!(bottlesPerCase>0))return (alert('Bottles Per Case is mandatory.'),false);
+ if(!supplierCurrency)return (alert('Currency is mandatory.'),false);
+ if(!supplierQuoteType)return (alert('Supplier Quote Type is mandatory.'),false);
+ if(supplierQuoteType==='EX-CELLAR'&&document.getElementById('itCanExCellarDelivery').value==='')return (alert('Enter Delivery to Closest Consolidation Price Per Case.'),false);
+ if(!localRetail)return (alert('Local Retail Price Per Bottle is mandatory.'),false);
+ if(!ontarioExclusive)return (alert('Product Ontario Exclusivity question is mandatory.'),false);
+ if(ontarioExclusive==='Yes'&&!ontarioExportDetails)return (alert('Please provide detailed Ontario / Canadian province export information.'),false);
+ if(!giftBoxYesNo)return (alert('Item in Gift Box? is mandatory.'),false);
+ if(!why)return (alert('Why I Recommend This Wine is mandatory.'),false);
+ if(giftBoxYesNo==='Yes'&&!giftBoxDescription)return (alert('Gift Box Description is mandatory when Item in Gift Box is Yes.'),false);
+ if(!protectedAppellation)return (alert('Protected Appellation? is mandatory.'),false);
+ if(protectedAppellation==='Yes'&&!appellationName)return (alert('Appellation Name is mandatory when Protected Appellation is Yes.'),false);
+ if(protectedAppellation==='Yes'&&!appellationDescription)return (alert('Appellation Description is mandatory when Protected Appellation is Yes.'),false);
+ if(!outstandingLocation)return (alert('Location or other information that makes this product popular or outstanding is mandatory.'),false);
+ if(!supplierOntarioAgent)return (alert('Please answer whether the supplier has a designated agent in Ontario / LCBO.'),false);
+ if(supplierOntarioAgent==='Yes'&&!supplierOntarioAgentDetails)return (alert('Detailed information about the designated Ontario / LCBO agent is mandatory.'),false);
+ if(!supplierOtherProvinceExporter)return (alert('Please answer whether the supplier exports to other Canadian provinces.'),false);
+ if(supplierOtherProvinceExporter==='Yes'&&!supplierOtherProvinceExporterDetails)return (alert('Detailed information about exports to other Canadian provinces is mandatory.'),false);
+ if(!document.getElementById('c_pressCoverage')?.value.trim())return (alert('Press Coverage / Other Information is mandatory.'),false);
+ if(document.getElementById('c_previouslyPurchased')?.value==='Yes'&&!document.getElementById('c_lcboItemNumber')?.value.trim())return (alert('LCBO Item Number is mandatory when the product was previously purchased by the LCBO.'),false);
  try{
   const itemPhotos=await persistItalyCandidatePhotos(id);
-  const rec={...existing,...data,id,country:'Italy',name:data.productDescription,opportunityId:document.getElementById('itCanOpp').value,supplierPricePerCase:casePrice,bottlesPerCase,supplierCurrency,supplierBottlePrice,supplierQuoteType,exCellarDeliveryPerCase:supplierQuoteType==='EX-CELLAR'?exCellarDeliveryPerCase:'',giftBoxYesNo,giftBoxDescription:giftBoxYesNo==='Yes'?giftBoxDescription:'',ontarioExportDetails:ontarioExclusive==='Yes'?ontarioExportDetails:'',protectedAppellation,appellationName:protectedAppellation==='Yes'?appellationName:'',appellationDescription:protectedAppellation==='Yes'?appellationDescription:'',outstandingLocation,supplierOntarioAgent,supplierOntarioAgentDetails:supplierOntarioAgent==='Yes'?supplierOntarioAgentDetails:'',supplierOtherProvinceExporter,supplierOtherProvinceExporterDetails:supplierOtherProvinceExporter==='Yes'?supplierOtherProvinceExporterDetails:'',sweetnessSugar:document.getElementById('c_sweetnessSugar').value.trim(),itemPhotos,localRetailPricePerBottle:localRetail,ontarioExclusivity:ontarioExclusive,why,intelligence:document.getElementById('itCanIntel').value.trim(),status:existing.status||'Action Required',headOfficeActionStatus:existing.headOfficeActionStatus||existing.status||'Action Required',createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
-  await saveItemAttachments(id,currentItalyCandidateAttachments);const i=state.countryCandidates.findIndex(x=>x.id===id);if(i>=0)state.countryCandidates[i]=rec;else state.countryCandidates.push(rec);save();closeItalyCandidateForm();renderItalySourcing()
- }catch(e){console.error(e);alert('The wine candidate, item photos, or attachments could not be saved.')}
+  const rec={...existing,...data,id,country:'Italy',name:data.productDescription,opportunityId:document.getElementById('itCanOpp').value,supplierPricePerCase:casePrice,bottlesPerCase,supplierCurrency,supplierBottlePrice,supplierQuoteType,exCellarDeliveryPerCase:supplierQuoteType==='EX-CELLAR'?exCellarDeliveryPerCase:'',giftBoxYesNo,giftBoxDescription:giftBoxYesNo==='Yes'?giftBoxDescription:'',ontarioExportDetails:ontarioExclusive==='Yes'?ontarioExportDetails:'',protectedAppellation,appellationName:protectedAppellation==='Yes'?appellationName:'',appellationDescription:protectedAppellation==='Yes'?appellationDescription:'',outstandingLocation,supplierOntarioAgent,supplierOntarioAgentDetails:supplierOntarioAgent==='Yes'?supplierOntarioAgentDetails:'',supplierOtherProvinceExporter,supplierOtherProvinceExporterDetails:supplierOtherProvinceExporter==='Yes'?supplierOtherProvinceExporterDetails:'',sweetnessSugar:document.getElementById('c_sweetnessSugar').value.trim(),itemPhotos,localRetailPricePerBottle:localRetail,ontarioExclusivity:ontarioExclusive,why,intelligence:document.getElementById('itCanIntel').value.trim(),status:existing.id?(existing.status||'Action Required'):'Action Required',headOfficeActionStatus:existing.id?(existing.headOfficeActionStatus||existing.status||'Action Required'):'Action Required',createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  const i=state.countryCandidates.findIndex(x=>x.id===id);
+  if(i>=0)state.countryCandidates[i]=rec;else state.countryCandidates.push(rec);
+
+  // Persist the proposal FIRST so Head Office always receives it.
+  safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+  if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
+
+  // Attachments are secondary. A browser/storage attachment issue must not block the proposal itself.
+  if(currentItalyCandidateAttachments.length){
+   try{await saveItemAttachments(id,currentItalyCandidateAttachments)}
+   catch(attachmentError){
+    console.error('Candidate attachments could not be saved:',attachmentError);
+    rec.attachmentSaveWarning='Supporting attachments could not be saved at proposal time.';
+    safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+   }
+  }
+
+  renderItalySourcing();
+  if(typeof window.renderHeadOfficeProposals==='function')window.renderHeadOfficeProposals();
+  closeItalyCandidateForm();
+  return true;
+ }catch(e){console.error(e);alert('The wine candidate could not be proposed to Head Office. '+(e?.message||''));return false}
 };
+
+window.proposeItalyCandidateToHeadOffice=async function(button){
+ if(button?.disabled)return false;
+ const original=button?.textContent||'Propose to Head Office';
+ try{
+  if(button){button.disabled=true;button.textContent='Proposing...'}
+  const ok=await window.saveItalyCandidate();
+  if(ok){
+   if(button){button.textContent='Proposed to Head Office';button.style.background='var(--green)'}
+   return true;
+  }
+  if(button){button.disabled=false;button.textContent=original;button.style.background=''}
+  return false;
+ }catch(err){
+  console.error('Proposal failed:',err);
+  alert('Proposal could not be sent to Head Office. '+(err?.message||''));
+  if(button){button.disabled=false;button.textContent=original;button.style.background=''}
+  return false;
+ }
+};
+
 window.deleteItalyCandidateFromModal=async()=>{const id=document.getElementById('itCanRecordId').value;if(!id)return closeItalyCandidateForm();if(!confirm('Delete this wine candidate?'))return;const rec=(state.countryCandidates||[]).find(x=>x.id===id);try{await deleteItemAttachments(id)}catch(e){}if(window.ZimportOnline?.deleteFile){for(const p of (rec?.itemPhotos||[]).map(x=>x?.path).filter(Boolean)){try{await window.ZimportOnline.deleteFile(p)}catch(e){console.warn(e)}}}state.countryCandidates=state.countryCandidates.filter(x=>x.id!==id);save();closeItalyCandidateForm();renderItalySourcing()};
-document.getElementById('italyCandidateDetailedForm')?.addEventListener('submit',e=>{e.preventDefault();saveItalyCandidate()});
+document.getElementById('italyCandidateDetailedForm')?.addEventListener('submit',e=>{e.preventDefault();proposeItalyCandidateToHeadOffice(document.getElementById('proposeItalyCandidateBtn'))});
 
 window.saveItalyBonus=()=>{state.countryBonuses.push({id:uid(),country:'Italy',type:document.getElementById('itBonusType').value,amount:num(document.getElementById('itBonusAmount').value),currency:document.getElementById('itBonusCurrency').value,related:document.getElementById('itBonusRelated').value.trim(),status:document.getElementById('itBonusStatus').value,date:document.getElementById('itBonusDate').value,notes:document.getElementById('itBonusNotes').value.trim()});save();closeItalyBonusForm();renderItalySourcing()};
 window.deleteItalySource=(kind,id)=>{if(!confirm('Delete this record?'))return;const key={opp:'countryOpportunities',win:'countryWineries',can:'countryCandidates',bonus:'countryBonuses'}[kind];state[key]=state[key].filter(x=>x.id!==id);save();renderItalySourcing()};
