@@ -466,7 +466,13 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <div class="table-wrap"><table><thead><tr><th>Shipment</th><th>PO'S</th><th>Transport Company</th><th>Pallets</th><th>Shipment Status</th><th>Actions</th></tr></thead><tbody id="archivedShipmentRows"></tbody></table></div>
 </div></section>
 
-<section id="po-page" class="panel"><div class="box"><div class="section-head"><div><h2 id="poPageTitle">PO'S #</h2><p class="note">Create and manage active purchase-order records. POs with status LCBO PAYED automatically move to Archived PO'S.</p></div><button id="addPoBtn" type="button">+ Create New PO</button></div><button type="button" class="secondary page-search-toggle" id="togglePoSearch">Search</button><div class="page-search-panel" id="poSearchPanel"><label>PO #<input id="poNumberSearch" type="search" placeholder="Type PO number"></label><label>PO Program<input id="poProgramSearch" type="search" placeholder="TENDER, REGU, SEAS or OTHER"></label><label>Vendor<input id="poSupplierSearch" type="search" placeholder="Type vendor name"></label><label>Item Description<input id="poItemSearch" type="search" placeholder="Type item description"></label><label>PO Status<select id="poStatusSearch"><option value="">All statuses</option><option>ARRIVED IN CANADA</option><option>CLEARED OUT FROM THE WAREHOUSE</option></select></label><div class="page-search-actions"><button type="button" class="secondary" id="clearPoSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th>PO #</th><th>PO Program</th><th>Vendor</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>PO Status</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="poRows"></tbody></table></div></div></section>
+<section id="po-page" class="panel"><div class="box"><div class="section-head"><div><h2 id="poPageTitle">PO'S #</h2><p class="note">Create and manage active purchase-order records. POs with status LCBO PAYED automatically move to Archived PO'S.</p></div><button id="addPoBtn" type="button">+ Create New PO</button></div>
+<div class="box" style="margin:12px 0;padding:14px;background:#f8fafc">
+  <div class="section-head" style="margin-bottom:8px"><div><h3 style="margin:0">Print PO Proformas</h3><p class="note">Choose an agency, mark the POs you want to include, then print.</p></div><button id="printPoProformasBtn" type="button">Print PO Proformas</button></div>
+  <div class="form-grid three">
+    <label>Agency<select id="poPrintAgencySelect"></select></label>
+  </div>
+</div><button type="button" class="secondary page-search-toggle" id="togglePoSearch">Search</button><div class="page-search-panel" id="poSearchPanel"><label>PO #<input id="poNumberSearch" type="search" placeholder="Type PO number"></label><label>PO Program<input id="poProgramSearch" type="search" placeholder="TENDER, REGU, SEAS or OTHER"></label><label>Vendor<input id="poSupplierSearch" type="search" placeholder="Type vendor name"></label><label>Item Description<input id="poItemSearch" type="search" placeholder="Type item description"></label><label>PO Status<select id="poStatusSearch"><option value="">All statuses</option><option>ARRIVED IN CANADA</option><option>CLEARED OUT FROM THE WAREHOUSE</option></select></label><div class="page-search-actions"><button type="button" class="secondary" id="clearPoSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th style="width:44px"><input id="selectAllPoPrint" type="checkbox" title="Select all visible POs"></th><th>PO #</th><th>PO Program</th><th>Vendor</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>PO Status</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="poRows"></tbody></table></div></div></section>
 <section id="archived-pos" class="panel"><div class="box"><div class="section-head"><div><h2>ARCHIVED PO'S</h2><p class="note">POs move here automatically when PO Status is LCBO PAYED.</p></div></div><button type="button" class="secondary page-search-toggle" id="toggleArchivedPoSearch">Search</button><div class="page-search-panel" id="archivedPoSearchPanel"><label>PO #<input id="archivedPoNumberSearch" type="search" placeholder="Type PO number"></label><label>Vendor<input id="archivedPoSupplierSearch" type="search" placeholder="Type vendor name"></label><label>Item Description<input id="archivedPoItemSearch" type="search" placeholder="Type item description"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearArchivedPoSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th>PO #</th><th>PO Program</th><th>Vendor</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>PO Status</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="archivedPoRows"></tbody></table></div></div></section>
 <section id="all-invoices" class="panel"><div class="box"><div class="section-head"><div><h2>All Invoices</h2><p class="note">Select an invoice page below.</p></div></div><div class="invoice-page-row">
   <button type="button" class="invoice-page-tab" onclick="activate('financial','heads-page')">LCBO to Agent Tender Invoices</button>
@@ -856,7 +862,9 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 <div id="shipmentModal" class="modal hidden"><div class="modal-card po-modal-card"><div class="modal-head"><div><h2 id="shipmentModalTitle">Create Shipment</h2><p>Create the shipment and assign POs from both Tender PO's # and Private Order PO's #.</p></div><button id="closeShipmentModal" class="icon">×</button></div><input type="hidden" id="shipmentRecordId">
 <div class="form-grid three"><label>Shipment Name *<input id="shipmentNameInput" placeholder="Example: Germany Consolidation Shipment"></label></div>
 <fieldset class="item-group"><legend>Add POs from Tender and Private Order PO's #</legend><div class="po-supplier-add"><label style="flex:1">PO<select id="shipmentPoSelect"></select></label><label style="flex:0 0 105px">Ref #<input id="shipmentRefInput" maxlength="30" placeholder="Ref #"></label><button id="addShipmentPoBtn" type="button" title="Add PO">+</button></div><div class="shipment-po-wrap"><table class="shipment-po-table"><thead><tr><th>PO #</th><th>Ref #</th><th>Suppliers</th><th>Bottles</th><th></th></tr></thead><tbody id="shipmentPoRows"></tbody></table></div></fieldset>
-<div class="shipment-compact-grid"><label>Transport Company Name<input id="shipmentCompanyInput" placeholder="Type transport company name"></label><label>Pallet Quantity<input id="shipmentPalletQtyInput" type="number" min="0" step="1" inputmode="numeric" placeholder="Number of pallets"></label><label>Phone Number<input id="shipmentPhoneInput" placeholder="Phone number"></label><label>Email 1<input id="shipmentEmail1Input" type="email" placeholder="Email address"></label><label>Email 2<input id="shipmentEmail2Input" type="email" placeholder="Email address"></label></div><div class="shipment-address-row"><label>From<input id="shipmentFromInput" placeholder="Country, city and address"></label><label>To<input id="shipmentToInput" placeholder="Country, city and address"></label></div><div class="full"><b>Attached Invoice and Files</b><div class="shipment-file-grid">
+<div class="form-grid three"><label>Pallet Quantity<input id="shipmentPalletQtyInput" type="number" min="0" step="1" inputmode="numeric" placeholder="Number of pallets"></label></div>
+<div class="form-grid"><label class="full">Transport Company Name<input id="shipmentCompanyInput" placeholder="Type transport company name"></label></div>
+<div class="shipment-compact-grid"><label>Phone Number<input id="shipmentPhoneInput" placeholder="Phone number"></label><label>Email 1<input id="shipmentEmail1Input" type="email" placeholder="Email address"></label><label>Email 2<input id="shipmentEmail2Input" type="email" placeholder="Email address"></label></div><div class="shipment-address-row"><label>From<input id="shipmentFromInput" placeholder="Country, city and address"></label><label>To<input id="shipmentToInput" placeholder="Country, city and address"></label></div><div class="full"><b>Attached Invoice and Files</b><div class="shipment-file-grid">
 <div class="shipment-file-slot"><b>File 1</b><input id="shipmentFile1" type="file"><span id="shipmentFile1Name" class="file-name">No file uploaded</span><div class="inline-actions"><button id="openShipmentFile1" type="button" class="secondary small">Open</button><button id="removeShipmentFile1" type="button" class="danger small">Remove</button></div></div>
 <div class="shipment-file-slot"><b>File 2</b><input id="shipmentFile2" type="file"><span id="shipmentFile2Name" class="file-name">No file uploaded</span><div class="inline-actions"><button id="openShipmentFile2" type="button" class="secondary small">Open</button><button id="removeShipmentFile2" type="button" class="danger small">Remove</button></div></div>
 <div class="shipment-file-slot"><b>File 3</b><input id="shipmentFile3" type="file"><span id="shipmentFile3Name" class="file-name">No file uploaded</span><div class="inline-actions"><button id="openShipmentFile3" type="button" class="secondary small">Open</button><button id="removeShipmentFile3" type="button" class="danger small">Remove</button></div></div>
@@ -871,13 +879,13 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 <div class="form-grid two shipment-bottom-row"><label>Cost of Shipment<div style="display:flex;gap:6px;align-items:center"><input id="shipmentCostInput" type="number" min="0" step="0.01" style="flex:1"><select id="shipmentCurrencyInput" style="width:82px"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></div></label><label>Transport LCBO PAYMENT STATUS<select id="shipmentPaymentStatusInput"><option value="Not Paid">Not Paid</option><option value="Paid">Paid</option><option value="Other">Other</option></select></label><label><span id="shipmentConverterLabel">Transportation CAD Converter — Enter Manually</span><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span>1 CAD =</span><input id="shipmentExchangeRateInput" type="number" min="0.0001" step="0.0001" style="width:90px" aria-label="Manual transportation exchange rate"><b id="shipmentConverterCurrency">CAD</b></div></label><label id="shipmentPaymentOtherWrap" class="hidden">Other Payment Status<input id="shipmentPaymentOtherInput" maxlength="50" placeholder="Type payment status"></label></div>
 <div class="modal-actions"><button id="deleteShipmentBtn" type="button" class="danger">Delete Shipment</button><span></span><button id="cancelShipmentBtn" type="button" class="secondary">Cancel</button><button id="saveShipmentBtn" type="button">Save Shipment</button></div></div></div>
 <div id="poModal" class="modal hidden"><div class="modal-card po-modal-card"><div class="modal-head"><div><h2 id="poModalTitle">Create New PO</h2><p>Attach a PO file to fill available information automatically, then review and save.</p></div><button id="closePoModal" class="icon">×</button></div><input type="hidden" id="poRecordId">
-<fieldset class="item-group po-file-import"><legend>Attach PO File</legend><label>Choose PO File<input id="poFileInput" type="file" accept=".pdf,.txt,.csv,application/pdf,text/plain,text/csv"></label><div id="poFileStatus" class="attachment-status">No file uploaded</div><div id="poFileImportStatus" class="note">Attach a Purchase Order (PO) PDF, TXT or CSV. The program will read the Purchase Order Number, PO Date, Vendors and item details and auto-fill the form.</div><div class="inline-actions"><button id="openPoRecordFileBtn" type="button" class="secondary small">Open Attached File</button><button id="removePoRecordFileBtn" type="button" class="danger small">Remove File</button></div></fieldset>
+<fieldset class="item-group"><legend>Attach PO File</legend><label>Choose PO File<input id="poFileInput" type="file"></label><div id="poFileStatus" class="attachment-status">No file uploaded</div><div class="note">The attached file is saved with the PO. Enter the PO information manually in the fields below.</div><div class="inline-actions"><button id="openPoRecordFileBtn" type="button" class="secondary small">Open Attached File</button><button id="removePoRecordFileBtn" type="button" class="danger small">Remove File</button></div></fieldset>
 <div class="form-grid three">
 <label>PO Number *<input id="poNumberInput" maxlength="25"></label>
 <label>PO Program *<select id="poProgramInput"><option value="REGU">REGU</option><option value="SEAS">SEAS</option><option value="TENDER">TENDER</option><option value="OTHER">OTHER</option></select></label>
 <label>PO Date<input id="poDateInput" type="date"></label>
 <label id="poProgramOtherWrap" class="hidden">Other PO Program<input id="poProgramOtherInput" maxlength="30" placeholder="Type program"></label>
-<div class="full"><label>Vendors</label><div class="po-supplier-add"><input id="poVendorInput" maxlength="120" placeholder="Type vendor name" style="flex:1"><button id="addPoVendorBtn" type="button" title="Add vendor">+</button></div><div id="poVendorChoices" class="po-supplier-choices"></div></div>
+<div class="full"><label>Vendors</label><p class="note">Select vendors from suppliers already registered in the program. You can add more than one vendor.</p><div class="po-supplier-add"><select id="poVendorSelect" style="flex:1"></select><button id="addPoVendorBtn" type="button" title="Add vendor">+</button></div><div id="poVendorChoices" class="po-supplier-choices"></div></div>
 </div>
 <fieldset class="item-group"><legend>PO Items</legend><p class="note">Scroll horizontally inside the item table to view every field.</p><div class="table-wrap"><table class="po-lines-table"><thead><tr><th>Item No. *</th><th>Total Quantity *</th><th>Product Name *</th><th>Unit Size (ml.) (if applicable)</th><th>Units per Case *</th><th>Bottle Quantity</th><th>Quoted Price per Case *</th><th></th></tr></thead><tbody id="poItemLines"></tbody></table></div><button id="addPoLineBtn" type="button" class="secondary">+ Add Item Line</button></fieldset>
 <div class="po-total"><label>Total PO Quoted Value *<input id="poGrandTotalInput" type="number" min="0" step="0.01" value="0.00" readonly title="Calculated automatically from Total Quantity × Quoted Price per Case"></label></div><label class="full">Notes<textarea id="poNotesInput" rows="5"></textarea></label>
@@ -1481,7 +1489,7 @@ function poStatusSelect(po){const status=po.poStatus||'';return `<select class="
 function poDisplayRow(po,archived=false){
   const calculated=(po.lines||[]).reduce((a,x)=>a+(num(x.totalQuantity)*num(x.quotedPricePerCase)),0);
   const statusCell=archived?poStatusBadge(po.poStatus||''):poStatusSelect(po);
-  return `<tr><td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(poProgramLabel(po))}</td><td>${escapeHtml((po.vendors||[]).join(', ')||po.vendor||((po.supplierNames||[]).join(', '))||'—')}</td><td>${escapeHtml(poItemDescriptions(po)||'—')}</td><td>${poCaseQuantity(po).toLocaleString()}</td><td>${poBottleQuantity(po).toLocaleString()}</td><td>${statusCell}</td><td>${escapeHtml((po.currency||'')+' '+poMoney(calculated))}</td><td>${po.fileName?`<button type="button" class="secondary small" onclick="openPoRecordFile('${po.id}')">${escapeHtml(po.fileName)}</button>`:'—'}</td><td><button type="button" class="secondary small" onclick="openPoEditor('${po.id}')">Edit</button> <button type="button" class="danger small" onclick="deletePoRecord('${po.id}')">Delete</button></td></tr>`;
+  return `<tr>${archived?'':`<td><input type="checkbox" class="po-print-checkbox" value="${po.id}" aria-label="Select PO ${escapeHtml(po.number||'')} for proforma print"></td>`}<td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(poProgramLabel(po))}</td><td>${escapeHtml((po.vendors||[]).join(', ')||po.vendor||((po.supplierNames||[]).join(', '))||'—')}</td><td>${escapeHtml(poItemDescriptions(po)||'—')}</td><td>${poCaseQuantity(po).toLocaleString()}</td><td>${poBottleQuantity(po).toLocaleString()}</td><td>${statusCell}</td><td>${escapeHtml((po.currency||'')+' '+poMoney(calculated))}</td><td>${po.fileName?`<button type="button" class="secondary small" onclick="openPoRecordFile('${po.id}')">${escapeHtml(po.fileName)}</button>`:'—'}</td><td><button type="button" class="secondary small" onclick="openPoEditor('${po.id}')">Edit</button> <button type="button" class="danger small" onclick="deletePoRecord('${po.id}')">Delete</button></td></tr>`;
 }
 function updatePoStatusFromRow(id,status){
   const po=(state.purchaseOrders||[]).find(x=>x.id===id);if(!po)return;
@@ -1497,8 +1505,90 @@ function updatePoStatusFromRow(id,status){
   }
 }
 window.updatePoStatusFromRow=updatePoStatusFromRow;
+
+function renderPoPrintAgencyOptions(){
+  const sel=$('#poPrintAgencySelect');if(!sel)return;
+  const current=sel.value;
+  sel.innerHTML='<option value="">Select agency</option>'+(state.agencies||[]).map(a=>`<option value="${a.id}">${escapeHtml(a.name||'Unnamed agency')}</option>`).join('');
+  if(current&&(state.agencies||[]).some(a=>a.id===current))sel.value=current;
+}
+function poPrintMatchedItem(line){
+  const itemNo=String(line?.itemNo||'').trim().toLowerCase();
+  const product=String(line?.yearProductName||'').trim().toLowerCase();
+  let item=(state.items||[]).find(i=>[i.lcboItemNumber,i.itemNumber,i.lcboNumber].some(v=>String(v||'').trim().toLowerCase()===itemNo));
+  if(!item&&product)item=(state.items||[]).find(i=>String(i.productDescription||'').trim().toLowerCase()===product||String(i.brandName||'').trim().toLowerCase()===product);
+  return item||{};
+}
+function poPrintItemRow(po,line){
+  const item=poPrintMatchedItem(line);
+  const cases=num(line.totalQuantity);
+  const bpc=num(line.unitsPerCase);
+  const bottles=(line.bottleQuantity!==''&&line.bottleQuantity!=null)?num(line.bottleQuantity):cases*bpc;
+  const casePrice=num(line.quotedPricePerCase);
+  const bottlePrice=bpc?casePrice/bpc:0;
+  const lcbo=item.lcboItemNumber||item.itemNumber||line.itemNo||'';
+  const desc=line.yearProductName||item.productDescription||item.brandName||'';
+  const vintage=item.vintage||item.year||'';
+  const alc=item.percentAlcohol??item.alcohol??'';
+  const size=line.unitSizeMl||item.sellingUnitSizeMl||item.bottleSizeMl||'';
+  return {cases,poNumber:po.number||'',lcbo,desc,vintage,alc,bottles,size,bpc,casePrice,bottlePrice};
+}
+function poProformaHtml(selectedPos,agency){
+  const logoUrl=new URL('zimport-global-logo.jpg',window.location.href).href;
+  const warning='Important !PO numbers may differ only by the last digit.';
+  const rows=[];
+  selectedPos.forEach(po=>(po.lines||[]).forEach(line=>rows.push(poPrintItemRow(po,line))));
+  const body=rows.map(r=>`<tr>
+    <td>${escapeHtml(String(r.cases||''))}</td>
+    <td>${escapeHtml(r.poNumber)}</td>
+    <td>${escapeHtml(r.lcbo)}</td>
+    <td class="left">${escapeHtml(r.desc)}</td>
+    <td>${escapeHtml(String(r.vintage||''))}</td>
+    <td>${r.alc!==''?escapeHtml(String(r.alc))+'%':''}</td>
+    <td>${escapeHtml(String(r.bottles||''))}</td>
+    <td>${escapeHtml(String(r.size||''))}</td>
+    <td>${escapeHtml(String(r.bpc||''))}</td>
+    <td>${r.casePrice?Number(r.casePrice).toFixed(2):''}</td>
+    <td>${r.bottlePrice?Number(r.bottlePrice).toFixed(2):''}</td>
+  </tr>`).join('');
+  return `<!doctype html><html><head><meta charset="utf-8"><title>PO Proformas - ${escapeHtml(agency?.name||'Agency')}</title>
+  <style>
+    @page{size:landscape;margin:12mm}
+    *{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0;background:#fff}
+    .header{text-align:center;margin-bottom:14px}.logo{max-height:150px;max-width:260px;object-fit:contain}
+    .agency{font-size:18px;font-weight:700;margin:8px 0 12px}.warning{font-size:15px;font-weight:800;margin:10px 0}
+    table{width:100%;border-collapse:collapse;font-size:11px;table-layout:auto}
+    th,td{border:1px solid #333;padding:6px 5px;text-align:center;vertical-align:middle}
+    th{background:#eee;font-weight:700;white-space:nowrap}.left{text-align:left;min-width:180px}
+    .bottom-warning{font-size:15px;font-weight:800;margin-top:14px}
+    .print-actions{text-align:right;margin-bottom:10px}
+    @media print{.print-actions{display:none}}
+  </style></head><body>
+    <div class="print-actions"><button onclick="window.print()">Print</button></div>
+    <div class="header"><img class="logo" src="${logoUrl}" alt="Zimport Global"><div class="agency">${escapeHtml(agency?.name||'')}</div></div>
+    <div class="warning">${warning}</div>
+    <table><thead><tr>
+      <th>Case Qtty</th><th>PO#</th><th>LCBO ITEM #</th><th>ITEM DESCRIPTION</th><th>Vintage</th><th>alc%</th><th>Btls Qtty</th><th>Size in mL</th><th>Bottles per case</th><th>CAD Case Price</th><th>CAD Price</th>
+    </tr></thead><tbody>${body}</tbody></table>
+    <div class="bottom-warning">${warning}</div>
+  </body></html>`;
+}
+function printSelectedPoProformas(){
+  const agencyId=$('#poPrintAgencySelect')?.value||'';
+  if(!agencyId){alert('Select the agency to print under.');$('#poPrintAgencySelect')?.focus();return}
+  const ids=$$('.po-print-checkbox:checked').map(x=>x.value);
+  if(!ids.length){alert('Mark at least one PO to include in the printout.');return}
+  const selectedPos=(state.purchaseOrders||[]).filter(po=>ids.includes(po.id));
+  const agency=(state.agencies||[]).find(a=>a.id===agencyId)||null;
+  const w=window.open('','_blank');
+  if(!w){alert('The print window was blocked by the browser. Please allow pop-ups and try again.');return}
+  w.document.open();w.document.write(poProformaHtml(selectedPos,agency));w.document.close();w.focus();
+}
+window.printSelectedPoProformas=printSelectedPoProformas;
+
 function renderPurchaseOrders(){
   if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
+  renderPoPrintAgencyOptions();
   if(!$('#poRows'))return;
   const visiblePos=purchaseOrdersForCurrentSection();
   const q=id=>($('#'+id)?.value||'').trim().toLowerCase(),poNumber=q('poNumberSearch'),poProgram=q('poProgramSearch'),poSupplier=q('poSupplierSearch'),poItem=q('poItemSearch'),poStatus=$('#poStatusSearch')?.value||'';
@@ -1508,7 +1598,7 @@ function renderPurchaseOrders(){
   });
   const rows=filteredPos.map(po=>poDisplayRow(po,false)).join('');
   const emptyMessage=currentPoContext==='tender-niss'?'No active TENDER purchase orders have been created.':currentPoContext==='speciality-services'?'No active REGU, SEAS, or OTHER private-order POs have been created.':'No active purchase orders have been created.';
-  $('#poRows').innerHTML=rows||`<tr><td colspan="10">${emptyMessage}</td></tr>`;
+  $('#poRows').innerHTML=rows||`<tr><td colspan="11">${emptyMessage}</td></tr>`;
 }
 function renderArchivedPurchaseOrders(){
   if(!$('#archivedPoRows'))return;
@@ -1522,17 +1612,34 @@ function renderArchivedPurchaseOrders(){
 let poSelectedSupplierIds=[];
 let poOtherSupplierNames=[];
 let poVendorNames=[];
-function renderPoVendorChoices(selected=poVendorNames){
-  poVendorNames=[...new Set((selected||[]).map(v=>String(v||'').trim()).filter(Boolean))];
+let poVendorSupplierIds=[];
+function renderPoVendorChoices(selectedNames=poVendorNames,selectedIds=poVendorSupplierIds){
+  poVendorSupplierIds=[...new Set((selectedIds||[]).filter(id=>(state.suppliers||[]).some(s=>s.id===id)))];
+  const legacyNames=(selectedNames||[]).map(v=>String(v||'').trim()).filter(Boolean);
+  // Match older name-only PO vendors to registered suppliers whenever possible.
+  legacyNames.forEach(name=>{
+    const s=(state.suppliers||[]).find(x=>String(x.name||'').trim().toLowerCase()===name.toLowerCase());
+    if(s&&!poVendorSupplierIds.includes(s.id))poVendorSupplierIds.push(s.id);
+  });
+  poVendorNames=poVendorSupplierIds.map(id=>(state.suppliers||[]).find(s=>s.id===id)?.name||'').filter(Boolean);
+  const select=$('#poVendorSelect');
+  if(select){
+    const available=(state.suppliers||[]).filter(s=>!poVendorSupplierIds.includes(s.id));
+    select.innerHTML='<option value="">Select registered supplier</option>'+available.map(s=>`<option value="${s.id}">${escapeHtml(s.name||'Unnamed supplier')}${s.lcboNumber?' — '+escapeHtml(s.lcboNumber):''}</option>`).join('');
+  }
   const wrap=$('#poVendorChoices');if(!wrap)return;
-  wrap.innerHTML=poVendorNames.map((name,i)=>`<span class="po-supplier-choice"><b>${escapeHtml(name)}</b><button type="button" class="danger small" onclick="removePoVendorChoice(${i})">×</button></span>`).join('')||'<span class="note">No vendors added.</span>';
+  wrap.innerHTML=poVendorSupplierIds.map((id,i)=>{
+    const s=(state.suppliers||[]).find(v=>v.id===id);
+    return `<span class="po-supplier-choice"><b>${escapeHtml(s?.name||'Unnamed supplier')}</b>${s?.lcboNumber?`<small>${escapeHtml(s.lcboNumber)}</small>`:''}<button type="button" class="danger small" onclick="removePoVendorChoice(${i})">×</button></span>`;
+  }).join('')||'<span class="note">No vendors selected.</span>';
 }
 function addPoVendorChoice(){
-  const input=$('#poVendorInput');if(!input)return;
-  const name=input.value.trim();if(!name){alert('Enter a vendor name.');input.focus();return}
-  poVendorNames.push(name);input.value='';renderPoVendorChoices();
+  const select=$('#poVendorSelect');if(!select)return;
+  const id=select.value;if(!id){alert('Select a registered supplier.');select.focus();return}
+  if(!poVendorSupplierIds.includes(id))poVendorSupplierIds.push(id);
+  renderPoVendorChoices([],poVendorSupplierIds);
 }
-function removePoVendorChoice(index){poVendorNames.splice(index,1);renderPoVendorChoices()}
+function removePoVendorChoice(index){poVendorSupplierIds.splice(index,1);renderPoVendorChoices([],poVendorSupplierIds)}
 
 function renderPoSupplierChoices(selected=poSelectedSupplierIds,otherNames=poOtherSupplierNames){
   poSelectedSupplierIds=[...new Set((selected||[]).filter(id=>state.suppliers.some(s=>s.id===id)))];
@@ -1555,170 +1662,10 @@ function calculatePoTotals(){let grand=0;$$('#poItemLines tr').forEach(tr=>{cons
 function syncPoProgramOther(){$('#poProgramOtherWrap').classList.toggle('hidden',$('#poProgramInput').value!=='OTHER')}
 function renderPoFileStatus(name=''){$('#poFileStatus').textContent=name?`Attached: ${name}`:'No file uploaded';$('#openPoRecordFileBtn').style.display=name?'inline-block':'none';$('#removePoRecordFileBtn').style.display=name?'inline-block':'none'}
 
-function setPoImportStatus(message,isError=false){
-  const el=$('#poFileImportStatus');if(!el)return;
-  el.textContent=message||'';
-  el.style.color=isError?'#a61b1b':'';
-}
-function poCleanValue(v){return String(v||'').replace(/\s+/g,' ').trim()}
-function poFirstMatch(text,patterns){
-  for(const p of patterns){const m=text.match(p);if(m&&m[1])return poCleanValue(m[1])}
-  return '';
-}
-function poDetectProgram(text){
-  const u=String(text||'').toUpperCase();
-  if(/\bTENDER\b/.test(u))return 'TENDER';
-  if(/\bSEAS(?:ONAL)?\b/.test(u))return 'SEAS';
-  if(/\bREGU(?:LAR)?\b/.test(u))return 'REGU';
-  if(/\bOTHER\b/.test(u))return 'OTHER';
-  return '';
-}
-function parsePoText(text){
-  const raw=String(text||'').replace(/\r/g,'\n');
-  const flat=raw.replace(/[ \t]+/g,' ');
-  const data={};
-  data.number=poFirstMatch(flat,[
-    /\bPURCHASE\s+ORDER\s*(?:NUMBER|NO\.?|#)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/\.]{1,30})/i,
-    /\bP\.?\s*O\.?\s*(?:NUMBER|NO\.?|#)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/\.]{1,30})/i,
-    /\bPO\s*(?:NUMBER|NO\.?|#)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/\.]{1,30})/i,
-    /\bORDER\s*(?:NUMBER|NO\.?|#)\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/\.]{1,30})/i
-  ]);
-  data.vendor=poFirstMatch(flat,[
-    /\bVENDORS?(?:\s+NAME)?\s*[:\-]?\s*([^\n|]{2,120})/i,
-    /\bSUPPLIERS?(?:\s+NAME)?\s*[:\-]?\s*([^\n|]{2,120})/i,
-    /\bSOLD\s+BY\s*[:\-]\s*([^\n|]{2,120})/i
-  ]);
-
-  data.poDate=poFirstMatch(flat,[
-    /\b(?:PURCHASE\s+ORDER\s+DATE|PO\s+DATE|ORDER\s+DATE|DATE)\s*[:\-]?\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})/i,
-    /\b(?:PURCHASE\s+ORDER\s+DATE|PO\s+DATE|ORDER\s+DATE|DATE)\s*[:\-]?\s*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,
-    /\b(?:PURCHASE\s+ORDER\s+DATE|PO\s+DATE|ORDER\s+DATE|DATE)\s*[:\-]?\s*([A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4})/i
-  ]);
-
-  data.program=poDetectProgram(flat);
-  const lines=raw.split(/\n+/).map(poCleanValue).filter(Boolean);
-  const items=[];
-  const numberOnly=s=>{const m=String(s||'').replace(/,/g,'').match(/-?\d+(?:\.\d+)?/);return m?m[0]:''};
-  const headerIndex=lines.findIndex(x=>/item|product|description|quantity|unit size|case/i.test(x)&&(/item|product|description/i.test(x)));
-  const candidates=headerIndex>=0?lines.slice(headerIndex+1):lines;
-  for(const ln of candidates){
-    if(items.length>=50)break;
-    if(/total\s+(?:po|order|amount|value)|subtotal|tax|freight|terms|ship to|bill to/i.test(ln))continue;
-    let cols=ln.split(/\s{2,}|\t+|\|/).map(poCleanValue).filter(Boolean);
-    if(cols.length<4){
-      const csv=ln.split(',').map(poCleanValue).filter(Boolean);
-      if(csv.length>=4)cols=csv;
-    }
-    if(cols.length<4)continue;
-    const itemNo=(cols[0]||'').match(/[A-Z0-9][A-Z0-9\-\/.]*/i)?.[0]||'';
-    if(!itemNo||itemNo.length>30)continue;
-    const nums=cols.map(c=>numberOnly(c));
-    const numericIdx=nums.map((n,i)=>n!==''?i:-1).filter(i=>i>=0);
-    if(numericIdx.length<2)continue;
-    let totalQuantity='',unitSizeMl='',unitsPerCase='',quotedPricePerCase='';
-    // Common PO layout: item | description | unit size | cases/qty | units/case | price
-    const lastNums=numericIdx.slice(-4);
-    if(lastNums.length>=1)quotedPricePerCase=nums[lastNums[lastNums.length-1]];
-    if(lastNums.length>=2)unitsPerCase=nums[lastNums[lastNums.length-2]];
-    if(lastNums.length>=3)totalQuantity=nums[lastNums[lastNums.length-3]];
-    if(lastNums.length>=4)unitSizeMl=nums[lastNums[lastNums.length-4]];
-    const descCols=cols.slice(1, Math.max(2,lastNums[0]||2));
-    const productName=poCleanValue(descCols.join(' '))||poCleanValue(cols[1]||'');
-    if(productName&&totalQuantity&&unitsPerCase&&quotedPricePerCase){
-      items.push({itemNo,totalQuantity:num(totalQuantity),yearProductName:productName,unitSizeMl:unitSizeMl?num(unitSizeMl):'',unitsPerCase:num(unitsPerCase),quotedPricePerCase:num(quotedPricePerCase)});
-    }
-  }
-  // Label-oriented fallback for a single item
-  if(!items.length){
-    const itemNo=poFirstMatch(flat,[/\bITEM\s*(?:NO\.?|NUMBER|#)\s*[:\-]?\s*([A-Z0-9\-\/.]+)/i]);
-    const productName=poFirstMatch(flat,[/\b(?:PRODUCT\s+NAME|DESCRIPTION)\s*[:\-]\s*([^\n|]{2,160})/i]);
-    const totalQuantity=poFirstMatch(flat,[/\b(?:TOTAL\s+QUANTITY|CASE\s+QUANTITY|CASES|QTY)\s*[:\-]?\s*([\d,.]+)/i]);
-    const unitSizeMl=poFirstMatch(flat,[/\bUNIT\s+SIZE(?:\s*\(ML\.?\))?\s*[:\-]?\s*([\d,.]+)/i]);
-    const unitsPerCase=poFirstMatch(flat,[/\bUNITS?\s+PER\s+CASE\s*[:\-]?\s*([\d,.]+)/i]);
-    const quotedPricePerCase=poFirstMatch(flat,[/\b(?:QUOTED\s+PRICE\s+PER\s+CASE|PRICE\s+PER\s+CASE|CASE\s+PRICE)\s*[:\-]?\s*[$€£]?\s*([\d,.]+)/i]);
-    if(itemNo||productName){
-      items.push({itemNo,totalQuantity:totalQuantity?num(totalQuantity.replace(/,/g,'')):'',yearProductName:productName,unitSizeMl:unitSizeMl?num(unitSizeMl.replace(/,/g,'')):'',unitsPerCase:unitsPerCase?num(unitsPerCase.replace(/,/g,'')):'',quotedPricePerCase:quotedPricePerCase?num(quotedPricePerCase.replace(/,/g,'')):''});
-    }
-  }
-  data.items=items;
-  return data;
-}
-async function ensurePdfJs(){
-  if(window.pdfjsLib)return window.pdfjsLib;
-  await new Promise((resolve,reject)=>{
-    const existing=document.querySelector('script[data-po-pdfjs="1"]');
-    if(existing){existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true});return}
-    const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    s.dataset.poPdfjs='1';s.onload=resolve;s.onerror=()=>reject(new Error('PDF reader could not be loaded'));
-    document.head.appendChild(s);
-  });
-  if(window.pdfjsLib)window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  return window.pdfjsLib;
-}
-async function extractPoFileText(file){
-  const name=String(file?.name||'').toLowerCase();
-  if(file?.type==='application/pdf'||name.endsWith('.pdf')){
-    const lib=await ensurePdfJs();
-    const bytes=new Uint8Array(await file.arrayBuffer());
-    const pdf=await lib.getDocument({data:bytes}).promise;
-    let full='';
-    for(let i=1;i<=pdf.numPages;i++){
-      const page=await pdf.getPage(i),content=await page.getTextContent();
-      const items=content.items.filter(x=>String(x.str||'').trim()).map(x=>({str:String(x.str||'').trim(),x:x.transform?.[4]||0,y:x.transform?.[5]||0}));
-      items.sort((a,b)=>Math.abs(b.y-a.y)>3?b.y-a.y:a.x-b.x);
-      let rows=[],row=[],lastY=null;
-      for(const it of items){if(lastY!==null&&Math.abs(it.y-lastY)>3){rows.push(row.sort((a,b)=>a.x-b.x).map(v=>v.str).join('  '));row=[]}row.push(it);lastY=it.y}
-      if(row.length)rows.push(row.sort((a,b)=>a.x-b.x).map(v=>v.str).join('  '));
-      full+=rows.join('\n')+'\n';
-    }
-    return full;
-  }
-  if(name.endsWith('.txt')||name.endsWith('.csv')||String(file?.type||'').startsWith('text/'))return await file.text();
-  throw new Error('This file type cannot be read automatically. Use PDF, TXT or CSV.');
-}
-function normalizePoDate(v){
-  const s=String(v||'').trim();if(!s)return '';
-  let m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);if(m)return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
-  m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);if(m){let y=m[3];if(y.length===2)y='20'+y;return `${y}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`}
-  const d=new Date(s);if(!isNaN(d))return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  return '';
-}
-function applyParsedPoData(data){
-  let filled=0;
-  if(data.number){$('#poNumberInput').value=data.number;filled++}if(data.poDate){const d=normalizePoDate(data.poDate);if(d){$('#poDateInput').value=d;filled++}}
-  if(data.vendor){const parsedVendors=String(data.vendor).split(/\s*(?:,|;|\band\b|&)\s*/i).map(v=>v.trim()).filter(Boolean);poVendorNames=[...new Set([...(poVendorNames||[]),...parsedVendors])];renderPoVendorChoices();$('#poVendorInput').value='';filled+=parsedVendors.length||1}
-  if(data.program){$('#poProgramInput').value=data.program;syncPoProgramOther();filled++}
-  if(Array.isArray(data.items)&&data.items.length){
-    $('#poItemLines').innerHTML='';
-    data.items.forEach(addPoLine);
-    filled+=data.items.length;
-  }
-  calculatePoTotals();
-  return filled;
-}
-async function autofillPoFromFile(file){
-  poPendingFile=file||null;
-  renderPoFileStatus(file?.name||'');
-  if(!file){setPoImportStatus('Attach a Purchase Order (PO) PDF, TXT or CSV. The program will read the Purchase Order Number, PO Date, Vendors and item details and auto-fill the form.');return}
-  setPoImportStatus('Reading the Purchase Order and identifying PO Number, PO Date, Vendors and item information...');
-  try{
-    const extracted=await extractPoFileText(file);
-    if(!poCleanValue(extracted))throw new Error('No readable text was found in this file.');
-    const parsed=parsePoText(extracted);
-    const filled=applyParsedPoData(parsed);
-    if(filled) setPoImportStatus(`PO file read successfully. ${filled} form value${filled===1?'':'s'} filled automatically. Please review before saving.`);
-    else setPoImportStatus('The file was attached, but the PO fields could not be identified automatically. Please enter the values manually.',true);
-  }catch(err){
-    console.error(err);
-    setPoImportStatus(`The file was attached, but automatic reading failed: ${err.message||err}`,true);
-  }
-}
-
 async function openPoEditor(id=''){
   if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
   const po=(state.purchaseOrders||[]).find(x=>x.id===id)||null;
-  $('#poRecordId').value=po?.id||'';$('#poModalTitle').textContent=po?'Edit PO':'Create New PO';$('#poNumberInput').value=po?.number||'';$('#poProgramInput').value=po?.program||'REGU';$('#poDateInput').value=po?.poDate||'';$('#poProgramOtherInput').value=po?.programOther||'';syncPoProgramOther();$('#poVendorInput').value='';renderPoVendorChoices(po?.vendors||po?.supplierNames||(po?.vendor?[po.vendor]:[]));$('#poItemLines').innerHTML='';const totalInput=$('#poGrandTotalInput');totalInput.value='0.00';(po?.lines?.length?po.lines:[{}]).forEach(addPoLine);calculatePoTotals();$('#poNotesInput').value=po?.notes||'';poPendingFile=null;renderPoFileStatus(po?.fileName||'');setPoImportStatus(po?.fileName?'Attached file saved. Attach a new PO file to auto-fill/replace available fields.':'PDF, TXT and CSV files can be read to auto-fill the PO form.');$('#deletePoBtn').style.visibility=po?'visible':'hidden';$('#poModal').classList.remove('hidden');
+  $('#poRecordId').value=po?.id||'';$('#poModalTitle').textContent=po?'Edit PO':'Create New PO';$('#poNumberInput').value=po?.number||'';$('#poProgramInput').value=po?.program||'REGU';$('#poDateInput').value=po?.poDate||'';$('#poProgramOtherInput').value=po?.programOther||'';syncPoProgramOther();renderPoVendorChoices(po?.vendors||po?.supplierNames||(po?.vendor?[po.vendor]:[]),po?.vendorSupplierIds||po?.supplierIds||[]);$('#poItemLines').innerHTML='';const totalInput=$('#poGrandTotalInput');totalInput.value='0.00';(po?.lines?.length?po.lines:[{}]).forEach(addPoLine);calculatePoTotals();$('#poNotesInput').value=po?.notes||'';poPendingFile=null;renderPoFileStatus(po?.fileName||'');$('#deletePoBtn').style.visibility=po?'visible':'hidden';$('#poModal').classList.remove('hidden');
 }
 function closePoEditor(){$('#poModal').classList.add('hidden');poPendingFile=null}
 function readPoLines(){return $$('#poItemLines tr').map(tr=>{const totalQuantity=tr.querySelector('.po-total-qty').value===''?'':num(tr.querySelector('.po-total-qty').value),unitsPerCase=tr.querySelector('.po-units-case').value===''?'':num(tr.querySelector('.po-units-case').value),quotedPricePerCase=tr.querySelector('.po-price-case').value===''?'':num(tr.querySelector('.po-price-case').value),bottleQuantity=(totalQuantity===''||unitsPerCase==='')?'':num(totalQuantity)*num(unitsPerCase);return {id:tr.dataset.poLine,itemNo:tr.querySelector('.po-item-no').value.trim(),totalQuantity,yearProductName:tr.querySelector('.po-name').value.trim(),unitSizeMl:tr.querySelector('.po-unit-size').value===''?'':num(tr.querySelector('.po-unit-size').value),unitsPerCase,bottleQuantity,quotedPricePerCase,lineTotal:num(totalQuantity)*num(quotedPricePerCase)}}).filter(x=>x.itemNo||x.yearProductName||x.quotedPricePerCase)}
@@ -1847,7 +1794,7 @@ function ensureReguSeasOtherInvoiceForPo(po){
 async function savePoRecord(){
   if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
   const number=$('#poNumberInput').value.trim();if(!number){alert('Enter the PO number.');return}if(number.length>25){alert('PO number cannot exceed 25 characters.');return}
-  const id=$('#poRecordId').value||uid();const pendingVendor=$('#poVendorInput')?.value.trim()||'';if(pendingVendor&&!poVendorNames.includes(pendingVendor))poVendorNames.push(pendingVendor);const vendors=[...new Set(poVendorNames.map(v=>String(v||'').trim()).filter(Boolean))];if(!vendors.length){alert('Add at least one vendor.');$('#poVendorInput')?.focus();return}const rawRows=$$('#poItemLines tr');if(!rawRows.length){alert('Add at least one PO item line.');return}for(const tr of rawRows){const required=[['.po-item-no','Item No.'],['.po-total-qty','Total Quantity'],['.po-name','Product Name'],['.po-units-case','Units per Case'],['.po-price-case','Quoted Price per Case']];for(const [sel,label] of required){if(tr.querySelector(sel).value.trim()===''){alert(label+' is required for every PO item.');tr.querySelector(sel).focus();return}}}const lines=readPoLines();const totalPoQuotedValue=lines.reduce((sum,line)=>sum+(num(line.totalQuantity)*num(line.quotedPricePerCase)),0);$('#poGrandTotalInput').value=poMoney(totalPoQuotedValue);const old=(state.purchaseOrders||[]).find(x=>x.id===id);const po={id,number,program:$('#poProgramInput').value,programOther:$('#poProgramInput').value==='OTHER'?$('#poProgramOtherInput').value.trim():'',poDate:$('#poDateInput').value,poStatus:old?.poStatus||'',vendors,vendor:vendors.join(', '),supplierIds:[],otherSupplierNames:[...vendors],supplierNames:[...vendors],lines,totalPoQuotedValue:num(totalPoQuotedValue),notes:$('#poNotesInput').value.trim(),fileName:poPendingFile?.name||old?.fileName||''};
+  const id=$('#poRecordId').value||uid();const vendorSupplierIds=[...new Set(poVendorSupplierIds)];const vendors=vendorSupplierIds.map(sid=>(state.suppliers||[]).find(s=>s.id===sid)?.name||'').filter(Boolean);if(!vendors.length){alert('Select at least one vendor from the registered suppliers list.');$('#poVendorSelect')?.focus();return}const rawRows=$$('#poItemLines tr');if(!rawRows.length){alert('Add at least one PO item line.');return}for(const tr of rawRows){const required=[['.po-item-no','Item No.'],['.po-total-qty','Total Quantity'],['.po-name','Product Name'],['.po-units-case','Units per Case'],['.po-price-case','Quoted Price per Case']];for(const [sel,label] of required){if(tr.querySelector(sel).value.trim()===''){alert(label+' is required for every PO item.');tr.querySelector(sel).focus();return}}}const lines=readPoLines();const totalPoQuotedValue=lines.reduce((sum,line)=>sum+(num(line.totalQuantity)*num(line.quotedPricePerCase)),0);$('#poGrandTotalInput').value=poMoney(totalPoQuotedValue);const old=(state.purchaseOrders||[]).find(x=>x.id===id);const po={id,number,program:$('#poProgramInput').value,programOther:$('#poProgramInput').value==='OTHER'?$('#poProgramOtherInput').value.trim():'',poDate:$('#poDateInput').value,poStatus:old?.poStatus||'',vendors,vendor:vendors.join(', '),vendorSupplierIds,supplierIds:[...vendorSupplierIds],otherSupplierNames:[],supplierNames:[...vendors],lines,totalPoQuotedValue:num(totalPoQuotedValue),notes:$('#poNotesInput').value.trim(),fileName:poPendingFile?.name||old?.fileName||''};
   if(po.program==='OTHER'&&!po.programOther){alert('Type the Other PO Program.');return}try{if(poPendingFile)await savePoRecordFile(id,poPendingFile);const i=state.purchaseOrders.findIndex(x=>x.id===id);if(i>=0)state.purchaseOrders[i]=po;else state.purchaseOrders.push(po);ensureInvoiceForPo(po);syncTenderInvoiceStatusFromPo(po);syncRsoInvoiceStatusFromPo(po);save();closePoEditor();if(po.poStatus==='LCBO PAYED'){activate('archived-pos','po-section');renderArchivedPurchaseOrders();}else if(po.program==='TENDER')openPoPage('tender-niss',"TENDER PO'S #");else openPoPage('speciality-services',"PRIVATE ORDER PO'S #");}catch(err){console.error(err);alert('The PO or its attached file could not be saved.')}
 }
 async function removeCurrentPoRecordFile(){const id=$('#poRecordId').value;if(id)await deletePoRecordFile(id);poPendingFile=null;const po=(state.purchaseOrders||[]).find(x=>x.id===id);if(po){po.fileName='';save()}renderPoFileStatus('')}
@@ -2352,8 +2299,8 @@ $('#submissionForm').onsubmit=e=>{e.preventDefault();const r=formRecord();if(r.r
 $('#deleteRecord').onclick=()=>{const id=$('#recordId').value,r=state.records.find(x=>x.id===id);if(r&&confirm('Move this submission to the Recycling Bin?')){moveToRecycleBin('record','All Submitted in Progress Items',r);deleteNtpAttachment(id);deletePoAttachment(id);state.records=state.records.filter(x=>x.id!==id);save();closeModal()}};
 $('#addPoBtn').onclick=()=>openPoEditor();$('#closePoModal').onclick=$('#cancelPoBtn').onclick=closePoEditor;$('#savePoBtn').onclick=savePoRecord;$('#deletePoBtn').onclick=deletePoFromEditor;$('#poProgramInput').onchange=syncPoProgramOther;
 $('#closeShipmentInfo').onclick=$('#closeShipmentInfoBottom').onclick=closeShipmentInfo;$('#addShipmentBtn').onclick=()=>openShipmentEditor();$('#closeShipmentModal').onclick=$('#cancelShipmentBtn').onclick=closeShipmentEditor;$('#saveShipmentBtn').onclick=saveShipment;$('#deleteShipmentBtn').onclick=()=>deleteShipment($('#shipmentRecordId').value);$('#addShipmentPoBtn').onclick=addShipmentPo;$('#shipmentCostInput').oninput=updateShipmentCalculations;$('#shipmentCurrencyInput').onchange=()=>updateShipmentCalculations(true);$('#shipmentExchangeRateInput').oninput=()=>updateShipmentCalculations(false);$('#shipmentPaymentStatusInput').onchange=syncShipmentPaymentOther;$('#shipmentStatusInput').onchange=syncShipmentStatusFields;$('#shipmentRefPalletStatusInput').onchange=syncShipmentYesNoColors;$('#shipmentExportFilesStatusInput').onchange=syncShipmentYesNoColors;const archivedFilterIds=['archivedTenderSearch','archivedYearSearch','archivedItemSearch','archivedAgencySearch','archivedProductSearch','archivedStageSearch','archivedFinalSearch','archivedQuoteFrom','archivedQuoteTo','archivedCurrencySearch','archivedErpFrom','archivedErpTo'];archivedFilterIds.forEach(id=>{const el=$('#'+id);if(el){el.oninput=()=>renderSubmissionTable('archivedSubmissionRows','archived',false);el.onchange=()=>renderSubmissionTable('archivedSubmissionRows','archived',false)}});const archivedAgency=$('#archivedAgencySearch');if(archivedAgency){archivedAgency.innerHTML='<option value="">All agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('')}const archivedProduct=$('#archivedProductSearch');if(archivedProduct){const products=[...new Set(state.records.map(r=>r.productType).filter(Boolean))].sort();archivedProduct.innerHTML='<option value="">All products</option>'+products.map(v=>`<option>${escapeHtml(v)}</option>`).join('')}const clearArchived=$('#clearArchivedSearch');if(clearArchived)clearArchived.onclick=()=>{archivedFilterIds.forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderSubmissionTable('archivedSubmissionRows','archived',false)};[1,2,3,4,5,6].forEach(n=>{$('#shipmentFile'+n).onchange=e=>{readShipmentFile(e.target.files[0],n-1);e.target.value=''};$('#openShipmentFile'+n).onclick=()=>openShipmentFile(n-1);$('#removeShipmentFile'+n).onclick=()=>removeShipmentFile(n-1)});
-if($('#addPoSupplierBtn'))$('#addPoSupplierBtn').onclick=addPoSupplierChoice;if($('#addPoVendorBtn'))$('#addPoVendorBtn').onclick=addPoVendorChoice;if($('#poVendorInput'))$('#poVendorInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addPoVendorChoice()}});if($('#poSupplierSelect'))$('#poSupplierSelect').onchange=syncPoOtherSupplier;
-$('#addPoLineBtn').onclick=()=>addPoLine();$('#poItemLines').addEventListener('input',calculatePoTotals);$('#poItemLines').addEventListener('click',e=>{if(e.target.classList.contains('po-remove-line')){e.target.closest('tr').remove();if(!$('#poItemLines').children.length)addPoLine();calculatePoTotals();}});$('#poFileInput').onchange=async e=>{const file=e.target.files[0]||null;e.target.value='';await autofillPoFromFile(file);};$('#openPoRecordFileBtn').onclick=()=>{if(poPendingFile){const url=URL.createObjectURL(poPendingFile);window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000)}else{const id=$('#poRecordId').value;if(id)openPoRecordFile(id)}};$('#removePoRecordFileBtn').onclick=removeCurrentPoRecordFile;$('#tenderCode').addEventListener('input',autofillTenderById);$('#tenderCode').addEventListener('change',autofillTenderById);$('#closeItemInfo').onclick=$('#closeItemInfoBottom').onclick=closeItemInfo;$('#copyAllItemInfo').onclick=copyAllItemInformation;$('#editItemFromInfo').onclick=()=>{const id=currentInfoItemId;closeItemInfo();activate('items');editItem(id)};$('#addTenderBtn').onclick=()=>openTender();$('#tenderProductNeeds').onchange=syncTenderOtherNeed;$('#workerTenderFilter').onchange=renderWorkerList;const workerSearchIds=['workerTenderIdSearch','workerTenderNameDateSearch','workerSupplierSearch','workerItemSearch','workerOfferedPriceSearch'];workerSearchIds.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderWorkerList});['workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.onchange=renderWorkerList});if($('#toggleWorkerSearch'))$('#toggleWorkerSearch').onclick=()=>{const panel=$('#workerSearchPanel');panel.classList.toggle('open');$('#toggleWorkerSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearWorkerSearch'))$('#clearWorkerSearch').onclick=()=>{[...workerSearchIds,'workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderWorkerList()};const workerAgency=$('#workerAgencySearch');if(workerAgency)workerAgency.innerHTML='<option value="">All agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');$('#closeWorkerItemModal').onclick=$('#cancelWorkerItem').onclick=closeWorkerItemEditor;$('#saveWorkerItem').onclick=saveWorkerListItem;$('#removeWorkerItem').onclick=removeWorkerItemFromEditor;$('#closeTender').onclick=$('#cancelTender').onclick=closeTender;const tenderSearchInputs=['tenderIdSearch','tenderNameSearch','tenderProductNeedsSearch','tenderPresubDateSearch','tenderTastingDateSearch'];tenderSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderTenders});if($('#tenderStatusSearch'))$('#tenderStatusSearch').onchange=renderTenders;if($('#toggleTenderSearch'))$('#toggleTenderSearch').onclick=()=>{const panel=$('#tenderSearchPanel');panel.classList.toggle('open');$('#toggleTenderSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearTenderSearch'))$('#clearTenderSearch').onclick=()=>{[...tenderSearchInputs,'tenderStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderTenders()};window.saveTenderRecord=function(){
+if($('#addPoSupplierBtn'))$('#addPoSupplierBtn').onclick=addPoSupplierChoice;if($('#addPoVendorBtn'))$('#addPoVendorBtn').onclick=addPoVendorChoice;if($('#poSupplierSelect'))$('#poSupplierSelect').onchange=syncPoOtherSupplier;
+$('#addPoLineBtn').onclick=()=>addPoLine();$('#poItemLines').addEventListener('input',calculatePoTotals);$('#poItemLines').addEventListener('click',e=>{if(e.target.classList.contains('po-remove-line')){e.target.closest('tr').remove();if(!$('#poItemLines').children.length)addPoLine();calculatePoTotals();}});$('#poFileInput').onchange=e=>{poPendingFile=e.target.files[0]||null;renderPoFileStatus(poPendingFile?.name||'');e.target.value='';};$('#openPoRecordFileBtn').onclick=()=>{if(poPendingFile){const url=URL.createObjectURL(poPendingFile);window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000)}else{const id=$('#poRecordId').value;if(id)openPoRecordFile(id)}};$('#removePoRecordFileBtn').onclick=removeCurrentPoRecordFile;$('#tenderCode').addEventListener('input',autofillTenderById);$('#tenderCode').addEventListener('change',autofillTenderById);$('#closeItemInfo').onclick=$('#closeItemInfoBottom').onclick=closeItemInfo;$('#copyAllItemInfo').onclick=copyAllItemInformation;$('#editItemFromInfo').onclick=()=>{const id=currentInfoItemId;closeItemInfo();activate('items');editItem(id)};$('#addTenderBtn').onclick=()=>openTender();$('#tenderProductNeeds').onchange=syncTenderOtherNeed;$('#workerTenderFilter').onchange=renderWorkerList;const workerSearchIds=['workerTenderIdSearch','workerTenderNameDateSearch','workerSupplierSearch','workerItemSearch','workerOfferedPriceSearch'];workerSearchIds.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderWorkerList});['workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.onchange=renderWorkerList});if($('#toggleWorkerSearch'))$('#toggleWorkerSearch').onclick=()=>{const panel=$('#workerSearchPanel');panel.classList.toggle('open');$('#toggleWorkerSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearWorkerSearch'))$('#clearWorkerSearch').onclick=()=>{[...workerSearchIds,'workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderWorkerList()};const workerAgency=$('#workerAgencySearch');if(workerAgency)workerAgency.innerHTML='<option value="">All agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');$('#closeWorkerItemModal').onclick=$('#cancelWorkerItem').onclick=closeWorkerItemEditor;$('#saveWorkerItem').onclick=saveWorkerListItem;$('#removeWorkerItem').onclick=removeWorkerItemFromEditor;$('#closeTender').onclick=$('#cancelTender').onclick=closeTender;const tenderSearchInputs=['tenderIdSearch','tenderNameSearch','tenderProductNeedsSearch','tenderPresubDateSearch','tenderTastingDateSearch'];tenderSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderTenders});if($('#tenderStatusSearch'))$('#tenderStatusSearch').onchange=renderTenders;if($('#toggleTenderSearch'))$('#toggleTenderSearch').onclick=()=>{const panel=$('#tenderSearchPanel');panel.classList.toggle('open');$('#toggleTenderSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearTenderSearch'))$('#clearTenderSearch').onclick=()=>{[...tenderSearchInputs,'tenderStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderTenders()};window.saveTenderRecord=function(){
  try{
   const id=$('#tenderRecordId').value||uid();
   const code=String($('#tenderCode').value||'').trim();
@@ -2456,7 +2403,10 @@ $('#exportBtn').onclick=()=>download('zimport-program-backup-'+new Date().toISOS
 $('#csvBtn').onclick=()=>{const keys=['tenderName','tenderDate','agency','supplier','brand','itemName','registered','year','award1','link1','award2','link2','award3','link3','additionalAwards','productType','caseKg','currency','exchangeRate','supplierPrice','supplierCad','agencyFee','bottles','offeredQuoteCurrency','offeredQuote','offeredQuoteCad','erp','transportExpense','netProfit','potentialCases','potentialBottles','totalProfit','sampleProvideDate','sampleStatus','documentsToProvideStatus','sampleDocumentStatus','stage1Decision','finalDecision','finalOrderedQty','comments','ntpStatus','ntpFileName','poStatus','poNumber','poFileName','submissionNumber','poFileName','submissionNumber'];const rows=[keys,...state.records.map(x=>{const d=derive(x);const o={...d,agency:agencyName(x.agencyId),erp:num(x.erpManual)||d.estimatedErp,additionalAwards:(x.extraAwards||[]).map(a=>[a.award,a.link].filter(Boolean).join(' - ')).join(' | ')};return keys.map(k=>String(o[k]??'').replaceAll('"','""'))})];download('zimport-submissions.csv',rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n'),'text/csv')};
 $('#clearBtn').onclick=()=>{if(confirm('Move all program records to the Recycling Bin?')){const groups=[['agency','Agencies','agencies'],['record','Submissions','records'],['item','Tender Item Database','items'],['tender','Tenders','tenders'],['supplier','Suppliers','suppliers'],['purchaseOrder',"PO'S #",'purchaseOrders'],['shipment','Transportation','shipments'],['financialInvoice','LCBO to Agent Tender Invoices','financialInvoices'],['supplierPaymentInvoice','Paying to Suppliers Invoices','supplierPaymentInvoices'],['supplierPaymentInvoice2','Suppliers to Agent Fee Payment','supplierPaymentInvoices2'],['otherInvoice','SEAS/REGU/OTHER TO AGENT INVOICES','otherInvoices'],['otherNewInvoice','OTHER MIXED INVOICES','otherNewInvoices'],['archivedInvoice','Archived Invoices','archivedInvoices'],['archivedShipment','Archived Transportation','archivedShipments'],['archivedPo',"ARCHIVED PO'S",'manuallyArchivedPurchaseOrders'],['countryWinery','Winery Database','countryWineries'],['countryCandidate','Wine Candidates','countryCandidates'],['countryBonus','Performance & Bonuses','countryBonuses']];groups.forEach(([type,page,key])=>(state[key]||[]).forEach(r=>moveToRecycleBin(type,page,r,{collection:key})));groups.forEach(([, ,key])=>state[key]=[]);save()}};
 
-const poSearchInputs=['poNumberSearch','poProgramSearch','poSupplierSearch','poItemSearch'];poSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderPurchaseOrders});if($('#togglePoSearch'))$('#togglePoSearch').onclick=()=>{const panel=$('#poSearchPanel');panel.classList.toggle('open');$('#togglePoSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearPoSearch'))$('#clearPoSearch').onclick=()=>{poSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderPurchaseOrders()};
+const poSearchInputs=['poNumberSearch','poProgramSearch','poSupplierSearch','poItemSearch'];poSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderPurchaseOrders});
+if($('#printPoProformasBtn'))$('#printPoProformasBtn').onclick=printSelectedPoProformas;
+if($('#selectAllPoPrint'))$('#selectAllPoPrint').onchange=e=>{$$('.po-print-checkbox').forEach(cb=>cb.checked=e.target.checked)};
+if($('#togglePoSearch'))$('#togglePoSearch').onclick=()=>{const panel=$('#poSearchPanel');panel.classList.toggle('open');$('#togglePoSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearPoSearch'))$('#clearPoSearch').onclick=()=>{poSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderPurchaseOrders()};
 const simplePageSearches=[
   ['toggleFinancialSearch','financialSearchPanel','financialPageSearch','clearFinancialPageSearch',renderFinancial],
   ['toggleOtherInvoiceSearch','otherInvoiceSearchPanel','otherInvoicePageSearch','clearOtherInvoicePageSearch',renderOtherInvoices],
