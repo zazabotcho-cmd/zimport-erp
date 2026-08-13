@@ -212,6 +212,12 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 .country-sourcing-country-buttons{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap}
 .country-sourcing-page-row{display:flex;align-items:center;gap:0;overflow-x:auto;white-space:nowrap;width:100%}
 .country-sourcing-page-row .tab{flex:0 0 auto}
+
+.country-sourcing-supplier-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%;padding:6px 0;border-bottom:1px solid var(--line);background:#f8fafc}
+.country-sourcing-supplier-buttons{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap}
+.country-source-supplier{padding:8px 12px;font-weight:800}
+.country-source-supplier.active{outline:2px solid var(--blue);outline-offset:-2px}
+.country-sourcing-level-label{font-weight:800;color:#52606d;margin-right:2px}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -287,11 +293,17 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <button id="addCountrySourcingBtn" class="secondary" type="button" style="display:none">+ Add New Country</button>
     <button id="deleteCountrySourcingBtn" class="danger" type="button" style="display:none">Delete Country</button>
   </div>
-  <div class="country-sourcing-page-row">
-    <button class="tab" data-tab="country-dashboard"><span id="countryDashboardTabLabel">Italy Dashboard</span></button>
+  <div class="country-sourcing-supplier-row">
+    <span class="country-sourcing-level-label">Suppliers:</span>
+    <span id="countrySourcingSupplierButtons" class="country-sourcing-supplier-buttons"></span>
+    <button id="addCountrySupplierBtn" class="secondary" type="button">+ Add Supplier</button>
+  </div>
+  <div class="country-sourcing-page-row" id="countrySourcingPageRow">
+    <button class="tab" data-tab="country-dashboard"><span id="countryDashboardTabLabel">Dashboard</span></button>
     <button class="tab" data-tab="country-opportunities">TENDER</button>
     <button class="tab" data-tab="country-wineries">Winery Database</button>
     <button class="tab" data-tab="country-candidates">Wine Candidates</button>
+    <button class="tab" data-tab="country-archived-candidates">Archived Wine Candidates</button>
     <button class="tab" data-tab="country-manager-notes">Portfolio Manager Notes</button>
     <button class="tab" data-tab="country-performance">Performance &amp; Bonuses</button>
     <button class="tab" data-tab="country-manager-recycle-bin">Recycling Bin</button>
@@ -310,6 +322,13 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 <section id="country-opportunities" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — TENDER</h2><p class="note">Read-only tender information. This page automatically shows tenders created in TENDERS and announced to the Italy Country Portfolio & Sourcing Representative. Tenders cannot be created, edited, or deleted here.</p></div></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name</th><th>Product Needs</th><th>Pre-Submission Date</th><th>Tasting Date</th><th>Status</th><th>Notes</th><th>Wine Candidates</th></tr></thead><tbody id="italyOpportunityRows"></tbody></table></div></div></section>
 <section id="country-wineries" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — Winery Database</h2><p class="note">All local relationships belong in the Zimport database so supplier intelligence remains with the company.</p></div><button type="button" onclick="openItalyWineryForm()">+ Add Winery</button></div><div id="italyWineryForm" class="item-group hidden" style="margin:16px 0"><div class="form-grid three"><label>Winery Name *<input id="itWinName"></label><label>Region<input id="itWinRegion"></label><label>Appellation<input id="itWinApp"></label><label>Contact Person<input id="itWinContact"></label><label>Email<input id="itWinEmail" type="email"></label><label>Phone / WhatsApp<input id="itWinPhone"></label><label>Website<input id="itWinWeb"></label><label>Ontario Representation<select id="itWinOntario"><option>No</option><option>Yes</option><option>Unknown</option></select></label><label>Exclusivity Available?<select id="itWinExclusive"><option>Unknown</option><option>Yes</option><option>No</option></select></label><label>Relationship<select id="itWinRelationship"><option>New Contact</option><option>Communication Started</option><option>Negotiating</option><option>Strong Relationship</option><option>Strategic Supplier</option></select></label><label>Local Market Strength (1–5)<input id="itWinStrength" type="number" min="1" max="5"></label><label class="full">Representative Intelligence / Notes<textarea id="itWinNotes" placeholder="Local reputation, best sellers, export demand, pricing intelligence..."></textarea></label></div><div class="modal-actions"><span></span><button class="secondary" onclick="closeItalyWineryForm()">Cancel</button><button onclick="saveItalyWinery()">Save Winery</button></div></div><div class="toolbar"><input id="italyWinerySearch" placeholder="Search winery, region, contact or notes" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Winery</th><th>Region</th><th>Appellation</th><th>Contact</th><th>Ontario Rep?</th><th>Exclusivity</th><th>Relationship</th><th>Local Strength</th><th>Intelligence</th><th>Action</th></tr></thead><tbody id="italyWineryRows"></tbody></table></div></div></section>
 <section id="country-candidates" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — Wine Candidates</h2><p class="note">Wine Candidate uses the same detailed product profile as Add Tender Item, with country-sourcing fields added for the representative.</p></div><button type="button" onclick="openItalyCandidateForm()">+ Propose Wine</button></div><div class="table-wrap"><table><thead><tr><th>Wine</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Head Office ACTION STATUS</th><th>Work Status</th><th>Action</th></tr></thead><tbody id="italyCandidateRows"></tbody></table></div></div></section>
+<section id="country-archived-candidates" class="panel"><div class="box">
+  <div class="section-head"><div><h2 id="archivedCountryCandidatesTitle">Italy — Archived Wine Candidates</h2><p class="note">Archived wine candidates for the selected country. Update information and propose again, or delete to the Portfolio Manager Recycling Bin.</p></div></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Wine</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Archived Date</th><th>Actions</th></tr></thead>
+    <tbody id="archivedCountryCandidateRows"></tbody>
+  </table></div>
+</div></section>
 <section id="country-manager-notes" class="panel"><div class="box">
 <div class="section-head"><div><h2 id="portfolioManagerNotesTitle">Portfolio Manager Notes</h2><p class="note">Notes for the selected country portfolio.</p></div><button id="addPortfolioManagerNoteBtn" type="button">+ Add Note</button></div>
 <div class="table-wrap"><table><thead><tr><th>Date</th><th>Note Title</th><th>Note</th><th>Actions</th></tr></thead><tbody id="portfolioManagerNotesRows"></tbody></table></div>
@@ -988,6 +1007,11 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 
 <div id="workerItemModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="workerItemModalTitle">Add Item to Worker Registration List</h2><p>Select an item from the Tender Item Database and assign registration details.</p></div><button id="closeWorkerItemModal" class="icon">×</button></div><input type="hidden" id="workerEditTenderId"><input type="hidden" id="workerEditWorkId"><div class="form-grid"><label>Tender *<select id="workerItemTender"></select></label><label class="full">Select item from Tender Item Database *<select id="workerDatabaseItem"></select></label><label>Offered Price<input id="workerOfferedPrice" type="number" step="0.01"></label><label>Currency<select id="workerCurrency"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></label><label>Agency / Where to Register<select id="workerAgency"></select></label><label>Work Status<select id="workerStatus"><option>To Register</option><option>In Progress</option><option>Registered in LCBO NISS</option><option>On Hold</option></select></label><label class="full">Instructions<textarea id="workerInstructions"></textarea></label></div><div class="modal-actions"><button type="button" id="removeWorkerItem" class="danger">Remove Item</button><span></span><button type="button" id="cancelWorkerItem" class="secondary">Cancel</button><button type="button" id="saveWorkerItem">Add Item</button></div></div></div>
 <div id="tenderModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="tenderModalTitle">Create a Tender</h2><p>All fields marked * are mandatory. Mark the Country Portfolio &amp; Sourcing Representatives who should receive this tender, then click Announce Tender.</p></div><button id="closeTender" class="icon">×</button></div><input type="hidden" id="tenderRecordId"><div class="form-grid"><label>Tender ID *<input id="tenderCode" type="number" step="1" placeholder="Enter tender ID" required></label><label>Tender Name *<input id="tenderNameInput" placeholder="Example: Emerging Europe 2026" required></label><label>Product Needs *<select id="tenderProductNeeds" required><option value="">Select</option><option>BEER</option><option>DEST COLLECTION</option><option>DUTY FREE</option><option>ECOMMERCE</option><option>ONE-ONE-ONE</option><option>READY TO DRINK</option><option>SPIRITS</option><option>VINTAGES</option><option>VINTAGES ADHOC</option><option>VINTAGES DIRECT</option><option>WINES</option><option>Other</option></select></label><label id="tenderOtherNeedWrap" class="hidden">Other Product Need *<input id="tenderOtherNeed" placeholder="Type product need name"></label><label>Pre-Submission Date *<input id="tenderPresubDate" type="date" required></label><label>Tasting Date *<input id="tenderTastingDate" type="date" required></label><label>Status *<select id="tenderStatus" required><option value="">Select</option><option>Active</option><option>Closed</option></select></label><label class="full">Notes *<textarea id="tenderNotes" required></textarea></label><fieldset class="item-group full"><legend>Country Portfolio &amp; Sourcing Representatives *</legend><p class="note">Mark every country representative who should receive this tender announcement.</p><div class="form-grid three" id="tenderRepresentativeChoices"></div><div id="tenderRepresentativeError" class="note" style="color:var(--red);display:none;margin-top:8px">Select at least one Country Portfolio &amp; Sourcing Representative.</div></fieldset></div><div class="modal-actions"><button type="button" id="deleteTender" class="danger">Delete</button><span></span><button type="button" id="cancelTender" class="secondary">Cancel</button><button type="button" id="saveTender" onclick="saveTenderRecord()">Announce Tender</button></div></div></div>
+<div id="countrySupplierModal" class="modal hidden"><div class="modal-card" style="max-width:520px">
+<div class="modal-head"><div><h2>Add Supplier</h2><p class="note" id="countrySupplierModalCountry"></p></div><button id="closeCountrySupplierModal" class="icon" type="button">×</button></div>
+<div class="form-grid"><label class="full">Supplier Name *<input id="newCountrySupplierName" maxlength="120" placeholder="Type supplier name"></label></div>
+<div class="modal-actions"><span></span><button id="cancelCountrySupplierBtn" type="button" class="secondary">Cancel</button><button id="saveCountrySupplierBtn" type="button">Add Supplier</button></div>
+</div></div>
 <div id="countrySourcingModal" class="modal hidden"><div class="modal-card" style="max-width:520px"><div class="modal-head"><div><h2>Add New Country</h2><p class="note">Create a new Country Sourcing workspace.</p></div><button id="closeCountrySourcingModal" class="icon" type="button">×</button></div>
 <div class="form-grid"><label class="full">Country Name *<input id="newCountrySourcingName" maxlength="60" placeholder="Type country name"></label></div>
 <div class="modal-actions"><span></span><button id="cancelCountrySourcingBtn" type="button" class="secondary">Cancel</button><button id="saveCountrySourcingBtn" type="button">Create Country</button></div></div></div>
@@ -1054,6 +1078,13 @@ if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
 if(!Array.isArray(state.countryBonuses))state.countryBonuses=[];
 if(!Array.isArray(state.portfolioManagerNotes))state.portfolioManagerNotes=[];
 if(!Array.isArray(state.portfolioManagerRecycleBin))state.portfolioManagerRecycleBin=[];
+if(!Array.isArray(state.archivedCountryCandidates))state.archivedCountryCandidates=[];
+if(!Array.isArray(state.countryPortfolioSuppliers))state.countryPortfolioSuppliers=[];
+(state.countrySourcingCountries||['Italy','Portugal','Spain','France']).forEach(country=>{
+ if(!state.countryPortfolioSuppliers.some(s=>s.country===country)){
+   state.countryPortfolioSuppliers.push({id:'portfolio-supplier-'+String(country).toLowerCase().replace(/[^a-z0-9]+/g,'-'),country,name:'General Portfolio',systemDefault:true,createdAt:new Date().toISOString()});
+ }
+});
 if(!Array.isArray(state.countrySourcingCountries)||!state.countrySourcingCountries.length)state.countrySourcingCountries=['Italy','Portugal','Spain','France'];
 state.countrySourcingCountries=[...new Set(state.countrySourcingCountries.map(x=>String(x||'').trim()).filter(Boolean))];
 if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
@@ -3305,8 +3336,57 @@ function renderOtherNewInvoices(){
 (function(){
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 let currentSourcingCountry='Italy';
+let currentCountrySupplierId='';
+const getCountrySuppliers=country=>(state.countryPortfolioSuppliers||[]).filter(s=>s.country===country);
+const currentCountrySupplier=()=>getCountrySuppliers(currentSourcingCountry).find(s=>s.id===currentCountrySupplierId)||null;
+const selectedSupplierName=()=>currentCountrySupplier()?.name||'';
+const recordMatchesCurrentSupplier=record=>{
+ const current=currentCountrySupplier();if(!current)return false;
+ const sid=String(record?.portfolioSupplierId||'');
+ return sid?sid===current.id:!!current.systemDefault;
+};
 const getSourcingCountries=()=>Array.isArray(state.countrySourcingCountries)&&state.countrySourcingCountries.length?state.countrySourcingCountries:['Italy','Portugal','Spain','France'];
 const italyOnly=a=>(a||[]).filter(x=>(x.country||'Italy')===currentSourcingCountry);
+
+function ensureCountryDefaultSupplier(country){
+ if(!Array.isArray(state.countryPortfolioSuppliers))state.countryPortfolioSuppliers=[];
+ let list=getCountrySuppliers(country);
+ if(!list.length){
+   state.countryPortfolioSuppliers.push({id:uid(),country,name:'General Portfolio',systemDefault:true,createdAt:new Date().toISOString()});
+   list=getCountrySuppliers(country);
+ }
+ return list;
+}
+function renderCountrySupplierControls(){
+ const suppliers=ensureCountryDefaultSupplier(currentSourcingCountry);
+ if(!suppliers.some(s=>s.id===currentCountrySupplierId))currentCountrySupplierId=suppliers[0]?.id||'';
+ const box=document.getElementById('countrySourcingSupplierButtons');
+ if(box){
+   box.innerHTML=suppliers.map(s=>`<button type="button" class="secondary country-source-supplier ${s.id===currentCountrySupplierId?'active':''}" data-supplier-id="${esc(s.id)}">${esc(s.name)}</button>`).join('');
+   box.querySelectorAll('.country-source-supplier').forEach(btn=>btn.onclick=()=>window.setCountryPortfolioSupplier(btn.dataset.supplierId));
+ }
+ const pageRow=document.getElementById('countrySourcingPageRow');if(pageRow)pageRow.style.display=currentCountrySupplierId?'flex':'none';
+}
+window.renderCountrySupplierControls=renderCountrySupplierControls;
+window.setCountryPortfolioSupplier=id=>{
+ if(!getCountrySuppliers(currentSourcingCountry).some(s=>s.id===id))return;
+ currentCountrySupplierId=id;renderCountrySupplierControls();renderItalySourcing();
+};
+window.openCountrySupplierModal=()=>{
+ const l=document.getElementById('countrySupplierModalCountry');if(l)l.textContent='Country: '+currentSourcingCountry;
+ const i=document.getElementById('newCountrySupplierName');if(i)i.value='';
+ show('countrySupplierModal',true);setTimeout(()=>i?.focus(),0);
+};
+window.closeCountrySupplierModal=()=>show('countrySupplierModal',false);
+window.saveCountryPortfolioSupplier=()=>{
+ if(!Array.isArray(state.countryPortfolioSuppliers))state.countryPortfolioSuppliers=[];
+ const input=document.getElementById('newCountrySupplierName');
+ const name=String(input?.value||'').trim().replace(/\s+/g,' ');
+ if(!name){alert('Type the supplier name.');input?.focus();return false}
+ if(getCountrySuppliers(currentSourcingCountry).some(s=>String(s.name||'').toLowerCase()===name.toLowerCase())){alert('This supplier already exists for this country.');return false}
+ const rec={id:uid(),country:currentSourcingCountry,name,createdAt:new Date().toISOString()};
+ state.countryPortfolioSuppliers.push(rec);currentCountrySupplierId=rec.id;save();renderCountrySupplierControls();renderItalySourcing();closeCountrySupplierModal();return true;
+};
 function renderSourcingCountryControls(){
  const countries=getSourcingCountries();
  if(!countries.includes(currentSourcingCountry))currentSourcingCountry=countries[0]||'Italy';
@@ -3338,6 +3418,9 @@ window.saveNewSourcingCountry=()=>{
  if(getSourcingCountries().some(c=>c.toLowerCase()===name.toLowerCase())){alert('This country already exists.');return false}
  state.countrySourcingCountries=[...getSourcingCountries(),name];
  currentSourcingCountry=name;
+ currentCountrySupplierId='';
+ ensureCountryDefaultSupplier(name);
+ currentCountrySupplierId=getCountrySuppliers(name)[0]?.id||'';
  save();
  renderSourcingCountryControls();
  renderItalySourcing();
@@ -3365,6 +3448,7 @@ window.deleteCurrentSourcingCountry=()=>{
  moveRecords('countryCandidates','countryCandidate','Country Sourcing — '+country+' — Wine Candidates');
  moveRecords('countryBonuses','countryBonus','Country Sourcing — '+country+' — Performance & Bonuses');
  moveRecords('portfolioManagerNotes','portfolioManagerNote','Country Sourcing — '+country+' — Portfolio Manager Notes');
+ moveRecords('archivedCountryCandidates','archivedCountryCandidate','Country Sourcing — '+country+' — Archived Wine Candidates');
  (state.tenders||[]).forEach(t=>{if(Array.isArray(t.sourcingRepresentatives))t.sourcingRepresentatives=t.sourcingRepresentatives.filter(x=>x!==country)});
  state.countrySourcingCountries=countries.filter(c=>c!==country);
  currentSourcingCountry=state.countrySourcingCountries[0]||'Italy';
@@ -3378,8 +3462,10 @@ window.deleteCurrentSourcingCountry=()=>{
 window.setSourcingCountry=country=>{
  if(!getSourcingCountries().includes(country))return;
  currentSourcingCountry=country;
+ currentCountrySupplierId='';
  renderSourcingCountryControls();
- const tab=document.getElementById('countryDashboardTabLabel');if(tab)tab.textContent=country+' Dashboard';
+ renderCountrySupplierControls();
+ const tab=document.getElementById('countryDashboardTabLabel');if(tab)tab.textContent='Dashboard';
  const dashboard=document.querySelector('#country-dashboard h2');if(dashboard)dashboard.textContent='Country Portfolio & Sourcing Representative — '+country;
  const badge=document.querySelector('#country-dashboard .badge');if(badge)badge.textContent=country.toUpperCase();
  const candidateTitle=document.querySelector('#country-candidates h2');if(candidateTitle)candidateTitle.textContent=country+' — Wine Candidates';
@@ -3662,7 +3748,7 @@ window.openItalyCandidateForm=async(id='')=>{
 window.closeItalyCandidateForm=()=>show('italyCandidateModal',false);
 
 window.openItalyBonusForm=()=>{const d=document.getElementById('itBonusDate');if(d&&!d.value)d.value=new Date().toISOString().slice(0,10);show('italyBonusForm')};window.closeItalyBonusForm=()=>show('italyBonusForm',false);
-window.saveItalyWinery=()=>{const name=document.getElementById('itWinName').value.trim();if(!name)return alert('Enter winery name.');state.countryWineries.push({id:uid(),country:currentSourcingCountry,name,region:document.getElementById('itWinRegion').value.trim(),appellation:document.getElementById('itWinApp').value.trim(),contact:document.getElementById('itWinContact').value.trim(),email:document.getElementById('itWinEmail').value.trim(),phone:document.getElementById('itWinPhone').value.trim(),website:document.getElementById('itWinWeb').value.trim(),ontario:document.getElementById('itWinOntario').value,exclusive:document.getElementById('itWinExclusive').value,relationship:document.getElementById('itWinRelationship').value,strength:num(document.getElementById('itWinStrength').value),notes:document.getElementById('itWinNotes').value.trim(),createdAt:new Date().toISOString()});save();closeItalyWineryForm();renderItalySourcing()};
+window.saveItalyWinery=()=>{const name=document.getElementById('itWinName').value.trim();if(!name)return alert('Enter winery name.');state.countryWineries.push({id:uid(),country:currentSourcingCountry,portfolioSupplierId:currentCountrySupplierId,name,region:document.getElementById('itWinRegion').value.trim(),appellation:document.getElementById('itWinApp').value.trim(),contact:document.getElementById('itWinContact').value.trim(),email:document.getElementById('itWinEmail').value.trim(),phone:document.getElementById('itWinPhone').value.trim(),website:document.getElementById('itWinWeb').value.trim(),ontario:document.getElementById('itWinOntario').value,exclusive:document.getElementById('itWinExclusive').value,relationship:document.getElementById('itWinRelationship').value,strength:num(document.getElementById('itWinStrength').value),notes:document.getElementById('itWinNotes').value.trim(),createdAt:new Date().toISOString()});save();closeItalyWineryForm();renderItalySourcing()};
 
 window.saveItalyCandidate=async()=>{
  if(!state||typeof state!=='object')state={};
@@ -3675,7 +3761,7 @@ window.saveItalyCandidate=async()=>{
  const supplierCurrency=document.getElementById('itCanCurrency').value,supplierQuoteType=document.getElementById('itCanQuoteType').value,localRetail=document.getElementById('itCanRetail').value.trim(),ontarioExclusive=document.getElementById('itCanExclusive').value,ontarioExportDetails=document.getElementById('itCanOntarioExportDetails').value.trim(),why=document.getElementById('itCanWhy').value.trim(),giftBoxYesNo=document.getElementById('itCanGiftBox').value,giftBoxDescription=document.getElementById('itCanGiftBoxDescription').value.trim(),protectedAppellation=document.getElementById('itCanProtectedAppellation').value,appellationName=document.getElementById('itCanAppellationName').value.trim(),appellationDescription=document.getElementById('itCanAppellationDescription').value.trim(),outstandingLocation=document.getElementById('itCanOutstandingLocation').value.trim(),supplierOntarioAgent=document.getElementById('c_supplierOntarioAgent').value,supplierOntarioAgentDetails=document.getElementById('c_supplierOntarioAgentDetails').value.trim(),supplierOtherProvinceExporter=document.getElementById('c_supplierOtherProvinceExporter').value,supplierOtherProvinceExporterDetails=document.getElementById('c_supplierOtherProvinceExporterDetails').value.trim(),exCellarDeliveryPerCase=num(document.getElementById('itCanExCellarDelivery').value);
  try{
   const itemPhotos=await persistItalyCandidatePhotos(id);
-  const rec={...existing,...data,id,country:currentSourcingCountry,name:data.productDescription||'Untitled Wine Candidate',opportunityId:document.getElementById('itCanOpp').value,supplierPricePerCase:casePrice,bottlesPerCase,supplierCurrency,supplierBottlePrice,supplierQuoteType,exCellarDeliveryPerCase:supplierQuoteType==='EX-CELLAR'?exCellarDeliveryPerCase:'',giftBoxYesNo,giftBoxDescription:giftBoxYesNo==='Yes'?giftBoxDescription:'',ontarioExportDetails:ontarioExclusive==='Yes'?ontarioExportDetails:'',protectedAppellation,appellationName:protectedAppellation==='Yes'?appellationName:'',appellationDescription:protectedAppellation==='Yes'?appellationDescription:'',outstandingLocation,supplierOntarioAgent,supplierOntarioAgentDetails:supplierOntarioAgent==='Yes'?supplierOntarioAgentDetails:'',supplierOtherProvinceExporter,supplierOtherProvinceExporterDetails:supplierOtherProvinceExporter==='Yes'?supplierOtherProvinceExporterDetails:'',sweetnessSugar:document.getElementById('c_sweetnessSugar').value.trim(),itemPhotos,localRetailPricePerBottle:localRetail,ontarioExclusivity:ontarioExclusive,why,intelligence:document.getElementById('itCanIntel').value.trim(),status:existing.id?(existing.status||'Action Required'):'Action Required',headOfficeActionStatus:existing.id?(existing.headOfficeActionStatus||existing.status||'Action Required'):'Action Required',createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  const rec={...existing,...data,id,country:currentSourcingCountry,portfolioSupplierId:existing.portfolioSupplierId||currentCountrySupplierId,name:data.productDescription||'Untitled Wine Candidate',opportunityId:document.getElementById('itCanOpp').value,supplierPricePerCase:casePrice,bottlesPerCase,supplierCurrency,supplierBottlePrice,supplierQuoteType,exCellarDeliveryPerCase:supplierQuoteType==='EX-CELLAR'?exCellarDeliveryPerCase:'',giftBoxYesNo,giftBoxDescription:giftBoxYesNo==='Yes'?giftBoxDescription:'',ontarioExportDetails:ontarioExclusive==='Yes'?ontarioExportDetails:'',protectedAppellation,appellationName:protectedAppellation==='Yes'?appellationName:'',appellationDescription:protectedAppellation==='Yes'?appellationDescription:'',outstandingLocation,supplierOntarioAgent,supplierOntarioAgentDetails:supplierOntarioAgent==='Yes'?supplierOntarioAgentDetails:'',supplierOtherProvinceExporter,supplierOtherProvinceExporterDetails:supplierOtherProvinceExporter==='Yes'?supplierOtherProvinceExporterDetails:'',sweetnessSugar:document.getElementById('c_sweetnessSugar').value.trim(),itemPhotos,localRetailPricePerBottle:localRetail,ontarioExclusivity:ontarioExclusive,why,intelligence:document.getElementById('itCanIntel').value.trim(),status:existing.id?(existing.status||'Action Required'):'Action Required',headOfficeActionStatus:existing.id?(existing.headOfficeActionStatus||existing.status||'Action Required'):'Action Required',createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
   if(existing.id&&normalizeHeadProposalStatus(existing.headOfficeActionStatus||existing.status)==='Approved for LCBO Submission'){
    const protectedKeys=[
     'opportunityId','productDescription','name','supplierPricePerCase','bottlesPerCase','supplierCurrency',
@@ -4039,8 +4125,9 @@ window.moveToPortfolioManagerRecycleBin=(type,page,record,restoreMeta={})=>{
  if(!record)return false;
  if(!Array.isArray(state.portfolioManagerRecycleBin))state.portfolioManagerRecycleBin=[];
  const country=String(record.country||currentSourcingCountry||'Italy');
+ const portfolioSupplierId=record.portfolioSupplierId||currentCountrySupplierId||'';
  state.portfolioManagerRecycleBin.push({
-   id:uid(),country,type,page,label:portfolioRecycleLabel(record),
+   id:uid(),country,portfolioSupplierId,type,page,label:portfolioRecycleLabel(record),
    record:JSON.parse(JSON.stringify(record)),restoreMeta,
    deletedAt:new Date().toISOString()
  });
@@ -4052,7 +4139,7 @@ window.renderPortfolioManagerRecycleBin=()=>{
  const body=document.getElementById('portfolioManagerRecycleRows');if(!body)return;
  if(!Array.isArray(state.portfolioManagerRecycleBin))state.portfolioManagerRecycleBin=[];
  const items=state.portfolioManagerRecycleBin
-   .filter(x=>(x.country||'Italy')===currentSourcingCountry)
+   .filter(x=>(x.country||'Italy')===currentSourcingCountry&&recordMatchesCurrentSupplier(x.record||x))
    .sort((a,b)=>String(b.deletedAt||'').localeCompare(String(a.deletedAt||'')));
  body.innerHTML=items.map(x=>`<tr>
    <td>${esc(x.deletedAt?new Date(x.deletedAt).toLocaleString():'—')}</td>
@@ -4087,7 +4174,7 @@ window.renderPortfolioManagerNotes=function(){
  const title=document.getElementById('portfolioManagerNotesTitle');if(title)title.textContent=currentSourcingCountry+' — Portfolio Manager Notes';
  const rows=document.getElementById('portfolioManagerNotesRows');if(!rows)return;
  if(!Array.isArray(state.portfolioManagerNotes))state.portfolioManagerNotes=[];
- const notes=state.portfolioManagerNotes.filter(x=>(x.country||'Italy')===currentSourcingCountry).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+ const notes=state.portfolioManagerNotes.filter(x=>(x.country||'Italy')===currentSourcingCountry&&recordMatchesCurrentSupplier(x)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
  rows.innerHTML=notes.map(n=>`<tr><td>${esc(n.date||'—')}</td><td><b>${esc(n.title||'Untitled Note')}</b></td><td>${esc((n.note||'').length>180?(n.note||'').slice(0,180)+'…':(n.note||'—'))}</td><td><button type="button" class="secondary small" onclick="openPortfolioManagerNote('${n.id}',true)">Open</button> <button type="button" class="secondary small" onclick="openPortfolioManagerNote('${n.id}',false)">Edit</button> <button type="button" class="danger small" onclick="deletePortfolioManagerNote('${n.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="4">No notes saved for this country.</td></tr>';
 };
 window.openPortfolioManagerNote=(id='',readOnly=false)=>{
@@ -4106,7 +4193,7 @@ window.closePortfolioManagerNote=()=>show('portfolioManagerNoteModal',false);
 window.savePortfolioManagerNote=()=>{
  if(!Array.isArray(state.portfolioManagerNotes))state.portfolioManagerNotes=[];
  const id=$('#portfolioManagerNoteId').value||uid();
- const rec={id,country:currentSourcingCountry,date:$('#portfolioManagerNoteDate').value||new Date().toISOString().slice(0,10),title:$('#portfolioManagerNoteTitleInput').value.trim(),note:$('#portfolioManagerNoteText').value.trim()};
+ const rec={id,country:currentSourcingCountry,portfolioSupplierId:currentCountrySupplierId,date:$('#portfolioManagerNoteDate').value||new Date().toISOString().slice(0,10),title:$('#portfolioManagerNoteTitleInput').value.trim(),note:$('#portfolioManagerNoteText').value.trim()};
  if(!rec.note){alert('Type a note before saving.');return false}
  const i=state.portfolioManagerNotes.findIndex(x=>x.id===id);if(i>=0)state.portfolioManagerNotes[i]=rec;else state.portfolioManagerNotes.push(rec);
  save();closePortfolioManagerNote();renderPortfolioManagerNotes();return true;
@@ -4118,25 +4205,83 @@ window.deletePortfolioManagerNote=id=>{
  state.portfolioManagerNotes=state.portfolioManagerNotes.filter(x=>x.id!==id);
  save();renderPortfolioManagerNotes();renderPortfolioManagerRecycleBin();
 };
+
+window.renderArchivedCountryCandidates=()=>{
+ const title=document.getElementById('archivedCountryCandidatesTitle');if(title)title.textContent=currentSourcingCountry+' — Archived Wine Candidates';
+ const body=document.getElementById('archivedCountryCandidateRows');if(!body)return;
+ if(!Array.isArray(state.archivedCountryCandidates))state.archivedCountryCandidates=[];
+ const tenders=(state.tenders||[]);
+ const wines=(state.countryWineries||[]);
+ const rows=state.archivedCountryCandidates.filter(x=>(x.country||'Italy')===currentSourcingCountry&&recordMatchesCurrentSupplier(x));
+ body.innerHTML=rows.map(x=>{
+   const o=tenders.find(t=>t.id===x.opportunityId);
+   const supplier=x.supplierName||x.producerName||wines.find(w=>w.id===x.wineryId)?.name||'—';
+   const price=x.supplierPricePerCase??x.price??'—';
+   const retail=x.localRetailPricePerBottle??x.localRetail??'—';
+   return `<tr>
+     <td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td>
+     <td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td>
+     <td>${esc(x.archivedAt?new Date(x.archivedAt).toLocaleDateString():'—')}</td>
+     <td><button type="button" class="secondary small" onclick="updateAndProposeArchivedCandidate('${x.id}')">Update Information / Propose Again</button> <button type="button" class="danger small" onclick="deleteArchivedCountryCandidate('${x.id}')">Delete</button></td>
+   </tr>`;
+ }).join('')||'<tr><td colspan="8">No archived wine candidates for this country.</td></tr>';
+};
+window.archiveCountryCandidate=id=>{
+ if(!Array.isArray(state.archivedCountryCandidates))state.archivedCountryCandidates=[];
+ const x=(state.countryCandidates||[]).find(v=>v.id===id);if(!x)return;
+ if(!confirm('Move this wine candidate to Archived Wine Candidates?'))return;
+ state.archivedCountryCandidates.push({...JSON.parse(JSON.stringify(x)),archivedAt:new Date().toISOString()});
+ state.countryCandidates=state.countryCandidates.filter(v=>v.id!==id);
+ save();renderItalySourcing();renderArchivedCountryCandidates();
+};
+window.updateAndProposeArchivedCandidate=id=>{
+ if(!Array.isArray(state.archivedCountryCandidates))state.archivedCountryCandidates=[];
+ const x=state.archivedCountryCandidates.find(v=>v.id===id);if(!x)return;
+ const restored={...JSON.parse(JSON.stringify(x)),status:'Action Required',headOfficeActionStatus:'Action Required',updatedAt:new Date().toISOString()};
+ delete restored.archivedAt;
+ state.archivedCountryCandidates=state.archivedCountryCandidates.filter(v=>v.id!==id);
+ if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
+ const i=state.countryCandidates.findIndex(v=>v.id===id);if(i>=0)state.countryCandidates[i]=restored;else state.countryCandidates.push(restored);
+ save();renderItalySourcing();renderArchivedCountryCandidates();
+ openItalyCandidateForm(id);
+};
+window.deleteArchivedCountryCandidate=id=>{
+ const x=(state.archivedCountryCandidates||[]).find(v=>v.id===id);if(!x)return;
+ if(!confirm('Move this archived wine candidate to the Portfolio Manager Recycling Bin?'))return;
+ moveToPortfolioManagerRecycleBin('archivedCountryCandidate','Archived Wine Candidates',x,{collection:'archivedCountryCandidates'});
+ state.archivedCountryCandidates=state.archivedCountryCandidates.filter(v=>v.id!==id);
+ save();renderArchivedCountryCandidates();renderPortfolioManagerRecycleBin();
+};
 window.renderItalySourcing=function(){
+ renderArchivedCountryCandidates();
  renderPortfolioManagerRecycleBin();
  renderPortfolioManagerNotes();
  renderSourcingCountryControls();
- const dashboard=document.querySelector('#country-dashboard h2');if(dashboard)dashboard.textContent='Country Portfolio & Sourcing Representative — '+currentSourcingCountry;
+ renderCountrySupplierControls();
+ const supplierLabel=selectedSupplierName()||'Select Supplier';
+ const dashboard=document.querySelector('#country-dashboard h2');if(dashboard)dashboard.textContent=currentSourcingCountry+' — '+supplierLabel+' — Dashboard';
  const badge=document.querySelector('#country-dashboard .badge');if(badge)badge.textContent=currentSourcingCountry.toUpperCase();
- const candidateTitle=document.querySelector('#country-candidates h2');if(candidateTitle)candidateTitle.textContent=currentSourcingCountry+' — Wine Candidates';
- const performanceTitle=document.querySelector('#country-performance h2');if(performanceTitle)performanceTitle.textContent=currentSourcingCountry+' Representative — Performance & Bonuses';
- const wineryTitle=document.querySelector('#country-wineries h2');if(wineryTitle)wineryTitle.textContent=currentSourcingCountry+' — Winery Database';
- if(!state.countryWineries)state.countryWineries=[];if(!state.countryCandidates)state.countryCandidates=[];if(!state.countryBonuses)state.countryBonuses=[];const tenders=(state.tenders||[]).filter(t=>(t.sourcingRepresentatives||[]).includes(currentSourcingCountry)),wins=italyOnly(state.countryWineries),can=italyOnly(state.countryCandidates),bon=italyOnly(state.countryBonuses),approved=can.filter(x=>/Approved|Submitted|Winner/.test(x.status)).length,winners=can.filter(x=>x.status==='Winner').length;const k=document.getElementById('italyKpis');if(k)k.innerHTML=[['Active Tenders',tenders.filter(x=>x.status==='Active').length],['Wineries',wins.length],['Wine Candidates',can.length],['Approved / Submitted',approved],['Winners',winners],['Potential Bottles',can.reduce((a,x)=>a+num(x.volume),0).toLocaleString()]].map(x=>`<div class="card"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('');
+ const candidateTitle=document.querySelector('#country-candidates h2');if(candidateTitle)candidateTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Wine Candidates';
+ const performanceTitle=document.querySelector('#country-performance h2');if(performanceTitle)performanceTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Performance & Bonuses';
+ const wineryTitle=document.querySelector('#country-wineries h2');if(wineryTitle)wineryTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Winery Database';
+ const archivedTitle=document.getElementById('archivedCountryCandidatesTitle');if(archivedTitle)archivedTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Archived Wine Candidates';
+ const notesTitle=document.getElementById('portfolioManagerNotesTitle');if(notesTitle)notesTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Portfolio Manager Notes';
+ const recycleTitle=document.getElementById('portfolioManagerRecycleTitle');if(recycleTitle)recycleTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Recycling Bin';
+ if(!state.countryWineries)state.countryWineries=[];if(!state.countryCandidates)state.countryCandidates=[];if(!state.countryBonuses)state.countryBonuses=[];const tenders=(state.tenders||[]).filter(t=>(t.sourcingRepresentatives||[]).includes(currentSourcingCountry)),wins=italyOnly(state.countryWineries).filter(recordMatchesCurrentSupplier),can=italyOnly(state.countryCandidates).filter(recordMatchesCurrentSupplier),bon=italyOnly(state.countryBonuses),approved=can.filter(x=>/Approved|Submitted|Winner/.test(x.status)).length,winners=can.filter(x=>x.status==='Winner').length;const k=document.getElementById('italyKpis');if(k)k.innerHTML=[['Active Tenders',tenders.filter(x=>x.status==='Active').length],['Wineries',wins.length],['Wine Candidates',can.length],['Approved / Submitted',approved],['Winners',winners],['Potential Bottles',can.reduce((a,x)=>a+num(x.volume),0).toLocaleString()]].map(x=>`<div class="card"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('');
 const or=document.getElementById('italyOpportunityRows');if(or)or.innerHTML=tenders.map(t=>{const productNeed=t.productNeeds==='Other'?(t.productNeedsOther||'Other'):t.productNeeds;return `<tr><td>${esc(t.code||'—')}</td><td><b>${esc(t.name||'—')}</b></td><td>${esc(productNeed||'—')}</td><td>${esc(t.presubDate||'—')}</td><td>${esc(t.tastingDate||'—')}</td><td><span class="badge ${esc(t.status||'')}">${esc(t.status||'—')}</span></td><td style="max-width:340px;white-space:normal">${esc(t.notes||'—')}</td><td>${can.filter(c=>c.opportunityId===t.id).length}</td></tr>`}).join('')||'<tr><td colspan="8">No tenders have been created in TENDER NISS yet.</td></tr>';
 const q=(document.getElementById('italyWinerySearch')?.value||'').toLowerCase();const wr=document.getElementById('italyWineryRows');if(wr)wr.innerHTML=wins.filter(x=>JSON.stringify(x).toLowerCase().includes(q)).map(x=>`<tr><td><b>${esc(x.name)}</b></td><td>${esc(x.region||'—')}</td><td>${esc(x.appellation||'—')}</td><td>${esc(x.contact||'—')}<br><small>${esc(x.email||x.phone||'')}</small></td><td>${esc(x.ontario)}</td><td>${esc(x.exclusive)}</td><td><span class="badge">${esc(x.relationship)}</span></td><td>${x.strength?'★'.repeat(Math.min(5,x.strength)):'—'}</td><td style="max-width:300px;white-space:normal">${esc(x.notes||'—')}</td><td><button class="danger small" onclick="deleteItalySource('win','${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="10">No wineries added for this country yet.</td></tr>';
-const cr=document.getElementById('italyCandidateRows');if(cr)cr.innerHTML=can.map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—',workStatus=candidateLcboSubmissionWorkStatus(x);return `<tr><td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(status)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td><span class="badge ${workStatus==='Registered in LCBO NISS'?'work-status-green':workStatus==='—'?'':'work-status-yellow'}">${esc(workStatus)}</span></td><td><button class="small" onclick="openItalyCandidateForm('${x.id}')">Edit</button> <button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="9">No wine candidates proposed yet.</td></tr>';
+const cr=document.getElementById('italyCandidateRows');if(cr)cr.innerHTML=can.map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—',workStatus=candidateLcboSubmissionWorkStatus(x);return `<tr><td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(status)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td><span class="badge ${workStatus==='Registered in LCBO NISS'?'work-status-green':workStatus==='—'?'':'work-status-yellow'}">${esc(workStatus)}</span></td><td><button class="small" onclick="openItalyCandidateForm('${x.id}')">Edit</button> <button type="button" class="secondary small" onclick="archiveCountryCandidate('${x.id}')">Move to Archived Wine Candidates</button> <button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="9">No wine candidates proposed yet.</td></tr>';
 const br=document.getElementById('italyBonusRows');if(br)br.innerHTML=bon.map(x=>`<tr><td>${esc(x.date||'—')}</td><td>${esc(x.type)}</td><td>${esc(x.related||'—')}</td><td><b>${esc(x.currency)} ${num(x.amount).toFixed(2)}</b></td><td><span class="badge">${esc(x.status)}</span></td><td>${esc(x.notes||'—')}</td></tr>`).join('')||'<tr><td colspan="6">No bonus records yet.</td></tr>';const pk=document.getElementById('italyPerformanceKpis');if(pk){const paid=bon.filter(x=>x.status==='Paid').reduce((a,x)=>a+num(x.amount),0),pending=bon.filter(x=>x.status!=='Paid').reduce((a,x)=>a+num(x.amount),0);pk.innerHTML=[['Candidates Proposed',can.length],['Approved',approved],['Winners',winners],['Win Rate',can.length?((winners/can.length)*100).toFixed(1)+'%':'0%'],['Bonus Records',bon.length],['Pending Bonus Value*',pending.toFixed(2)]].map(x=>`<div class="card"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('')}
 const ra=document.getElementById('italyRecentActivity');if(ra)ra.innerHTML=`<div class="row"><span>Newest winery</span><b>${esc(wins.at(-1)?.name||'—')}</b></div><div class="row"><span>Newest candidate</span><b>${esc(can.at(-1)?.name||'—')}</b></div><div class="row"><span>Active Tenders</span><b>${tenders.filter(x=>x.status==='Active').length}</b></div>`;renderHeadOfficeProposals();populateItalySelects()};
 if(document.getElementById('headAddBonusBtn'))document.getElementById('headAddBonusBtn').onclick=()=>openHeadBonusForm();
 if(document.getElementById('headCancelBonusBtn'))document.getElementById('headCancelBonusBtn').onclick=closeHeadBonusForm;
 if(document.getElementById('headSaveBonusBtn'))document.getElementById('headSaveBonusBtn').onclick=saveHeadBonus;
 if(document.getElementById('headBonusCountryFilter'))document.getElementById('headBonusCountryFilter').onchange=renderHeadBonuses;
+if(document.getElementById('addCountrySupplierBtn'))document.getElementById('addCountrySupplierBtn').onclick=openCountrySupplierModal;
+if(document.getElementById('closeCountrySupplierModal'))document.getElementById('closeCountrySupplierModal').onclick=closeCountrySupplierModal;
+if(document.getElementById('cancelCountrySupplierBtn'))document.getElementById('cancelCountrySupplierBtn').onclick=closeCountrySupplierModal;
+if(document.getElementById('saveCountrySupplierBtn'))document.getElementById('saveCountrySupplierBtn').onclick=saveCountryPortfolioSupplier;
+if(document.getElementById('newCountrySupplierName'))document.getElementById('newCountrySupplierName').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();saveCountryPortfolioSupplier()}});
 if(document.getElementById('addCountrySourcingBtn'))document.getElementById('addCountrySourcingBtn').onclick=openCountrySourcingModal;
 if(document.getElementById('deleteCountrySourcingBtn'))document.getElementById('deleteCountrySourcingBtn').onclick=deleteCurrentSourcingCountry;
 if(document.getElementById('closeCountrySourcingModal'))document.getElementById('closeCountrySourcingModal').onclick=closeCountrySourcingModal;
@@ -4148,6 +4293,7 @@ if(document.getElementById('closePortfolioManagerNoteModal'))document.getElement
 if(document.getElementById('cancelPortfolioManagerNoteBtn'))document.getElementById('cancelPortfolioManagerNoteBtn').onclick=closePortfolioManagerNote;
 if(document.getElementById('savePortfolioManagerNoteBtn'))document.getElementById('savePortfolioManagerNoteBtn').onclick=savePortfolioManagerNote;
 document.addEventListener('DOMContentLoaded',renderSourcingCountryControls);
+document.addEventListener('DOMContentLoaded',renderCountrySupplierControls);
 document.addEventListener('DOMContentLoaded',renderHeadBonuses);
 document.addEventListener('DOMContentLoaded',renderItalySourcing);setTimeout(renderItalySourcing,0);
 })();
