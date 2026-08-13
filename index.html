@@ -201,6 +201,11 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 
 .invoice-page-row{display:flex;align-items:stretch;overflow-x:auto;white-space:nowrap;border:1px solid var(--line);border-radius:10px;background:#fff}.invoice-page-row .invoice-page-tab{flex:0 0 auto;background:transparent;color:#4b5a69;border:0;border-right:1px solid var(--line);border-radius:0;padding:14px 18px;font-weight:700}.invoice-page-row .invoice-page-tab:last-child{border-right:0}.invoice-page-row .invoice-page-tab:hover{background:#f5f8fb;color:var(--blue)}
 .archive-status-select{min-width:190px}
+
+.country-source-country{margin-right:4px;padding:9px 13px;font-weight:800}
+.country-source-country.active{outline:2px solid var(--blue);outline-offset:-2px}
+.panel{display:none!important}
+.panel.active{display:block!important}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -271,10 +276,10 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <button class="tab" data-tab="archived-pos">ARCHIVED PO'S</button>
 </nav>
 <nav class="subnav" data-section-nav="country-sourcing">
-  <button class="tab country-source-country active" type="button" onclick="setSourcingCountry('Italy')">Italy</button>
-  <button class="tab country-source-country" type="button" onclick="setSourcingCountry('Portugal')">Portugal</button>
-  <button class="tab country-source-country" type="button" onclick="setSourcingCountry('Spain')">Spain</button>
-  <button class="tab country-source-country" type="button" onclick="setSourcingCountry('France')">France</button>
+  <button class="secondary country-source-country active" type="button" onclick="setSourcingCountry('Italy')">Italy</button>
+  <button class="secondary country-source-country" type="button" onclick="setSourcingCountry('Portugal')">Portugal</button>
+  <button class="secondary country-source-country" type="button" onclick="setSourcingCountry('Spain')">Spain</button>
+  <button class="secondary country-source-country" type="button" onclick="setSourcingCountry('France')">France</button>
   <button class="tab" data-tab="country-dashboard"><span id="countryDashboardTabLabel">Italy Dashboard</span></button>
   <button class="tab" data-tab="country-opportunities">TENDER</button>
   <button class="tab" data-tab="country-wineries">Winery Database</button>
@@ -2400,6 +2405,7 @@ function showCalc(r){const x=calculateLCBO(r);$('#calcResults').innerHTML=[['Cas
 function isAdminOnlyTab(tab){return ['dashboard','all-proposals','all-invoices','financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices','head-performance-bonuses','heads-recycle-bin','settings','program-settings'].includes(tab)}
 function isAdminUser(){return (window.ZIMPORT_CURRENT_ROLE||'readonly')==='admin'}
 function activate(tab,preferredSection=''){
+  if(!tab)return;
   if(!isAdminUser() && isAdminOnlyTab(tab)){
     alert('Administrator access only.');
     activateMainSection('tender-niss');
@@ -2449,8 +2455,8 @@ function activateMainSection(section){
   if(section==='po-section'){openPoPage('po-section',"PO'S #");return;}
   $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
   $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav===section));
-  const tabs=[...document.querySelectorAll(`.subnav[data-section-nav="${section}"] .tab`)];
-  const first=tabs.find(el=>el.style.display!=='none' && !(!isAdminUser() && isAdminOnlyTab(el.dataset.tab)));
+  const tabs=[...document.querySelectorAll(`.subnav[data-section-nav="${section}"] .tab[data-tab]`)];
+  const first=tabs.find(el=>el.style.display!=='none' && el.dataset.tab && !(!isAdminUser() && isAdminOnlyTab(el.dataset.tab)));
   if(first){
     if(first.dataset.tab==='po-page')openPoPage(section,first.dataset.poTitle||"PO'S #");
     else activate(first.dataset.tab,section);
