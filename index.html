@@ -266,6 +266,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </nav>
 <nav class="subnav" data-section-nav="po-section">
   <button class="tab" data-tab="po-page" data-po-title="PO'S #">PO'S #</button>
+  <button class="tab" data-tab="proformas">Proformas</button>
   <button class="tab" data-tab="archived-pos">ARCHIVED PO'S</button>
 </nav>
 <nav class="subnav" data-section-nav="country-sourcing">
@@ -467,8 +468,13 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </div></section>
 
 <section id="po-page" class="panel"><div class="box"><div class="section-head"><div><h2 id="poPageTitle">PO'S #</h2><p class="note">Create and manage active purchase-order records. POs with status LCBO PAYED automatically move to Archived PO'S.</p></div><button id="addPoBtn" type="button">+ Create New PO</button></div>
-<div class="box" style="margin:12px 0;padding:14px;background:#f8fafc">
-  <div class="section-head" style="margin-bottom:8px"><div><h3 style="margin:0">Print PO Proformas</h3><p class="note">Choose an agency and order name, create pallets, then select a pallet and mark the POs that belong on it.</p></div><button id="printPoProformasBtn" type="button">Print PO Proformas</button></div>
+<button type="button" class="secondary page-search-toggle" id="togglePoSearch">Search</button><div class="page-search-panel" id="poSearchPanel"><label>PO #<input id="poNumberSearch" type="search" placeholder="Type PO number"></label><label>PO Program<input id="poProgramSearch" type="search" placeholder="TENDER, REGU, SEAS or OTHER"></label><label>Vendor<input id="poSupplierSearch" type="search" placeholder="Type vendor name"></label><label>Item Description<input id="poItemSearch" type="search" placeholder="Type item description"></label><label>PO Delivery Status<select id="poStatusSearch"><option value="">All statuses</option><option>ARRIVED IN CANADA</option><option>CLEARED OUT FROM THE WAREHOUSE</option></select></label><div class="page-search-actions"><button type="button" class="secondary" id="clearPoSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th>PO #</th><th>PO Program</th><th>Vendor</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>PO Delivery Status</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="poRows"></tbody></table></div></div></section>
+
+<section id="proformas" class="panel"><div class="box">
+  <div class="section-head">
+    <div><h2>Proformas</h2><p class="note">Create pallets, mark available POs, then use Add Marked POs. Once a PO is added to one pallet it cannot be added to another pallet.</p></div>
+    <button id="printPoProformasBtn" type="button">Print PO Proformas</button>
+  </div>
   <div class="form-grid three">
     <label>Agency<select id="poPrintAgencySelect"></select></label>
     <label>Order Name<input id="poPrintOrderName" type="text" maxlength="10" placeholder="Up to 10 letters"></label>
@@ -476,7 +482,27 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   </div>
   <div style="margin-top:10px"><b>Total Pallet Quantity: <span id="poPrintPalletTotal">0</span></b></div>
   <div id="poPrintPalletWorkspace" style="margin-top:10px"></div>
-</div><button type="button" class="secondary page-search-toggle" id="togglePoSearch">Search</button><div class="page-search-panel" id="poSearchPanel"><label>PO #<input id="poNumberSearch" type="search" placeholder="Type PO number"></label><label>PO Program<input id="poProgramSearch" type="search" placeholder="TENDER, REGU, SEAS or OTHER"></label><label>Vendor<input id="poSupplierSearch" type="search" placeholder="Type vendor name"></label><label>Item Description<input id="poItemSearch" type="search" placeholder="Type item description"></label><label>PO Delivery Status<select id="poStatusSearch"><option value="">All statuses</option><option>ARRIVED IN CANADA</option><option>CLEARED OUT FROM THE WAREHOUSE</option></select></label><div class="page-search-actions"><button type="button" class="secondary" id="clearPoSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th style="width:44px"><input id="selectAllPoPrint" type="checkbox" title="Select all visible POs"></th><th>PO #</th><th>PO Program</th><th>Vendor</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>PO Delivery Status</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="poRows"></tbody></table></div></div></section>
+
+  <div class="section-head" style="margin-top:18px">
+    <div><h3 style="margin:0">Available POs</h3><p class="note">Select a pallet above, mark the available POs below, then click Add Marked POs.</p></div>
+    <button id="addMarkedPosToPalletBtn" type="button" class="secondary small">Add Marked POs</button>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr>
+      <th style="width:44px"><input id="selectAllPoPrint" type="checkbox" title="Mark all available POs"></th>
+      <th>PO #</th><th>PO Program</th><th>Vendor</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>PO Delivery Status</th>
+    </tr></thead>
+    <tbody id="proformaPoRows"></tbody>
+  </table></div>
+
+  <div class="section-head" style="margin-top:22px">
+    <div><h3 style="margin:0">Saved Proformas</h3><p class="note">Saved proformas remain available here for opening, printing, or deleting.</p></div>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Order Name</th><th>Agency</th><th>Total Pallets</th><th>POs</th><th>Actions</th></tr></thead>
+    <tbody id="savedProformaRows"></tbody>
+  </table></div>
+</div></section>
 <section id="archived-pos" class="panel"><div class="box"><div class="section-head"><div><h2>ARCHIVED PO'S</h2><p class="note">POs move here automatically when PO Status is LCBO PAYED.</p></div></div><button type="button" class="secondary page-search-toggle" id="toggleArchivedPoSearch">Search</button><div class="page-search-panel" id="archivedPoSearchPanel"><label>PO #<input id="archivedPoNumberSearch" type="search" placeholder="Type PO number"></label><label>Vendor<input id="archivedPoSupplierSearch" type="search" placeholder="Type vendor name"></label><label>Item Description<input id="archivedPoItemSearch" type="search" placeholder="Type item description"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearArchivedPoSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th>PO #</th><th>PO Program</th><th>Vendor</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>PO Delivery Status</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="archivedPoRows"></tbody></table></div></div></section>
 <section id="all-invoices" class="panel"><div class="box"><div class="section-head"><div><h2>All Invoices</h2><p class="note">Select an invoice page below.</p></div></div><div class="invoice-page-row">
   <button type="button" class="invoice-page-tab" onclick="activate('financial','heads-page')">LCBO to Agent Tender Invoices</button>
@@ -974,6 +1000,7 @@ if(!Array.isArray(state.archivedInvoices))state.archivedInvoices=[];
 if(!Array.isArray(state.otherNewInvoices))state.otherNewInvoices=[];
 if(!Array.isArray(state.recycleBin))state.recycleBin=[];
 if(!Array.isArray(state.headsRecycleBin))state.headsRecycleBin=[];
+if(!Array.isArray(state.savedProformas))state.savedProformas=[];
 if(!state.recycleRetentionDays)state.recycleRetentionDays=90;
 if(state.financial&&typeof state.financial==='object'&&Object.keys(state.financial).length&&!state.financialInvoices.length){state.financialInvoices.push({...state.financial,id:uid(),poNumber:'',invoiceNumber:''});}
 delete state.financial;
@@ -1502,7 +1529,7 @@ function poStatusSelect(po){const status=po.poStatus||'';return `<select class="
 function poDisplayRow(po,archived=false){
   const calculated=(po.lines||[]).reduce((a,x)=>a+(num(x.totalQuantity)*num(x.quotedPricePerCase)),0);
   const statusCell=archived?poStatusBadge(po.poStatus||''):poStatusSelect(po);
-  return `<tr>${archived?'':`<td><input type="checkbox" class="po-print-checkbox" value="${po.id}" onchange="assignPoToActivePrintPallet('${po.id}',this.checked)" aria-label="Assign PO ${escapeHtml(po.number||'')} to selected pallet"></td>`}<td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(poProgramLabel(po))}</td><td>${escapeHtml((po.vendors||[]).join(', ')||po.vendor||((po.supplierNames||[]).join(', '))||'—')}</td><td>${escapeHtml(poItemDescriptions(po)||'—')}</td><td><b>${escapeHtml(poCaseQuantityWithBottlesPerCase(po))}</b></td><td>${poBottleQuantity(po).toLocaleString()}</td><td>${statusCell}</td><td>${escapeHtml((po.currency||'')+' '+poMoney(calculated))}</td><td>${po.fileName?`<button type="button" class="secondary small" onclick="openPoRecordFile('${po.id}')">${escapeHtml(po.fileName)}</button>`:'—'}</td><td><button type="button" class="secondary small" onclick="openPoEditor('${po.id}')">Edit</button> <button type="button" class="danger small" onclick="deletePoRecord('${po.id}')">Delete</button></td></tr>`;
+  return `<tr><td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(poProgramLabel(po))}</td><td>${escapeHtml((po.vendors||[]).join(', ')||po.vendor||((po.supplierNames||[]).join(', '))||'—')}</td><td>${escapeHtml(poItemDescriptions(po)||'—')}</td><td><b>${escapeHtml(poCaseQuantityWithBottlesPerCase(po))}</b></td><td>${poBottleQuantity(po).toLocaleString()}</td><td>${statusCell}</td><td>${escapeHtml((po.currency||'')+' '+poMoney(calculated))}</td><td>${po.fileName?`<button type="button" class="secondary small" onclick="openPoRecordFile('${po.id}')">${escapeHtml(po.fileName)}</button>`:'—'}</td><td><button type="button" class="secondary small" onclick="openPoEditor('${po.id}')">Edit</button> <button type="button" class="danger small" onclick="deletePoRecord('${po.id}')">Delete</button></td></tr>`;
 }
 function updatePoStatusFromRow(id,status){
   const po=(state.purchaseOrders||[]).find(x=>x.id===id);if(!po)return;
@@ -1525,6 +1552,9 @@ let activePoPrintPalletId='';
 function poPrintPalletPoNumbers(pallet){
   return (pallet?.poIds||[]).map(id=>(state.purchaseOrders||[]).find(po=>po.id===id)?.number||'').filter(Boolean);
 }
+function poPrintAssignedPoIds(exceptPalletId=''){
+  return new Set(poPrintPallets.filter(p=>p.id!==exceptPalletId).flatMap(p=>p.poIds||[]));
+}
 function renderPoPrintPalletWorkspace(){
   const wrap=$('#poPrintPalletWorkspace'),total=$('#poPrintPalletTotal');
   if(total)total.textContent=String(poPrintPallets.length);
@@ -1532,7 +1562,7 @@ function renderPoPrintPalletWorkspace(){
   if(!poPrintPallets.length){
     activePoPrintPalletId='';
     wrap.innerHTML='<div class="note">No pallets created yet. Click + Create Pallet.</div>';
-    syncPoPrintCheckboxes();
+    renderProformaPoRows();
     return;
   }
   if(!poPrintPallets.some(p=>p.id===activePoPrintPalletId))activePoPrintPalletId=poPrintPallets[0].id;
@@ -1541,11 +1571,11 @@ function renderPoPrintPalletWorkspace(){
     const active=p.id===activePoPrintPalletId;
     return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin:5px 0;border:1px solid #d8dee8;border-radius:7px;background:${active?'#eef5fb':'#fff'}">
       <button type="button" class="${active?'':'secondary'} small" onclick="selectPoPrintPallet('${p.id}')">Pallet ${i+1}${active?' — SELECTED':''}</button>
-      <span style="flex:1"><b>POs:</b> ${nums.length?nums.map(escapeHtml).join(', '):'None assigned — mark POs below'}</span>
+      <span style="flex:1"><b>POs:</b> ${nums.length?nums.map(escapeHtml).join(', '):'No POs added yet'}</span>
       <button type="button" class="danger small" onclick="deletePoPrintPallet('${p.id}')">Delete Pallet</button>
     </div>`;
   }).join('');
-  syncPoPrintCheckboxes();
+  renderProformaPoRows();
 }
 function createPoPrintPallet(){
   const id='pallet-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
@@ -1560,36 +1590,54 @@ function selectPoPrintPallet(id){
 }
 function deletePoPrintPallet(id){
   const p=poPrintPallets.find(x=>x.id===id);if(!p)return;
-  if(!confirm('Delete this pallet assignment?'))return;
+  if(!confirm('Delete this pallet assignment? The POs on it will become available again.'))return;
   poPrintPallets=poPrintPallets.filter(x=>x.id!==id);
   if(activePoPrintPalletId===id)activePoPrintPalletId=poPrintPallets[0]?.id||'';
   renderPoPrintPalletWorkspace();
 }
-function syncPoPrintCheckboxes(){
+function proformaAvailablePos(){
+  return (state.purchaseOrders||[]).filter(po=>po.poStatus!=='LCBO PAYED');
+}
+function renderProformaPoRows(){
+  const tbody=$('#proformaPoRows');if(!tbody)return;
   const active=poPrintPallets.find(p=>p.id===activePoPrintPalletId);
-  $$('.po-print-checkbox').forEach(cb=>{
-    cb.checked=!!active?.poIds?.includes(cb.value);
-    cb.disabled=!active;
-    cb.title=active?`Assign/unassign this PO to ${poPrintPallets.indexOf(active)+1} pallet`:'Create and select a pallet first';
-  });
+  const assignedElsewhere=poPrintAssignedPoIds(active?.id||'');
+  const rows=proformaAvailablePos().map(po=>{
+    const inActive=!!active?.poIds?.includes(po.id);
+    const unavailable=assignedElsewhere.has(po.id)||inActive;
+    const reason=inActive?'Already added to selected pallet':assignedElsewhere.has(po.id)?'Already assigned to another pallet':'';
+    return `<tr>
+      <td><input type="checkbox" class="po-print-checkbox" value="${po.id}" ${unavailable?'disabled':''} title="${escapeHtml(reason||'Mark this PO to add to the selected pallet')}"></td>
+      <td><b>${escapeHtml(po.number||'—')}</b>${reason?`<br><small>${escapeHtml(reason)}</small>`:''}</td>
+      <td>${escapeHtml(poProgramLabel(po))}</td>
+      <td>${escapeHtml((po.vendors||[]).join(', ')||po.vendor||((po.supplierNames||[]).join(', '))||'—')}</td>
+      <td>${escapeHtml(poItemDescriptions(po)||'—')}</td>
+      <td>${escapeHtml(poCaseQuantityWithBottlesPerCase(po))}</td>
+      <td>${poBottleQuantity(po).toLocaleString()}</td>
+      <td>${poStatusBadge(po.poStatus||'')}</td>
+    </tr>`;
+  }).join('');
+  tbody.innerHTML=rows||'<tr><td colspan="8">No active POs available.</td></tr>';
   const all=$('#selectAllPoPrint');
   if(all){
+    all.checked=false;
     all.disabled=!active;
-    const visible=$$('.po-print-checkbox').filter(cb=>!cb.disabled);
-    all.checked=!!visible.length&&visible.every(cb=>cb.checked);
   }
 }
-function assignPoToActivePrintPallet(poId,checked){
+function addMarkedPosToActivePallet(){
   const active=poPrintPallets.find(p=>p.id===activePoPrintPalletId);
-  if(!active){alert('Create and select a pallet first.');syncPoPrintCheckboxes();return}
+  if(!active){alert('Create and select a pallet first.');return}
+  const ids=$$('.po-print-checkbox:checked:not(:disabled)').map(cb=>cb.value);
+  if(!ids.length){alert('Mark at least one available PO.');return}
+  const assignedElsewhere=poPrintAssignedPoIds(active.id);
   active.poIds=Array.isArray(active.poIds)?active.poIds:[];
-  if(checked){if(!active.poIds.includes(poId))active.poIds.push(poId)}
-  else active.poIds=active.poIds.filter(id=>id!==poId);
+  ids.forEach(id=>{
+    if(!assignedElsewhere.has(id)&&!active.poIds.includes(id))active.poIds.push(id);
+  });
   renderPoPrintPalletWorkspace();
 }
 window.selectPoPrintPallet=selectPoPrintPallet;
 window.deletePoPrintPallet=deletePoPrintPallet;
-window.assignPoToActivePrintPallet=assignPoToActivePrintPallet;
 
 function renderPoPrintAgencyOptions(){
   const sel=$('#poPrintAgencySelect');if(!sel)return;
@@ -1618,7 +1666,7 @@ function poPrintItemRow(po,line){
   const size=line.unitSizeMl||item.sellingUnitSizeMl||item.bottleSizeMl||'';
   return {cases,poNumber:po.number||'',lcbo,desc,vintage,alc,bottles,size,bpc,casePrice,bottlePrice};
 }
-function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets){
+function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets,allowSave=false){
   const logoUrl=new URL('zimport-global-logo.jpg',window.location.href).href;
   const warning='Important !PO numbers may differ only by the last digit.';
   const rows=[];
@@ -1656,11 +1704,12 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets){
     </div>`;
   return `<!doctype html><html><head><meta charset="utf-8"><title>PO Proformas - ${escapeHtml(agency?.name||'Agency')}</title>
   <style>
-    @page{size:landscape;margin:4mm}
+    @page{size:landscape;margin:5mm 5mm 5mm 8mm}
     *{box-sizing:border-box}
     html,body{width:100%;max-width:100%;margin:0;padding:0}
-    body{font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;zoom:.88;overflow:visible}
+    body{font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;overflow:visible}
     .print-actions{text-align:right;margin-bottom:3px}
+    body>div:not(.print-actions),body>table{width:94%;margin-left:3.5%;margin-right:2.5%}
     .sheet-head{position:relative;min-height:.82in;margin-bottom:3px;padding:0 .9in}
     .logo{position:absolute;top:0;right:0;width:.78in;height:.78in;object-fit:contain}
     .order-name{font-size:12px;font-weight:700;margin-top:1px;text-align:center}
@@ -1668,9 +1717,9 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets){
     .warning{font-size:11.5px;font-weight:800;margin:4px 0}
     .top-pallet-warning{font-size:9.5px;font-weight:600;margin:3px 0 5px}
     .pallet-summary{font-size:8px;margin:3px 0 5px}
-    table{width:100%;max-width:100%;border-collapse:collapse;font-size:8.8px;table-layout:fixed}
-    th,td{border:1px solid #333;padding:3px 2px;text-align:center;vertical-align:middle;overflow-wrap:anywhere}
-    th{background:#eee;font-weight:700;white-space:normal;line-height:1.05}
+    table{width:94%;max-width:94%;border-collapse:collapse;font-size:10.5px;table-layout:fixed}
+    th,td{border:1px solid #333;padding:5px 3px;text-align:center;vertical-align:middle;overflow-wrap:anywhere}
+    th{background:#eee;font-weight:700;white-space:normal;line-height:1.15}
     th:nth-child(1),td:nth-child(1){width:8%}
     th:nth-child(2),td:nth-child(2){width:10%}
     th:nth-child(3),td:nth-child(3){width:10%}
@@ -1682,19 +1731,18 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets){
     th:nth-child(9),td:nth-child(9){width:10%}
     .left{text-align:left;min-width:0}
     tfoot td{font-weight:800;background:#f5f5f5}
-    .total-cases{text-align:center;font-size:9px}
+    .total-cases{text-align:center;font-size:11px}
     .bottom-warning{font-size:10px;font-weight:800;margin-top:5px}
     .instructions{font-size:7.2px;line-height:1.15;margin-top:4px}
     .instruction-line{margin:2px 0}.instruction-section{margin:5px 0 0 0}
     @media print{
       .print-actions{display:none}
-      body{zoom:.84}
       table,.sheet-head,.warning,.top-pallet-warning,.pallet-summary{break-inside:avoid}
       thead{display:table-header-group}
       tfoot{display:table-footer-group}
     }
   </style></head><body>
-    <div class="print-actions"><button onclick="window.print()">Print</button></div>
+    <div class="print-actions"><button onclick="window.print()">Print</button>${allowSave?'<button onclick="window.opener&&window.opener.saveCurrentGeneratedProforma&&window.opener.saveCurrentGeneratedProforma()">Save / Move to Proformas</button>':''}</div>
     <div class="sheet-head">
       <div class="order-name">Order Name: ${escapeHtml(orderName||'')}</div>
       <div class="pallets">Total Pallet Quantity: ${escapeHtml(String(totalPallets||0))}</div>
@@ -1702,7 +1750,7 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets){
     </div>
     <div class="warning">${warning}</div>
     <div class="top-pallet-warning"><b>Important !</b> Pallet labels will be provided once the order is ready for pickup. Please inform us at least 10 working days in advance.</div>
-    <div class="pallet-summary">${(pallets||[]).map((p,i)=>`<b>Pallet ${i+1}:</b> ${escapeHtml(poPrintPalletPoNumbers(p).join(', ')||'No PO assigned')}`).join(' &nbsp;&nbsp; ')}</div>
+    <div class="pallet-summary"><b>Pallet Assignment:</b><br>${(pallets||[]).map((p,i)=>`<div><b>Pallet ${i+1}:</b> ${escapeHtml(((p.poNumbers||poPrintPalletPoNumbers(p))||[]).join(', ')||'No PO assigned')}</div>`).join('')}</div>
     <table><thead><tr>
       <th>Case Qtty</th><th>PO#</th><th>LCBO ITEM #</th><th>ITEM DESCRIPTION</th><th>Btls Qtty</th><th>Size in mL</th><th>Bottles per case</th><th>CAD Case Price</th><th>CAD Price</th>
     </tr></thead><tbody>${body}</tbody>
@@ -1711,11 +1759,74 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets){
     <div class="instructions">${instructions}</div>
   </body></html>`;
 }
+
+let currentGeneratedProforma=null;
+function savedProformaPoNumbers(rec){
+  return [...new Set((rec?.pallets||[]).flatMap(p=>p.poNumbers||[]))];
+}
+function renderSavedProformas(){
+  const tbody=$('#savedProformaRows');if(!tbody)return;
+  const rows=(state.savedProformas||[]).map(rec=>`<tr>
+    <td><button type="button" class="clickable-name" onclick="openSavedProforma('${rec.id}')">${escapeHtml(rec.orderName||'Unnamed')}</button></td>
+    <td>${escapeHtml(rec.agency?.name||'—')}</td>
+    <td>${num(rec.totalPallets).toLocaleString()}</td>
+    <td>${escapeHtml(savedProformaPoNumbers(rec).join(', ')||'—')}</td>
+    <td><button type="button" class="secondary small" onclick="openSavedProforma('${rec.id}')">Open</button> <button type="button" class="secondary small" onclick="printSavedProforma('${rec.id}')">Print</button> <button type="button" class="danger small" onclick="deleteSavedProforma('${rec.id}')">Delete Proforma</button></td>
+  </tr>`).join('');
+  tbody.innerHTML=rows||'<tr><td colspan="5">No saved proformas.</td></tr>';
+}
+function savedProformaHtml(rec){
+  return poProformaHtml(rec.selectedPos||[],rec.agency||null,num(rec.totalPallets),rec.orderName||'',rec.pallets||[],false);
+}
+function openSavedProforma(id){
+  const rec=(state.savedProformas||[]).find(x=>x.id===id);if(!rec)return;
+  const w=window.open('','_blank');
+  if(!w){alert('The proforma window was blocked by the browser. Please allow pop-ups and try again.');return}
+  w.document.open();w.document.write(savedProformaHtml(rec));w.document.close();w.focus();
+}
+function printSavedProforma(id){
+  const rec=(state.savedProformas||[]).find(x=>x.id===id);if(!rec)return;
+  const w=window.open('','_blank');
+  if(!w){alert('The print window was blocked by the browser. Please allow pop-ups and try again.');return}
+  w.document.open();w.document.write(savedProformaHtml(rec));w.document.close();w.focus();
+  setTimeout(()=>{try{w.print()}catch(e){}},300);
+}
+function saveCurrentGeneratedProforma(){
+  const d=currentGeneratedProforma;if(!d){alert('Generate a proforma first.');return}
+  if(!Array.isArray(state.savedProformas))state.savedProformas=[];
+  const rec={
+    id:uid(),
+    orderName:d.orderName||'',
+    agency:JSON.parse(JSON.stringify(d.agency||{})),
+    totalPallets:num(d.totalPallets),
+    pallets:JSON.parse(JSON.stringify(d.pallets||[])),
+    selectedPos:JSON.parse(JSON.stringify(d.selectedPos||[])),
+    createdAt:new Date().toISOString()
+  };
+  state.savedProformas.push(rec);
+  save();
+  renderSavedProformas();
+  activate('proformas','po-section');
+  alert('Proforma saved in the Proformas page.');
+}
+function deleteSavedProforma(id){
+  const rec=(state.savedProformas||[]).find(x=>x.id===id);if(!rec)return;
+  if(!confirm('Move this proforma to the Recycling Bin?'))return;
+  moveToRecycleBin('savedProforma','Proformas',rec,{collection:'savedProformas'});
+  state.savedProformas=state.savedProformas.filter(x=>x.id!==id);
+  save();renderSavedProformas();
+}
+window.openSavedProforma=openSavedProforma;
+window.printSavedProforma=printSavedProforma;
+window.deleteSavedProforma=deleteSavedProforma;
+window.saveCurrentGeneratedProforma=saveCurrentGeneratedProforma;
+
 function printSelectedPoProformas(){
   const agencyId=$('#poPrintAgencySelect')?.value||'';
   if(!agencyId){alert('Select the agency to print under.');$('#poPrintAgencySelect')?.focus();return}
   const totalPallets=poPrintPallets.length;
   if(!totalPallets){alert('Create at least one pallet.');return}
+  if(poPrintPallets.some(p=>!(p.poIds||[]).length)){alert('Every created pallet must have at least one PO before printing.');return}
   const orderName=String($('#poPrintOrderName')?.value||'').trim().slice(0,10);
   const ids=[...new Set(poPrintPallets.flatMap(p=>p.poIds||[]))];
   if(!ids.length){alert('Assign at least one PO to a pallet before printing.');return}
@@ -1723,7 +1834,9 @@ function printSelectedPoProformas(){
   const agency=(state.agencies||[]).find(a=>a.id===agencyId)||null;
   const w=window.open('','_blank');
   if(!w){alert('The print window was blocked by the browser. Please allow pop-ups and try again.');return}
-  w.document.open();w.document.write(poProformaHtml(selectedPos,agency,totalPallets,orderName,poPrintPallets));w.document.close();w.focus();
+  const palletSnapshots=poPrintPallets.map(p=>({id:p.id,poIds:[...(p.poIds||[])],poNumbers:poPrintPalletPoNumbers(p)}));
+  currentGeneratedProforma={selectedPos:JSON.parse(JSON.stringify(selectedPos)),agency:JSON.parse(JSON.stringify(agency||{})),totalPallets,orderName,pallets:palletSnapshots};
+  w.document.open();w.document.write(poProformaHtml(selectedPos,agency,totalPallets,orderName,palletSnapshots,true));w.document.close();w.focus();
 }
 window.printSelectedPoProformas=printSelectedPoProformas;
 
@@ -1739,8 +1852,8 @@ function renderPurchaseOrders(){
   });
   const rows=filteredPos.map(po=>poDisplayRow(po,false)).join('');
   const emptyMessage=currentPoContext==='tender-niss'?'No active TENDER purchase orders have been created.':currentPoContext==='speciality-services'?'No active REGU, SEAS, or OTHER private-order POs have been created.':'No active purchase orders have been created.';
-  $('#poRows').innerHTML=rows||`<tr><td colspan="11">${emptyMessage}</td></tr>`;
-  syncPoPrintCheckboxes();
+  $('#poRows').innerHTML=rows||`<tr><td colspan="10">${emptyMessage}</td></tr>`;
+  renderProformaPoRows();
 }
 function renderArchivedPurchaseOrders(){
   if(!$('#archivedPoRows'))return;
@@ -2166,7 +2279,7 @@ window.openGenericInvoiceDetails=openGenericInvoiceDetails;
 document.addEventListener('input',e=>{if(e.target?.id==='winnerBreakdownSearch')renderDashboard()});
 document.addEventListener('change',e=>{if(e.target?.id==='winnerBreakdownSort')renderDashboard()});
 document.addEventListener('click',e=>{if(e.target?.id==='clearWinnerBreakdownSearch'){const q=$('#winnerBreakdownSearch');if(q)q.value='';renderDashboard();}});
-function recycleLabel(type,record){return record?.invoiceNumber||record?.number||record?.name||record?.itemName||record?.productDescription||record?.description||record?.code||record?.shipmentName||record?.poNumber||record?.id||'Deleted record'}
+function recycleLabel(type,record){return record?.invoiceNumber||record?.number||record?.name||record?.orderName||record?.itemName||record?.productDescription||record?.description||record?.code||record?.shipmentName||record?.poNumber||record?.id||'Deleted record'}
 function moveToRecycleBin(type,page,record,restoreMeta={}){if(!record)return false;if(!Array.isArray(state.recycleBin))state.recycleBin=[];const now=new Date(),days=num(state.recycleRetentionDays)||90,deleteAfter=new Date(now.getTime()+days*86400000);state.recycleBin.push({id:uid(),type,page,label:recycleLabel(type,record),record:JSON.parse(JSON.stringify(record)),restoreMeta,deletedAt:now.toISOString(),deleteAfter:deleteAfter.toISOString()});return true}
 function moveToHeadsRecycleBin(type,page,record,restoreMeta={}){if(!record)return false;if(!Array.isArray(state.headsRecycleBin))state.headsRecycleBin=[];const now=new Date();state.headsRecycleBin.push({id:uid(),type,page,label:recycleLabel(type,record),record:JSON.parse(JSON.stringify(record)),restoreMeta,directToHeads:true,deletedAt:now.toISOString(),movedToHeadsAt:now.toISOString()});return true}
 function purgeExpiredRecycle(){if(!isAdminUser()){alert('Only an administrator can move expired Recycling Bin records to Head\'s Recycling Bin.');return}const now=Date.now();if(!Array.isArray(state.headsRecycleBin))state.headsRecycleBin=[];const keep=[];(state.recycleBin||[]).forEach(x=>{if(new Date(x.deleteAfter).getTime()<=now)state.headsRecycleBin.push({...x,movedToHeadsAt:new Date().toISOString()});else keep.push(x)});state.recycleBin=keep;save()}
@@ -2176,7 +2289,7 @@ function restoreHeadsRecycleRecord(id){if(!isAdminUser()){alert('Administrator a
 function permanentlyDeleteHeadsRecycle(id){if(!isAdminUser()){alert('Administrator access only.');return}if(!confirm('Permanently delete this record? This cannot be undone.'))return;state.headsRecycleBin=(state.headsRecycleBin||[]).filter(v=>v.id!==id);save()}
 function renderHeadsRecycleBin(){const body=$('#headsRecycleRows');if(!body)return;const q=String($('#headsRecycleSearch')?.value||'').trim().toLowerCase();const rows=(state.headsRecycleBin||[]).filter(x=>!q||`${x.page} ${x.label}`.toLowerCase().includes(q)).sort((a,b)=>new Date(b.movedToHeadsAt||b.deletedAt)-new Date(a.movedToHeadsAt||a.deletedAt));body.innerHTML=rows.map(x=>`<tr><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.movedToHeadsAt||x.deletedAt).toLocaleString())}</td><td><button type=\"button\" onclick=\"restoreHeadsRecycleRecord('${x.id}')\">Restore</button> <button type=\"button\" class=\"danger\" onclick=\"permanentlyDeleteHeadsRecycle('${x.id}')\">Permanently Delete</button></td></tr>`).join('')||'<tr><td colspan=\"5\" class=\"note\">Head\'s Recycling Bin is empty.</td></tr>'}
 function renderRecycleBin(){const body=$('#recycleRows');if(!body)return;const q=String($('#recycleSearch')?.value||'').trim().toLowerCase();const canAdmin=isAdminUser();const rows=(state.recycleBin||[]).filter(x=>!q||`${x.page} ${x.label}`.toLowerCase().includes(q)).sort((a,b)=>new Date(b.deletedAt)-new Date(a.deletedAt));body.innerHTML=rows.map(x=>`<tr><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.deleteAfter).toLocaleDateString())}</td><td><button type="button" onclick="restoreRecycleRecord('${x.id}')">Restore</button>${canAdmin?` <button type="button" class="danger recycle-permanent-delete" onclick="permanentlyDeleteRecycle('${x.id}')">Delete Permanently</button>`:''}</td></tr>`).join('')||'<tr><td colspan="5" class="note">Recycling Bin is empty.</td></tr>';const sel=$('#recycleRetention');if(sel)sel.value=String(state.recycleRetentionDays||90);document.querySelectorAll('.recycle-admin-only').forEach(el=>el.style.display=canAdmin?'':'none')}
-function renderAll(){syncTenderItemCategoriesFromItems();renderDashboard();renderAgencies();renderSuppliers();renderTenders();populateWinnerAgencySearch();renderTable();renderItems();renderSupplierAllItems();renderPurchaseOrders();renderArchivedPurchaseOrders();renderShipments();renderFinancial();renderSupplierPaymentInvoices();renderSupplierPayment2Invoices();renderOtherInvoices();renderRecycleBin();renderHeadsRecycleBin();renderSettings();applySharedCurrencyOptions()}
+function renderAll(){syncTenderItemCategoriesFromItems();renderDashboard();renderAgencies();renderSuppliers();renderTenders();populateWinnerAgencySearch();renderTable();renderItems();renderSupplierAllItems();renderPurchaseOrders();renderArchivedPurchaseOrders();renderShipments();renderFinancial();renderSupplierPaymentInvoices();renderSupplierPayment2Invoices();renderOtherInvoices();renderRecycleBin();renderHeadsRecycleBin();renderSavedProformas();renderSettings();applySharedCurrencyOptions()}
 function openAgency(id=''){const a=state.agencies.find(x=>x.id===id)||{id:'',name:'',short:'',contactName:'',address1:'',address2:'',cityProvincePostal:'',phone:'',email:'',notes:''};$('#agencyId').value=a.id||'';$('#agencyName').value=a.name||'';$('#agencyShort').value=a.short||'';$('#agencyContactName').value=a.contactName||'';$('#agencyAddress1').value=a.address1||'';$('#agencyAddress2').value=a.address2||'';$('#agencyCityProvincePostal').value=a.cityProvincePostal||'';$('#agencyPhone').value=a.phone||'';$('#agencyEmail').value=a.email||'';$('#agencyNotes').value=a.notes||'';$('#agencyModalTitle').textContent=a.id?'Edit Agency':'Add Agency';$('#deleteAgency').style.visibility=a.id?'visible':'hidden';$('#agencyModal').classList.remove('hidden')}
 function editAgency(id){openAgency(id)}
 function closeAgency(){$('#agencyModal').classList.add('hidden')}
@@ -2547,15 +2660,8 @@ $('#clearBtn').onclick=()=>{if(confirm('Move all program records to the Recyclin
 
 const poSearchInputs=['poNumberSearch','poProgramSearch','poSupplierSearch','poItemSearch'];poSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderPurchaseOrders});
 if($('#printPoProformasBtn'))$('#printPoProformasBtn').onclick=printSelectedPoProformas;
-if($('#createPoPrintPalletBtn'))$('#createPoPrintPalletBtn').onclick=createPoPrintPallet;
-if($('#selectAllPoPrint'))$('#selectAllPoPrint').onchange=e=>{
-  const active=poPrintPallets.find(p=>p.id===activePoPrintPalletId);
-  if(!active){e.target.checked=false;alert('Create and select a pallet first.');return}
-  const ids=$$('.po-print-checkbox').map(cb=>cb.value);
-  if(e.target.checked)active.poIds=[...new Set([...(active.poIds||[]),...ids])];
-  else active.poIds=(active.poIds||[]).filter(id=>!ids.includes(id));
-  renderPoPrintPalletWorkspace();
-};
+if($('#createPoPrintPalletBtn'))$('#createPoPrintPalletBtn').onclick=createPoPrintPallet;if($('#addMarkedPosToPalletBtn'))$('#addMarkedPosToPalletBtn').onclick=addMarkedPosToActivePallet;
+if($('#selectAllPoPrint'))$('#selectAllPoPrint').onchange=e=>{$$('.po-print-checkbox:not(:disabled)').forEach(cb=>cb.checked=e.target.checked)};
 if($('#togglePoSearch'))$('#togglePoSearch').onclick=()=>{const panel=$('#poSearchPanel');panel.classList.toggle('open');$('#togglePoSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearPoSearch'))$('#clearPoSearch').onclick=()=>{poSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderPurchaseOrders()};
 const simplePageSearches=[
   ['toggleFinancialSearch','financialSearchPanel','financialPageSearch','clearFinancialPageSearch',renderFinancial],
