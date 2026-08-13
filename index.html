@@ -871,7 +871,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 <div class="form-grid two shipment-bottom-row"><label>Cost of Shipment<div style="display:flex;gap:6px;align-items:center"><input id="shipmentCostInput" type="number" min="0" step="0.01" style="flex:1"><select id="shipmentCurrencyInput" style="width:82px"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></div></label><label>Transport LCBO PAYMENT STATUS<select id="shipmentPaymentStatusInput"><option value="Not Paid">Not Paid</option><option value="Paid">Paid</option><option value="Other">Other</option></select></label><label><span id="shipmentConverterLabel">Transportation CAD Converter — Enter Manually</span><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span>1 CAD =</span><input id="shipmentExchangeRateInput" type="number" min="0.0001" step="0.0001" style="width:90px" aria-label="Manual transportation exchange rate"><b id="shipmentConverterCurrency">CAD</b></div></label><label id="shipmentPaymentOtherWrap" class="hidden">Other Payment Status<input id="shipmentPaymentOtherInput" maxlength="50" placeholder="Type payment status"></label></div>
 <div class="modal-actions"><button id="deleteShipmentBtn" type="button" class="danger">Delete Shipment</button><span></span><button id="cancelShipmentBtn" type="button" class="secondary">Cancel</button><button id="saveShipmentBtn" type="button">Save Shipment</button></div></div></div>
 <div id="poModal" class="modal hidden"><div class="modal-card po-modal-card"><div class="modal-head"><div><h2 id="poModalTitle">Create New PO</h2><p>Attach a PO file to fill available information automatically, then review and save.</p></div><button id="closePoModal" class="icon">×</button></div><input type="hidden" id="poRecordId">
-<fieldset class="item-group po-file-import"><legend>Attach PO File</legend><label>Choose PO File<input id="poFileInput" type="file" accept=".pdf,.txt,.csv,application/pdf,text/plain,text/csv"></label><div id="poFileStatus" class="attachment-status">No file uploaded</div><div id="poFileImportStatus" class="note">PDF, TXT and CSV files can be read to auto-fill the PO form.</div><div class="inline-actions"><button id="openPoRecordFileBtn" type="button" class="secondary small">Open Attached File</button><button id="removePoRecordFileBtn" type="button" class="danger small">Remove File</button></div></fieldset>
+<fieldset class="item-group po-file-import"><legend>Attach PO File</legend><label>Choose PO File<input id="poFileInput" type="file" accept=".pdf,.txt,.csv,application/pdf,text/plain,text/csv"></label><div id="poFileStatus" class="attachment-status">No file uploaded</div><div id="poFileImportStatus" class="note">Attach a Purchase Order (PO) PDF, TXT or CSV. The program will read the Purchase Order Number, PO Date, Vendors and item details and auto-fill the form.</div><div class="inline-actions"><button id="openPoRecordFileBtn" type="button" class="secondary small">Open Attached File</button><button id="removePoRecordFileBtn" type="button" class="danger small">Remove File</button></div></fieldset>
 <div class="form-grid three">
 <label>PO Number *<input id="poNumberInput" maxlength="25"></label>
 <label>PO Program *<select id="poProgramInput"><option value="REGU">REGU</option><option value="SEAS">SEAS</option><option value="TENDER">TENDER</option><option value="OTHER">OTHER</option></select></label>
@@ -1578,14 +1578,23 @@ function parsePoText(text){
   const flat=raw.replace(/[ \t]+/g,' ');
   const data={};
   data.number=poFirstMatch(flat,[
-    /\b(?:PO|P\.O\.|PURCHASE\s+ORDER)\s*(?:NUMBER|NO\.?|#)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/]{2,24})/i,
-    /\bORDER\s*(?:NUMBER|NO\.?|#)\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/]{2,24})/i
+    /\bPURCHASE\s+ORDER\s*(?:NUMBER|NO\.?|#)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/\.]{1,30})/i,
+    /\bP\.?\s*O\.?\s*(?:NUMBER|NO\.?|#)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/\.]{1,30})/i,
+    /\bPO\s*(?:NUMBER|NO\.?|#)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/\.]{1,30})/i,
+    /\bORDER\s*(?:NUMBER|NO\.?|#)\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/\.]{1,30})/i
   ]);
   data.vendor=poFirstMatch(flat,[
-    /\bVENDOR(?:\s+NAME)?\s*[:\-]\s*([^\n|]{2,120})/i,
-    /\bSUPPLIER(?:\s+NAME)?\s*[:\-]\s*([^\n|]{2,120})/i,
+    /\bVENDORS?(?:\s+NAME)?\s*[:\-]?\s*([^\n|]{2,120})/i,
+    /\bSUPPLIERS?(?:\s+NAME)?\s*[:\-]?\s*([^\n|]{2,120})/i,
     /\bSOLD\s+BY\s*[:\-]\s*([^\n|]{2,120})/i
   ]);
+
+  data.poDate=poFirstMatch(flat,[
+    /\b(?:PURCHASE\s+ORDER\s+DATE|PO\s+DATE|ORDER\s+DATE|DATE)\s*[:\-]?\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})/i,
+    /\b(?:PURCHASE\s+ORDER\s+DATE|PO\s+DATE|ORDER\s+DATE|DATE)\s*[:\-]?\s*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,
+    /\b(?:PURCHASE\s+ORDER\s+DATE|PO\s+DATE|ORDER\s+DATE|DATE)\s*[:\-]?\s*([A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4})/i
+  ]);
+
   data.program=poDetectProgram(flat);
   const lines=raw.split(/\n+/).map(poCleanValue).filter(Boolean);
   const items=[];
@@ -1656,16 +1665,28 @@ async function extractPoFileText(file){
     let full='';
     for(let i=1;i<=pdf.numPages;i++){
       const page=await pdf.getPage(i),content=await page.getTextContent();
-      full+=content.items.map(x=>x.str).join(' ')+'\n';
+      const items=content.items.filter(x=>String(x.str||'').trim()).map(x=>({str:String(x.str||'').trim(),x:x.transform?.[4]||0,y:x.transform?.[5]||0}));
+      items.sort((a,b)=>Math.abs(b.y-a.y)>3?b.y-a.y:a.x-b.x);
+      let rows=[],row=[],lastY=null;
+      for(const it of items){if(lastY!==null&&Math.abs(it.y-lastY)>3){rows.push(row.sort((a,b)=>a.x-b.x).map(v=>v.str).join('  '));row=[]}row.push(it);lastY=it.y}
+      if(row.length)rows.push(row.sort((a,b)=>a.x-b.x).map(v=>v.str).join('  '));
+      full+=rows.join('\n')+'\n';
     }
     return full;
   }
   if(name.endsWith('.txt')||name.endsWith('.csv')||String(file?.type||'').startsWith('text/'))return await file.text();
   throw new Error('This file type cannot be read automatically. Use PDF, TXT or CSV.');
 }
+function normalizePoDate(v){
+  const s=String(v||'').trim();if(!s)return '';
+  let m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);if(m)return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);if(m){let y=m[3];if(y.length===2)y='20'+y;return `${y}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`}
+  const d=new Date(s);if(!isNaN(d))return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return '';
+}
 function applyParsedPoData(data){
   let filled=0;
-  if(data.number){$('#poNumberInput').value=data.number;filled++}
+  if(data.number){$('#poNumberInput').value=data.number;filled++}if(data.poDate){const d=normalizePoDate(data.poDate);if(d){$('#poDateInput').value=d;filled++}}
   if(data.vendor){const parsedVendors=String(data.vendor).split(/\s*(?:,|;|\band\b|&)\s*/i).map(v=>v.trim()).filter(Boolean);poVendorNames=[...new Set([...(poVendorNames||[]),...parsedVendors])];renderPoVendorChoices();$('#poVendorInput').value='';filled+=parsedVendors.length||1}
   if(data.program){$('#poProgramInput').value=data.program;syncPoProgramOther();filled++}
   if(Array.isArray(data.items)&&data.items.length){
@@ -1679,8 +1700,8 @@ function applyParsedPoData(data){
 async function autofillPoFromFile(file){
   poPendingFile=file||null;
   renderPoFileStatus(file?.name||'');
-  if(!file){setPoImportStatus('PDF, TXT and CSV files can be read to auto-fill the PO form.');return}
-  setPoImportStatus('Reading PO file and filling the form...');
+  if(!file){setPoImportStatus('Attach a Purchase Order (PO) PDF, TXT or CSV. The program will read the Purchase Order Number, PO Date, Vendors and item details and auto-fill the form.');return}
+  setPoImportStatus('Reading the Purchase Order and identifying PO Number, PO Date, Vendors and item information...');
   try{
     const extracted=await extractPoFileText(file);
     if(!poCleanValue(extracted))throw new Error('No readable text was found in this file.');
