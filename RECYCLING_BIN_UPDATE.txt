@@ -1,0 +1,10 @@
+RECYCLING BIN UPDATE
+
+1. RECYCLING BIN is now a top-level main navigation page and is accessible to all signed-in users.
+2. Deleted business records are routed to the Recycling Bin instead of being permanently removed.
+3. Restore is available to every user role from the Recycling Bin.
+4. Delete Permanently is displayed and permitted only for Administrator users.
+5. Delete Expired Now and Retention Period controls are Administrator-only.
+6. Permanent-delete functions include an additional administrator role check in code.
+7. Existing ordinary delete permissions remain unchanged; moving records into the Recycling Bin does not grant extra delete rights.
+8. Covered record areas include submissions, archived submissions, tenders, tender items, suppliers and supplier items, POs, transportation, financial/supplier/agency/other invoices, archived invoices, archived transportation, archived POs, LCBO submission work items, and country sourcing records.
