@@ -1485,13 +1485,22 @@ function purchaseOrdersForCurrentSection(){
 function archivedPurchaseOrders(){return (Array.isArray(state.purchaseOrders)?state.purchaseOrders:[]).filter(po=>(po.poStatus||'')==='LCBO PAYED')}
 function poItemDescriptions(po){return (po.lines||[]).map(x=>x.yearProductName||x.itemNo||'').filter(Boolean).join(' / ')}
 function poCaseQuantity(po){return (po.lines||[]).reduce((sum,line)=>sum+num(line.totalQuantity),0)}
+function poCaseQuantityWithBottlesPerCase(po){
+  const lines=(po?.lines||[]).filter(line=>line.totalQuantity!==''&&line.totalQuantity!=null);
+  if(!lines.length)return '—';
+  return lines.map(line=>{
+    const cases=num(line.totalQuantity);
+    const bottlesPerCase=num(line.unitsPerCase);
+    return `${cases.toLocaleString()} × ${bottlesPerCase.toLocaleString()}`;
+  }).join(' / ');
+}
 function poBottleQuantity(po){return (po.lines||[]).reduce((sum,line)=>sum+(line.bottleQuantity!==''&&line.bottleQuantity!=null?num(line.bottleQuantity):num(line.totalQuantity)*num(line.unitsPerCase)),0)}
 function poStatusBadge(status=''){const value=status||'—';const cls=status==='LCBO PAYED'?'status-green':status==='CLEARED OUT FROM THE WAREHOUSE'?'status-blue':'status-yellow';return `<span class="${cls}">${escapeHtml(value)}</span>`}
 function poStatusSelect(po){const status=po.poStatus||'';return `<select class="po-inline-status" onchange="updatePoStatusFromRow('${po.id}',this.value)"><option value="" ${status===''?'selected':''}>Select PO Status</option><option ${status==='ARRIVED IN CANADA'?'selected':''}>ARRIVED IN CANADA</option><option ${status==='CLEARED OUT FROM THE WAREHOUSE'?'selected':''}>CLEARED OUT FROM THE WAREHOUSE</option><option ${status==='LCBO PAYED'?'selected':''}>LCBO PAYED</option></select>`}
 function poDisplayRow(po,archived=false){
   const calculated=(po.lines||[]).reduce((a,x)=>a+(num(x.totalQuantity)*num(x.quotedPricePerCase)),0);
   const statusCell=archived?poStatusBadge(po.poStatus||''):poStatusSelect(po);
-  return `<tr>${archived?'':`<td><input type="checkbox" class="po-print-checkbox" value="${po.id}" aria-label="Select PO ${escapeHtml(po.number||'')} for proforma print"></td>`}<td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(poProgramLabel(po))}</td><td>${escapeHtml((po.vendors||[]).join(', ')||po.vendor||((po.supplierNames||[]).join(', '))||'—')}</td><td>${escapeHtml(poItemDescriptions(po)||'—')}</td><td>${poCaseQuantity(po).toLocaleString()}</td><td>${poBottleQuantity(po).toLocaleString()}</td><td>${statusCell}</td><td>${escapeHtml((po.currency||'')+' '+poMoney(calculated))}</td><td>${po.fileName?`<button type="button" class="secondary small" onclick="openPoRecordFile('${po.id}')">${escapeHtml(po.fileName)}</button>`:'—'}</td><td><button type="button" class="secondary small" onclick="openPoEditor('${po.id}')">Edit</button> <button type="button" class="danger small" onclick="deletePoRecord('${po.id}')">Delete</button></td></tr>`;
+  return `<tr>${archived?'':`<td><input type="checkbox" class="po-print-checkbox" value="${po.id}" aria-label="Select PO ${escapeHtml(po.number||'')} for proforma print"></td>`}<td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(poProgramLabel(po))}</td><td>${escapeHtml((po.vendors||[]).join(', ')||po.vendor||((po.supplierNames||[]).join(', '))||'—')}</td><td>${escapeHtml(poItemDescriptions(po)||'—')}</td><td><b>${escapeHtml(poCaseQuantityWithBottlesPerCase(po))}</b></td><td>${poBottleQuantity(po).toLocaleString()}</td><td>${statusCell}</td><td>${escapeHtml((po.currency||'')+' '+poMoney(calculated))}</td><td>${po.fileName?`<button type="button" class="secondary small" onclick="openPoRecordFile('${po.id}')">${escapeHtml(po.fileName)}</button>`:'—'}</td><td><button type="button" class="secondary small" onclick="openPoEditor('${po.id}')">Edit</button> <button type="button" class="danger small" onclick="deletePoRecord('${po.id}')">Delete</button></td></tr>`;
 }
 function updatePoStatusFromRow(id,status){
   const po=(state.purchaseOrders||[]).find(x=>x.id===id);if(!po)return;
@@ -1576,12 +1585,11 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName){
     @page{size:landscape;margin:10mm}
     *{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0;background:#fff}
     .print-actions{text-align:right;margin-bottom:6px}
-    .sheet-head{position:relative;min-height:1.08in;margin-bottom:6px;padding-right:1.15in}
+    .sheet-head{position:relative;min-height:1.08in;margin-bottom:6px;padding:0 1.15in}
     .logo{position:absolute;top:0;right:0;width:1in;height:1in;object-fit:contain}
-    .agency{font-size:16px;font-weight:700;padding-top:7px}
-    .company-name{font-size:13px;font-weight:700;margin-top:3px}
-    .order-name{font-size:12px;font-weight:700;margin-top:3px}
-    .pallets{font-size:13px;font-weight:700;margin-top:5px}
+    .agency{font-size:16px;font-weight:700;padding-top:7px;text-align:left}
+    .order-name{font-size:14px;font-weight:700;margin-top:3px;text-align:center}
+    .pallets{font-size:14px;font-weight:700;margin-top:5px;text-align:center}
     .warning{font-size:14px;font-weight:800;margin:7px 0}
     .top-pallet-warning{font-size:11px;font-weight:600;margin:5px 0 8px}
     table{width:100%;border-collapse:collapse;font-size:10.5px;table-layout:auto}
@@ -1597,13 +1605,12 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName){
     <div class="print-actions"><button onclick="window.print()">Print</button></div>
     <div class="sheet-head">
       <div class="agency">${escapeHtml(agency?.name||'')}</div>
-      <div class="company-name">Zimport Global Corporation</div>
       <div class="order-name">Order Name: ${escapeHtml(orderName||'')}</div>
       <div class="pallets">Total Pallet Quantity: ${escapeHtml(String(totalPallets||0))}</div>
       <img class="logo" src="${logoUrl}" alt="Zimport Global">
     </div>
     <div class="warning">${warning}</div>
-    <div class="top-pallet-warning"><b>Important !</b> Pallet labels will be provided once the order is ready for pickup. Please inform us at least 3 working days in advance.</div>
+    <div class="top-pallet-warning"><b>Important !</b> Pallet labels will be provided once the order is ready for pickup. Please inform us at least 10 working days in advance.</div>
     <table><thead><tr>
       <th>Case Qtty</th><th>PO#</th><th>LCBO ITEM #</th><th>ITEM DESCRIPTION</th><th>Btls Qtty</th><th>Size in mL</th><th>Bottles per case</th><th>CAD Case Price</th><th>CAD Price</th>
     </tr></thead><tbody>${body}</tbody>
