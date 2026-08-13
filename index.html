@@ -206,6 +206,12 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 .country-source-country.active{outline:2px solid var(--blue);outline-offset:-2px}
 .panel{display:none!important}
 .panel.active{display:block!important}
+
+.country-sourcing-nav{display:flex!important;flex-direction:column;align-items:stretch;gap:6px}
+.country-sourcing-country-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.country-sourcing-country-buttons{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap}
+.country-sourcing-page-row{display:flex;align-items:center;gap:0;overflow-x:auto;white-space:nowrap;width:100%}
+.country-sourcing-page-row .tab{flex:0 0 auto}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -275,14 +281,19 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <button class="tab" data-tab="proformas">Proformas</button>
   <button class="tab" data-tab="archived-pos">ARCHIVED PO'S</button>
 </nav>
-<nav class="subnav" data-section-nav="country-sourcing">
-  <span id="countrySourcingCountryButtons" style="display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap"></span>
-  <button id="addCountrySourcingBtn" class="secondary" type="button" style="display:none">+ Add New Country</button>
-  <button class="tab" data-tab="country-dashboard"><span id="countryDashboardTabLabel">Italy Dashboard</span></button>
-  <button class="tab" data-tab="country-opportunities">TENDER</button>
-  <button class="tab" data-tab="country-wineries">Winery Database</button>
-  <button class="tab" data-tab="country-candidates">Wine Candidates</button>
-  <button class="tab" data-tab="country-performance">Performance & Bonuses</button>
+<nav class="subnav country-sourcing-nav" data-section-nav="country-sourcing">
+  <div class="country-sourcing-country-row">
+    <span id="countrySourcingCountryButtons" class="country-sourcing-country-buttons"></span>
+    <button id="addCountrySourcingBtn" class="secondary" type="button" style="display:none">+ Add New Country</button>
+    <button id="deleteCountrySourcingBtn" class="danger" type="button" style="display:none">Delete Country</button>
+  </div>
+  <div class="country-sourcing-page-row">
+    <button class="tab" data-tab="country-dashboard"><span id="countryDashboardTabLabel">Italy Dashboard</span></button>
+    <button class="tab" data-tab="country-opportunities">TENDER</button>
+    <button class="tab" data-tab="country-wineries">Winery Database</button>
+    <button class="tab" data-tab="country-candidates">Wine Candidates</button>
+    <button class="tab" data-tab="country-performance">Performance &amp; Bonuses</button>
+  </div>
 </nav>
 <nav class="subnav" data-section-nav="recycle-section">
   <button class="tab" data-tab="recycle-bin">Recycling Bin</button>
@@ -3281,7 +3292,9 @@ function renderSourcingCountryControls(){
  const box=document.getElementById('countrySourcingCountryButtons');
  if(box)box.innerHTML=countries.map(country=>`<button class="secondary country-source-country ${country===currentSourcingCountry?'active':''}" type="button" data-country="${esc(country)}">${esc(country)}</button>`).join('');
  if(box)box.querySelectorAll('.country-source-country').forEach(btn=>btn.onclick=()=>window.setSourcingCountry(btn.dataset.country));
- const add=document.getElementById('addCountrySourcingBtn');if(add)add.style.display=(typeof isAdminUser==='function'&&isAdminUser())?'inline-block':'none';
+ const admin=(typeof isAdminUser==='function'&&isAdminUser());
+ const add=document.getElementById('addCountrySourcingBtn');if(add)add.style.display=admin?'inline-block':'none';
+ const del=document.getElementById('deleteCountrySourcingBtn');if(del){del.style.display=admin?'inline-block':'none';del.disabled=!admin||getSourcingCountries().length<=1}
  const bonusCountry=document.getElementById('headBonusCountry');
  if(bonusCountry){const cur=bonusCountry.value;bonusCountry.innerHTML=countries.map(c=>`<option>${esc(c)}</option>`).join('');if(countries.includes(cur))bonusCountry.value=cur}
  const bonusFilter=document.getElementById('headBonusCountryFilter');
@@ -3308,6 +3321,36 @@ window.saveNewSourcingCountry=()=>{
  renderSourcingCountryControls();
  renderItalySourcing();
  closeCountrySourcingModal();
+ return true;
+};
+
+window.deleteCurrentSourcingCountry=()=>{
+ if(!(typeof isAdminUser==='function'&&isAdminUser())){alert('Administrator access only.');return false}
+ const country=currentSourcingCountry;
+ const countries=getSourcingCountries();
+ if(countries.length<=1){alert('At least one Country Sourcing workspace must remain.');return false}
+ const wineryCount=(state.countryWineries||[]).filter(x=>(x.country||'Italy')===country).length;
+ const candidateCount=(state.countryCandidates||[]).filter(x=>(x.country||'Italy')===country).length;
+ const bonusCount=(state.countryBonuses||[]).filter(x=>(x.country||'Italy')===country).length;
+ const tenderCount=(state.tenders||[]).filter(t=>(t.sourcingRepresentatives||[]).includes(country)).length;
+ const ok=confirm(`${country} currently has ${wineryCount} wineries, ${candidateCount} wine candidates, ${bonusCount} bonus records, and ${tenderCount} tenders assigned.\n\nDelete this country workspace?\n\nIts winery, candidate, and bonus records will move to the Recycling Bin. The country will also be removed from tender representative assignments.`);
+ if(!ok)return false;
+ const moveRecords=(key,type,page)=>{
+   const records=(state[key]||[]).filter(x=>(x.country||'Italy')===country);
+   records.forEach(x=>moveToRecycleBin(type,page,x,{collection:key,deletedCountry:country}));
+   state[key]=(state[key]||[]).filter(x=>(x.country||'Italy')!==country);
+ };
+ moveRecords('countryWineries','countryWinery','Country Sourcing — '+country+' — Winery Database');
+ moveRecords('countryCandidates','countryCandidate','Country Sourcing — '+country+' — Wine Candidates');
+ moveRecords('countryBonuses','countryBonus','Country Sourcing — '+country+' — Performance & Bonuses');
+ (state.tenders||[]).forEach(t=>{if(Array.isArray(t.sourcingRepresentatives))t.sourcingRepresentatives=t.sourcingRepresentatives.filter(x=>x!==country)});
+ state.countrySourcingCountries=countries.filter(c=>c!==country);
+ currentSourcingCountry=state.countrySourcingCountries[0]||'Italy';
+ save();
+ renderSourcingCountryControls();
+ renderItalySourcing();
+ if(typeof renderTenders==='function')renderTenders();
+ if(typeof renderHeadBonuses==='function')renderHeadBonuses();
  return true;
 };
 window.setSourcingCountry=country=>{
@@ -3974,6 +4017,7 @@ if(document.getElementById('headCancelBonusBtn'))document.getElementById('headCa
 if(document.getElementById('headSaveBonusBtn'))document.getElementById('headSaveBonusBtn').onclick=saveHeadBonus;
 if(document.getElementById('headBonusCountryFilter'))document.getElementById('headBonusCountryFilter').onchange=renderHeadBonuses;
 if(document.getElementById('addCountrySourcingBtn'))document.getElementById('addCountrySourcingBtn').onclick=openCountrySourcingModal;
+if(document.getElementById('deleteCountrySourcingBtn'))document.getElementById('deleteCountrySourcingBtn').onclick=deleteCurrentSourcingCountry;
 if(document.getElementById('closeCountrySourcingModal'))document.getElementById('closeCountrySourcingModal').onclick=closeCountrySourcingModal;
 if(document.getElementById('cancelCountrySourcingBtn'))document.getElementById('cancelCountrySourcingBtn').onclick=closeCountrySourcingModal;
 if(document.getElementById('saveCountrySourcingBtn'))document.getElementById('saveCountrySourcingBtn').onclick=saveNewSourcingCountry;
