@@ -1715,6 +1715,7 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets,allowS
   const rows=[];
   selectedPos.forEach(po=>(po.lines||[]).forEach(line=>rows.push(poPrintItemRow(po,line))));
   const totalCases=rows.reduce((sum,r)=>sum+num(r.cases),0);
+  const totalBottles=rows.reduce((sum,r)=>sum+num(r.bottles),0);
   const body=rows.map(r=>`<tr>
     <td>${escapeHtml(String(r.cases||''))}</td>
     <td>${escapeHtml(r.poNumber)}</td>
@@ -1774,7 +1775,7 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets,allowS
     th:nth-child(9),td:nth-child(9){width:10%}
     .left{text-align:left;min-width:0}
     tfoot td{font-weight:800;background:#f5f5f5}
-    .total-cases{text-align:center;font-size:11px}
+    .total-cases,.total-bottles{text-align:center;font-size:11px}
     .bottom-warning{font-size:10px;font-weight:800;margin-top:5px}
     .instructions{font-size:7.2px;line-height:1.15;margin-top:4px}
     .instruction-line{margin:2px 0}.instruction-section{margin:5px 0 0 0}
@@ -1797,7 +1798,7 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets,allowS
     <table><thead><tr>
       <th>Case Qtty</th><th>PO#</th><th>LCBO ITEM #</th><th>ITEM DESCRIPTION</th><th>Btls Qtty</th><th>Size in mL</th><th>Bottles per case</th><th>CAD Case Price</th><th>CAD Price</th>
     </tr></thead><tbody>${body}</tbody>
-    <tfoot><tr><td class="total-cases">Total Cases: ${totalCases.toLocaleString()}</td><td colspan="8"></td></tr></tfoot></table>
+    <tfoot><tr><td class="total-cases">Total Cases: ${totalCases.toLocaleString()}</td><td colspan="3"></td><td class="total-bottles">Total Bottles: ${totalBottles.toLocaleString()}</td><td colspan="4"></td></tr></tfoot></table>
     <div class="bottom-warning">${warning}</div>
     <div class="instructions">${instructions}</div>
   </body></html>`;
@@ -1814,7 +1815,7 @@ function renderSavedProformas(){
     <td>${escapeHtml(rec.agency?.name||'—')}</td>
     <td>${num(rec.totalPallets).toLocaleString()}</td>
     <td>${escapeHtml(savedProformaPoNumbers(rec).join(', ')||'—')}</td>
-    <td><button type="button" class="secondary small" onclick="openSavedProforma('${rec.id}')">Open</button> <button type="button" class="secondary small" onclick="printSavedProforma('${rec.id}')">Print</button> <button type="button" class="secondary small" onclick="downloadSavedProforma('${rec.id}')">Download</button> <button type="button" class="danger small" onclick="deleteSavedProforma('${rec.id}')">Delete Proforma</button></td>
+    <td><button type="button" class="secondary small" onclick="openSavedProforma('${rec.id}')">Open</button> <button type="button" class="secondary small" onclick="printSavedProforma('${rec.id}')">Print</button> <button type="button" class="secondary small" onclick="saveSavedProformaFile('${rec.id}')">Save File</button> <button type="button" class="danger small" onclick="deleteSavedProforma('${rec.id}')">Delete Proforma</button></td>
   </tr>`).join('');
   tbody.innerHTML=rows||'<tr><td colspan="5">No saved proformas.</td></tr>';
 }
@@ -1834,15 +1835,30 @@ function printSavedProforma(id){
   w.document.open();w.document.write(savedProformaHtml(rec));w.document.close();w.focus();
   setTimeout(()=>{try{w.print()}catch(e){}},300);
 }
-function downloadSavedProforma(id){
+async function saveSavedProformaFile(id){
   const rec=(state.savedProformas||[]).find(x=>x.id===id);if(!rec)return;
   const html=savedProformaHtml(rec);
   const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
   const safeName=String(rec.orderName||'proforma').replace(/[^a-z0-9_-]+/gi,'-').replace(/^-+|-+$/g,'')||'proforma';
+  const fileName=`${safeName}-proforma.html`;
+  if('showSaveFilePicker' in window){
+    try{
+      const handle=await window.showSaveFilePicker({
+        suggestedName:fileName,
+        types:[{description:'Proforma HTML File',accept:{'text/html':['.html']}}]
+      });
+      const writable=await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    }catch(err){
+      if(err&&err.name==='AbortError')return;
+    }
+  }
+  const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
-  a.download=`${safeName}-proforma.html`;
+  a.download=fileName;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -1875,7 +1891,7 @@ function deleteSavedProforma(id){
 }
 window.openSavedProforma=openSavedProforma;
 window.printSavedProforma=printSavedProforma;
-window.downloadSavedProforma=downloadSavedProforma;
+window.saveSavedProformaFile=saveSavedProformaFile;
 window.deleteSavedProforma=deleteSavedProforma;
 window.saveCurrentGeneratedProforma=saveCurrentGeneratedProforma;
 
