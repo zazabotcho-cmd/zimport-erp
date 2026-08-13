@@ -472,7 +472,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 
 <section id="proformas" class="panel"><div class="box">
   <div class="section-head">
-    <div><h2>Proformas</h2><p class="note">Create pallets, mark available POs, then use Add Marked POs. Once a PO is added to one pallet it cannot be added to another pallet.</p></div>
+    <div><h2>Proformas</h2><p class="note">Create pallets, mark POs, then use Add Marked POs. If one PO must be split across multiple pallets, the same PO can be added to more than one pallet.</p></div>
     <button id="printPoProformasBtn" type="button">Print PO Proformas</button>
   </div>
   <div class="form-grid three">
@@ -484,7 +484,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <div id="poPrintPalletWorkspace" style="margin-top:10px"></div>
 
   <div class="section-head" style="margin-top:18px">
-    <div><h3 style="margin:0">Available POs</h3><p class="note">Select a pallet above, mark the available POs below, then click Add Marked POs.</p></div>
+    <div><h3 style="margin:0">Available POs</h3><p class="note">Select a pallet above, mark the POs below, then click Add Marked POs. POs already used on another pallet remain visible and can be added again if the order must be split.</p></div>
     <button id="addMarkedPosToPalletBtn" type="button" class="secondary small">Add Marked POs</button>
   </div>
   <div class="table-wrap"><table>
@@ -1601,13 +1601,18 @@ function proformaAvailablePos(){
 function renderProformaPoRows(){
   const tbody=$('#proformaPoRows');if(!tbody)return;
   const active=poPrintPallets.find(p=>p.id===activePoPrintPalletId);
-  const assignedElsewhere=poPrintAssignedPoIds(active?.id||'');
   const rows=proformaAvailablePos().map(po=>{
     const inActive=!!active?.poIds?.includes(po.id);
-    const unavailable=assignedElsewhere.has(po.id)||inActive;
-    const reason=inActive?'Already added to selected pallet':assignedElsewhere.has(po.id)?'Already assigned to another pallet':'';
+    const otherPalletNumbers=poPrintPallets
+      .map((p,i)=>({pallet:p,index:i+1}))
+      .filter(x=>x.pallet.id!==active?.id&&(x.pallet.poIds||[]).includes(po.id))
+      .map(x=>x.index);
+    const statusParts=[];
+    if(inActive)statusParts.push('Already added to selected pallet');
+    if(otherPalletNumbers.length)statusParts.push('Also on Pallet '+otherPalletNumbers.join(', '));
+    const reason=statusParts.join(' · ');
     return `<tr>
-      <td><input type="checkbox" class="po-print-checkbox" value="${po.id}" ${unavailable?'disabled':''} title="${escapeHtml(reason||'Mark this PO to add to the selected pallet')}"></td>
+      <td><input type="checkbox" class="po-print-checkbox" value="${po.id}" ${inActive?'disabled':''} title="${escapeHtml(inActive?'Already added to selected pallet':(otherPalletNumbers.length?'This PO is already on another pallet but can be added again to split the order.':'Mark this PO to add to the selected pallet'))}"></td>
       <td><b>${escapeHtml(po.number||'—')}</b>${reason?`<br><small>${escapeHtml(reason)}</small>`:''}</td>
       <td>${escapeHtml(poProgramLabel(po))}</td>
       <td>${escapeHtml((po.vendors||[]).join(', ')||po.vendor||((po.supplierNames||[]).join(', '))||'—')}</td>
@@ -1628,11 +1633,10 @@ function addMarkedPosToActivePallet(){
   const active=poPrintPallets.find(p=>p.id===activePoPrintPalletId);
   if(!active){alert('Create and select a pallet first.');return}
   const ids=$$('.po-print-checkbox:checked:not(:disabled)').map(cb=>cb.value);
-  if(!ids.length){alert('Mark at least one available PO.');return}
-  const assignedElsewhere=poPrintAssignedPoIds(active.id);
+  if(!ids.length){alert('Mark at least one PO.');return}
   active.poIds=Array.isArray(active.poIds)?active.poIds:[];
   ids.forEach(id=>{
-    if(!assignedElsewhere.has(id)&&!active.poIds.includes(id))active.poIds.push(id);
+    if(!active.poIds.includes(id))active.poIds.push(id);
   });
   renderPoPrintPalletWorkspace();
 }
@@ -1710,13 +1714,13 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets,allowS
     body{font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;overflow:visible}
     .print-actions{text-align:right;margin-bottom:3px}
     body>div:not(.print-actions),body>table{width:94%;margin-left:3.5%;margin-right:2.5%}
-    .sheet-head{position:relative;min-height:.82in;margin-bottom:3px;padding:0 .9in}
+    .sheet-head{position:relative;min-height:1.12in;margin-bottom:3px;padding:0 .9in}
     .logo{position:absolute;top:0;right:0;width:.78in;height:.78in;object-fit:contain}
     .order-name{font-size:12px;font-weight:700;margin-top:1px;text-align:center}
     .pallets{font-size:12px;font-weight:700;margin-top:3px;text-align:center}
     .warning{font-size:11.5px;font-weight:800;margin:4px 0}
     .top-pallet-warning{font-size:9.5px;font-weight:600;margin:3px 0 5px}
-    .pallet-summary{font-size:8px;margin:3px 0 5px}
+    .pallet-summary{font-size:11px;line-height:1.35;margin:5px auto 7px;text-align:center;font-weight:600}
     table{width:94%;max-width:94%;border-collapse:collapse;font-size:10.5px;table-layout:fixed}
     th,td{border:1px solid #333;padding:5px 3px;text-align:center;vertical-align:middle;overflow-wrap:anywhere}
     th{background:#eee;font-weight:700;white-space:normal;line-height:1.15}
@@ -1746,11 +1750,11 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets,allowS
     <div class="sheet-head">
       <div class="order-name">Order Name: ${escapeHtml(orderName||'')}</div>
       <div class="pallets">Total Pallet Quantity: ${escapeHtml(String(totalPallets||0))}</div>
+      <div class="pallet-summary"><b>PO's must be loaded on each pallets as following</b><br>${(pallets||[]).map((p,i)=>`<div><b>Pallet ${i+1}:</b> ${escapeHtml(((p.poNumbers||poPrintPalletPoNumbers(p))||[]).join(', ')||'No PO assigned')}</div>`).join('')}</div>
       <img class="logo" src="${logoUrl}" alt="Zimport Global">
     </div>
     <div class="warning">${warning}</div>
     <div class="top-pallet-warning"><b>Important !</b> Pallet labels will be provided once the order is ready for pickup. Please inform us at least 10 working days in advance.</div>
-    <div class="pallet-summary"><b>Pallet Assignment:</b><br>${(pallets||[]).map((p,i)=>`<div><b>Pallet ${i+1}:</b> ${escapeHtml(((p.poNumbers||poPrintPalletPoNumbers(p))||[]).join(', ')||'No PO assigned')}</div>`).join('')}</div>
     <table><thead><tr>
       <th>Case Qtty</th><th>PO#</th><th>LCBO ITEM #</th><th>ITEM DESCRIPTION</th><th>Btls Qtty</th><th>Size in mL</th><th>Bottles per case</th><th>CAD Case Price</th><th>CAD Price</th>
     </tr></thead><tbody>${body}</tbody>
