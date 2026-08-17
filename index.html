@@ -685,7 +685,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
  <div class="table-wrap"><table>
   <thead><tr>
    <th>PO #</th><th>PO Program</th><th>Vendor / Supplier</th><th>LCBO Item #</th><th>Product Name</th>
-   <th>Cases in Stock</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Arrived Date</th><th>Status</th>
+   <th>PO Quote / Case</th><th>Cases in Stock</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Arrived Date</th><th>Status</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -1233,7 +1233,7 @@ if(!Array.isArray(state.countryPortfolioSuppliers))state.countryPortfolioSupplie
 });
 if(!Array.isArray(state.countrySourcingCountries)||!state.countrySourcingCountries.length)state.countrySourcingCountries=['Italy','Portugal','Spain','France'];
 state.countrySourcingCountries=[...new Set(state.countrySourcingCountries.map(x=>String(x||'').trim()).filter(Boolean))];
-if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
+if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];if(!Array.isArray(state.inventoryDeletedPoSnapshots))state.inventoryDeletedPoSnapshots=[];
 state.purchaseOrders.forEach(po=>{if(String(po.poStatus||'').toUpperCase()==='ARRIVED IN CANADA')po.poStatus='Arrived in Canada'});
 if(!Array.isArray(state.manuallyArchivedPurchaseOrders))state.manuallyArchivedPurchaseOrders=[];
 if(!Array.isArray(state.shipments))state.shipments=[];
@@ -1748,12 +1748,25 @@ function transportationStatusOptions(status=''){
 }
 function shipmentStatusSelect(sh){const status=normalizeSharedShipmentStatus(sh.status||'Not Contacted');return `<select class="shipment-inline-status ${shipmentStatusClass(status)}" onchange="updateShipmentStatusFromRow('${sh.id}',this.value)">${transportationStatusOptions(status)}</select>`}
 function updateIncludedPoStatusesForShipment(sh,status){
-  const shared=normalizeSharedShipmentStatus(status);
-  if(!TRANSPORT_SYNC_STATUSES.includes(shared))return;
-  const ids=new Set((sh.poLinks||[]).map(x=>x.poId).filter(Boolean));
-  (state.purchaseOrders||[]).forEach(po=>{
-    if(ids.has(po.id) && !PO_ONLY_STATUSES.includes(normalizeSharedShipmentStatus(po.poStatus||'')))po.poStatus=shared;
-  });
+ const shared=normalizeSharedShipmentStatus(status);
+ if(!TRANSPORT_SYNC_STATUSES.includes(shared))return;
+ const ids=new Set((sh.poLinks||[]).map(x=>x.poId).filter(Boolean));
+ (state.purchaseOrders||[]).forEach(po=>{
+   if(ids.has(po.id)&&!PO_ONLY_STATUSES.includes(normalizeSharedShipmentStatus(po.poStatus||''))){
+     po.poStatus=shared;
+     if(shared==='Arrived in Canada'){
+       po.inventoryArrivalSource='shipment';
+       po.inventoryArrivalShipmentId=sh.id;
+       po.inventoryArrivalShipmentName=sh.name||'';
+       po.inventoryArrivalStatusDate=sh.statusDate||new Date().toISOString().slice(0,10);
+       delete po.inventoryRemovedByShipment;
+     }else if(po.inventoryArrivalShipmentId===sh.id){
+       delete po.inventoryArrivalSource;
+       delete po.inventoryArrivalShipmentId;
+       delete po.inventoryRemovedByShipment;
+     }
+   }
+ });
 }
 function updateShipmentStatusFromRow(id,status){
   const sh=(state.shipments||[]).find(x=>x.id===id);if(!sh)return;
@@ -1788,8 +1801,47 @@ function syncShipmentStatusFields(){const status=$('#shipmentStatusInput')?.valu
 function syncShipmentYesNoColors(){['shipmentRefPalletStatusInput','shipmentExportFilesStatusInput'].forEach(id=>{const el=$('#'+id);if(!el)return;el.classList.remove('yesno-yellow','yesno-green');el.classList.add(el.value==='Yes'?'yesno-green':'yesno-yellow')})}
 function openShipmentEditor(id=''){const sh=(state.shipments||[]).find(x=>x.id===id)||null;$('#shipmentRecordId').value=sh?.id||'';$('#shipmentNameInput').value=sh?.name||'';$('#shipmentCompanyInput').value=sh?.company||'';$('#shipmentPalletQtyInput').value=sh?.palletQty??'';$('#shipmentPhoneInput').value=sh?.phone||'';$('#shipmentEmail1Input').value=sh?.email1||'';$('#shipmentEmail2Input').value=sh?.email2||'';$('#shipmentCurrencyInput').value=sh?.currency||'CAD';$('#shipmentExchangeRateInput').value=sh?(sh.currency==='CAD'?'1':(sh.exchangeRate||'')):'1';$('#shipmentFromInput').value=sh?.from||'';$('#shipmentToInput').value=sh?.to||'';$('#shipmentCostInput').value=sh?.cost??'';$('#shipmentNotesInput').value=sh?.notes||'';$('#shipmentStatusInput').value=sh?.status||'Not Contacted';$('#shipmentPaymentStatusInput').value=sh?.paymentStatus||'Not Paid';$('#shipmentPaymentOtherInput').value=sh?.paymentOther||'';$('#shipmentPickupDateInput').value=sh?.pickupDate||'';$('#shipmentDeliveryDateInput').value=sh?.deliveryDate||'';$('#shipmentRefPalletStatusInput').value=sh?.refPalletStatus||'No';$('#shipmentExportFilesStatusInput').value=sh?.exportFilesStatus||'No';syncShipmentPaymentOther();syncShipmentStatusFields();shipmentSelectedPos=(sh?.poLinks||[]).map(x=>({...x}));shipmentPendingFiles=[sh?.attachment1||null,sh?.attachment2||null,sh?.attachment3||null,sh?.attachment4||null,sh?.attachment5||null,sh?.attachment6||null];renderShipmentFiles();$('#shipmentModalTitle').textContent=sh?'Edit Shipment':'Create Shipment';$('#deleteShipmentBtn').style.visibility=sh?'visible':'hidden';renderShipmentPoSelector();$('#shipmentModal').classList.remove('hidden')}
 function closeShipmentEditor(){$('#shipmentModal').classList.add('hidden');shipmentSelectedPos=[];shipmentPendingFiles=[null,null,null,null,null,null]}
-function saveShipment(){const name=$('#shipmentNameInput').value.trim(),company=$('#shipmentCompanyInput').value.trim(),phone=$('#shipmentPhoneInput').value.trim(),from=$('#shipmentFromInput').value.trim(),to=$('#shipmentToInput').value.trim(),cost=$('#shipmentCostInput').value,paymentStatus=$('#shipmentPaymentStatusInput').value,paymentOther=$('#shipmentPaymentOtherInput').value.trim();if(!name){alert('Enter the shipment name.');return}if(!shipmentSelectedPos.length){alert('Add at least one PO first.');return}if(paymentStatus==='Other'&&!paymentOther){alert('Type the transportation payment status.');$('#shipmentPaymentOtherInput').focus();return}const shipmentCurrency=$('#shipmentCurrencyInput').value,manualExchangeRate=shipmentCurrency==='CAD'?1:num($('#shipmentExchangeRateInput').value);if(shipmentCurrency!=='CAD'&&manualExchangeRate<=0){alert('Enter the Transportation CAD converter manually, for example: 1 CAD = 0.8 '+shipmentCurrency+'.');$('#shipmentExchangeRateInput').focus();return}const id=$('#shipmentRecordId').value||uid(),sh={id,name,company,palletQty:Math.max(0,Math.round(num($('#shipmentPalletQtyInput').value))),phone,email1:$('#shipmentEmail1Input').value.trim(),email2:$('#shipmentEmail2Input').value.trim(),from,to,cost:num(cost),currency:shipmentCurrency,exchangeRate:manualExchangeRate,poLinks:shipmentSelectedPos.map(x=>({...x})),notes:$('#shipmentNotesInput').value.trim(),status:normalizeSharedShipmentStatus($('#shipmentStatusInput').value),paymentStatus,paymentOther:paymentStatus==='Other'?paymentOther:'',pickupDate:$('#shipmentPickupDateInput').value||'',deliveryDate:$('#shipmentDeliveryDateInput').value||'',refPalletStatus:$('#shipmentRefPalletStatusInput').value||'No',exportFilesStatus:$('#shipmentExportFilesStatusInput').value||'No',attachment1:shipmentPendingFiles[0]||null,attachment2:shipmentPendingFiles[1]||null,attachment3:shipmentPendingFiles[2]||null,attachment4:shipmentPendingFiles[3]||null,attachment5:shipmentPendingFiles[4]||null,attachment6:shipmentPendingFiles[5]||null};const i=state.shipments.findIndex(x=>x.id===id);if(i>=0)state.shipments[i]=sh;else state.shipments.push(sh);updateIncludedPoStatusesForShipment(sh,sh.status);save();closeShipmentEditor()}
-function deleteShipment(id){const x=state.shipments.find(v=>v.id===id);if(!x||!confirm('Move this shipment to the Recycling Bin?'))return;moveToRecycleBin('shipment','Transportation',x);state.shipments=state.shipments.filter(v=>v.id!==id);save();closeShipmentEditor()}
+function saveShipment(){
+ const name=$('#shipmentNameInput').value.trim(),company=$('#shipmentCompanyInput').value.trim(),phone=$('#shipmentPhoneInput').value.trim(),from=$('#shipmentFromInput').value.trim(),to=$('#shipmentToInput').value.trim(),cost=$('#shipmentCostInput').value,paymentStatus=$('#shipmentPaymentStatusInput').value,paymentOther=$('#shipmentPaymentOtherInput').value.trim();
+ if(!name){alert('Enter the shipment name.');return}
+ if(!shipmentSelectedPos.length){alert('Add at least one PO first.');return}
+ if(paymentStatus==='Other'&&!paymentOther){alert('Type the transportation payment status.');$('#shipmentPaymentOtherInput').focus();return}
+ const shipmentCurrency=$('#shipmentCurrencyInput').value,manualExchangeRate=shipmentCurrency==='CAD'?1:num($('#shipmentExchangeRateInput').value);
+ if(shipmentCurrency!=='CAD'&&manualExchangeRate<=0){alert('Enter the Transportation CAD converter manually, for example: 1 CAD = 0.8 '+shipmentCurrency+'.');$('#shipmentExchangeRateInput').focus();return}
+ const id=$('#shipmentRecordId').value||uid();
+ const previousShipment=(state.shipments||[]).find(x=>x.id===id)||null;
+ const sh={id,name,company,palletQty:Math.max(0,Math.round(num($('#shipmentPalletQtyInput').value))),phone,email1:$('#shipmentEmail1Input').value.trim(),email2:$('#shipmentEmail2Input').value.trim(),from,to,cost:num(cost),currency:shipmentCurrency,exchangeRate:manualExchangeRate,poLinks:shipmentSelectedPos.map(x=>({...x})),notes:$('#shipmentNotesInput').value.trim(),status:normalizeSharedShipmentStatus($('#shipmentStatusInput').value),paymentStatus,paymentOther:paymentStatus==='Other'?paymentOther:'',pickupDate:$('#shipmentPickupDateInput').value||'',deliveryDate:$('#shipmentDeliveryDateInput').value||'',refPalletStatus:$('#shipmentRefPalletStatusInput').value||'No',exportFilesStatus:$('#shipmentExportFilesStatusInput').value||'No',attachment1:shipmentPendingFiles[0]||null,attachment2:shipmentPendingFiles[1]||null,attachment3:shipmentPendingFiles[2]||null,attachment4:shipmentPendingFiles[3]||null,attachment5:shipmentPendingFiles[4]||null,attachment6:shipmentPendingFiles[5]||null};
+
+ const oldPoIds=new Set((previousShipment?.poLinks||[]).map(x=>x.poId).filter(Boolean));
+ const newPoIds=new Set((sh.poLinks||[]).map(x=>x.poId).filter(Boolean));
+ oldPoIds.forEach(poId=>{
+   if(newPoIds.has(poId))return;
+   const po=(state.purchaseOrders||[]).find(x=>x.id===poId);
+   if(!po)return;
+   const anotherArrived=(state.shipments||[]).some(other=>other.id!==id&&normalizeSharedShipmentStatus(other.status||'')==='Arrived in Canada'&&(other.poLinks||[]).some(link=>link.poId===poId));
+   if(!anotherArrived){
+     po.inventoryRemovedByShipment=true;
+     po.inventoryArrivalSource='removed-shipment';
+     delete po.inventoryArrivalShipmentId;
+   }
+ });
+
+ const i=state.shipments.findIndex(x=>x.id===id);
+ if(i>=0)state.shipments[i]=sh;else state.shipments.push(sh);
+ updateIncludedPoStatusesForShipment(sh,sh.status);
+ save();
+ if(typeof renderHeadInventory==='function')renderHeadInventory();
+ closeShipmentEditor();
+}
+function deleteShipment(id){
+ const x=state.shipments.find(v=>v.id===id);if(!x||!confirm('Move this shipment to the Recycling Bin?'))return;
+ // Once a non-TENDER PO has entered Inventory in Stock, deleting Transportation does not remove it from inventory.
+ moveToRecycleBin('shipment','Transportation',x);
+ state.shipments=state.shipments.filter(v=>v.id!==id);
+ save();
+ if(typeof renderHeadInventory==='function')renderHeadInventory();
+ closeShipmentEditor();
+}
 window.completeWinnerPO=completeWinnerPO;window.openShipmentEditor=openShipmentEditor;window.openShipmentInfo=openShipmentInfo;window.openStoredShipmentInfoFile=openStoredShipmentInfoFile;window.deleteShipment=deleteShipment;window.removeShipmentPo=removeShipmentPo;window.updateShipmentRef=updateShipmentRef;window.copyShipmentRef=copyShipmentRef;
 function purchaseOrdersForCurrentSection(){
   const all=(Array.isArray(state.purchaseOrders)?state.purchaseOrders:[]).filter(po=>(po.poStatus||'')!=='LCBO PAYED');
@@ -1834,6 +1886,14 @@ function updatePoStatusFromRow(id,status){
   const po=(state.purchaseOrders||[]).find(x=>x.id===id);if(!po)return;
   const shared=normalizeSharedShipmentStatus(status);
   po.poStatus=shared;
+  if(shared==='Arrived in Canada'){
+    po.inventoryArrivalSource='po';
+    delete po.inventoryRemovedByShipment;
+    delete po.inventoryArrivalShipmentId;
+  }else{
+    delete po.inventoryRemovedByShipment;
+    if(po.inventoryArrivalSource==='po')delete po.inventoryArrivalSource;
+  }
   if(TRANSPORT_SYNC_STATUSES.includes(shared)){
     const linkedShipments=(state.shipments||[]).filter(sh=>(sh.poLinks||[]).some(link=>link.poId===id));
     linkedShipments.forEach(sh=>{
@@ -2393,7 +2453,18 @@ async function savePoRecord(){
   if(po.program==='OTHER'&&!po.programOther){alert('Type the Other PO Program.');return}try{if(poPendingFile)await savePoRecordFile(id,poPendingFile);const i=state.purchaseOrders.findIndex(x=>x.id===id);if(i>=0)state.purchaseOrders[i]=po;else state.purchaseOrders.push(po);ensureInvoiceForPo(po);syncTenderInvoiceStatusFromPo(po);syncRsoInvoiceStatusFromPo(po);save();if(typeof renderHeadInventory==='function')renderHeadInventory();closePoEditor();if(po.poStatus==='LCBO PAYED'){activate('archived-pos','po-section');renderArchivedPurchaseOrders();}else if(po.program==='TENDER')openPoPage('tender-niss',"TENDER PO'S #");else openPoPage('speciality-services',"PRIVATE ORDER PO'S #");}catch(err){console.error(err);alert('The PO or its attached file could not be saved.')}
 }
 async function removeCurrentPoRecordFile(){const id=$('#poRecordId').value;if(id)await deletePoRecordFile(id);poPendingFile=null;const po=(state.purchaseOrders||[]).find(x=>x.id===id);if(po){po.fileName='';save()}renderPoFileStatus('')}
-async function deletePoRecord(id){const x=state.purchaseOrders.find(v=>v.id===id);if(!x||!confirm('Move this PO to the Recycling Bin?'))return;moveToRecycleBin('purchaseOrder',"PO'S #",x);await deletePoRecordFile(id);state.purchaseOrders=state.purchaseOrders.filter(v=>v.id!==id);save();if(typeof renderHeadInventory==='function')renderHeadInventory()}
+async function deletePoRecord(id){
+ const x=state.purchaseOrders.find(v=>v.id===id);if(!x||!confirm('Move this PO to the Recycling Bin?'))return;
+ snapshotInventoryPoBeforeDeletion(x);
+ moveToRecycleBin('purchaseOrder',"PO'S #",x);
+ await deletePoRecordFile(id);
+ state.purchaseOrders=state.purchaseOrders.filter(v=>v.id!==id);
+ // IMPORTANT: keep existing PO links inside Transportation even after the PO record is deleted.
+ // Keep the Transportation link so the preserved Inventory snapshot remains tied to its shipment.
+ save();
+ if(typeof renderHeadInventory==='function')renderHeadInventory();
+ if(typeof renderShipments==='function')renderShipments();
+}
 function deletePoFromEditor(){const id=$('#poRecordId').value;if(id){deletePoRecord(id);closePoEditor()}}
 window.openPoEditor=openPoEditor;window.deletePoRecord=deletePoRecord;window.openPoRecordFile=openPoRecordFile;window.removePoSupplierChoice=removePoSupplierChoice;window.removePoOtherSupplierChoice=removePoOtherSupplierChoice;window.removePoVendorChoice=removePoVendorChoice;
 function applySharedCurrencyOptions(){
@@ -4616,16 +4687,57 @@ function inventoryPoProgram(po={}){
  return program==='OTHER'?(String(po.programOther||'OTHER').trim()||'OTHER').toUpperCase():program;
 }
 function inventoryShipmentForPo(po){
+ const shipmentId=po?.sourceShipmentId||po?.inventoryArrivalShipmentId||'';
+ if(shipmentId){
+   const live=(state.shipments||[]).find(sh=>sh.id===shipmentId);
+   if(live)return live;
+   return {
+     id:shipmentId,
+     name:po.sourceShipmentName||po.inventoryArrivalShipmentName||'Deleted Transportation',
+     status:'Arrived in Canada',
+     statusDate:po.sourceShipmentStatusDate||po.inventoryArrivalStatusDate||''
+   };
+ }
  return (state.shipments||[]).find(sh=>(sh.poLinks||[]).some(link=>link.poId===po.id))||null;
 }
 function inventoryPoIsArrived(po){
+ const activeArrivedShipment=(state.shipments||[]).some(sh=>normalizeSharedShipmentStatus(sh.status||'')==='Arrived in Canada'&&(sh.poLinks||[]).some(link=>link.poId===po.id));
+ if(activeArrivedShipment)return true;
  const poArrived=normalizeSharedShipmentStatus(po?.poStatus||'')==='Arrived in Canada';
- const shipment=inventoryShipmentForPo(po);
- const shipmentArrived=normalizeSharedShipmentStatus(shipment?.status||'')==='Arrived in Canada';
- return poArrived||shipmentArrived;
+ if(!poArrived)return false;
+ return !(po.inventoryRemovedByShipment||po.inventoryArrivalSource==='removed-shipment');
 }
+
+function snapshotInventoryPoBeforeDeletion(po){
+ if(!po||inventoryPoProgram(po)==='TENDER'||!inventoryPoIsArrived(po))return null;
+ if(!Array.isArray(state.inventoryDeletedPoSnapshots))state.inventoryDeletedPoSnapshots=[];
+ const shipment=inventoryShipmentForPo(po);
+ const snapshot={
+   ...JSON.parse(JSON.stringify(po)),
+   inventorySnapshotId:uid(),
+   inventoryDeletedFromPoPage:true,
+   deletedFromPoPageAt:new Date().toISOString(),
+   sourceShipmentId:shipment?.id||po.inventoryArrivalShipmentId||'',
+   sourceShipmentName:shipment?.name||'',
+   sourceShipmentStatusDate:shipment?.statusDate||'',
+   originalPoId:po.id
+ };
+ const existingIndex=state.inventoryDeletedPoSnapshots.findIndex(x=>x.originalPoId===po.id);
+ if(existingIndex>=0)state.inventoryDeletedPoSnapshots[existingIndex]=snapshot;
+ else state.inventoryDeletedPoSnapshots.push(snapshot);
+ return snapshot;
+}
+window.snapshotInventoryPoBeforeDeletion=snapshotInventoryPoBeforeDeletion;
+
+function inventoryDeletedPoSnapshotsActive(){
+ if(!Array.isArray(state.inventoryDeletedPoSnapshots))state.inventoryDeletedPoSnapshots=[];
+ return state.inventoryDeletedPoSnapshots.filter(po=>inventoryPoProgram(po)!=='TENDER');
+}
+
 function automaticInventoryPos(){
- return (state.purchaseOrders||[]).filter(po=>inventoryPoProgram(po)!=='TENDER'&&inventoryPoIsArrived(po));
+ const live=(state.purchaseOrders||[]).filter(po=>inventoryPoProgram(po)!=='TENDER'&&inventoryPoIsArrived(po));
+ const snapshots=inventoryDeletedPoSnapshotsActive();
+ return [...live,...snapshots];
 }
 window.renderHeadInventory=()=>{
  const body=document.getElementById('headInventoryRows'),k=document.getElementById('headInventoryKpis');
@@ -4648,29 +4760,31 @@ window.renderHeadInventory=()=>{
     if(q&&!hay.includes(q))return;
     rows.push({
      poNumber:po.number||'—',program,vendor,itemNo:line.itemNo||'—',product:line.yearProductName||'—',
-     cases,bpc,bottles,shipment:shipment?.name||'—',arrivalDate,status:'Arrived in Canada'
+     quotePerCase:num(line.quotedPricePerCase),quoteCurrency:po.currency||po.quotationCurrency||po.supplierCurrency||'',
+     cases,bpc,bottles,shipment:shipment?.name||po.sourceShipmentName||'—',arrivalDate:shipment?.statusDate||po.sourceShipmentStatusDate||arrivalDate,status:'Arrived in Canada',deletedFromPoPage:!!po.inventoryDeletedFromPoPage
     });
    });
   }else{
    const hay=[po.number,program,vendor,shipment?.name,po.poStatus].join(' ').toLowerCase();
    if(!q||hay.includes(q)){
-    rows.push({poNumber:po.number||'—',program,vendor,itemNo:'—',product:'—',cases:0,bpc:0,bottles:0,shipment:shipment?.name||'—',arrivalDate,status:'Arrived in Canada'});
+    rows.push({poNumber:po.number||'—',program,vendor,itemNo:'—',product:'—',quotePerCase:0,quoteCurrency:po.currency||po.quotationCurrency||po.supplierCurrency||'',cases:0,bpc:0,bottles:0,shipment:shipment?.name||po.sourceShipmentName||'—',arrivalDate:shipment?.statusDate||po.sourceShipmentStatusDate||arrivalDate,status:'Arrived in Canada',deletedFromPoPage:!!po.inventoryDeletedFromPoPage});
    }
   }
  });
  body.innerHTML=rows.map(r=>`<tr>
-  <td><b>${escapeHtml(r.poNumber)}</b></td>
+  <td><b>${escapeHtml(r.poNumber)}</b>${r.deletedFromPoPage?'<br><small>PO deleted from PO page — retained in inventory</small>':''}</td>
   <td>${escapeHtml(r.program)}</td>
   <td>${escapeHtml(r.vendor)}</td>
   <td>${escapeHtml(r.itemNo)}</td>
   <td><b>${escapeHtml(r.product)}</b></td>
+  <td><b>${r.quotePerCase?escapeHtml((r.quoteCurrency?r.quoteCurrency+' ':'')+r.quotePerCase.toFixed(2)):'—'}</b></td>
   <td>${r.cases.toLocaleString()}</td>
   <td>${r.bpc.toLocaleString()}</td>
   <td><b>${r.bottles.toLocaleString()}</b></td>
   <td>${escapeHtml(r.shipment)}</td>
   <td>${escapeHtml(r.arrivalDate)}</td>
   <td><span class="badge">Arrived in Canada</span></td>
- </tr>`).join('')||'<tr><td colspan="11">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
+ </tr>`).join('')||'<tr><td colspan="12">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
 
  if(k){
   const totalCases=pos.reduce((sum,po)=>sum+(po.lines||[]).reduce((s,l)=>s+num(l.totalQuantity),0),0);
