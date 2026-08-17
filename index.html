@@ -277,7 +277,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <button class="tab" data-tab="all-proposals">ALL PROPOSALS</button>
   <button class="tab" data-tab="all-invoices">ALL INVOICES</button>
   <button class="tab" data-tab="inventory-in-stock">INVENTORY IN STOCK</button>
-  <button class="tab" data-tab="head-performance-bonuses">Performance &amp; Bonuses</button>
+  
   <button class="tab" data-tab="heads-recycle-bin">Head's Recycling Bin</button>
 </nav>
 <nav class="subnav" data-section-nav="tender-niss">
@@ -438,25 +438,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <div class="cards" id="italyPerformanceKpis"></div>
   <div class="table-wrap"><table><thead><tr><th>Date</th><th>Bonus Type</th><th>Related To</th><th>Amount</th><th>Status</th><th>Notes</th></tr></thead><tbody id="italyBonusRows"></tbody></table></div>
 </div></section>
-<section id="head-performance-bonuses" class="panel"><div class="box">
-  <div class="section-head"><div><h2>Country Representative — Performance &amp; Bonuses</h2><p class="note">Head Office management page. Select the country representative when creating or editing each bonus.</p></div><button id="headAddBonusBtn" type="button">+ Add Bonus / Payment</button></div>
-  <div id="headBonusForm" class="item-group hidden" style="margin:16px 0">
-    <input type="hidden" id="headBonusId">
-    <div class="form-grid three">
-      <label>Country Representative<select id="headBonusCountry"><option>Italy</option><option>Portugal</option><option>Spain</option><option>France</option></select></label>
-      <label>Type<select id="headBonusType"><option>Monthly Retainer</option><option>Approved Submission Bonus</option><option>LCBO Winner Bonus</option><option>Bottle Performance Commission</option><option>Annual Performance Bonus</option></select></label>
-      <label>Amount<input id="headBonusAmount" type="number" step="0.01"></label>
-      <label>Currency<select id="headBonusCurrency"><option>EUR</option><option>CAD</option></select></label>
-      <label>Related Wine / Opportunity<input id="headBonusRelated"></label>
-      <label>Status<select id="headBonusStatus"><option>Pending</option><option>Approved</option><option>Payable</option><option>Paid</option></select></label>
-      <label>Date<input id="headBonusDate" type="date"></label>
-      <label class="full">Notes<textarea id="headBonusNotes"></textarea></label>
-    </div>
-    <div class="modal-actions"><span></span><button id="headCancelBonusBtn" type="button" class="secondary">Cancel</button><button id="headSaveBonusBtn" type="button">Save Bonus</button></div>
-  </div>
-  <div class="toolbar"><select id="headBonusCountryFilter"><option value="">All Country Representatives</option><option>Italy</option><option>Portugal</option><option>Spain</option><option>France</option></select></div>
-  <div class="table-wrap"><table><thead><tr><th>Country Representative</th><th>Date</th><th>Bonus Type</th><th>Related To</th><th>Amount</th><th>Status</th><th>Notes</th><th>Actions</th></tr></thead><tbody id="headBonusRows"></tbody></table></div>
-</div></section>
+
 <section id="all-proposals" class="panel">
   <div class="box">
     <div class="section-head">
@@ -1801,7 +1783,18 @@ function updateShipmentStatusFromRow(id,status){
   sh.status=shared;sh.statusDate=new Date().toISOString().slice(0,10);
   updateIncludedPoStatusesForShipment(sh,shared);
   (sh.poLinks||[]).forEach(link=>refreshSplitPoStatus(link.poId));
-  save();renderShipments();renderPurchaseOrders();renderArchivedPurchaseOrders();if(typeof renderHeadInventory==='function')renderHeadInventory();
+  if(shared==='Arrived in Canada'){
+    (sh.poLinks||[]).forEach(link=>{
+      const po=(state.purchaseOrders||[]).find(p=>p.id===link.poId);
+      if(po&&String(po.program||'').toUpperCase()==='TENDER')syncArrivedTenderPoInvoice(po);
+    });
+  }
+  save();
+  renderShipments();
+  renderPurchaseOrders();
+  renderArchivedPurchaseOrders();
+  if(typeof renderFinancial==='function')renderFinancial();
+  if(typeof renderHeadInventory==='function')renderHeadInventory();
 }
 window.updateShipmentStatusFromRow=updateShipmentStatusFromRow;
 function renderShipments(){if(!$('#shipmentRows'))return;const shipmentQuery=$('#transportationPageSearch')?.value||'';const rows=(state.shipments||[]).filter(sh=>{const poText=(sh.poLinks||[]).map(l=>(state.purchaseOrders||[]).find(p=>p.id===l.poId)?.number||'').join(' ');return pageSearchMatches(sh,shipmentQuery,poText)}).map(sh=>{const t=shipmentTotals(sh),payment=sh.paymentStatus==='Other'?(sh.paymentOther||'Other'):(sh.paymentStatus||'Not Paid'),warehouse=`<div><b>REF # and Pallet Labels Requested:</b> ${yesNoBadge(sh.refPalletStatus||'No')}</div><div><b>Export Files Sent:</b> ${yesNoBadge(sh.exportFilesStatus||'No')}</div>`,converter=`1 CAD = ${t.exchangeRate.toFixed(4)} ${escapeHtml(sh.currency||'CAD')}`;return `<tr><td><button type="button" class="shipment-name-link" onclick="openShipmentInfo('${sh.id}')">${escapeHtml(sh.name||'—')}</button></td><td>${escapeHtml(sh.company||'—')}</td><td>${(sh.poLinks||[]).map(l=>escapeHtml((state.purchaseOrders||[]).find(p=>p.id===l.poId)?.number||'—')).join(', ')||'—'}</td><td>${t.totalBottles.toLocaleString()}</td><td>${num(sh.palletQty).toLocaleString()}</td><td>${escapeHtml((sh.currency||'CAD')+' '+t.cost.toFixed(2))}</td><td>${escapeHtml((sh.currency||'CAD')+' '+t.costPerBottle.toFixed(4))}</td><td><span class="transport-converter"><span>${converter}</span></span></td><td><b>CAD ${t.costPerBottleCad.toFixed(4)}</b></td><td>${shipmentStatusSelect(sh)}<br><small>${escapeHtml(sh.statusDate||'—')}</small></td><td>${escapeHtml(formatTransportationDate(sh.pickupDate)||'—')}</td><td><b>${escapeHtml(formatTransportationDate(sh.deliveryDate)||'—')}</b><br><small>${escapeHtml(shipmentDeliveryLabel(sh.status))}</small></td><td>${warehouse}</td><td>${escapeHtml(payment)}</td><td><div class="shipment-actions"><button type="button" class="secondary small" onclick="openShipmentEditor('${sh.id}')">Edit</button><button type="button" class="danger small" onclick="deleteShipment('${sh.id}')">Delete</button></div></td></tr>`}).join('');$('#shipmentRows').innerHTML=rows||'<tr><td colspan="15">No shipments have been created.</td></tr>'}
@@ -1886,6 +1879,12 @@ function saveShipment(){
  const i=state.shipments.findIndex(x=>x.id===id);
  if(i>=0)state.shipments[i]=sh;else state.shipments.push(sh);
  updateIncludedPoStatusesForShipment(sh,sh.status);
+ if(normalizeSharedShipmentStatus(sh.status||'')==='Arrived in Canada'){
+   (sh.poLinks||[]).forEach(link=>{
+     const po=(state.purchaseOrders||[]).find(p=>p.id===link.poId);
+     if(po&&String(po.program||'').toUpperCase()==='TENDER')syncArrivedTenderPoInvoice(po);
+   });
+ }
  [...new Set([...(previousShipment?.poLinks||[]).map(x=>x.poId),...(sh.poLinks||[]).map(x=>x.poId)])].filter(Boolean).forEach(refreshSplitPoStatus);
  save();
  if(typeof renderHeadInventory==='function')renderHeadInventory();
@@ -2458,35 +2457,108 @@ function poInvoiceBottleQty(po){
 function linkedSubmissionForPo(poNo){
   return (state.records||[]).find(r=>String(r.poNumber||'').trim().toLowerCase()===String(poNo||'').trim().toLowerCase())||null;
 }
-function ensureTenderInvoiceForPo(po){
-  if(!po||String(po.program||'').toUpperCase()!=='TENDER')return;
-  if(!Array.isArray(state.financialInvoices))state.financialInvoices=[];
-  const poNo=String(po.number||'').trim();if(!poNo)return;
-  let inv=state.financialInvoices.find(x=>String(x.poNumber||'').trim().toLowerCase()===poNo.toLowerCase()&&x.autoCreatedFromTenderPo);
-  const linkedRecord=linkedSubmissionForPo(poNo);
+
+function tenderPoArrivedInCanada(po){
+  if(!po||String(po.program||'').toUpperCase()!=='TENDER')return false;
+  const poStatus=normalizeSharedShipmentStatus(po.poStatus||'');
+  if(poStatus==='Arrived in Canada')return true;
+  return (state.shipments||[]).some(sh=>
+    normalizeSharedShipmentStatus(sh.status||'')==='Arrived in Canada' &&
+    (sh.poLinks||[]).some(link=>link.poId===po.id)
+  );
+}
+window.tenderPoArrivedInCanada=tenderPoArrivedInCanada;
+
+function tenderPoAutoInvoiceValues(po,existing={}){
+  const lines=po?.lines||[];
+  const first=lines[0]||{};
   const bottleQty=poInvoiceBottleQty(po);
-  const base={
-    poNumber:poNo,
-    submissionNumber:linkedRecord?.submissionNumber||'',
-    invoiceNumber:inv?.invoiceNumber||'',
-    lcboInvoiceCad:inv?.lcboInvoiceCad||'',
-    lcboCurrency:inv?.lcboCurrency||'CAD',
-    lcboApproxDate:inv?.lcboApproxDate||'',
-    lcboPayDate:inv?.lcboPayDate||'',
-    lcboPaidStatus:inv?.lcboPaidStatus||'Not Paid',
-    transportInvoiceName:inv?.transportInvoiceName||'',
+  const firstUnits=num(first.unitsPerCase);
+  const firstCasePrice=num(first.quotedPricePerCase);
+  const supplierItemPrice=firstUnits>0?firstCasePrice/firstUnits:0;
+  const linkedRecord=linkedSubmissionForPo(String(po.number||'').trim());
+
+  return {
+    poNumber:String(po.number||'').trim(),
+    submissionNumber:linkedRecord?.submissionNumber||existing.submissionNumber||'',
+    invoiceNumber:existing.invoiceNumber||'',
+    lcboInvoiceCad:existing.lcboInvoiceCad||'',
+    lcboCurrency:existing.lcboCurrency||'CAD',
+    lcboApproxDate:existing.lcboApproxDate||'',
+    lcboPayDate:existing.lcboPayDate||'',
+    lcboPaidStatus:normalizeTenderInvoicePaymentStatus(existing.lcboPaidStatus||'Not Paid'),
+    transportInvoiceName:existing.transportInvoiceName||(
+      (state.shipments||[]).find(sh=>
+        normalizeSharedShipmentStatus(sh.status||'')==='Arrived in Canada' &&
+        (sh.poLinks||[]).some(link=>link.poId===po.id)
+      )?.name||''
+    ),
     totalBottles:bottleQty,
     poBottleQuantity:bottleQty,
-    supplierItemPrice:inv?.supplierItemPrice||'',
-    supplierCurrency:inv?.supplierCurrency||'USD',
-    supplierItemsInCase:inv?.supplierItemsInCase||'',
-    supplierRate:inv?.supplierRate||'',
-    notes:inv?.notes||'Automatically created from Tender PO.',
+    supplierItemPrice:existing.supplierItemPrice!==undefined&&existing.supplierItemPrice!==''?existing.supplierItemPrice:supplierItemPrice,
+    supplierCurrency:existing.supplierCurrency||po.currency||'CAD',
+    supplierItemsInCase:existing.supplierItemsInCase!==undefined&&existing.supplierItemsInCase!==''?existing.supplierItemsInCase:firstUnits,
+    supplierRate:existing.supplierRate||'',
+    notes:existing.notes||'Automatically created when Tender PO Transportation arrived in Canada.',
     autoCreatedFromTenderPo:true,
-    sourcePoId:po.id
+    autoCreatedOnArrival:true,
+    sourcePoId:po.id,
+    poProgram:'TENDER',
+    poStatus:'Arrived in Canada',
+    totalPoQuotedValue:(po.lines||[]).reduce((sum,line)=>sum+(num(line.totalQuantity)*num(line.quotedPricePerCase)),0),
+    poCurrency:po.currency||'CAD',
+    supplierNames:(po.supplierNames||po.vendors||[]).join(', '),
+    itemDescription:lines.map(line=>line.yearProductName||line.itemNo||'').filter(Boolean).join(' / '),
+    arrivedInCanadaDate:(
+      (state.shipments||[]).find(sh=>
+        normalizeSharedShipmentStatus(sh.status||'')==='Arrived in Canada' &&
+        (sh.poLinks||[]).some(link=>link.poId===po.id)
+      )?.statusDate||po.inventoryArrivalStatusDate||''
+    )
   };
-  if(inv)Object.assign(inv,base);
-  else state.financialInvoices.push({id:uid(),...base});
+}
+window.tenderPoAutoInvoiceValues=tenderPoAutoInvoiceValues;
+
+function syncArrivedTenderPoInvoice(po){
+  if(!tenderPoArrivedInCanada(po))return null;
+  if(!Array.isArray(state.financialInvoices))state.financialInvoices=[];
+  const poNo=String(po.number||'').trim();
+  if(!poNo)return null;
+
+  let inv=state.financialInvoices.find(x=>x.sourcePoId===po.id && x.autoCreatedFromTenderPo);
+  if(!inv){
+    inv=state.financialInvoices.find(x=>
+      x.autoCreatedFromTenderPo &&
+      String(x.poNumber||'').trim().toLowerCase()===poNo.toLowerCase()
+    );
+  }
+
+  const values=tenderPoAutoInvoiceValues(po,inv||{});
+  if(normalizeTenderInvoicePaymentStatus(values.lcboPaidStatus)!=='Fully Paid'){
+    values.lcboPaidStatus='Next 60 Days Upcoming Payment';
+  }
+
+  if(inv){
+    Object.assign(inv,values);
+    return inv;
+  }
+  const created={id:uid(),...values};
+  state.financialInvoices.push(created);
+  return created;
+}
+window.syncArrivedTenderPoInvoice=syncArrivedTenderPoInvoice;
+
+function syncAllArrivedTenderPoInvoices(){
+  (state.purchaseOrders||[])
+    .filter(po=>String(po.program||'').toUpperCase()==='TENDER')
+    .forEach(syncArrivedTenderPoInvoice);
+}
+window.syncAllArrivedTenderPoInvoices=syncAllArrivedTenderPoInvoices;
+
+function ensureTenderInvoiceForPo(po){
+  if(!po||String(po.program||'').toUpperCase()!=='TENDER')return;
+  // Tender invoices are created/filled only after the linked Transportation arrives in Canada.
+  if(tenderPoArrivedInCanada(po))syncArrivedTenderPoInvoice(po);
 }
 function ensureInvoiceForPo(po){
   if(!po)return;
@@ -2500,6 +2572,12 @@ function ensureInvoiceForPo(po){
 
 
 
+
+
+function totalPoQuotedValue(po){
+  return (po?.lines||[]).reduce((sum,line)=>sum+(num(line.totalQuantity)*num(line.quotedPricePerCase)),0);
+}
+window.totalPoQuotedValue=totalPoQuotedValue;
 
 function ensureReguSeasOtherInvoiceForPo(po){
   if(!po)return;
@@ -2541,9 +2619,9 @@ function ensureReguSeasOtherInvoiceForPo(po){
     invoiceNumber:inv?.invoiceNumber||inv?.number||'',
     date:inv?.date||inv?.invoiceDate||'',
     invoiceDate:inv?.invoiceDate||inv?.date||'',
-    amount:inv?.amount??inv?.invoiceAmount??'',
-    invoiceAmount:inv?.invoiceAmount??inv?.amount??'',
-    currency:inv?.currency||'CAD',
+    amount:totalPoQuotedValue(po),
+    invoiceAmount:totalPoQuotedValue(po),
+    currency:po.currency||inv?.currency||'CAD',
     notes:inv?.notes||inv?.invoiceNotes||('Automatically created from '+program+' PO '+poNo+'.'),
     invoiceNotes:inv?.invoiceNotes||inv?.notes||('Automatically created from '+program+' PO '+poNo+'.'),
     paidStatus:normalizeRsoInvoiceStatus(inv?.paidStatus||'Not Paid'),
@@ -2624,15 +2702,11 @@ function tenderInvoiceStatusClass(v){
 }
 function syncTenderInvoiceStatusFromPo(po){
   if(!po||String(po.program||'').toUpperCase()!=='TENDER')return;
-  const poNo=String(po.number||'').trim().toLowerCase();
-  if(!poNo)return;
-  (state.financialInvoices||[]).forEach(inv=>{
-    if(String(inv.poNumber||'').trim().toLowerCase()!==poNo)return;
-    const current=normalizeTenderInvoicePaymentStatus(inv.lcboPaidStatus);
-    if((po.poStatus||'')==='ARRIVED IN CANADA'&&current!=='Fully Paid'){
-      inv.lcboPaidStatus='Next 60 Days Upcoming Payment';
-    }
-  });
+  if(!tenderPoArrivedInCanada(po))return;
+  const inv=syncArrivedTenderPoInvoice(po);
+  if(inv && normalizeTenderInvoicePaymentStatus(inv.lcboPaidStatus)!=='Fully Paid'){
+    inv.lcboPaidStatus='Next 60 Days Upcoming Payment';
+  }
 }
 function updateTenderInvoiceStatusFromRow(id,status){
   const inv=(state.financialInvoices||[]).find(x=>x.id===id);if(!inv)return;
@@ -2679,7 +2753,7 @@ function tenderPaymentSelectHtml(inv){
   const s=normalizeTenderInvoicePaymentStatus(inv.lcboPaidStatus);
   return `<select class="tender-payment-select ${tenderPaymentSelectClass(s)}" onchange="updateTenderInvoiceStatusFromRow('${inv.id}',this.value);this.className='tender-payment-select '+tenderPaymentSelectClass(this.value)"><option value="Not Paid" ${s==='Not Paid'?'selected':''}>Not Paid</option><option value="Next 60 Days Upcoming Payment" ${s==='Next 60 Days Upcoming Payment'?'selected':''}>Next 60 Days Upcoming Payment</option><option value="Fully Paid" ${s==='Fully Paid'?'selected':''}>Fully Paid</option></select>`;
 }
-function renderFinancial(){if(!$('#financialInvoiceRows'))return;const financialQuery=$('#financialPageSearch')?.value||'';$('#financialInvoiceRows').innerHTML=(state.financialInvoices||[]).filter(x=>pageSearchMatches(x,financialQuery)).map(x=>{const c=financialCalculations(x);return `<tr><td>${escapeHtml(x.poNumber||'—')}</td><td><button type="button" class="invoice-number-link" onclick="openFinancialInvoiceDetails('${x.id}')">${escapeHtml(x.invoiceNumber||'—')}</button></td><td>${escapeHtml(x.submissionNumber||'—')}</td><td>${escapeHtml(x.lcboCurrency||'CAD')} ${num(x.lcboInvoiceCad).toFixed(2)}</td><td>${money(c.nettedExpenses)}</td><td>${money(c.advertisingExpenses)}</td><td>${money(c.failedSalesAmount)}</td><td>${money(c.otherExpenses)}</td><td>${money(c.transportCad)}</td><td>${money(c.supplierTotalCad)}</td><td><span class="status ${x.lcboPaidStatus==='Yes'?'green':'yellow'}"><select class="invoice-inline-status" onchange="updateTenderInvoiceStatusFromRow('${x.id}',this.value)"><option value="Not Paid" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Not Paid'?'selected':''}>Not Paid</option><option value="Next 60 Days Upcoming Payment" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Next 60 Days Upcoming Payment'?'selected':''}>Next 60 Days Upcoming Payment</option><option value="Fully Paid" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Fully Paid'?'selected':''}>Fully Paid</option></select></span></td><td><strong class="${c.netProfit<0?'negative':'positive'}">${money(c.netProfit)}</strong></td><td><button type="button" onclick="editFinancialInvoice('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('Tender','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="removeFinancialInvoice('${x.id}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="14" class="note">No financial invoices created. Click + Create Invoice.</td></tr>';}
+function renderFinancial(){syncAllArrivedTenderPoInvoices();if(!$('#financialInvoiceRows'))return;const financialQuery=$('#financialPageSearch')?.value||'';$('#financialInvoiceRows').innerHTML=(state.financialInvoices||[]).filter(x=>pageSearchMatches(x,financialQuery)).map(x=>{const c=financialCalculations(x);return `<tr><td>${escapeHtml(x.poNumber||'—')}</td><td><button type="button" class="invoice-number-link" onclick="openFinancialInvoiceDetails('${x.id}')">${escapeHtml(x.invoiceNumber||'—')}</button></td><td>${escapeHtml(x.submissionNumber||'—')}</td><td>${escapeHtml(x.lcboCurrency||'CAD')} ${num(x.lcboInvoiceCad).toFixed(2)}</td><td>${money(c.nettedExpenses)}</td><td>${money(c.advertisingExpenses)}</td><td>${money(c.failedSalesAmount)}</td><td>${money(c.otherExpenses)}</td><td>${money(c.transportCad)}</td><td>${money(c.supplierTotalCad)}</td><td><span class="status ${x.lcboPaidStatus==='Yes'?'green':'yellow'}"><select class="invoice-inline-status" onchange="updateTenderInvoiceStatusFromRow('${x.id}',this.value)"><option value="Not Paid" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Not Paid'?'selected':''}>Not Paid</option><option value="Next 60 Days Upcoming Payment" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Next 60 Days Upcoming Payment'?'selected':''}>Next 60 Days Upcoming Payment</option><option value="Fully Paid" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Fully Paid'?'selected':''}>Fully Paid</option></select></span></td><td><strong class="${c.netProfit<0?'negative':'positive'}">${money(c.netProfit)}</strong></td><td><button type="button" onclick="editFinancialInvoice('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('Tender','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="removeFinancialInvoice('${x.id}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="14" class="note">No financial invoices created. Click + Create Invoice.</td></tr>';}
 let currentFinancialDetailId='';
 function financialDetailField(label,value){const text=value===undefined||value===null||value===''?'—':String(value);return `<div class="detail-row"><span>${escapeHtml(label)}</span><b>${escapeHtml(text)}</b><button type="button" class="secondary small" onclick='copyText(${JSON.stringify(text)})'>Copy</button></div>`}
 function financialDetailSections(x){const c=financialCalculations(x),currency=x.lcboCurrency||'CAD',supplierCurrency=x.supplierCurrency||'CAD';return [
@@ -2787,17 +2861,38 @@ function syncRsoInvoiceStatusFromPo(po){
     }
   });
 }
-function renderOtherInvoices(){const body=$('#otherInvoiceRows');if(!body)return;const otherInvoiceQuery=$('#otherInvoicePageSearch')?.value||'';body.innerHTML=(state.otherInvoices||[]).filter(x=>pageSearchMatches(x,otherInvoiceQuery)).map(x=>`<tr><td><b>${escapeHtml(x.name||'—')}</b></td><td><button type="button" class="invoice-number-link" onclick="openGenericInvoiceDetails('other','${x.id}')">${escapeHtml(x.number||'—')}</button></td><td>${escapeHtml(x.date||'—')}</td><td>${escapeHtml(x.currency||'CAD')} ${num(x.amount).toFixed(2)}</td><td><span class="status ${x.paidStatus==='Fully Paid'?'green':'yellow'}">${escapeHtml(x.paidStatus||'Not Paid')}</span>${x.upcomingPaymentCalculatedDate?`<br><small>Calculated payment date: <b>${escapeHtml(x.upcomingPaymentCalculatedDate)}</b></small>${x.stockOutDate?`<br><small>Stock-Out Date: ${escapeHtml(x.stockOutDate)}</small>`:''}`:''}</td><td>${x.fileName?`<button type="button" class="file-link" onclick="openSavedOtherInvoiceFile('${x.id}')">${escapeHtml(x.fileName)}</button>`:'—'}</td><td>${escapeHtml(x.notes||'—')}</td><td><button type="button" onclick="openOtherInvoiceEditor('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('SEAS/REGU/OTHER TO AGENT','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="deleteOtherInvoice('${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="9" class="note">No other invoices created. Click + Create Invoice.</td></tr>'}
+function renderOtherInvoices(){const body=$('#otherInvoiceRows');if(!body)return;(state.otherInvoices||[]).forEach(syncRsoInvoiceAmountFromLinkedPo);const otherInvoiceQuery=$('#otherInvoicePageSearch')?.value||'';body.innerHTML=(state.otherInvoices||[]).filter(x=>pageSearchMatches(x,otherInvoiceQuery)).map(x=>`<tr><td><b>${escapeHtml(x.name||'—')}</b></td><td><button type="button" class="invoice-number-link" onclick="openGenericInvoiceDetails('other','${x.id}')">${escapeHtml(x.number||'—')}</button></td><td>${escapeHtml(x.date||'—')}</td><td>${escapeHtml(x.currency||'CAD')} ${num(x.amount).toFixed(2)}</td><td><span class="status ${x.paidStatus==='Fully Paid'?'green':'yellow'}">${escapeHtml(x.paidStatus||'Not Paid')}</span>${x.upcomingPaymentCalculatedDate?`<br><small>Calculated payment date: <b>${escapeHtml(x.upcomingPaymentCalculatedDate)}</b></small>${x.stockOutDate?`<br><small>Stock-Out Date: ${escapeHtml(x.stockOutDate)}</small>`:''}`:''}</td><td>${x.fileName?`<button type="button" class="file-link" onclick="openSavedOtherInvoiceFile('${x.id}')">${escapeHtml(x.fileName)}</button>`:'—'}</td><td>${escapeHtml(x.notes||'—')}</td><td><button type="button" onclick="openOtherInvoiceEditor('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('SEAS/REGU/OTHER TO AGENT','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="deleteOtherInvoice('${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="9" class="note">No other invoices created. Click + Create Invoice.</td></tr>'}
 function renderOtherInvoiceFileStatus(message=''){const el=$('#otherInvoiceFileStatus');if(el)el.textContent=message||(otherInvoicePendingFile?.name||'No invoice attached')}
 function readOtherInvoiceFile(file){if(!file)return;if(file.size>10*1024*1024){alert('Maximum invoice file size is 10 MB.');return}const r=new FileReader();r.onload=()=>{otherInvoicePendingFile={name:file.name,type:file.type||'application/octet-stream',data:r.result};renderOtherInvoiceFileStatus();const id=$('#otherInvoiceId').value,x=(state.otherInvoices||[]).find(v=>v.id===id);if(x){x.file=otherInvoicePendingFile;x.fileName=otherInvoicePendingFile.name;save();renderOtherInvoiceFileStatus(otherInvoicePendingFile.name+' — saved automatically')}};r.readAsDataURL(file)}
 function openOtherInvoiceFile(){if(!otherInvoicePendingFile?.data){alert('No invoice is attached.');return}window.open(otherInvoicePendingFile.data,'_blank')}
 function removeOtherInvoiceFile(){otherInvoicePendingFile=null;const id=$('#otherInvoiceId').value,x=(state.otherInvoices||[]).find(v=>v.id===id);if(x){x.file=null;x.fileName='';save();renderOtherInvoiceFileStatus('No invoice attached — removed automatically')}else renderOtherInvoiceFileStatus()}
 function openSavedOtherInvoiceFile(id){const x=(state.otherInvoices||[]).find(v=>v.id===id);if(!x?.file?.data){alert('The invoice file is not available.');return}window.open(x.file.data,'_blank')}
-function openOtherInvoiceEditor(id=''){const x=(state.otherInvoices||[]).find(v=>v.id===id)||{};$('#otherInvoiceId').value=x.id||'';$('#otherInvoiceName').value=x.name||'';$('#otherInvoiceNumber').value=x.number||'';$('#otherInvoiceDate').value=x.date||'';$('#otherInvoiceAmount').value=x.amount??'';$('#otherInvoiceCurrency').value=x.currency||'CAD';$('#otherInvoicePaidStatus').value=x.paidStatus||'Not Paid';$('#otherInvoiceUpcomingPaymentDate').value=x.upcomingPaymentCalculatedDate||'';$('#otherInvoiceNotes').value=x.notes||'';otherInvoicePendingFile=x.file||null;renderOtherInvoiceFileStatus();$('#otherInvoiceEditorTitle').textContent=id?'Edit Invoice':'Create Invoice';$('#deleteOtherInvoice').style.visibility=id?'visible':'hidden';$('#otherInvoiceList').classList.add('hidden');$('#otherInvoiceEditor').classList.remove('hidden')}
+
+function syncRsoInvoiceAmountFromLinkedPo(inv){
+  if(!inv)return inv;
+  const po=(state.purchaseOrders||[]).find(p=>p.id===inv.sourcePoId) ||
+           (state.purchaseOrders||[]).find(p=>String(p.number||'').trim().toLowerCase()===String(inv.poNumber||'').trim().toLowerCase());
+  if(po && ['REGU','SEAS','OTHER'].includes(String(po.program||'').toUpperCase())){
+    inv.amount=totalPoQuotedValue(po);
+    inv.invoiceAmount=inv.amount;
+    inv.currency=po.currency||inv.currency||'CAD';
+  }
+  return inv;
+}
+window.syncRsoInvoiceAmountFromLinkedPo=syncRsoInvoiceAmountFromLinkedPo;
+
+function openOtherInvoiceEditor(id=''){const x=syncRsoInvoiceAmountFromLinkedPo((state.otherInvoices||[]).find(v=>v.id===id)||{});$('#otherInvoiceId').value=x.id||'';$('#otherInvoiceName').value=x.name||'';$('#otherInvoiceNumber').value=x.number||'';$('#otherInvoiceDate').value=x.date||'';$('#otherInvoiceAmount').value=x.amount??'';$('#otherInvoiceCurrency').value=x.currency||'CAD';const linkedPoInvoice=!!(x.sourcePoId||x.autoCreatedFromPo);$('#otherInvoiceAmount').readOnly=linkedPoInvoice;$('#otherInvoiceCurrency').disabled=linkedPoInvoice;$('#otherInvoicePaidStatus').value=x.paidStatus||'Not Paid';$('#otherInvoiceUpcomingPaymentDate').value=x.upcomingPaymentCalculatedDate||'';$('#otherInvoiceNotes').value=x.notes||'';otherInvoicePendingFile=x.file||null;renderOtherInvoiceFileStatus();$('#otherInvoiceEditorTitle').textContent=id?'Edit Invoice':'Create Invoice';$('#deleteOtherInvoice').style.visibility=id?'visible':'hidden';$('#otherInvoiceList').classList.add('hidden');$('#otherInvoiceEditor').classList.remove('hidden')}
 function closeOtherInvoiceEditor(){$('#otherInvoiceEditor').classList.add('hidden');$('#otherInvoiceList').classList.remove('hidden');renderOtherInvoices()}
 function saveOtherInvoice(){const name=$('#otherInvoiceName').value.trim();if(!name){alert('Invoice Name is required.');$('#otherInvoiceName').focus();return}if(!Array.isArray(state.otherInvoices))state.otherInvoices=[];
 if(!Array.isArray(state.recycleBin))state.recycleBin=[];
-if(!state.recycleRetentionDays)state.recycleRetentionDays=90;const x={id:$('#otherInvoiceId').value||uid(),name,number:$('#otherInvoiceNumber').value.trim(),date:$('#otherInvoiceDate').value,amount:num($('#otherInvoiceAmount').value),currency:$('#otherInvoiceCurrency').value||'CAD',paidStatus:$('#otherInvoicePaidStatus').value||'Not Paid',notes:$('#otherInvoiceNotes').value.trim(),file:otherInvoicePendingFile,fileName:otherInvoicePendingFile?.name||''};const i=state.otherInvoices.findIndex(v=>v.id===x.id);if(i>=0)state.otherInvoices[i]=x;else state.otherInvoices.push(x);$('#otherInvoiceId').value=x.id;save();renderOtherInvoices();closeOtherInvoiceEditor();alert('Invoice saved successfully.')}
+if(!state.recycleRetentionDays)state.recycleRetentionDays=90;const x={id:$('#otherInvoiceId').value||uid(),name,number:$('#otherInvoiceNumber').value.trim(),date:$('#otherInvoiceDate').value,amount:num($('#otherInvoiceAmount').value),currency:$('#otherInvoiceCurrency').value||'CAD',paidStatus:$('#otherInvoicePaidStatus').value||'Not Paid',notes:$('#otherInvoiceNotes').value.trim(),file:otherInvoicePendingFile,fileName:otherInvoicePendingFile?.name||''};
+const existingLinked=(state.otherInvoices||[]).find(v=>v.id===x.id);
+if(existingLinked?.sourcePoId||existingLinked?.autoCreatedFromPo){
+  x.sourcePoId=existingLinked.sourcePoId;
+  x.poNumber=existingLinked.poNumber||x.poNumber;
+  x.autoCreatedFromPo=existingLinked.autoCreatedFromPo;
+  syncRsoInvoiceAmountFromLinkedPo(x);
+}const i=state.otherInvoices.findIndex(v=>v.id===x.id);if(i>=0)state.otherInvoices[i]=x;else state.otherInvoices.push(x);$('#otherInvoiceId').value=x.id;save();renderOtherInvoices();closeOtherInvoiceEditor();alert('Invoice saved successfully.')}
 function deleteOtherInvoice(id){const x=(state.otherInvoices||[]).find(v=>v.id===id);if(!x||!confirm(`Move invoice ${x.name||''} to Head's Recycling Bin?`))return;moveToHeadsRecycleBin('otherInvoice','SEAS/REGU/OTHER TO AGENT INVOICES',x,{collection:'otherInvoices'});state.otherInvoices=state.otherInvoices.filter(v=>v.id!==id);save();closeOtherInvoiceEditor()}
 window.openOtherInvoiceEditor=openOtherInvoiceEditor;window.deleteOtherInvoice=deleteOtherInvoice;window.openSavedOtherInvoiceFile=openSavedOtherInvoiceFile;window.openOtherInvoiceFile=openOtherInvoiceFile;window.removeOtherInvoiceFile=removeOtherInvoiceFile;
 let currentGenericInvoiceDetails={type:'',id:''};
@@ -4136,7 +4231,7 @@ window.deleteCurrentSourcingCountry=()=>{
  renderSourcingCountryControls();
  renderItalySourcing();
  if(typeof renderTenders==='function')renderTenders();
- if(typeof renderHeadBonuses==='function')renderHeadBonuses();
+ 
  return true;
 };
 window.setSourcingCountry=country=>{
@@ -4781,14 +4876,14 @@ function saveHeadBonus(){
   const id=$('#headBonusId').value||uid();
   const rec={id,country:$('#headBonusCountry').value,type:$('#headBonusType').value,amount:num($('#headBonusAmount').value),currency:$('#headBonusCurrency').value,related:$('#headBonusRelated').value.trim(),status:$('#headBonusStatus').value,date:$('#headBonusDate').value,notes:$('#headBonusNotes').value.trim()};
   const i=state.countryBonuses.findIndex(x=>x.id===id);if(i>=0)state.countryBonuses[i]=rec;else state.countryBonuses.push(rec);
-  save();closeHeadBonusForm();renderHeadBonuses();renderItalySourcing();
+  save();closeHeadBonusForm();renderItalySourcing();
 }
 function deleteHeadBonus(id){
   if(!isAdminUser()){alert('Administrator access only.');return}
   const x=(state.countryBonuses||[]).find(v=>v.id===id);if(!x||!confirm('Move this bonus record to the representative Portfolio Manager Recycling Bin?'))return;
   moveToPortfolioManagerRecycleBin('countryBonus','Performance & Bonuses',x,{collection:'countryBonuses'});
   state.countryBonuses=state.countryBonuses.filter(v=>v.id!==id);
-  save();renderHeadBonuses();renderItalySourcing();
+  save();renderItalySourcing();
 }
 window.openHeadBonusForm=openHeadBonusForm;
 window.deleteHeadBonus=deleteHeadBonus;
@@ -5328,7 +5423,7 @@ window.restorePortfolioManagerRecycle=id=>{
  save();
  renderPortfolioManagerRecycleBin();
  renderItalySourcing();
- if(typeof renderHeadBonuses==='function')renderHeadBonuses();
+ 
 };
 window.permanentlyDeletePortfolioManagerRecycle=id=>{
  if(!(typeof isAdminUser==='function'&&isAdminUser())){alert('Administrator access only.');return}
