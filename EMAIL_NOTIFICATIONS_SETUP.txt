@@ -1,0 +1,28 @@
+ZIMPORT — SUPPLIER EMAIL NOTIFICATIONS
+
+ADDED
+1. Tender form now includes Suppliers to Notify.
+2. When an ACTIVE tender is announced, every MARKED supplier receives:
+   Subject: Action Required — Active Tender Is Announced!
+3. Every time Main Office sends Internal Mail to a supplier, that supplier receives an external email notification.
+4. Supplier email addresses come from:
+   Country Sourcing → Suppliers → Supplier Information → Email Address
+5. If multiple Supplier Information records contain email addresses, all unique registered emails for that supplier are notified.
+6. Tender recipients already successfully notified are not emailed again when the same tender is edited.
+7. Failed or unconfigured notifications are stored in pendingEmailNotifications.
+
+ONE-TIME EMAIL DELIVERY SETUP
+A secure Supabase Edge Function is included:
+supabase/functions/send-email/index.ts
+
+Deploy:
+supabase functions deploy send-email
+
+Configure secrets:
+supabase secrets set RESEND_API_KEY=YOUR_RESEND_API_KEY
+supabase secrets set EMAIL_FROM="Zimport <notifications@YOUR_VERIFIED_DOMAIN.com>"
+
+The included function uses Resend. The EMAIL_FROM domain/address must be verified.
+
+IMPORTANT
+The existing program did not contain an external email-delivery service. Until this Edge Function is deployed and its secrets are configured, the browser cannot physically send internet email. In that case notifications are queued in pendingEmailNotifications rather than being silently lost.
