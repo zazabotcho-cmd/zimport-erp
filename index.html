@@ -156,6 +156,8 @@
 .supplier-balance{display:inline-block;min-width:105px;padding:7px 10px;border-radius:8px;font-weight:800;text-align:center}.supplier-balance.yellow{background:#fff3bf;color:#7a5a00;border:1px solid #f0d86b}.supplier-balance.green{background:#d3f9d8;color:#1b6b2a;border:1px solid #8ce99a}
 .po-inline-status{min-width:220px;padding:7px 8px;border:1px solid #bdc9d6;border-radius:7px;background:#fff;font-weight:700}.shipment-inline-status{min-width:190px;padding:7px 8px;border-radius:7px;font-weight:700;border:1px solid #bdc9d6}.shipment-inline-status.status-yellow{background:#fff3bf;color:#6b5200}.shipment-inline-status.status-green{background:#dff3e2;color:#1f6225}.shipment-inline-status.status-blue{background:#dbeafe;color:#1e40af}.invoice-status-notpaid{display:inline-block;padding:5px 9px;border-radius:999px;background:#f1f5f9;color:#334155;font-weight:700}.invoice-status-upcoming{display:inline-block;padding:5px 9px;border-radius:999px;background:#fff3bf;color:#7a5b00;font-weight:700;border:1px solid #e0a800}.invoice-status-paid{display:inline-block;padding:5px 9px;border-radius:999px;background:#d3f9d8;color:#176b2c;font-weight:700;border:1px solid #8ce99a}.invoice-inline-status{min-width:220px;padding:7px;border:1px solid #bdc9d6;border-radius:7px;font-weight:700}.tender-payment-select{min-width:225px;padding:7px 8px;border-radius:7px;font-weight:800}.tender-payment-select.status-upcoming{background:#fff3bf!important;border:2px solid #e0a800!important;color:#6b5200!important}.tender-payment-select.status-paid{background:#dff3e2!important;border:2px solid #2e7d32!important;color:#1f6225!important}.tender-payment-select.status-notpaid{background:#fff!important;border:1px solid #bdc9d6!important;color:#334155!important}.rso-status-select{min-width:220px;padding:7px 8px;border-radius:7px;font-weight:800}.rso-status-select.status-upcoming{background:#fff3bf!important;border:2px solid #e0a800!important;color:#6b5200!important}.rso-status-select.status-paid{background:#dff3e2!important;border:2px solid #2e7d32!important;color:#1f6225!important}.rso-status-select.status-notpaid{background:#fff!important;border:1px solid #bdc9d6!important;color:#334155!important}
 .italy-source-price-row{grid-column:1/-1;display:grid;grid-template-columns:minmax(220px,1.3fr) 150px 95px minmax(190px,1fr);gap:10px;align-items:end}
+.italy-price-stack{display:grid;grid-template-columns:1fr;gap:10px}
+.italy-submission-stack{display:grid;grid-template-columns:1fr;gap:10px}
 .italy-product-photo-wrap{grid-column:1/-1;display:grid;grid-template-columns:minmax(260px,1fr) minmax(360px,1.15fr);gap:14px;align-items:end}
 .italy-photo-slots{display:grid;grid-template-columns:repeat(3,minmax(105px,1fr));gap:8px}
 .italy-photo-slot{border:1px dashed #aebdca;border-radius:8px;padding:8px;background:#fff;min-height:92px}
@@ -3613,9 +3615,11 @@ function italyCandidateGroupsHtml(){
    const attachments=[...byId.attachments];attachments[1]='Supporting Photos / Documents — minimum 7, maximum 10 files (awards, scores, exhibitions, licenses, specifications)';
    return `<fieldset class="item-group"><legend>${g.title}</legend><div class="form-grid three">
     ${italyCandidateFieldHtml(pickup)}
-    ${italyCandidateFieldHtml(byId.pickupPhone)}
+    <div class="italy-submission-stack">
+      ${italyCandidateFieldHtml(byId.pickupPhone)}
+      ${italyCandidateFieldHtml(byId.limitedCaseQty)}
+    </div>
     ${italyCandidateFieldHtml(lead)}
-    ${italyCandidateFieldHtml(byId.limitedCaseQty)}
     <div class="italy-score-row">
       ${italyCandidateFieldHtml(byId.score)}
       ${italyCandidateFieldHtml(byId.scoreSource)}
@@ -3649,12 +3653,14 @@ function italyCandidateGroupsHtml(){
     <label>Supplier Price Per Offered Case <small>(to win a tender, must keep the lowest price among competitors from your region)</small><input id="itCanPrice" type="number" min="0" step="0.01" placeholder="Case price"></label>
     <label>Bottles Per Case <small>(if the full case weight is more than 18.9 kg, items must be reduced)</small><input id="itCanBottlesPerCase" type="number" min="1" step="1" placeholder="e.g. 12"></label>
     <label>Currency<select id="itCanCurrency"><option value="">Select</option><option>EUR</option><option>CAD</option><option>USD</option><option>GBP</option></select></label>
-    <label>Supplier Bottle Price<input id="itCanBottlePrice" readonly placeholder="Case Price ÷ Bottles Per Case"></label>
+    <div class="italy-price-stack">
+      <label>Supplier Bottle Price<input id="itCanBottlePrice" readonly placeholder="Case Price ÷ Bottles Per Case"></label>
+      <label>Local Retail Price Per Bottle<input id="itCanRetail" placeholder="e.g. €8.99"></label>
+    </div>
   </div>
 
   <label>Supplier Quote Type<select id="itCanQuoteType"><option value="">Select</option><option value="FOB">FOB</option><option value="CONSOLIDATION WAREHOUSE">CONSOLIDATION WAREHOUSE (MOST PREFERABLE)</option><option value="EX-CELLAR">EX-CELLAR (NOT PREFERABLE)</option></select></label>
   <label id="itCanExCellarDeliveryWrap" class="field-hidden">Delivery cost per case (from winery to nearest consolidation warehouse.)<input id="itCanExCellarDelivery" type="number" min="0" step="0.01" placeholder="Delivery cost per case"></label>
-  <label>Local Retail Price Per Bottle<input id="itCanRetail" placeholder="e.g. €8.99"></label>
 
   <label class="full">Product Ontario Exclusivity — Is this product or previous vintage exported in Ontario or another Canadian province?<select id="itCanExclusive"><option value="">Select</option><option>No</option><option>Yes</option></select></label>
   <label id="itCanOntarioExportDetailsWrap" class="full field-hidden">Please provide detailed information<textarea id="itCanOntarioExportDetails" placeholder="Province, importer/agency, listing, product/vintage, status, retail channel, and any other relevant details"></textarea></label>
@@ -3794,7 +3800,7 @@ window.saveItalyCandidate=async()=>{
  const data={};itemGroups.filter(g=>g.title!=='Pricing Information').forEach(g=>g.fields.filter(f=>!['producerSameAsSupplier','producerName','producerAddress1','producerAddress2','producerCity','producerRegionCountry','producerPostalCode'].includes(f[0])).forEach(([k,,t])=>{if(['calculated','websites','attachments'].includes(t))return;const el=document.getElementById('c_'+k);if(!el)return;data[k]=t==='number'?num(el.value):(k==='productCategory'?normalizeProductCategory(el.value||'Wine'):(el.value||''))}));
  data.supplierRegion=document.getElementById('c_supplierRegion')?.value.trim()||'';data.supplierCountry=document.getElementById('c_supplierCountry')?.value.trim()||'';data.supplierRegionCountry=[data.supplierRegion,data.supplierCountry].filter(Boolean).join(' / ');
   data.websites=[...document.querySelectorAll('.italy-candidate-website-url')].map(el=>el.value.trim()).filter(Boolean);data.attachments=currentItalyCandidateAttachments.map(({id,name,size,type,lastModified})=>({id,name,size,type,lastModified}));
- if(currentItalyCandidateAttachments.length<7){alert('Supporting Photos / Documents requires a minimum of 7 files before saving.');return false}
+ 
  if(currentItalyCandidateAttachments.length>10){alert('Supporting Photos / Documents allows a maximum of 10 files.');return false}
  const bottlesPerCase=num(document.getElementById('itCanBottlesPerCase').value),casePrice=num(document.getElementById('itCanPrice').value),supplierBottlePrice=bottlesPerCase>0?casePrice/bottlesPerCase:0;
  const supplierCurrency=document.getElementById('itCanCurrency').value,supplierQuoteType=document.getElementById('itCanQuoteType').value,localRetail=document.getElementById('itCanRetail').value.trim(),ontarioExclusive=document.getElementById('itCanExclusive').value,ontarioExportDetails=document.getElementById('itCanOntarioExportDetails').value.trim(),why=document.getElementById('itCanWhy').value.trim(),giftBoxYesNo=document.getElementById('itCanGiftBox').value,giftBoxDescription=document.getElementById('itCanGiftBoxDescription').value.trim(),protectedAppellation=document.getElementById('itCanProtectedAppellation').value,appellationName=document.getElementById('itCanAppellationName').value.trim(),appellationDescription=document.getElementById('itCanAppellationDescription').value.trim(),uniqueOtherDescription=document.getElementById('itCanUniqueOtherDescription').value.trim(),outstandingLocation=document.getElementById('itCanOutstandingLocation').value.trim(),supplierOntarioAgent=document.getElementById('c_supplierOntarioAgent').value,supplierOntarioAgentDetails=document.getElementById('c_supplierOntarioAgentDetails').value.trim(),supplierOtherProvinceExporter=document.getElementById('c_supplierOtherProvinceExporter').value,supplierOtherProvinceExporterDetails=document.getElementById('c_supplierOtherProvinceExporterDetails').value.trim(),exCellarDeliveryPerCase=num(document.getElementById('itCanExCellarDelivery').value);
