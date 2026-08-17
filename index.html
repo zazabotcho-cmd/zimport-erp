@@ -671,15 +671,33 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   </table></div>
 </div></section>
 <section id="archived-pos" class="panel"><div class="box"><div class="section-head"><div><h2>ARCHIVED PO'S</h2><p class="note">POs move here automatically when PO Status is LCBO PAYED.</p></div></div><button type="button" class="secondary page-search-toggle" id="toggleArchivedPoSearch">Search</button><div class="page-search-panel" id="archivedPoSearchPanel"><label>PO #<input id="archivedPoNumberSearch" type="search" placeholder="Type PO number"></label><label>Vendor<input id="archivedPoSupplierSearch" type="search" placeholder="Type vendor name"></label><label>Item Description<input id="archivedPoItemSearch" type="search" placeholder="Type item description"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearArchivedPoSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th>PO #</th><th>PO Program</th><th>Vendor</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>Shipment Status</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="archivedPoRows"></tbody></table></div></div></section>
-<div id="inventoryStockOutModal" class="modal hidden"><div class="modal-card" style="max-width:560px">
- <div class="modal-head"><div><h2>Mark Stock-Out Date</h2><p class="note" id="inventoryStockOutLabel"></p></div><button type="button" class="icon" onclick="closeInventoryStockOutDate()">×</button></div>
- <input type="hidden" id="inventoryStockOutKey"><input type="hidden" id="inventoryStockOutPoId"><input type="hidden" id="inventoryStockOutPoNumber">
- <div class="form-grid">
-  <label class="full">Stock-Out Date<input id="inventoryStockOutDate" type="date" onchange="document.getElementById('inventoryStockOutDueDate').value=datePlusDaysIso(this.value,14)"></label>
-  <label class="full">Calculated Payment Date<input id="inventoryStockOutDueDate" type="date" readonly></label>
-  <div class="full note">Payment date is automatically calculated as Stock-Out Date + 14 days. The linked SEAS/REGU/OTHER TO AGENT invoice will change to Upcoming Payment in Next 14 Days.</div>
- </div>
- <div class="modal-actions"><span></span><button type="button" class="secondary" onclick="closeInventoryStockOutDate()">Cancel</button><button type="button" onclick="saveInventoryStockOutDate()">Save Date &amp; Update Invoice</button></div>
+
+<div id="inventoryStockOutModal" class="modal hidden"><div class="modal-card" style="max-width:580px">
+  <div class="modal-head">
+    <div><h2>Mark Stock-Out Date</h2><p class="note" id="inventoryStockOutLabel"></p></div>
+    <button type="button" class="icon" onclick="closeInventoryStockOutDate()">×</button>
+  </div>
+  <input type="hidden" id="inventoryStockOutKey">
+  <input type="hidden" id="inventoryStockOutPoId">
+  <input type="hidden" id="inventoryStockOutPoNumber">
+  <div class="form-grid">
+    <label class="full">Stock-Out Date
+      <input id="inventoryStockOutDate" type="date">
+    </label>
+    <label class="full">Calculated Payment Date
+      <input id="inventoryStockOutDueDate" type="date" readonly>
+    </label>
+    <div class="full note">
+      The calculated payment date is 14 days after the Stock-Out Date. The linked
+      SEAS/REGU/OTHER TO AGENT invoice will automatically change to
+      <b>Upcoming Payment in Next 14 Days</b>, unless it is already Fully Paid.
+    </div>
+  </div>
+  <div class="modal-actions">
+    <span></span>
+    <button type="button" class="secondary" onclick="closeInventoryStockOutDate()">Cancel</button>
+    <button type="button" onclick="saveInventoryStockOutDate()">Save Date &amp; Update Invoice</button>
+  </div>
 </div></div>
 <section id="inventory-in-stock" class="panel"><div class="box">
  <div class="section-head">
@@ -1897,7 +1915,7 @@ function poCaseQuantityWithBottlesPerCase(po){
   const lines=(po?.lines||[]).filter(line=>line.totalQuantity!==''&&line.totalQuantity!=null);
   if(!lines.length)return '—';
   return lines.map(line=>{
-    const inventoryKey=inventoryLineKey(po,line,lineIndex);const cases=inventoryCasesForLine(po,line,lineIndex);
+    const cases=num(line.totalQuantity);
     const bottlesPerCase=num(line.unitsPerCase);
     return `${cases.toLocaleString()} × ${bottlesPerCase.toLocaleString()}`;
   }).join(' / ');
@@ -4855,67 +4873,201 @@ function automaticInventoryPos(){
  const snapshots=inventoryDeletedPoSnapshotsActive();
  return [...live,...snapshots];
 }
-function inventoryLineKey(po,line,index){return `${po.originalPoId||po.id||po.number||'po'}::${line.itemNo||line.yearProductName||index}`;}
-function inventoryCasesForLine(po,line,index){const key=inventoryLineKey(po,line,index),v=state.inventoryCaseOverrides?.[key];return v===undefined?num(line.totalQuantity):num(v);}
-window.updateInventoryCases=(key,currentCases)=>{const entered=prompt('Update Cases in Stock:',String(currentCases));if(entered===null)return;const value=Number(entered);if(!Number.isFinite(value)||value<0){alert('Enter a valid Cases in Stock quantity.');return}if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};state.inventoryCaseOverrides[key]=value;if(value>0&&state.inventoryStockOutDates?.[key])delete state.inventoryStockOutDates[key];save();renderHeadInventory();};
-function datePlusDaysIso(iso,days){if(!iso)return '';const d=new Date(iso+'T12:00:00');if(Number.isNaN(d.getTime()))return '';d.setDate(d.getDate()+days);return d.toISOString().slice(0,10);}
-function inventoryLinkedRsoInvoices(poId,poNumber){const no=String(poNumber||'').trim().toLowerCase();return (state.otherInvoices||[]).filter(inv=>(poId&&inv.sourcePoId===poId)||(no&&String(inv.poNumber||'').trim().toLowerCase()===no));}
-window.openInventoryStockOutDate=(key,poId,poNumber,product)=>{if(!state.inventoryStockOutDates||typeof state.inventoryStockOutDates!=='object')state.inventoryStockOutDates={};const existing=state.inventoryStockOutDates[key]||{};$('#inventoryStockOutKey').value=key;$('#inventoryStockOutPoId').value=poId||'';$('#inventoryStockOutPoNumber').value=poNumber||'';$('#inventoryStockOutLabel').textContent=`${poNumber||'PO'} — ${product||'Inventory Item'}`;$('#inventoryStockOutDate').value=existing.stockOutDate||new Date().toISOString().slice(0,10);$('#inventoryStockOutDueDate').value=datePlusDaysIso($('#inventoryStockOutDate').value,14);show('inventoryStockOutModal',true);};
+
+function inventorySafeKeyPart(v){
+  return encodeURIComponent(String(v??''));
+}
+function inventoryLineKey(po,line,index){
+  return `${inventorySafeKeyPart(po.originalPoId||po.id||po.number||'po')}::${inventorySafeKeyPart(line.itemNo||line.yearProductName||index)}`;
+}
+function inventoryCasesForLine(po,line,index){
+  const key=inventoryLineKey(po,line,index);
+  const v=state.inventoryCaseOverrides?.[key];
+  return v===undefined?num(line.totalQuantity):Math.max(0,num(v));
+}
+function inventoryDatePlusDays(iso,days){
+  if(!iso)return '';
+  const d=new Date(iso+'T12:00:00');
+  if(Number.isNaN(d.getTime()))return '';
+  d.setDate(d.getDate()+Number(days||0));
+  return d.toISOString().slice(0,10);
+}
+function inventoryLinkedRsoInvoices(poId,poNumber){
+  const no=String(poNumber||'').trim().toLowerCase();
+  return (state.otherInvoices||[]).filter(inv=>{
+    const sourceMatch=poId && inv.sourcePoId===poId;
+    const numberMatch=no && String(inv.poNumber||'').trim().toLowerCase()===no;
+    return sourceMatch||numberMatch;
+  });
+}
+window.updateInventoryCases=(encodedKey,currentCases)=>{
+  const key=decodeURIComponent(String(encodedKey||''));
+  const entered=prompt('Update Cases in Stock:',String(currentCases));
+  if(entered===null)return;
+  const value=Number(entered);
+  if(!Number.isFinite(value)||value<0){
+    alert('Enter a valid Cases in Stock quantity.');
+    return;
+  }
+  if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};
+  state.inventoryCaseOverrides[key]=value;
+  if(value>0&&state.inventoryStockOutDates?.[key])delete state.inventoryStockOutDates[key];
+  save();
+  renderHeadInventory();
+};
+
+window.openInventoryStockOutDate=(encodedKey,encodedPoId,encodedPoNumber)=>{
+  const key=decodeURIComponent(String(encodedKey||''));
+  const poId=decodeURIComponent(String(encodedPoId||''));
+  const poNumber=decodeURIComponent(String(encodedPoNumber||''));
+  if(!state.inventoryStockOutDates||typeof state.inventoryStockOutDates!=='object')state.inventoryStockOutDates={};
+  const existing=state.inventoryStockOutDates[key]||{};
+  $('#inventoryStockOutKey').value=key;
+  $('#inventoryStockOutPoId').value=poId;
+  $('#inventoryStockOutPoNumber').value=poNumber;
+  $('#inventoryStockOutLabel').textContent=poNumber?`PO ${poNumber}`:'Inventory Item';
+  $('#inventoryStockOutDate').value=existing.stockOutDate||new Date().toISOString().slice(0,10);
+  $('#inventoryStockOutDueDate').value=inventoryDatePlusDays($('#inventoryStockOutDate').value,14);
+  show('inventoryStockOutModal',true);
+};
 window.closeInventoryStockOutDate=()=>show('inventoryStockOutModal',false);
-window.saveInventoryStockOutDate=()=>{const key=$('#inventoryStockOutKey').value,poId=$('#inventoryStockOutPoId').value,poNumber=$('#inventoryStockOutPoNumber').value,date=$('#inventoryStockOutDate').value;if(!date){alert('Select the Stock-Out Date.');return false}const due=datePlusDaysIso(date,14);if(!state.inventoryStockOutDates||typeof state.inventoryStockOutDates!=='object')state.inventoryStockOutDates={};state.inventoryStockOutDates[key]={stockOutDate:date,paymentDueDate:due,poId,poNumber,updatedAt:new Date().toISOString()};inventoryLinkedRsoInvoices(poId,poNumber).forEach(inv=>{if(normalizeRsoInvoiceStatus(inv.paidStatus||inv.invoicePaidStatus)!=='Fully Paid'){inv.paidStatus='Upcoming Payment in Next 14 Days';inv.stockOutDate=date;inv.upcomingPaymentCalculatedDate=due;inv.stockOutTriggered=true;}});save();closeInventoryStockOutDate();renderHeadInventory();try{renderOtherInvoices()}catch(e){}return true;};
+
+window.saveInventoryStockOutDate=()=>{
+  const key=$('#inventoryStockOutKey').value;
+  const poId=$('#inventoryStockOutPoId').value;
+  const poNumber=$('#inventoryStockOutPoNumber').value;
+  const stockOutDate=$('#inventoryStockOutDate').value;
+  if(!stockOutDate){
+    alert('Select the Stock-Out Date.');
+    return false;
+  }
+  const dueDate=inventoryDatePlusDays(stockOutDate,14);
+  if(!state.inventoryStockOutDates||typeof state.inventoryStockOutDates!=='object')state.inventoryStockOutDates={};
+  state.inventoryStockOutDates[key]={
+    stockOutDate,
+    paymentDueDate:dueDate,
+    poId,
+    poNumber,
+    updatedAt:new Date().toISOString()
+  };
+
+  const linked=inventoryLinkedRsoInvoices(poId,poNumber);
+  linked.forEach(inv=>{
+    if(normalizeRsoInvoiceStatus(inv.paidStatus||inv.invoicePaidStatus)!=='Fully Paid'){
+      inv.paidStatus='Upcoming Payment in Next 14 Days';
+      inv.stockOutDate=stockOutDate;
+      inv.upcomingPaymentCalculatedDate=dueDate;
+      inv.stockOutTriggered=true;
+    }
+  });
+
+  save();
+  closeInventoryStockOutDate();
+  renderHeadInventory();
+  if(typeof renderOtherInvoices==='function')renderOtherInvoices();
+
+  if(!linked.length){
+    alert('Stock-Out Date saved. No linked SEAS/REGU/OTHER TO AGENT invoice was found for this PO yet.');
+  }
+  return true;
+};
+
+(function wireInventoryStockOutDate(){
+  const el=document.getElementById('inventoryStockOutDate');
+  if(el){
+    el.addEventListener('change',()=>{
+      const due=document.getElementById('inventoryStockOutDueDate');
+      if(due)due.value=inventoryDatePlusDays(el.value,14);
+    });
+  }
+})();
+
 window.renderHeadInventory=()=>{
  const body=document.getElementById('headInventoryRows'),k=document.getElementById('headInventoryKpis');
  if(!body)return;
  const q=(document.getElementById('headInventorySearch')?.value||'').trim().toLowerCase();
  const pos=automaticInventoryPos();
  const rows=[];
+
  pos.forEach(po=>{
   const shipment=inventoryShipmentForPo(po);
-  const arrivalDate=shipment?.statusDate||'—';
+  const arrivalDate=shipment?.statusDate||po.sourceShipmentStatusDate||'—';
   const vendor=(po.supplierNames||po.vendors||[]).join(', ')||po.vendor||'—';
   const program=inventoryPoProgram(po);
   const lines=(po.lines||[]);
+
   if(lines.length){
    lines.forEach((line,lineIndex)=>{
-    const cases=num(line.totalQuantity);
+    const originalCases=num(line.totalQuantity);
+    const cases=inventoryCasesForLine(po,line,lineIndex);
     const bpc=num(line.unitsPerCase);
-    const bottles=(line.bottleQuantity!==''&&line.bottleQuantity!=null)?num(line.bottleQuantity):cases*bpc;
-    const hay=[po.number,program,vendor,line.itemNo,line.yearProductName,shipment?.name,po.poStatus].join(' ').toLowerCase();
+    const bottles=cases*bpc;
+    const inventoryKey=inventoryLineKey(po,line,lineIndex);
+    const poId=po.originalPoId||po.id||'';
+    const poNumber=po.number||'';
+    const totalQuotedValue=originalCases*num(line.quotedPricePerCase);
+    const hay=[poNumber,program,vendor,line.itemNo,line.yearProductName,shipment?.name,po.poStatus].join(' ').toLowerCase();
     if(q&&!hay.includes(q))return;
+
     rows.push({
-     poNumber:po.number||'—',program,vendor,itemNo:line.itemNo||'—',product:line.yearProductName||'—',
-     quotePerCase:num(line.quotedPricePerCase),totalQuotedValue:cases*num(line.quotedPricePerCase),quoteCurrency:po.currency||po.quotationCurrency||po.supplierCurrency||'',
-     cases,bpc,bottles,inventoryKey,poId:po.originalPoId||po.id||'',productName:line.yearProductName||'—',shipment:shipment?.name||po.sourceShipmentName||'—',arrivalDate:shipment?.statusDate||po.sourceShipmentStatusDate||arrivalDate,status:'Arrived in Canada',deletedFromPoPage:!!po.inventoryDeletedFromPoPage
+      poNumber,
+      poId,
+      program,
+      vendor,
+      itemNo:line.itemNo||'—',
+      product:line.yearProductName||'—',
+      totalQuotedValue,
+      quoteCurrency:po.currency||po.quotationCurrency||po.supplierCurrency||'',
+      cases,
+      bpc,
+      bottles,
+      inventoryKey,
+      shipment:shipment?.name||po.sourceShipmentName||'—',
+      arrivalDate,
+      deletedFromPoPage:!!po.inventoryDeletedFromPoPage
     });
    });
-  }else{
-   const hay=[po.number,program,vendor,shipment?.name,po.poStatus].join(' ').toLowerCase();
-   if(!q||hay.includes(q)){
-    rows.push({poNumber:po.number||'—',program,vendor,itemNo:'—',product:'—',quotePerCase:0,totalQuotedValue:0,quoteCurrency:po.currency||po.quotationCurrency||po.supplierCurrency||'',cases:0,bpc:0,bottles:0,inventoryKey:`${po.originalPoId||po.id||po.number||'po'}::fallback`,poId:po.originalPoId||po.id||'',productName:'—',shipment:shipment?.name||po.sourceShipmentName||'—',arrivalDate:shipment?.statusDate||po.sourceShipmentStatusDate||arrivalDate,status:'Arrived in Canada',deletedFromPoPage:!!po.inventoryDeletedFromPoPage});
-   }
   }
  });
- body.innerHTML=rows.map(r=>`<tr>
-  <td><b>${escapeHtml(r.poNumber)}</b>${r.deletedFromPoPage?'<br><small>PO deleted from PO page — retained in inventory</small>':''}</td>
-  <td>${escapeHtml(r.program)}</td>
-  <td>${escapeHtml(r.vendor)}</td>
-  <td>${escapeHtml(r.itemNo)}</td>
-  <td><b>${escapeHtml(r.product)}</b></td>
-  <td><b>${r.quotePerCase?escapeHtml((r.quoteCurrency?r.quoteCurrency+' ':'')+r.quotePerCase.toFixed(2)):'—'}</b></td>
-  <td><b>${r.cases.toLocaleString()}</b> <button type="button" class="secondary small" onclick="updateInventoryCases('${r.inventoryKey}',${r.cases})">Update</button>${r.cases===0?` <button type="button" class="secondary small" onclick="openInventoryStockOutDate('${r.inventoryKey}','${r.poId}','${escapeHtml(r.poNumber)}','${escapeHtml(r.productName)}')">Mark Stock-Out Date</button>${state.inventoryStockOutDates?.[r.inventoryKey]?.stockOutDate?`<br><small>Stock-Out: ${escapeHtml(state.inventoryStockOutDates[r.inventoryKey].stockOutDate)} · Payment due: ${escapeHtml(state.inventoryStockOutDates[r.inventoryKey].paymentDueDate||'')}</small>`:''}`:''}</td>
-  <td>${r.bpc.toLocaleString()}</td>
-  <td><b>${r.bottles.toLocaleString()}</b></td>
-  <td>${escapeHtml(r.shipment)}</td>
-  <td>${escapeHtml(r.arrivalDate)}</td>
-  <td><span class="badge">Arrived in Canada</span></td>
- </tr>`).join('')||'<tr><td colspan="12">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
+
+ body.innerHTML=rows.map(r=>{
+   const keyArg=encodeURIComponent(r.inventoryKey);
+   const poIdArg=encodeURIComponent(r.poId||'');
+   const poNoArg=encodeURIComponent(r.poNumber||'');
+   const stockOut=state.inventoryStockOutDates?.[r.inventoryKey];
+   const zeroControls=r.cases===0
+     ? ` <button type="button" class="secondary small" onclick="openInventoryStockOutDate('${keyArg}','${poIdArg}','${poNoArg}')">Mark Stock-Out Date</button>
+        ${stockOut?.stockOutDate?`<br><small>Stock-Out: ${escapeHtml(stockOut.stockOutDate)} · Payment due: ${escapeHtml(stockOut.paymentDueDate||'')}</small>`:''}`
+     : '';
+
+   return `<tr>
+    <td><b>${escapeHtml(r.poNumber||'—')}</b>${r.deletedFromPoPage?'<br><small>PO deleted from PO page — retained in inventory</small>':''}</td>
+    <td>${escapeHtml(r.program)}</td>
+    <td>${escapeHtml(r.vendor)}</td>
+    <td>${escapeHtml(r.itemNo)}</td>
+    <td><b>${escapeHtml(r.product)}</b></td>
+    <td><b>${r.totalQuotedValue?escapeHtml((r.quoteCurrency?r.quoteCurrency+' ':'')+r.totalQuotedValue.toFixed(2)):'—'}</b></td>
+    <td><b>${r.cases.toLocaleString()}</b> <button type="button" class="secondary small" onclick="updateInventoryCases('${keyArg}',${r.cases})">Update</button>${zeroControls}</td>
+    <td>${r.bpc.toLocaleString()}</td>
+    <td><b>${r.bottles.toLocaleString()}</b></td>
+    <td>${escapeHtml(r.shipment)}</td>
+    <td>${escapeHtml(r.arrivalDate)}</td>
+    <td><span class="badge">Arrived in Canada</span></td>
+   </tr>`;
+ }).join('')||'<tr><td colspan="12">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
 
  if(k){
-  const totalCases=pos.reduce((sum,po)=>sum+(po.lines||[]).reduce((s,l,i)=>s+inventoryCasesForLine(po,l,i),0),0);
-  const totalBottles=pos.reduce((sum,po)=>sum+(po.lines||[]).reduce((s,l,i)=>s+inventoryCasesForLine(po,l,i)*num(l.unitsPerCase),0),0);
-  k.innerHTML=`<div class="card"><span>POs in Inventory</span><strong>${pos.length}</strong></div>
-   <div class="card"><span>Total Cases in Stock</span><strong>${totalCases.toLocaleString()}</strong></div>
-   <div class="card"><span>Total Bottles in Stock</span><strong>${totalBottles.toLocaleString()}</strong></div>`;
+   let totalCases=0,totalBottles=0;
+   pos.forEach(po=>{
+     (po.lines||[]).forEach((line,index)=>{
+       const c=inventoryCasesForLine(po,line,index);
+       totalCases+=c;
+       totalBottles+=c*num(line.unitsPerCase);
+     });
+   });
+   k.innerHTML=`<div class="card"><span>POs in Inventory</span><strong>${pos.length}</strong></div>
+     <div class="card"><span>Total Cases in Stock</span><strong>${totalCases.toLocaleString()}</strong></div>
+     <div class="card"><span>Total Bottles in Stock</span><strong>${totalBottles.toLocaleString()}</strong></div>`;
  }
 };
 
