@@ -1117,7 +1117,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 
 <div id="shipmentModal" class="modal hidden"><div class="modal-card po-modal-card"><div class="modal-head"><div><h2 id="shipmentModalTitle">Create Shipment</h2><p>Create the shipment and assign POs from both Tender PO's # and Private Order PO's #.</p></div><button id="closeShipmentModal" class="icon">×</button></div><input type="hidden" id="shipmentRecordId">
 <div class="form-grid three"><label>Shipment Name *<input id="shipmentNameInput" placeholder="Example: Germany Consolidation Shipment"></label></div>
-<fieldset class="item-group"><legend>Add POs from Tender and Private Order PO's #</legend><div class="po-supplier-add"><label style="flex:1">PO<select id="shipmentPoSelect"></select></label><label style="flex:0 0 105px">Ref #<input id="shipmentRefInput" maxlength="30" placeholder="Ref #"></label><button id="addShipmentPoBtn" type="button" title="Add PO">+</button></div><div class="shipment-po-wrap"><table class="shipment-po-table"><thead><tr><th>PO #</th><th>Ref #</th><th>Suppliers</th><th>Bottles</th><th></th></tr></thead><tbody id="shipmentPoRows"></tbody></table></div></fieldset>
+<fieldset class="item-group"><legend>Add POs from Tender and Private Order PO's #</legend><div class="po-supplier-add"><label style="flex:1">PO<select id="shipmentPoSelect"></select><div id="shipmentPoUsageWarning" class="note" style="color:var(--red);margin-top:6px"></div></label><label style="flex:0 0 105px">Ref #<input id="shipmentRefInput" maxlength="30" placeholder="Ref #"></label><button id="addShipmentPoBtn" type="button" title="Add PO">+</button></div><div class="shipment-po-wrap"><table class="shipment-po-table"><thead><tr><th>PO #</th><th>Ref #</th><th>Suppliers</th><th>Bottles</th><th></th></tr></thead><tbody id="shipmentPoRows"></tbody></table></div></fieldset>
 <div class="form-grid three"><label>Pallet Quantity<input id="shipmentPalletQtyInput" type="number" min="0" step="1" inputmode="numeric" placeholder="Number of pallets"></label></div>
 <div class="form-grid"><label class="full">Transport Company Name<input id="shipmentCompanyInput" placeholder="Type transport company name"></label></div>
 <div class="shipment-compact-grid"><label>Phone Number<input id="shipmentPhoneInput" placeholder="Phone number"></label><label>Email 1<input id="shipmentEmail1Input" type="email" placeholder="Email address"></label><label>Email 2<input id="shipmentEmail2Input" type="email" placeholder="Email address"></label></div><div class="shipment-address-row"><label>From<input id="shipmentFromInput" placeholder="Country, city and address"></label><label>To<input id="shipmentToInput" placeholder="Country, city and address"></label></div><div class="full"><b>Attached Invoice and Files</b><div class="shipment-file-grid">
@@ -1748,25 +1748,23 @@ function transportationStatusOptions(status=''){
 }
 function shipmentStatusSelect(sh){const status=normalizeSharedShipmentStatus(sh.status||'Not Contacted');return `<select class="shipment-inline-status ${shipmentStatusClass(status)}" onchange="updateShipmentStatusFromRow('${sh.id}',this.value)">${transportationStatusOptions(status)}</select>`}
 function updateIncludedPoStatusesForShipment(sh,status){
- const shared=normalizeSharedShipmentStatus(status);
- if(!TRANSPORT_SYNC_STATUSES.includes(shared))return;
- const ids=new Set((sh.poLinks||[]).map(x=>x.poId).filter(Boolean));
- (state.purchaseOrders||[]).forEach(po=>{
-   if(ids.has(po.id)&&!PO_ONLY_STATUSES.includes(normalizeSharedShipmentStatus(po.poStatus||''))){
-     po.poStatus=shared;
-     if(shared==='Arrived in Canada'){
-       po.inventoryArrivalSource='shipment';
-       po.inventoryArrivalShipmentId=sh.id;
-       po.inventoryArrivalShipmentName=sh.name||'';
-       po.inventoryArrivalStatusDate=sh.statusDate||new Date().toISOString().slice(0,10);
-       delete po.inventoryRemovedByShipment;
-     }else if(po.inventoryArrivalShipmentId===sh.id){
-       delete po.inventoryArrivalSource;
-       delete po.inventoryArrivalShipmentId;
-       delete po.inventoryRemovedByShipment;
-     }
-   }
- });
+  const shared=normalizeSharedShipmentStatus(status);
+  if(!TRANSPORT_SYNC_STATUSES.includes(shared))return;
+  const ids=new Set((sh.poLinks||[]).map(x=>x.poId).filter(Boolean));
+
+  (state.purchaseOrders||[]).forEach(po=>{
+    if(!ids.has(po.id)||PO_ONLY_STATUSES.includes(normalizeSharedShipmentStatus(po.poStatus||'')))return;
+
+    if(shared==='Arrived in Canada'){
+      po.inventoryArrivalSource='shipment';
+      po.inventoryArrivalShipmentId=sh.id;
+      po.inventoryArrivalShipmentName=sh.name||'';
+      po.inventoryArrivalStatusDate=sh.statusDate||new Date().toISOString().slice(0,10);
+      delete po.inventoryRemovedByShipment;
+    }
+
+    refreshSplitPoStatus(po.id);
+  });
 }
 function updateShipmentStatusFromRow(id,status){
   const sh=(state.shipments||[]).find(x=>x.id===id);if(!sh)return;
@@ -1774,6 +1772,7 @@ function updateShipmentStatusFromRow(id,status){
   if(!TRANSPORT_SYNC_STATUSES.includes(shared))return;
   sh.status=shared;sh.statusDate=new Date().toISOString().slice(0,10);
   updateIncludedPoStatusesForShipment(sh,shared);
+  (sh.poLinks||[]).forEach(link=>refreshSplitPoStatus(link.poId));
   save();renderShipments();renderPurchaseOrders();renderArchivedPurchaseOrders();if(typeof renderHeadInventory==='function')renderHeadInventory();
 }
 window.updateShipmentStatusFromRow=updateShipmentStatusFromRow;
@@ -1784,10 +1783,40 @@ function copyShipmentInfoAll(sh){const totals=shipmentTotals(sh),payment=sh.paym
 function closeShipmentInfo(){const m=$('#shipmentInfoModal');if(m)m.classList.add('hidden')}
 function openStoredShipmentInfoFile(shipmentId,fileIndex){const sh=(state.shipments||[]).find(x=>x.id===shipmentId),files=[1,2,3,4,5,6].map(n=>sh?.['attachment'+n]).filter(Boolean),f=files[fileIndex];if(!f?.data){alert('No file is attached.');return}const win=window.open(f.data,'_blank');if(!win){const a=document.createElement('a');a.href=f.data;a.download=f.name||'shipment-file';document.body.appendChild(a);a.click();a.remove()}}
 function poClassificationLabel(po={}){const program=String(po.program||'OTHER').toUpperCase();const classification=program==='OTHER'?(String(po.programOther||'OTHER').trim()||'OTHER'):program;return classification+' PO#'+(po.number||'Unnamed')}
-function renderShipmentPoSelector(){const select=$('#shipmentPoSelect');if(!select)return;select.innerHTML='<option value="">Select PO</option>'+(state.purchaseOrders||[]).filter(po=>!shipmentSelectedPos.some(x=>x.poId===po.id)).map(po=>`<option value="${po.id}">${escapeHtml(poClassificationLabel(po))} — ${poBottleCount(po).toLocaleString()} bottles</option>`).join('');renderShipmentPoRows()}
+function renderShipmentPoSelector(){
+ const select=$('#shipmentPoSelect');if(!select)return;
+ const currentShipmentId=$('#shipmentRecordId')?.value||'';
+ select.innerHTML='<option value="">Select PO</option>'+(state.purchaseOrders||[])
+   .filter(po=>!shipmentSelectedPos.some(x=>x.poId===po.id))
+   .map(po=>{
+     const usedIn=(state.shipments||[]).filter(sh=>sh.id!==currentShipmentId&&(sh.poLinks||[]).some(link=>link.poId===po.id));
+     const suffix=usedIn.length
+       ? ` — ALREADY USED IN ANOTHER TRANSPORTATION: ${usedIn.map(sh=>sh.name||'Unnamed Transportation').join(', ')}`
+       : '';
+     return `<option value="${po.id}">${escapeHtml(poClassificationLabel(po))} — ${poBottleCount(po).toLocaleString()} bottles${escapeHtml(suffix)}</option>`;
+   }).join('');
+ renderShipmentPoRows();
+}
 function renderShipmentPoRows(){const body=$('#shipmentPoRows');if(!body)return;body.innerHTML=shipmentSelectedPos.map(link=>{const po=(state.purchaseOrders||[]).find(x=>x.id===link.poId),poNo=po?.number||'—',suppliers=(po?.supplierNames||[]).join(', ')||'—',bottles=poBottleCount(po).toLocaleString();return `<tr><td><b>${escapeHtml(poNo)}</b><button type="button" class="secondary copy-mini" onclick="copyText('${escapeHtml(poNo).replace(/'/g,"\\'")}')">Copy</button></td><td><div style="display:flex;align-items:center;gap:4px"><input value="${escapeHtml(link.ref||'')}" oninput="updateShipmentRef('${link.poId}',this.value)" placeholder="Ref #"><button type="button" class="secondary copy-mini" onclick="copyShipmentRef('${link.poId}')">Copy</button></div></td><td>${escapeHtml(suppliers)}</td><td>${bottles}</td><td><button type="button" class="danger small" onclick="removeShipmentPo('${link.poId}')">Remove</button></td></tr>`}).join('')||'<tr><td colspan="5">No POs added.</td></tr>';updateShipmentCalculations()}
 function updateShipmentCalculations(resetRate=false){const totalBottles=shipmentSelectedPos.reduce((sum,link)=>sum+poBottleCount((state.purchaseOrders||[]).find(x=>x.id===link.poId)),0),cost=num($('#shipmentCostInput')?.value),currency=$('#shipmentCurrencyInput')?.value||'CAD',rateInput=$('#shipmentExchangeRateInput');if(resetRate&&rateInput)rateInput.value=currency==='CAD'?'1':'';const exchangeRate=currency==='CAD'?1:num(rateInput?.value),cadRate=currency==='CAD'?1:(exchangeRate>0?1/exchangeRate:0),costPerBottle=totalBottles?cost/totalBottles:0,costPerBottleCad=costPerBottle*cadRate;$('#shipmentTotalBottles').textContent=totalBottles.toLocaleString();$('#shipmentCostDisplay').textContent=currency+' '+cost.toFixed(2);$('#shipmentCostPerBottle').textContent=currency+' '+costPerBottle.toFixed(4);if(rateInput){rateInput.disabled=currency==='CAD';if(currency==='CAD')rateInput.value='1'}$('#shipmentConverterCurrency').textContent=currency;$('#shipmentConverterLabel').textContent='Transportation CAD Converter — Enter Manually';$('#shipmentCostPerBottleCad').textContent='CAD '+costPerBottleCad.toFixed(4)}
-function addShipmentPo(){const poId=$('#shipmentPoSelect').value;if(!poId)return;shipmentSelectedPos.push({poId,ref:$('#shipmentRefInput').value.trim()});$('#shipmentRefInput').value='';renderShipmentPoSelector()}
+function shipmentPoUsageInfo(poId){
+ const currentShipmentId=$('#shipmentRecordId')?.value||'';
+ return (state.shipments||[]).filter(sh=>sh.id!==currentShipmentId&&(sh.poLinks||[]).some(link=>link.poId===poId));
+}
+window.shipmentPoUsageInfo=shipmentPoUsageInfo;
+
+function addShipmentPo(){
+ const poId=$('#shipmentPoSelect').value;if(!poId)return;
+ const usedIn=shipmentPoUsageInfo(poId);
+ if(usedIn.length){
+   const names=usedIn.map(sh=>sh.name||'Unnamed Transportation').join(', ');
+   const ok=confirm(`This PO is already used in another Transportation: ${names}.\n\nDo you still want to add this PO to the current Transportation?`);
+   if(!ok)return;
+ }
+ shipmentSelectedPos.push({poId,ref:$('#shipmentRefInput').value.trim()});
+ $('#shipmentRefInput').value='';
+ renderShipmentPoSelector();
+}
 function removeShipmentPo(poId){shipmentSelectedPos=shipmentSelectedPos.filter(x=>x.poId!==poId);renderShipmentPoSelector()}
 function updateShipmentRef(poId,value){const x=shipmentSelectedPos.find(x=>x.poId===poId);if(x)x.ref=value}
 function copyShipmentRef(poId){const x=shipmentSelectedPos.find(x=>x.poId===poId);copyText(x?.ref||'')}
@@ -1829,6 +1858,7 @@ function saveShipment(){
  const i=state.shipments.findIndex(x=>x.id===id);
  if(i>=0)state.shipments[i]=sh;else state.shipments.push(sh);
  updateIncludedPoStatusesForShipment(sh,sh.status);
+ [...new Set([...(previousShipment?.poLinks||[]).map(x=>x.poId),...(sh.poLinks||[]).map(x=>x.poId)])].filter(Boolean).forEach(refreshSplitPoStatus);
  save();
  if(typeof renderHeadInventory==='function')renderHeadInventory();
  closeShipmentEditor();
@@ -1838,6 +1868,7 @@ function deleteShipment(id){
  // Once a non-TENDER PO has entered Inventory in Stock, deleting Transportation does not remove it from inventory.
  moveToRecycleBin('shipment','Transportation',x);
  state.shipments=state.shipments.filter(v=>v.id!==id);
+ const affectedPoIds=(x.poLinks||[]).map(link=>link.poId).filter(Boolean);affectedPoIds.forEach(refreshSplitPoStatus);
  save();
  if(typeof renderHeadInventory==='function')renderHeadInventory();
  closeShipmentEditor();
@@ -1865,9 +1896,62 @@ function poBottleQuantity(po){return (po.lines||[]).reduce((sum,line)=>sum+(line
 const TRANSPORT_SYNC_STATUSES=['Not Contacted','Scheduled & Confirmed','On the Way','Delivered to Consolidation','Arrived in Canada'];
 const PO_ONLY_STATUSES=['CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED'];
 const SHARED_SHIPMENT_STATUSES=[...TRANSPORT_SYNC_STATUSES,...PO_ONLY_STATUSES];
+
+const SPLIT_PO_STATUS_ORDER=['Not Contacted','Scheduled & Confirmed','On the Way','Delivered to Consolidation','Arrived in Canada'];
+
+function splitPoLinkedShipments(poId){
+  return (state.shipments||[]).filter(sh=>(sh.poLinks||[]).some(link=>link.poId===poId));
+}
+function splitPoAggregateStatus(po){
+  if(!po)return '';
+  const own=normalizeSharedShipmentStatus(po.poStatus||'');
+  if(PO_ONLY_STATUSES.includes(own))return own;
+
+  const linked=splitPoLinkedShipments(po.id);
+  if(!linked.length)return own;
+
+  const statuses=linked.map(sh=>normalizeSharedShipmentStatus(sh.status||'')).filter(Boolean);
+  if(!statuses.length)return own;
+
+  const unique=[...new Set(statuses)];
+  if(unique.length===1)return unique[0];
+
+  let highest='Not Contacted',highestIndex=0;
+  statuses.forEach(s=>{
+    const i=SPLIT_PO_STATUS_ORDER.indexOf(s);
+    if(i>highestIndex){highestIndex=i;highest=s}
+  });
+
+  return highest==='Not Contacted'?'Not Contacted':`${highest} (PARTIALLY)`;
+}
+window.splitPoAggregateStatus=splitPoAggregateStatus;
+
+function refreshSplitPoStatus(poId){
+  const po=(state.purchaseOrders||[]).find(x=>x.id===poId);
+  if(!po)return;
+  const current=normalizeSharedShipmentStatus(po.poStatus||'');
+  if(PO_ONLY_STATUSES.includes(current))return;
+
+  const linked=splitPoLinkedShipments(poId);
+  if(!linked.length)return;
+
+  po.poStatus=splitPoAggregateStatus(po);
+}
+window.refreshSplitPoStatus=refreshSplitPoStatus;
+
+function refreshAllSplitPoStatuses(){
+  (state.purchaseOrders||[]).forEach(po=>refreshSplitPoStatus(po.id));
+}
+window.refreshAllSplitPoStatuses=refreshAllSplitPoStatuses;
+
 function normalizeSharedShipmentStatus(status=''){
   const s=String(status||'').trim();
-  if(s.toUpperCase()==='ARRIVED IN CANADA')return 'Arrived in Canada';
+  const upper=s.toUpperCase();
+  if(upper==='SCHEDULED & CONFIRMED (PARTIALLY)')return 'Scheduled & Confirmed (PARTIALLY)';
+  if(upper==='ON THE WAY (PARTIALLY)')return 'On the Way (PARTIALLY)';
+  if(upper==='DELIVERED TO CONSOLIDATION (PARTIALLY)')return 'Delivered to Consolidation (PARTIALLY)';
+  if(upper==='ARRIVED IN CANADA (PARTIALLY)')return 'Arrived in Canada (PARTIALLY)';
+  if(upper==='ARRIVED IN CANADA')return 'Arrived in Canada';
   if(s.toLowerCase()==='delivered')return 'Delivered to Consolidation';
   return s;
 }
@@ -1876,7 +1960,15 @@ function sharedShipmentStatusOptions(status=''){
   return '<option value="">Select Shipment Status</option>'+SHARED_SHIPMENT_STATUSES.map(v=>`<option value="${escapeHtml(v)}" ${current===v?'selected':''}>${escapeHtml(v)}</option>`).join('');
 }
 function poStatusBadge(status=''){const value=normalizeSharedShipmentStatus(status)||'—';const cls=value==='LCBO PAYED'?'status-green':value==='CLEARED OUT FROM THE WAREHOUSE'?'status-blue':(['Delivered to Consolidation','Arrived in Canada'].includes(value)?'status-green':'status-yellow');return `<span class="${cls}">${escapeHtml(value)}</span>`}
-function poStatusSelect(po){return `<select class="po-inline-status" onchange="updatePoStatusFromRow('${po.id}',this.value)">${sharedShipmentStatusOptions(po.poStatus||'')}</select>`}
+function poStatusSelect(po){
+  const linked=splitPoLinkedShipments(po.id);
+  if(linked.length>1){
+    const value=splitPoAggregateStatus(po)||'—';
+    const cls=value.includes('(PARTIALLY)')?'status-yellow':(['Delivered to Consolidation','Arrived in Canada'].includes(value)?'status-green':'status-yellow');
+    return `<span class="${cls}">${escapeHtml(value)}</span><br><small>Split across ${linked.length} Transportation records</small>`;
+  }
+  return `<select class="po-inline-status" onchange="updatePoStatusFromRow('${po.id}',this.value)">${sharedShipmentStatusOptions(po.poStatus||'')}</select>`;
+}
 function poDisplayRow(po,archived=false){
   const calculated=(po.lines||[]).reduce((a,x)=>a+(num(x.totalQuantity)*num(x.quotedPricePerCase)),0);
   const statusCell=archived?poStatusBadge(po.poStatus||''):poStatusSelect(po);
@@ -2242,13 +2334,14 @@ window.printSelectedPoProformas=printSelectedPoProformas;
 
 function renderPurchaseOrders(){
   if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
+  refreshAllSplitPoStatuses();
   renderPoPrintAgencyOptions();
   if(!$('#poRows'))return;
   const visiblePos=purchaseOrdersForCurrentSection();
   const q=id=>($('#'+id)?.value||'').trim().toLowerCase(),poNumber=q('poNumberSearch'),poProgram=q('poProgramSearch'),poSupplier=q('poSupplierSearch'),poItem=q('poItemSearch'),poStatus=$('#poStatusSearch')?.value||'';
   const filteredPos=visiblePos.filter(po=>{
     const supplierText=String((po.vendors||[]).join(' ')||po.vendor||((po.supplierNames||[]).join(' '))||'').toLowerCase(),itemText=poItemDescriptions(po).toLowerCase();
-    return(!poNumber||String(po.number||'').toLowerCase().includes(poNumber))&&(!poProgram||poProgramLabel(po).toLowerCase().includes(poProgram))&&(!poSupplier||supplierText.includes(poSupplier))&&(!poItem||itemText.includes(poItem))&&(!poStatus||(po.poStatus||'')===poStatus)
+    return(!poNumber||String(po.number||'').toLowerCase().includes(poNumber))&&(!poProgram||poProgramLabel(po).toLowerCase().includes(poProgram))&&(!poSupplier||supplierText.includes(poSupplier))&&(!poItem||itemText.includes(poItem))&&(!poStatus||splitPoAggregateStatus(po)===poStatus||(po.poStatus||'')===poStatus)
   });
   const rows=filteredPos.map(po=>poDisplayRow(po,false)).join('');
   const emptyMessage=currentPoContext==='tender-niss'?'No active TENDER purchase orders have been created.':currentPoContext==='speciality-services'?'No active REGU, SEAS, or OTHER private-order POs have been created.':'No active purchase orders have been created.';
@@ -3174,6 +3267,19 @@ $('#saveProgramSettings').onclick=()=>$('#saveSettings').click();
 $('#exportBtn').onclick=()=>download('zimport-program-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({settings,...state},null,2),'application/json');$('#importFile').onchange=e=>{const file=e.target.files[0];if(!file)return;const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);settings=d.settings||settings;state={agencies:d.agencies||defaultAgencies,records:d.records||[],items:d.items||[],tenders:d.tenders||[],suppliers:d.suppliers||[],purchaseOrders:d.purchaseOrders||[],shipments:d.shipments||[],financialInvoices:d.financialInvoices||[],supplierPaymentInvoices:d.supplierPaymentInvoices||[],supplierPaymentInvoices2:d.supplierPaymentInvoices2||[],otherInvoices:d.otherInvoices||[]};safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));save();alert('Backup imported.')}catch{alert('Invalid backup file.')}};fr.readAsText(file)};
 $('#csvBtn').onclick=()=>{const keys=['tenderName','tenderDate','agency','supplier','brand','itemName','registered','year','award1','link1','award2','link2','award3','link3','additionalAwards','productType','caseKg','currency','exchangeRate','supplierPrice','supplierCad','agencyFee','bottles','offeredQuoteCurrency','offeredQuote','offeredQuoteCad','erp','transportExpense','netProfit','potentialCases','potentialBottles','totalProfit','sampleProvideDate','sampleStatus','documentsToProvideStatus','sampleDocumentStatus','stage1Decision','finalDecision','finalOrderedQty','comments','ntpStatus','ntpFileName','poStatus','poNumber','poFileName','submissionNumber','poFileName','submissionNumber'];const rows=[keys,...state.records.map(x=>{const d=derive(x);const o={...d,agency:agencyName(x.agencyId),erp:num(x.erpManual)||d.estimatedErp,additionalAwards:(x.extraAwards||[]).map(a=>[a.award,a.link].filter(Boolean).join(' - ')).join(' | ')};return keys.map(k=>String(o[k]??'').replaceAll('"','""'))})];download('zimport-submissions.csv',rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n'),'text/csv')};
 $('#clearBtn').onclick=()=>{if(confirm('Move all program records to the Recycling Bin?')){const groups=[['agency','Agencies','agencies'],['record','Submissions','records'],['item','Tender Item Database','items'],['tender','Tenders','tenders'],['supplier','Suppliers','suppliers'],['purchaseOrder',"PO'S #",'purchaseOrders'],['shipment','Transportation','shipments'],['financialInvoice','LCBO to Agent Tender Invoices','financialInvoices'],['supplierPaymentInvoice','Paying to Suppliers Invoices','supplierPaymentInvoices'],['supplierPaymentInvoice2','Suppliers to Agent Fee Payment','supplierPaymentInvoices2'],['otherInvoice','SEAS/REGU/OTHER TO AGENT INVOICES','otherInvoices'],['otherNewInvoice','OTHER MIXED INVOICES','otherNewInvoices'],['archivedInvoice','Archived Invoices','archivedInvoices'],['archivedShipment','Archived Transportation','archivedShipments'],['archivedPo',"ARCHIVED PO'S",'manuallyArchivedPurchaseOrders'],['countryWinery','Winery Database','countryWineries'],['countryCandidate','Wine Candidates','countryCandidates'],['countryBonus','Performance & Bonuses','countryBonuses']];groups.forEach(([type,page,key])=>(state[key]||[]).forEach(r=>moveToRecycleBin(type,page,r,{collection:key})));groups.forEach(([, ,key])=>state[key]=[]);save()}};
+
+
+const shipmentPoSelectEl=$('#shipmentPoSelect');
+if(shipmentPoSelectEl){
+ shipmentPoSelectEl.addEventListener('change',()=>{
+  const note=$('#shipmentPoUsageWarning');
+  if(!note)return;
+  const used=shipmentPoUsageInfo(shipmentPoSelectEl.value);
+  note.textContent=used.length
+    ? `This PO is already used in another Transportation: ${used.map(sh=>sh.name||'Unnamed Transportation').join(', ')}`
+    : '';
+ });
+}
 
 const poSearchInputs=['poNumberSearch','poProgramSearch','poSupplierSearch','poItemSearch'];poSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderPurchaseOrders});
 if($('#printPoProformasBtn'))$('#printPoProformasBtn').onclick=printSelectedPoProformas;
