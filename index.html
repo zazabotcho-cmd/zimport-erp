@@ -207,7 +207,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 .panel{display:none!important}
 .panel.active{display:block!important}
 
-.country-sourcing-nav{display:flex!important;flex-direction:column;align-items:stretch;gap:6px}
+.country-sourcing-nav{display:none!important;flex-direction:column;align-items:stretch;gap:6px}.country-sourcing-nav.active{display:flex!important}
 .country-sourcing-country-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%;padding-bottom:6px;border-bottom:1px solid var(--line)}
 .country-sourcing-country-buttons{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap}
 .country-sourcing-page-row{display:flex;align-items:center;gap:0;overflow-x:auto;white-space:nowrap;width:100%}
@@ -3560,7 +3560,7 @@ function italyCandidateFieldHtml([id,label,type='text',opts='']){
  else if(type==='textarea')input=`<textarea id="c_${id}" ${id==='pressCoverage'?'maxlength="400"':id==='pickupPoint'?'maxlength="50"':''}></textarea>`;
  else if(type==='calculated')input=`<input id="c_${id}" readonly>`;
  else if(type==='websites')input=`<div id="c_websites" class="dynamic-list"><div id="italyCandidateWebsiteRows"></div><div class="inline-actions"><button type="button" id="addItalyCandidateWebsiteBtn" class="secondary small">+ Add new URL to the list</button></div></div>`;
- else if(type==='attachments')input=`<div id="c_attachments" class="attachment-box"><input id="italyCandidateAttachmentInput" type="file" accept=".pdf,.jpg,.jpeg,image/jpeg,application/pdf" multiple><small>Up to 10 files. PDF, JPG or JPEG only. Maximum 5 MB per file.</small><div id="italyCandidateAttachmentRows"></div></div>`;
+ else if(type==='attachments')input=`<div id="c_attachments" class="attachment-box"><input id="italyCandidateAttachmentInput" type="file" accept=".pdf,.jpg,.jpeg,image/jpeg,application/pdf" multiple><small>Minimum 7, maximum 10 files (awards, scores, exhibitions, licenses, specifications). PDF, JPG or JPEG only. Maximum 5 MB per file.</small><div id="italyCandidateAttachmentRows"></div></div>`;
  else input=`<input id="c_${id}" type="${type}" ${type==='number'?'step="any"':''}>`;
  const cls=[opts==='full'?'full':'',opts==='pickup'?'pickup-compact':''].filter(Boolean).join(' ');
  return `<label class="${cls}">${label}${input}</label>`;
@@ -3606,13 +3606,16 @@ function italyCandidateGroupsHtml(){
   if(g.title==='Submission Details'){
    const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
    const pickup=[...byId.pickupPoint];pickup[1]='Pickup Point (Consolidation warehouse name, city, region, country, warehouse code)';
-   const awards=[...byId.awards];awards[1]='Awards / Medals — Offered current vintage awards are most important; then previous vintage awards';
+   const lead=[...byId.leadTimeDays];lead[1]='Lead-time (days) to prepare PO (after receiving the purchase order file; 0 days would be preferred)';
+   const awards=[...byId.awards];awards[1]='Awards / Medals — <span style="color:red;font-weight:700">Offered current vintage awards are most important; then previous vintage awards</span>';
    const press=[...byId.pressCoverage];press[1]='Press Coverage / Other Information (maximum 400 characters)';
    const websites=[...byId.websites];websites[1]='Websites related to the submission — awards or other';
-   const attachments=[...byId.attachments];attachments[1]='Supporting Photos / Documents (awards, scores, exhibitions, licenses, specifications)';
+   const attachments=[...byId.attachments];attachments[1]='Supporting Photos / Documents — minimum 7, maximum 10 files (awards, scores, exhibitions, licenses, specifications)';
    return `<fieldset class="item-group"><legend>${g.title}</legend><div class="form-grid three">
     ${italyCandidateFieldHtml(pickup)}
-    ${['pickupPhone','leadTimeDays','limitedCaseQty'].map(id=>italyCandidateFieldHtml(byId[id])).join('')}
+    ${italyCandidateFieldHtml(byId.pickupPhone)}
+    ${italyCandidateFieldHtml(lead)}
+    ${italyCandidateFieldHtml(byId.limitedCaseQty)}
     <div class="italy-score-row">
       ${italyCandidateFieldHtml(byId.score)}
       ${italyCandidateFieldHtml(byId.scoreSource)}
@@ -3623,6 +3626,11 @@ function italyCandidateGroupsHtml(){
     ${italyCandidateFieldHtml(websites)}
     ${italyCandidateFieldHtml(attachments)}
    </div></fieldset>`;
+  }
+  if(g.title==='Selling Unit Information'){
+   const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
+   const containerWeight=[...byId.containerWeightG];containerWeight[1]='Container/bottle Weight excluding liquid (gm.) (light weight bottles are more preferable)';
+   return `<fieldset class="item-group"><legend>${g.title}</legend><div class="form-grid three">${g.fields.map(f=>italyCandidateFieldHtml(f[0]==='containerWeightG'?containerWeight:f)).join('')}</div></fieldset>`;
   }
   if(g.layout==='caseInfo'){
    const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
@@ -3786,6 +3794,8 @@ window.saveItalyCandidate=async()=>{
  const data={};itemGroups.filter(g=>g.title!=='Pricing Information').forEach(g=>g.fields.filter(f=>!['producerSameAsSupplier','producerName','producerAddress1','producerAddress2','producerCity','producerRegionCountry','producerPostalCode'].includes(f[0])).forEach(([k,,t])=>{if(['calculated','websites','attachments'].includes(t))return;const el=document.getElementById('c_'+k);if(!el)return;data[k]=t==='number'?num(el.value):(k==='productCategory'?normalizeProductCategory(el.value||'Wine'):(el.value||''))}));
  data.supplierRegion=document.getElementById('c_supplierRegion')?.value.trim()||'';data.supplierCountry=document.getElementById('c_supplierCountry')?.value.trim()||'';data.supplierRegionCountry=[data.supplierRegion,data.supplierCountry].filter(Boolean).join(' / ');
   data.websites=[...document.querySelectorAll('.italy-candidate-website-url')].map(el=>el.value.trim()).filter(Boolean);data.attachments=currentItalyCandidateAttachments.map(({id,name,size,type,lastModified})=>({id,name,size,type,lastModified}));
+ if(currentItalyCandidateAttachments.length<7){alert('Supporting Photos / Documents requires a minimum of 7 files before saving.');return false}
+ if(currentItalyCandidateAttachments.length>10){alert('Supporting Photos / Documents allows a maximum of 10 files.');return false}
  const bottlesPerCase=num(document.getElementById('itCanBottlesPerCase').value),casePrice=num(document.getElementById('itCanPrice').value),supplierBottlePrice=bottlesPerCase>0?casePrice/bottlesPerCase:0;
  const supplierCurrency=document.getElementById('itCanCurrency').value,supplierQuoteType=document.getElementById('itCanQuoteType').value,localRetail=document.getElementById('itCanRetail').value.trim(),ontarioExclusive=document.getElementById('itCanExclusive').value,ontarioExportDetails=document.getElementById('itCanOntarioExportDetails').value.trim(),why=document.getElementById('itCanWhy').value.trim(),giftBoxYesNo=document.getElementById('itCanGiftBox').value,giftBoxDescription=document.getElementById('itCanGiftBoxDescription').value.trim(),protectedAppellation=document.getElementById('itCanProtectedAppellation').value,appellationName=document.getElementById('itCanAppellationName').value.trim(),appellationDescription=document.getElementById('itCanAppellationDescription').value.trim(),uniqueOtherDescription=document.getElementById('itCanUniqueOtherDescription').value.trim(),outstandingLocation=document.getElementById('itCanOutstandingLocation').value.trim(),supplierOntarioAgent=document.getElementById('c_supplierOntarioAgent').value,supplierOntarioAgentDetails=document.getElementById('c_supplierOntarioAgentDetails').value.trim(),supplierOtherProvinceExporter=document.getElementById('c_supplierOtherProvinceExporter').value,supplierOtherProvinceExporterDetails=document.getElementById('c_supplierOtherProvinceExporterDetails').value.trim(),exCellarDeliveryPerCase=num(document.getElementById('itCanExCellarDelivery').value);
  try{
