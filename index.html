@@ -316,11 +316,11 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   </div>
   <div class="country-sourcing-page-row" id="countrySourcingPageRow">
     <button class="tab" data-tab="country-dashboard"><span id="countryDashboardTabLabel">Dashboard</span></button>
-    <button class="tab" data-tab="country-opportunities">TENDER</button>
+    <button class="tab" data-tab="country-opportunities">My Tenders</button>
     <button class="tab" data-tab="country-wineries">Supplier Information</button>
     <button class="tab" data-tab="country-candidates">Wine Candidates</button>
     <button class="tab" data-tab="country-archived-candidates">Archived Wine Candidates</button>
-    <button class="tab" data-tab="country-manager-notes">Portfolio Manager Notes</button>
+    <button class="tab" data-tab="country-manager-notes">Supplier Working Notes</button>
     <button class="tab" data-tab="country-internal-mail">Internal Mail <span id="supplierInternalMailBadge" class="internal-mail-badge" style="display:none">0</span></button>
 <button class="tab" data-tab="country-manager-recycle-bin">Recycling Bin</button>
   </div>
@@ -347,13 +347,27 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
       <div class="row"><span>Prepare winning wine orders on time according to the required preparation date</span><b>Required</b></div>
       <div class="row"><span>Contact the administrator when required</span><b>Required</b></div>
       <div class="row"><span>Send all requested documents on time</span><b>Required</b></div>
+      <div class="row"><span>Provide requested samples on time</span><b>Required</b></div>
       <div class="row"><span>Prepare order cases and labels exactly as requested</span><b>Required</b></div>
       <div class="row"><span>Be available and reply to emails within 24 hours</span><b>Required</b></div>
       <div class="row"><span>Prepare all required export documents</span><b>Required</b></div>
     </div>
   </div>
 </div></section>
-<section id="country-opportunities" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — TENDER</h2><p class="note">Read-only tender information. This page automatically shows tenders created in TENDERS and announced to the Italy Country Portfolio & Sourcing Representative. Tenders cannot be created, edited, or deleted here.</p></div></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name</th><th>Product Needs</th><th>Pre-Submission Date</th><th>Tasting Date</th><th>Status</th><th>Notes</th><th>Wine Candidates</th></tr></thead><tbody id="italyOpportunityRows"></tbody></table></div></div></section>
+<section id="country-opportunities" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — My Tenders</h2><p class="note">Read-only tender information. This page automatically shows tenders created in TENDERS and announced to the Italy Country Portfolio & Sourcing Representative. Tenders cannot be created, edited, or deleted here.</p></div></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name</th><th>Product Needs</th><th>Pre-Submission Date</th><th>Tasting Date</th><th>Status</th><th>Notes</th><th>Wine Candidates</th><th>Responsibility Contact Person</th></tr></thead><tbody id="italyOpportunityRows"></tbody></table></div></div></section>
+
+<div id="supplierTenderContactModal" class="modal hidden"><div class="modal-card" style="max-width:760px">
+ <div class="modal-head"><div><h2>Responsibility Contact Person</h2><p id="supplierTenderContactTenderLabel" class="note"></p></div><button type="button" class="icon" onclick="closeSupplierTenderContact()">×</button></div>
+ <input type="hidden" id="supplierTenderContactTenderId">
+ <div class="form-grid">
+  <label>Contact Person Name<input id="supplierTenderContactName"></label>
+  <label>Position<input id="supplierTenderContactPosition"></label>
+  <label>Email<input id="supplierTenderContactEmail" type="email"></label>
+  <label>Phone<input id="supplierTenderContactPhone" type="tel"></label>
+  <label class="full">Other<textarea id="supplierTenderContactOther" rows="5" placeholder="Other contact information or responsibilities"></textarea></label>
+ </div>
+ <div class="modal-actions"><span></span><button type="button" class="secondary" onclick="closeSupplierTenderContact()">Cancel</button><button type="button" onclick="saveSupplierTenderContact()">Save Contact</button></div>
+</div></div>
 <section id="country-wineries" class="panel"><div class="box">
   <div class="section-head">
     <div><h2>Supplier Information</h2><p class="note">Add and manage multiple Supplier Information records for the selected supplier. Each record can be edited or deleted.</p></div>
@@ -401,13 +415,13 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   </table></div>
 </div></section>
 <section id="country-manager-notes" class="panel"><div class="box">
-<div class="section-head"><div><h2 id="portfolioManagerNotesTitle">Portfolio Manager Notes</h2><p class="note">Notes for the selected country portfolio.</p></div><button id="addPortfolioManagerNoteBtn" type="button">+ Add Note</button></div>
+<div class="section-head"><div><h2 id="portfolioManagerNotesTitle">Supplier Working Notes</h2><p class="note">Working notes for the selected supplier.</p></div><button id="addPortfolioManagerNoteBtn" type="button">+ Add Supplier Working Note</button></div>
 <div class="table-wrap"><table><thead><tr><th>Date</th><th>Note Title</th><th>Note</th><th>Actions</th></tr></thead><tbody id="portfolioManagerNotesRows"></tbody></table></div>
 </div></section>
 <div id="portfolioManagerNoteModal" class="modal hidden"><div class="modal-card" style="max-width:720px">
-<div class="modal-head"><div><h2 id="portfolioManagerNoteModalTitle">Portfolio Manager Note</h2><p class="note" id="portfolioManagerNoteCountryLabel"></p></div><button id="closePortfolioManagerNoteModal" class="icon" type="button">×</button></div>
+<div class="modal-head"><div><h2 id="portfolioManagerNoteModalTitle">Supplier Working Note</h2><p class="note" id="portfolioManagerNoteCountryLabel"></p></div><button id="closePortfolioManagerNoteModal" class="icon" type="button">×</button></div>
 <input type="hidden" id="portfolioManagerNoteId">
-<div class="form-grid"><label>Date<input id="portfolioManagerNoteDate" type="date"></label><label>Note Title<input id="portfolioManagerNoteTitleInput" maxlength="120"></label><label class="full">Note<textarea id="portfolioManagerNoteText" rows="10"></textarea></label></div>
+<div class="form-grid"><label>Date<input id="portfolioManagerNoteDate" type="date"></label><label>Note Title<input id="portfolioManagerNoteTitleInput" maxlength="120"></label><label class="full">Note<textarea id="portfolioManagerNoteText" rows="10"></textarea></label><div class="full note"><b>Attachments:</b> add or update up to 5 files. Add a description next to each file.</div><label>File 1<input id="portfolioManagerNoteFile1" type="file"></label><label>File 1 Description<input id="portfolioManagerNoteFileDesc1" maxlength="200" placeholder="Describe this file"></label><label>File 2<input id="portfolioManagerNoteFile2" type="file"></label><label>File 2 Description<input id="portfolioManagerNoteFileDesc2" maxlength="200" placeholder="Describe this file"></label><label>File 3<input id="portfolioManagerNoteFile3" type="file"></label><label>File 3 Description<input id="portfolioManagerNoteFileDesc3" maxlength="200" placeholder="Describe this file"></label><label>File 4<input id="portfolioManagerNoteFile4" type="file"></label><label>File 4 Description<input id="portfolioManagerNoteFileDesc4" maxlength="200" placeholder="Describe this file"></label><label>File 5<input id="portfolioManagerNoteFile5" type="file"></label><label>File 5 Description<input id="portfolioManagerNoteFileDesc5" maxlength="200" placeholder="Describe this file"></label><div id="portfolioManagerExistingFiles" class="full"></div></div>
 <div class="modal-actions"><span></span><button id="cancelPortfolioManagerNoteBtn" class="secondary" type="button">Cancel</button><button id="savePortfolioManagerNoteBtn" type="button">Save Note</button></div>
 </div></div>
 <section id="country-manager-recycle-bin" class="panel"><div class="box">
@@ -1031,7 +1045,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 
 
 <section id="internal-mail" class="panel"><div class="box">
-  <div class="section-head"><div><h2>Main Internal Mail</h2><p class="note">Communicate with suppliers and exchange attached files inside the program.</p></div><button type="button" onclick="openInternalMailCompose('main')">+ New Message</button></div>
+  <div class="section-head"><div><h2>Main Internal Mail</h2><p class="note">Communicate with suppliers and exchange attached files inside the program.</p></div><div class="inline-actions"><button type="button" class="secondary" onclick="showInternalMailDrafts('main')">Drafts</button><button type="button" onclick="openInternalMailCompose('main')">+ New Message</button></div></div>
   <div class="internal-mail-layout">
     <div id="mainInternalMailList" class="internal-mail-list"></div>
     <div id="mainInternalMailThread" class="internal-mail-thread"><p class="note">Select a message.</p></div>
@@ -1039,7 +1053,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </div></section>
 
 <section id="country-internal-mail" class="panel"><div class="box">
-  <div class="section-head"><div><h2 id="supplierInternalMailTitle">Supplier Internal Mail</h2><p class="note">Messages between this supplier and the main office.</p></div><button type="button" onclick="openInternalMailCompose('supplier')">+ New Message</button></div>
+  <div class="section-head"><div><h2 id="supplierInternalMailTitle">Supplier Internal Mail</h2><p class="note">Messages between this supplier and the main office.</p></div><div class="inline-actions"><button type="button" class="secondary" onclick="showInternalMailDrafts('supplier')">Drafts</button><button type="button" onclick="openInternalMailCompose('supplier')">+ New Message</button></div></div>
   <div class="internal-mail-layout">
     <div id="supplierInternalMailList" class="internal-mail-list"></div>
     <div id="supplierInternalMailThread" class="internal-mail-thread"><p class="note">Select a message.</p></div>
@@ -1048,7 +1062,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 
 <div id="internalMailComposeModal" class="modal hidden"><div class="modal-card" style="max-width:760px">
   <div class="modal-head"><div><h2>New Internal Message</h2><p id="internalMailComposeContext" class="note"></p></div><button type="button" class="icon" onclick="closeInternalMailCompose()">×</button></div>
-  <input type="hidden" id="internalMailComposeMode">
+  <input type="hidden" id="internalMailComposeMode"><input type="hidden" id="internalMailDraftId">
   <div class="form-grid">
     <label class="full">To<select id="internalMailRecipient"></select></label>
     <label class="full">Subject<input id="internalMailSubject" maxlength="160"></label>
@@ -1056,7 +1070,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <label class="full">Attach Files<input id="internalMailFiles" type="file" multiple></label>
     <div class="full note">Multiple files are supported. Maximum 5 MB per file.</div>
   </div>
-  <div class="modal-actions"><span></span><button type="button" class="secondary" onclick="closeInternalMailCompose()">Cancel</button><button type="button" onclick="sendInternalMail()">Send Message</button></div>
+  <div class="modal-actions"><button type="button" class="secondary" onclick="saveInternalMailDraft()">Save Draft</button><span></span><button type="button" class="secondary" onclick="closeInternalMailCompose()">Cancel</button><button type="button" onclick="sendInternalMail()">Send Message</button></div>
 </div></div>
 <section id="recycle-bin" class="panel"><div class="box"><div class="section-head"><div><h2>Recycling Bin</h2><p class="note">Everything deleted from program pages is moved here first. Every user can restore deleted records. Only administrators can permanently delete records.</p></div><button type="button" class="secondary recycle-admin-only" id="emptyExpiredRecycle">Move Expired to Head's Bin — Admin Only</button></div><div class="winner-performance-toolbar"><label>Search Deleted Records<input id="recycleSearch" type="search" placeholder="Type record name or page"></label><label class="recycle-admin-only">Retention Period — Admin Only<select id="recycleRetention"><option value="30">30 Days</option><option value="60">60 Days</option><option value="90" selected>90 Days</option></select></label></div><div class="table-wrap"><table><thead><tr><th>Original Page</th><th>Record</th><th>Deleted Date</th><th>Delete After</th><th>Actions</th></tr></thead><tbody id="recycleRows"></tbody></table></div></div></section>
 <section id="heads-recycle-bin" class="panel"><div class="box"><div class="section-head"><div><h2>Head's Recycling Bin</h2><p class="note">Records deleted from the main Recycling Bin are moved here for final Head Office review. Restore sends the record back to the main Recycling Bin. Permanently Delete removes it from the program and cannot be undone.</p></div></div><div class="winner-performance-toolbar"><label>Search Head's Deleted Records<input id="headsRecycleSearch" type="search" placeholder="Type record name or original page"></label></div><div class="table-wrap"><table><thead><tr><th>Original Page</th><th>Record</th><th>First Deleted</th><th>Moved to Head's Bin</th><th>Actions</th></tr></thead><tbody id="headsRecycleRows"></tbody></table></div></div></section>
@@ -1175,7 +1189,7 @@ if(!Array.isArray(state.tenders))state.tenders=[];
 if(!Array.isArray(state.countryOpportunities))state.countryOpportunities=[];
 if(!Array.isArray(state.countryWineries))state.countryWineries=[];
 if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
-if(!Array.isArray(state.countryBonuses))state.countryBonuses=[];
+if(!Array.isArray(state.countryBonuses))state.countryBonuses=[];if(!state.supplierTenderContacts||typeof state.supplierTenderContacts!=='object')state.supplierTenderContacts={};
 if(!Array.isArray(state.portfolioManagerNotes))state.portfolioManagerNotes=[];
 if(!Array.isArray(state.portfolioManagerRecycleBin))state.portfolioManagerRecycleBin=[];
 if(!Array.isArray(state.archivedCountryCandidates))state.archivedCountryCandidates=[];
@@ -3522,6 +3536,7 @@ window.saveCountryPortfolioSupplier=()=>{
 
 function ensureInternalMailState(){
  if(!Array.isArray(state.internalMail))state.internalMail=[];
+ if(!Array.isArray(state.internalMailDrafts))state.internalMailDrafts=[];
 }
 function currentSupplierMailboxKey(){
  return currentCountrySupplierId?`${currentSourcingCountry}::${currentCountrySupplierId}`:'';
@@ -3578,7 +3593,7 @@ window.openInternalMailMessage=(id,viewer,silent=false)=>{
  if(viewer==='main'&&m.toType==='main')m.mainRead=true;
  if(viewer==='supplier'&&m.toType==='supplier')m.supplierRead=true;
  const target=document.getElementById(viewer==='main'?'mainInternalMailThread':'supplierInternalMailThread');
- if(target)target.innerHTML=`<h3>${esc(m.subject||'(No subject)')}</h3><p><b>From:</b> ${esc(m.fromType==='main'?'Main Office':m.supplierName||'Supplier')}<br><b>To:</b> ${esc(m.toType==='main'?'Main Office':m.supplierName||'Supplier')}<br><small>${esc(m.createdAt?new Date(m.createdAt).toLocaleString():'')}</small></p><div style="white-space:pre-wrap">${esc(m.body||'')}</div><div class="internal-mail-attachments">${attachmentButtons(m)}</div><div class="inline-actions" style="margin-top:16px"><button type="button" class="secondary" onclick="replyInternalMail('${m.id}','${viewer}')">Reply</button></div>`;
+ if(target)target.innerHTML=`<h3>${esc(m.subject||'(No subject)')}</h3><p><b>From:</b> ${esc(m.fromType==='main'?'Main Office':m.supplierName||'Supplier')}<br><b>To:</b> ${esc(m.toType==='main'?'Main Office':m.supplierName||'Supplier')}<br><small>${esc(m.createdAt?new Date(m.createdAt).toLocaleString():'')}</small></p><div style="white-space:pre-wrap">${esc(m.body||'')}</div><div class="internal-mail-attachments">${attachmentButtons(m)}</div><div class="inline-actions" style="margin-top:16px"><button type="button" class="secondary" onclick="replyInternalMail('${m.id}','${viewer}')">Reply</button><button type="button" class="danger" onclick="deleteInternalMailMessage('${m.id}','${viewer}')">Delete</button></div>`;
  save();
  if(!silent){viewer==='main'?renderMainInternalMail(id):renderSupplierInternalMail(id)}
  updateInternalMailBadges();
@@ -3586,8 +3601,8 @@ window.openInternalMailMessage=(id,viewer,silent=false)=>{
 window.openInternalMailCompose=(mode='main',replyToId='')=>{
  ensureInternalMailState();
  const to=document.getElementById('internalMailRecipient'),ctx=document.getElementById('internalMailComposeContext'),sub=document.getElementById('internalMailSubject'),body=document.getElementById('internalMailBody'),files=document.getElementById('internalMailFiles');
- document.getElementById('internalMailComposeMode').value=mode;
- sub.value='';body.value='';files.value='';
+ document.getElementById('internalMailComposeMode').value=mode;document.getElementById('internalMailDraftId').value='';
+ sub.value='';body.value='';files.value='';document.querySelector('#internalMailComposeModal [data-delete-draft]')?.remove();
  if(mode==='supplier'){
   if(!currentSupplierMailboxKey()){alert('Select a supplier first.');return}
   to.innerHTML='<option value="main">Main Office</option>';
@@ -3605,6 +3620,82 @@ window.openInternalMailCompose=(mode='main',replyToId='')=>{
 };
 window.closeInternalMailCompose=()=>show('internalMailComposeModal',false);
 window.replyInternalMail=(id,viewer)=>openInternalMailCompose(viewer,id);
+
+window.deleteInternalMailMessage=(id,viewer)=>{
+ ensureInternalMailState();
+ const m=state.internalMail.find(x=>x.id===id);if(!m)return false;
+ if(!confirm('Delete this internal mail message?'))return false;
+ state.internalMail=state.internalMail.filter(x=>x.id!==id);
+ save();
+ if(viewer==='main'){
+  const t=document.getElementById('mainInternalMailThread');if(t)t.innerHTML='<p class="note">Select a message.</p>';
+  renderMainInternalMail();
+ }else{
+  const t=document.getElementById('supplierInternalMailThread');if(t)t.innerHTML='<p class="note">Select a message.</p>';
+  renderSupplierInternalMail();
+ }
+ updateInternalMailBadges();
+ return true;
+};
+
+window.saveInternalMailDraft=async()=>{
+ ensureInternalMailState();
+ const mode=document.getElementById('internalMailComposeMode').value;
+ const draftId=document.getElementById('internalMailDraftId').value||'';
+ const recipient=document.getElementById('internalMailRecipient').value||'';
+ const subject=document.getElementById('internalMailSubject').value.trim();
+ const body=document.getElementById('internalMailBody').value.trim();
+ const files=[...(document.getElementById('internalMailFiles')?.files||[])];
+ const attachments=[];
+ for(const f of files){
+  if(f.size>5*1024*1024){alert('Each internal mail attachment must be 5 MB or smaller.');return false}
+  const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.readAsDataURL(f)});
+  attachments.push({name:f.name,size:f.size,type:f.type,lastModified:f.lastModified,dataUrl});
+ }
+ let supplierKey='',supplierName='',supplierCountry='';
+ if(mode==='supplier'){
+  supplierKey=currentSupplierMailboxKey();supplierName=currentSupplierMailboxName();supplierCountry=currentSourcingCountry;
+ }else if(recipient){
+  supplierKey=recipient;const [country,id]=recipient.split('::');const s=(state.countryPortfolioSuppliers||[]).find(x=>x.country===country&&x.id===id);
+  supplierName=s?.name||'Supplier';supplierCountry=country||'';
+ }
+ const existing=draftId?state.internalMailDrafts.find(d=>d.id===draftId):null;
+ const draft={...(existing||{}),id:existing?.id||uid(),mode,recipient,supplierKey,supplierName,supplierCountry,subject,body,
+  attachments:attachments.length?attachments:(existing?.attachments||[]),updatedAt:new Date().toISOString(),createdAt:existing?.createdAt||new Date().toISOString()};
+ if(existing){state.internalMailDrafts[state.internalMailDrafts.findIndex(d=>d.id===draft.id)]=draft}else state.internalMailDrafts.push(draft);
+ save();document.getElementById('internalMailDraftId').value=draft.id;alert('Draft saved.');return true;
+};
+
+window.showInternalMailDrafts=(mode)=>{
+ ensureInternalMailState();
+ const key=currentSupplierMailboxKey();
+ const drafts=state.internalMailDrafts.filter(d=>d.mode===mode&&(mode==='main'||d.supplierKey===key)).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
+ const target=document.getElementById(mode==='main'?'mainInternalMailList':'supplierInternalMailList');
+ const thread=document.getElementById(mode==='main'?'mainInternalMailThread':'supplierInternalMailThread');
+ if(target)target.innerHTML=drafts.map(d=>`<button type="button" class="internal-mail-item" onclick="openInternalMailDraft('${d.id}','${mode}')"><b>DRAFT — ${esc(d.subject||'(No subject)')}</b><br><small>${esc(d.updatedAt?new Date(d.updatedAt).toLocaleString():'')}</small></button>`).join('')||'<div class="note" style="padding:12px">No drafts.</div>';
+ if(thread)thread.innerHTML='<p class="note">Select a draft to continue editing.</p>';
+};
+
+window.openInternalMailDraft=(id,mode)=>{
+ ensureInternalMailState();
+ const d=state.internalMailDrafts.find(x=>x.id===id);if(!d)return;
+ openInternalMailCompose(mode);
+ document.getElementById('internalMailDraftId').value=d.id;
+ document.getElementById('internalMailRecipient').value=d.recipient||'';
+ document.getElementById('internalMailSubject').value=d.subject||'';
+ document.getElementById('internalMailBody').value=d.body||'';
+ const ctx=document.getElementById('internalMailComposeContext');if(ctx)ctx.textContent='Editing saved draft';
+ const actions=document.querySelector('#internalMailComposeModal .modal-actions');
+ if(actions&& !actions.querySelector('[data-delete-draft]')){
+   const btn=document.createElement('button');btn.type='button';btn.className='danger';btn.dataset.deleteDraft='1';btn.textContent='Delete Draft';btn.onclick=()=>{deleteInternalMailDraft(d.id,mode);closeInternalMailCompose()};actions.prepend(btn);
+ }
+};
+
+window.deleteInternalMailDraft=(id,mode)=>{
+ if(!confirm('Delete this draft?'))return false;
+ state.internalMailDrafts=(state.internalMailDrafts||[]).filter(d=>d.id!==id);save();showInternalMailDrafts(mode);return true;
+};
+
 window.sendInternalMail=async()=>{
  ensureInternalMailState();
  const mode=document.getElementById('internalMailComposeMode').value,recipient=document.getElementById('internalMailRecipient').value,subject=document.getElementById('internalMailSubject').value.trim(),body=document.getElementById('internalMailBody').value.trim(),files=[...(document.getElementById('internalMailFiles')?.files||[])];
@@ -3624,7 +3715,7 @@ window.sendInternalMail=async()=>{
   supplierKey=recipient;const [country,id]=recipient.split('::');const s=(state.countryPortfolioSuppliers||[]).find(x=>x.country===country&&x.id===id);
   supplierName=s?.name||'Supplier';supplierCountry=country||'';toType='supplier';fromType='main';
  }
- state.internalMail.push({id:uid(),supplierKey,supplierName,supplierCountry,fromType,toType,subject,body,attachments,createdAt:new Date().toISOString(),mainRead:toType!=='main',supplierRead:toType!=='supplier'});
+ state.internalMail.push({id:uid(),supplierKey,supplierName,supplierCountry,fromType,toType,subject,body,attachments,createdAt:new Date().toISOString(),mainRead:toType!=='main',supplierRead:toType!=='supplier'});const draftId=document.getElementById('internalMailDraftId')?.value||'';if(draftId)state.internalMailDrafts=(state.internalMailDrafts||[]).filter(d=>d.id!==draftId);
  save();closeInternalMailCompose();renderMainInternalMail();renderSupplierInternalMail();updateInternalMailBadges();return true;
 };
 window.renderMainInternalMail=renderMainInternalMail;
@@ -3691,7 +3782,7 @@ window.deleteCurrentSourcingCountry=()=>{
  moveRecords('countryWineries','countryWinery','Country Sourcing — '+country+' — Supplier Information');
  moveRecords('countryCandidates','countryCandidate','Country Sourcing — '+country+' — Wine Candidates');
  moveRecords('countryBonuses','countryBonus','Country Sourcing — '+country+' — Performance & Bonuses');
- moveRecords('portfolioManagerNotes','portfolioManagerNote','Country Sourcing — '+country+' — Portfolio Manager Notes');
+ moveRecords('portfolioManagerNotes','portfolioManagerNote','Country Sourcing — '+country+' — Supplier Working Notes');
  moveRecords('archivedCountryCandidates','archivedCountryCandidate','Country Sourcing — '+country+' — Archived Wine Candidates');
  (state.tenders||[]).forEach(t=>{if(Array.isArray(t.sourcingRepresentatives))t.sourcingRepresentatives=t.sourcingRepresentatives.filter(x=>x!==country)});
  state.countrySourcingCountries=countries.filter(c=>c!==country);
@@ -4617,11 +4708,11 @@ window.permanentlyDeletePortfolioManagerRecycle=id=>{
  save();renderPortfolioManagerRecycleBin();
 };
 window.renderPortfolioManagerNotes=function(){
- const title=document.getElementById('portfolioManagerNotesTitle');if(title)title.textContent=currentSourcingCountry+' — Portfolio Manager Notes';
+ const title=document.getElementById('portfolioManagerNotesTitle');if(title)title.textContent=currentSourcingCountry+' — '+(selectedSupplierName()||'Supplier')+' — Supplier Working Notes';
  const rows=document.getElementById('portfolioManagerNotesRows');if(!rows)return;
  if(!Array.isArray(state.portfolioManagerNotes))state.portfolioManagerNotes=[];
  const notes=state.portfolioManagerNotes.filter(x=>(x.country||'Italy')===currentSourcingCountry&&recordMatchesCurrentSupplier(x)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
- rows.innerHTML=notes.map(n=>`<tr><td>${esc(n.date||'—')}</td><td><b>${esc(n.title||'Untitled Note')}</b></td><td>${esc((n.note||'').length>180?(n.note||'').slice(0,180)+'…':(n.note||'—'))}</td><td><button type="button" class="secondary small" onclick="openPortfolioManagerNote('${n.id}',true)">Open</button> <button type="button" class="secondary small" onclick="openPortfolioManagerNote('${n.id}',false)">Edit</button> <button type="button" class="danger small" onclick="deletePortfolioManagerNote('${n.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="4">No notes saved for this country.</td></tr>';
+ rows.innerHTML=notes.map(n=>`<tr><td>${esc(n.date||'—')}</td><td><b>${esc(n.title||'Untitled Note')}</b></td><td>${esc((n.note||'').length>180?(n.note||'').slice(0,180)+'…':(n.note||'—'))}${(n.files||[]).length?`<br><small>${n.files.length} attached file${n.files.length===1?'':'s'}</small>`:''}</td><td><button type="button" class="secondary small" onclick="openPortfolioManagerNote('${n.id}',true)">Open</button> <button type="button" class="secondary small" onclick="openPortfolioManagerNote('${n.id}',false)">Edit</button> <button type="button" class="danger small" onclick="deletePortfolioManagerNote('${n.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="4">No notes saved for this country.</td></tr>';
 };
 window.openPortfolioManagerNote=(id='',readOnly=false)=>{
  const n=(state.portfolioManagerNotes||[]).find(x=>x.id===id)||null;
@@ -4629,19 +4720,45 @@ window.openPortfolioManagerNote=(id='',readOnly=false)=>{
  $('#portfolioManagerNoteDate').value=n?.date||new Date().toISOString().slice(0,10);
  $('#portfolioManagerNoteTitleInput').value=n?.title||'';
  $('#portfolioManagerNoteText').value=n?.note||'';
- $('#portfolioManagerNoteCountryLabel').textContent=currentSourcingCountry+' Portfolio Manager';
- $('#portfolioManagerNoteModalTitle').textContent=readOnly?'Portfolio Manager Note':(n?'Edit Portfolio Manager Note':'Add Portfolio Manager Note');
+ $('#portfolioManagerNoteCountryLabel').textContent=currentSourcingCountry+' — '+(selectedSupplierName()||'Supplier');
+ $('#portfolioManagerNoteModalTitle').textContent=readOnly?'Supplier Working Note':(n?'Edit Supplier Working Note':'Add Supplier Working Note');
+ for(let i=1;i<=5;i++){
+  const f=$('#portfolioManagerNoteFile'+i),d=$('#portfolioManagerNoteFileDesc'+i);
+  if(f){f.value='';f.disabled=!!readOnly}
+  if(d){d.value=n?.files?.[i-1]?.description||'';d.disabled=!!readOnly}
+ }
+ const existing=$('#portfolioManagerExistingFiles');
+ if(existing)existing.innerHTML=(n?.files||[]).map((f,i)=>`<div class="row"><span><b>${esc(f.name||('File '+(i+1)))}</b>${f.description?` — ${esc(f.description)}`:''}</span>${f.dataUrl?`<button type="button" class="secondary small" onclick="openPortfolioNoteFile('${n.id}',${i})">Open</button>`:''}</div>`).join('');
  ['portfolioManagerNoteDate','portfolioManagerNoteTitleInput','portfolioManagerNoteText'].forEach(x=>$('#'+x).disabled=!!readOnly);
  $('#savePortfolioManagerNoteBtn').style.display=readOnly?'none':'inline-block';
  show('portfolioManagerNoteModal',true);
 };
+window.openPortfolioNoteFile=(noteId,index)=>{
+ const n=(state.portfolioManagerNotes||[]).find(x=>x.id===noteId),f=n?.files?.[Number(index)];
+ if(!f?.dataUrl){alert('File is unavailable.');return}
+ const a=document.createElement('a');a.href=f.dataUrl;a.download=f.name||'attachment';a.target='_blank';document.body.appendChild(a);a.click();a.remove();
+};
 window.closePortfolioManagerNote=()=>show('portfolioManagerNoteModal',false);
-window.savePortfolioManagerNote=()=>{
+window.savePortfolioManagerNote=async()=>{
  if(!Array.isArray(state.portfolioManagerNotes))state.portfolioManagerNotes=[];
  const id=$('#portfolioManagerNoteId').value||uid();
- const rec={id,country:currentSourcingCountry,portfolioSupplierId:currentCountrySupplierId,date:$('#portfolioManagerNoteDate').value||new Date().toISOString().slice(0,10),title:$('#portfolioManagerNoteTitleInput').value.trim(),note:$('#portfolioManagerNoteText').value.trim()};
+ const existing=state.portfolioManagerNotes.find(x=>x.id===id);
+ const savedFiles=(existing?.files||[]).slice(0,5);
+ const files=[];
+ for(let i=1;i<=5;i++){
+  const input=$('#portfolioManagerNoteFile'+i),description=$('#portfolioManagerNoteFileDesc'+i)?.value.trim()||'';
+  const uploaded=input?.files?.[0];
+  if(uploaded){
+   if(uploaded.size>5*1024*1024){alert('Each attached file must be 5 MB or smaller.');return false}
+   const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.readAsDataURL(uploaded)});
+   files.push({name:uploaded.name,size:uploaded.size,type:uploaded.type,lastModified:uploaded.lastModified,dataUrl,description});
+  }else if(savedFiles[i-1]){
+   files.push({...savedFiles[i-1],description});
+  }
+ }
+ const rec={id,country:currentSourcingCountry,portfolioSupplierId:currentCountrySupplierId,date:$('#portfolioManagerNoteDate').value||new Date().toISOString().slice(0,10),title:$('#portfolioManagerNoteTitleInput').value.trim(),note:$('#portfolioManagerNoteText').value.trim(),files};
  if(!rec.note){alert('Type a note before saving.');return false}
- const i=state.portfolioManagerNotes.findIndex(x=>x.id===id);if(i>=0)state.portfolioManagerNotes[i]=rec;else state.portfolioManagerNotes.push(rec);
+ const idx=state.portfolioManagerNotes.findIndex(x=>x.id===id);if(idx>=0)state.portfolioManagerNotes[idx]=rec;else state.portfolioManagerNotes.push(rec);
  save();closePortfolioManagerNote();renderPortfolioManagerNotes();return true;
 };
 window.deletePortfolioManagerNote=id=>{
@@ -4698,6 +4815,33 @@ window.deleteArchivedCountryCandidate=id=>{
  state.archivedCountryCandidates=state.archivedCountryCandidates.filter(v=>v.id!==id);
  save();renderArchivedCountryCandidates();renderPortfolioManagerRecycleBin();
 };
+
+function supplierTenderContactKey(tenderId){return `${currentSourcingCountry}::${currentCountrySupplierId}::${tenderId}`;}
+function getSupplierTenderContact(tenderId){
+ if(!state.supplierTenderContacts||typeof state.supplierTenderContacts!=='object')state.supplierTenderContacts={};
+ return state.supplierTenderContacts[supplierTenderContactKey(tenderId)]||null;
+}
+window.openSupplierTenderContact=tenderId=>{
+ const t=(state.tenders||[]).find(x=>x.id===tenderId);if(!t)return;
+ const c=getSupplierTenderContact(tenderId)||{};
+ $('#supplierTenderContactTenderId').value=tenderId;
+ $('#supplierTenderContactTenderLabel').textContent=(t.code||'')+' — '+(t.name||'Tender');
+ $('#supplierTenderContactName').value=c.name||'';
+ $('#supplierTenderContactPosition').value=c.position||'';
+ $('#supplierTenderContactEmail').value=c.email||'';
+ $('#supplierTenderContactPhone').value=c.phone||'';
+ $('#supplierTenderContactOther').value=c.other||'';
+ show('supplierTenderContactModal',true);
+};
+window.closeSupplierTenderContact=()=>show('supplierTenderContactModal',false);
+window.saveSupplierTenderContact=()=>{
+ if(!state.supplierTenderContacts||typeof state.supplierTenderContacts!=='object')state.supplierTenderContacts={};
+ const tenderId=$('#supplierTenderContactTenderId').value;if(!tenderId)return false;
+ const rec={name:$('#supplierTenderContactName').value.trim(),position:$('#supplierTenderContactPosition').value.trim(),email:$('#supplierTenderContactEmail').value.trim(),phone:$('#supplierTenderContactPhone').value.trim(),other:$('#supplierTenderContactOther').value.trim(),updatedAt:new Date().toISOString()};
+ state.supplierTenderContacts[supplierTenderContactKey(tenderId)]=rec;
+ save();closeSupplierTenderContact();renderItalySourcing();return true;
+};
+
 window.renderItalySourcing=function(){
  renderArchivedCountryCandidates();
  renderPortfolioManagerRecycleBin();
@@ -4719,7 +4863,7 @@ window.renderItalySourcing=function(){
  ['Approved Wine Candidates',approved],
  ['Tender Winners',winners]
 ].map(x=>`<div class="card"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('');
-const or=document.getElementById('italyOpportunityRows');if(or)or.innerHTML=tenders.map(t=>{const productNeed=t.productNeeds==='Other'?(t.productNeedsOther||'Other'):t.productNeeds;return `<tr><td>${esc(t.code||'—')}</td><td><b>${esc(t.name||'—')}</b></td><td>${esc(productNeed||'—')}</td><td>${esc(t.presubDate||'—')}</td><td>${esc(t.tastingDate||'—')}</td><td><span class="badge ${esc(t.status||'')}">${esc(t.status||'—')}</span></td><td style="max-width:340px;white-space:normal">${esc(t.notes||'—')}</td><td>${can.filter(c=>c.opportunityId===t.id).length}</td></tr>`}).join('')||'<tr><td colspan="8">No tenders have been created in TENDER NISS yet.</td></tr>';
+const or=document.getElementById('italyOpportunityRows');if(or)or.innerHTML=tenders.map(t=>{const productNeed=t.productNeeds==='Other'?(t.productNeedsOther||'Other'):t.productNeeds;return `<tr><td>${esc(t.code||'—')}</td><td><b>${esc(t.name||'—')}</b></td><td>${esc(productNeed||'—')}</td><td>${esc(t.presubDate||'—')}</td><td>${esc(t.tastingDate||'—')}</td><td><span class="badge ${esc(t.status||'')}">${esc(t.status||'—')}</span></td><td style="max-width:340px;white-space:normal">${esc(t.notes||'—')}</td><td>${can.filter(c=>c.opportunityId===t.id).length}</td><td>${(()=>{const c=getSupplierTenderContact(t.id);return c?`<div><b>${esc(c.name||'Unnamed')}</b>${c.position?`<br><small>${esc(c.position)}</small>`:''}${c.email?`<br><small>${esc(c.email)}</small>`:''}${c.phone?`<br><small>${esc(c.phone)}</small>`:''}${c.other?`<br><small>${esc(c.other)}</small>`:''}<br><button type="button" class="secondary small" onclick="openSupplierTenderContact('${t.id}')">Edit</button></div>`:`<button type="button" class="secondary small" onclick="openSupplierTenderContact('${t.id}')">+ Add Contact Person</button>`})()}</td></tr>`}).join('')||'<tr><td colspan="9">No tenders have been created in TENDER NISS yet.</td></tr>';
 const q=(document.getElementById('italyWinerySearch')?.value||'').toLowerCase();const wr=document.getElementById('italyWineryRows');if(wr)wr.innerHTML=wins.filter(x=>JSON.stringify(x).toLowerCase().includes(q)).map(x=>`<tr>
 <td>${esc(x.lcboSupplierNumber||'—')}</td><td><b>${esc(x.supplierLegalFullName||x.name||'—')}</b></td>
 <td>${esc([x.address1,x.address2].filter(Boolean).join(', ')||'—')}</td><td>${esc(x.city||'—')}</td><td>${esc(x.region||'—')}</td><td>${esc(x.supplierCountry||x.country||'—')}</td><td>${esc(x.postalCode||'—')}</td>
