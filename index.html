@@ -1251,7 +1251,7 @@ if(!Array.isArray(state.manuallyArchivedPurchaseOrders))state.manuallyArchivedPu
 if(!Array.isArray(state.shipments))state.shipments=[];
 state.shipments.forEach(sh=>{if(['CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED'].includes(normalizeSharedShipmentStatus(sh.status||'')))sh.status='Arrived in Canada'});
 if(!Array.isArray(state.archivedShipments))state.archivedShipments=[];
-if(!Array.isArray(state.financialInvoices))state.financialInvoices=[];
+if(!Array.isArray(state.financialInvoices))state.financialInvoices=[];if(!Array.isArray(state.suppressedTenderInvoicePoIds))state.suppressedTenderInvoicePoIds=[];
 if(!Array.isArray(state.supplierPaymentInvoices))state.supplierPaymentInvoices=[];
 if(!Array.isArray(state.supplierPaymentInvoices2))state.supplierPaymentInvoices2=[];
 if(!Array.isArray(state.otherInvoices))state.otherInvoices=[];
@@ -2528,6 +2528,7 @@ window.tenderPoAutoInvoiceValues=tenderPoAutoInvoiceValues;
 
 function syncArrivedTenderPoInvoice(po){
   if(!tenderPoArrivedInCanada(po))return null;
+  if((state.suppressedTenderInvoicePoIds||[]).includes(po.id))return null;
   if(!Array.isArray(state.financialInvoices))state.financialInvoices=[];
   const poNo=String(po.number||'').trim();
   if(!poNo)return null;
@@ -2772,7 +2773,7 @@ function tenderPaymentSelectHtml(inv){
   const s=normalizeTenderInvoicePaymentStatus(inv.lcboPaidStatus);
   return `<select class="tender-payment-select ${tenderPaymentSelectClass(s)}" onchange="updateTenderInvoiceStatusFromRow('${inv.id}',this.value);this.className='tender-payment-select '+tenderPaymentSelectClass(this.value)"><option value="Not Paid" ${s==='Not Paid'?'selected':''}>Not Paid</option><option value="Next 60 Days Upcoming Payment" ${s==='Next 60 Days Upcoming Payment'?'selected':''}>Next 60 Days Upcoming Payment</option><option value="Fully Paid" ${s==='Fully Paid'?'selected':''}>Fully Paid</option></select>`;
 }
-function renderFinancial(){syncAllArrivedTenderPoInvoices();(state.financialInvoices||[]).forEach(syncTenderInvoiceTotalPoQuotedValue);if(!$('#financialInvoiceRows'))return;const financialQuery=$('#financialPageSearch')?.value||'';$('#financialInvoiceRows').innerHTML=(state.financialInvoices||[]).filter(x=>pageSearchMatches(x,financialQuery)).map(x=>{const c=financialCalculations(x);return `<tr><td>${escapeHtml(x.poNumber||'—')}</td><td><button type="button" class="invoice-number-link" onclick="openFinancialInvoiceDetails('${x.id}')">${escapeHtml(x.invoiceNumber||'—')}</button></td><td>${escapeHtml(x.submissionNumber||'—')}</td><td>${escapeHtml(x.arrivedInCanadaDate||'—')}</td><td><b>${escapeHtml(x.next60DaysPaymentDate||'—')}</b></td><td>${escapeHtml(x.lcboCurrency||'CAD')} ${num(x.lcboInvoiceCad).toFixed(2)}</td><td>${money(c.nettedExpenses)}</td><td>${money(c.advertisingExpenses)}</td><td>${money(c.failedSalesAmount)}</td><td>${money(c.otherExpenses)}</td><td>${money(c.transportCad)}</td><td>${money(c.supplierTotalCad)}</td><td><span class="status ${x.lcboPaidStatus==='Yes'?'green':'yellow'}"><select class="invoice-inline-status" onchange="updateTenderInvoiceStatusFromRow('${x.id}',this.value)"><option value="Not Paid" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Not Paid'?'selected':''}>Not Paid</option><option value="Next 60 Days Upcoming Payment" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Next 60 Days Upcoming Payment'?'selected':''}>Next 60 Days Upcoming Payment</option><option value="Fully Paid" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Fully Paid'?'selected':''}>Fully Paid</option></select></span></td><td><strong class="${c.netProfit<0?'negative':'positive'}">${money(c.netProfit)}</strong></td><td><button type="button" onclick="editFinancialInvoice('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('Tender','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="removeFinancialInvoice('${x.id}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="14" class="note">No financial invoices created. Click + Create Invoice.</td></tr>';}
+function renderFinancial(){syncAllArrivedTenderPoInvoices();(state.financialInvoices||[]).forEach(syncTenderInvoiceTotalPoQuotedValue);if(!$('#financialInvoiceRows'))return;const financialQuery=$('#financialPageSearch')?.value||'';$('#financialInvoiceRows').innerHTML=(state.financialInvoices||[]).filter(x=>pageSearchMatches(x,financialQuery)).map(x=>{const c=financialCalculations(x);return `<tr><td>${escapeHtml(x.poNumber||'—')}</td><td><button type="button" class="invoice-number-link" onclick="openFinancialInvoiceDetails('${x.id}')">${escapeHtml(x.invoiceNumber||'—')}</button></td><td>${escapeHtml(x.submissionNumber||'—')}</td><td>${escapeHtml(x.arrivedInCanadaDate||'—')}</td><td><b>${escapeHtml(x.next60DaysPaymentDate||'—')}</b></td><td>${escapeHtml(x.lcboCurrency||'CAD')} ${num(x.lcboInvoiceCad).toFixed(2)}</td><td>${money(c.nettedExpenses)}</td><td>${money(c.advertisingExpenses)}</td><td>${money(c.failedSalesAmount)}</td><td>${money(c.otherExpenses)}</td><td>${money(c.transportCad)}</td><td>${money(c.supplierTotalCad)}</td><td><span class="status ${x.lcboPaidStatus==='Yes'?'green':'yellow'}"><select class="invoice-inline-status" onchange="updateTenderInvoiceStatusFromRow('${x.id}',this.value)"><option value="Not Paid" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Not Paid'?'selected':''}>Not Paid</option><option value="Next 60 Days Upcoming Payment" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Next 60 Days Upcoming Payment'?'selected':''}>Next 60 Days Upcoming Payment</option><option value="Fully Paid" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Fully Paid'?'selected':''}>Fully Paid</option></select></span></td><td><strong class="${c.netProfit<0?'negative':'positive'}">${money(c.netProfit)}</strong></td><td><button type="button" onclick="editFinancialInvoice('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('Tender','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="removeFinancialInvoice('${x.id}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="16" class="note">No financial invoices created. Click + Create Invoice.</td></tr>';}
 let currentFinancialDetailId='';
 function financialDetailField(label,value){const text=value===undefined||value===null||value===''?'—':String(value);return `<div class="detail-row"><span>${escapeHtml(label)}</span><b>${escapeHtml(text)}</b><button type="button" class="secondary small" onclick='copyText(${JSON.stringify(text)})'>Copy</button></div>`}
 function financialDetailSections(x){const c=financialCalculations(x),currency=x.lcboCurrency||'CAD',supplierCurrency=x.supplierCurrency||'CAD';return [
@@ -2808,7 +2809,7 @@ function syncTenderInvoiceTotalPoQuotedValue(inv){
 window.syncTenderInvoiceTotalPoQuotedValue=syncTenderInvoiceTotalPoQuotedValue;
 
 let currentFinancialInvoiceEditId='';
-function openFinancialInvoiceEditor(id=''){currentFinancialInvoiceEditId=id||'';const d=syncTenderInvoiceTotalPoQuotedValue((state.financialInvoices||[]).find(x=>x.id===id))||{id:'',poNumber:'',invoiceNumber:'',submissionNumber:'',lcboCurrency:'CAD',lcboPaidStatus:'Not Paid',supplierCurrency:'USD'};if(d.lcboPaidStatus==='Yes'||d.lcboPaidStatus==='Paid by LCBO')d.lcboPaidStatus='Fully Paid';if(d.lcboPaidStatus==='No'||d.lcboPaidStatus==='Unpaid by LCBO'||!d.lcboPaidStatus)d.lcboPaidStatus='Not Paid';if(d.supplierItemPrice===undefined&&d.supplierItemUsd!==undefined)d.supplierItemPrice=d.supplierItemUsd;if(!d.supplierCurrency)d.supplierCurrency='USD';if(d.nettedAmount1===undefined&&d.otherExpenses!==undefined)d.nettedAmount1=d.otherExpenses;if(d.adAmount1===undefined&&d.advertising!==undefined)d.adAmount1=d.advertising;if(d.failedSalesPercent===undefined&&d.failedSalesExpenses!==undefined&&num(d.lcboInvoiceCad)>0)d.failedSalesPercent=(num(d.failedSalesExpenses)/num(d.lcboInvoiceCad))*100;Object.entries(financialFieldMap).forEach(([k,fieldId])=>{const e=$('#'+fieldId);if(e)e.value=d[k]??'';});if($('#finArrivedInCanadaDate'))$('#finArrivedInCanadaDate').value=d.arrivedInCanadaDate||'';if($('#finNext60DaysPaymentDate'))$('#finNext60DaysPaymentDate').value=d.next60DaysPaymentDate||'';if(d.autoCreatedFromTenderPo||d.sourcePoId){if($('#finLcboInvoiceCad'))$('#finLcboInvoiceCad').readOnly=true;if($('#finLcboCurrency'))$('#finLcboCurrency').disabled=true;}else{if($('#finLcboInvoiceCad'))$('#finLcboInvoiceCad').readOnly=false;if($('#finLcboCurrency'))$('#finLcboCurrency').disabled=false;}populateFinancialPoOptions();$('#financialEditorTitle').textContent=id?'Edit Invoice':'Create Invoice';$('#deleteFinancialInvoice').style.visibility=id?'visible':'hidden';$('#financialInvoiceList').classList.add('hidden');$('#financialInvoiceDetails').classList.add('hidden');$('#financialInvoiceEditor').classList.remove('hidden');updateFinancialCalculations();}
+function openFinancialInvoiceEditor(id=''){currentFinancialInvoiceEditId=id||'';const existingInvoice=id?(state.financialInvoices||[]).find(x=>x.id===id):null;if(id&&!existingInvoice){alert('This Tender invoice could not be found. Refresh the page and try again.');return}const d=syncTenderInvoiceTotalPoQuotedValue(existingInvoice)||{id:'',poNumber:'',invoiceNumber:'',submissionNumber:'',lcboCurrency:'CAD',lcboPaidStatus:'Not Paid',supplierCurrency:'USD'};if(d.lcboPaidStatus==='Yes'||d.lcboPaidStatus==='Paid by LCBO')d.lcboPaidStatus='Fully Paid';if(d.lcboPaidStatus==='No'||d.lcboPaidStatus==='Unpaid by LCBO'||!d.lcboPaidStatus)d.lcboPaidStatus='Not Paid';if(d.supplierItemPrice===undefined&&d.supplierItemUsd!==undefined)d.supplierItemPrice=d.supplierItemUsd;if(!d.supplierCurrency)d.supplierCurrency='USD';if(d.nettedAmount1===undefined&&d.otherExpenses!==undefined)d.nettedAmount1=d.otherExpenses;if(d.adAmount1===undefined&&d.advertising!==undefined)d.adAmount1=d.advertising;if(d.failedSalesPercent===undefined&&d.failedSalesExpenses!==undefined&&num(d.lcboInvoiceCad)>0)d.failedSalesPercent=(num(d.failedSalesExpenses)/num(d.lcboInvoiceCad))*100;Object.entries(financialFieldMap).forEach(([k,fieldId])=>{const e=$('#'+fieldId);if(e)e.value=d[k]??'';});if($('#finArrivedInCanadaDate'))$('#finArrivedInCanadaDate').value=d.arrivedInCanadaDate||'';if($('#finNext60DaysPaymentDate'))$('#finNext60DaysPaymentDate').value=d.next60DaysPaymentDate||'';if(d.autoCreatedFromTenderPo||d.sourcePoId){if($('#finLcboInvoiceCad'))$('#finLcboInvoiceCad').readOnly=true;if($('#finLcboCurrency'))$('#finLcboCurrency').disabled=true;}else{if($('#finLcboInvoiceCad'))$('#finLcboInvoiceCad').readOnly=false;if($('#finLcboCurrency'))$('#finLcboCurrency').disabled=false;}populateFinancialPoOptions();$('#financialEditorTitle').textContent=id?'Edit Invoice':'Create Invoice';$('#deleteFinancialInvoice').style.visibility=id?'visible':'hidden';$('#financialInvoiceList').classList.add('hidden');$('#financialInvoiceDetails').classList.add('hidden');$('#financialInvoiceEditor').classList.remove('hidden');updateFinancialCalculations();}
 function closeFinancialInvoiceEditor(){currentFinancialInvoiceEditId='';$('#financialInvoiceEditor').classList.add('hidden');$('#financialInvoiceList').classList.remove('hidden');renderFinancial();}
 function saveFinancialInvoice(){
  const d=readFinancialForm();
@@ -2820,25 +2821,23 @@ function saveFinancialInvoice(){
  if(!Array.isArray(state.financialInvoices))state.financialInvoices=[];
 
  if(currentFinancialInvoiceEditId){
-   const i=state.financialInvoices.findIndex(x=>x.id===currentFinancialInvoiceEditId);
-   if(i>=0){
-     const existing=state.financialInvoices[i];
-     const updated={...existing,...d,id:existing.id};
-
-     // Preserve automatic Tender-PO linkage metadata when editing.
-     if(existing.sourcePoId)updated.sourcePoId=existing.sourcePoId;
-     if(existing.autoCreatedFromTenderPo)updated.autoCreatedFromTenderPo=existing.autoCreatedFromTenderPo;
-     if(existing.autoCreatedOnArrival)updated.autoCreatedOnArrival=existing.autoCreatedOnArrival;
-     if(existing.poProgram)updated.poProgram=existing.poProgram;
-     if(existing.arrivedInCanadaDate)updated.arrivedInCanadaDate=existing.arrivedInCanadaDate;
-     if(existing.next60DaysPaymentDate)updated.next60DaysPaymentDate=existing.next60DaysPaymentDate;
-
-     syncTenderInvoiceTotalPoQuotedValue(updated);
-     state.financialInvoices[i]=updated;
-   }else{
-     alert('The invoice being edited could not be found. Please close the editor and open the invoice again.');
+   const index=state.financialInvoices.findIndex(x=>x.id===currentFinancialInvoiceEditId);
+   if(index<0){
+     alert('The invoice being edited no longer exists. Close the editor and open the invoice again.');
      return;
    }
+
+   const existing=state.financialInvoices[index];
+   const updated={...existing,...d,id:existing.id};
+
+   ['sourcePoId','autoCreatedFromTenderPo','autoCreatedOnArrival','poProgram',
+    'arrivedInCanadaDate','next60DaysPaymentDate','totalPoQuotedValue',
+    'poCurrency','supplierNames','itemDescription'].forEach(k=>{
+      if(existing[k]!==undefined)updated[k]=existing[k];
+   });
+
+   syncTenderInvoiceTotalPoQuotedValue(updated);
+   state.financialInvoices[index]=updated;
  }else{
    d.id=uid();
    state.financialInvoices.push(d);
@@ -2849,7 +2848,29 @@ function saveFinancialInvoice(){
  closeFinancialInvoiceEditor();
  alert('Financial invoice saved.');
 }
-function removeFinancialInvoice(id){const x=state.financialInvoices.find(v=>v.id===id);if(!x||!confirm(`Move invoice ${x.invoiceNumber||''} to Head's Recycling Bin?`))return;moveToHeadsRecycleBin('financialInvoice','LCBO to Agent Tender Invoices',x,{collection:'financialInvoices'});state.financialInvoices=state.financialInvoices.filter(v=>v.id!==id);save();renderFinancial();if(!$('#financialInvoiceEditor').classList.contains('hidden'))closeFinancialInvoiceEditor();}
+function removeFinancialInvoice(id){
+ const x=(state.financialInvoices||[]).find(v=>v.id===id);
+ if(!x||!confirm(`Move invoice ${x.invoiceNumber||x.poNumber||''} to Head's Recycling Bin?`))return;
+
+ if(x.sourcePoId){
+   if(!Array.isArray(state.suppressedTenderInvoicePoIds))state.suppressedTenderInvoicePoIds=[];
+   if(!state.suppressedTenderInvoicePoIds.includes(x.sourcePoId)){
+     state.suppressedTenderInvoicePoIds.push(x.sourcePoId);
+   }
+ }
+
+ moveToHeadsRecycleBin('financialInvoice','LCBO to Agent Tender Invoices',x,{collection:'financialInvoices'});
+ state.financialInvoices=(state.financialInvoices||[]).filter(v=>v.id!==id);
+
+ if(currentFinancialInvoiceEditId===id)currentFinancialInvoiceEditId='';
+ if(currentFinancialDetailId===id)currentFinancialDetailId='';
+
+ save();
+ $('#financialInvoiceEditor')?.classList.add('hidden');
+ $('#financialInvoiceDetails')?.classList.add('hidden');
+ $('#financialInvoiceList')?.classList.remove('hidden');
+ renderFinancial();
+}
 function editFinancialInvoice(id){openFinancialInvoiceEditor(id);}
 
 
@@ -3749,34 +3770,48 @@ function renderOtherNewInvoices(){
     return null;
   }
   function archiveInvoice(type,id){
-    const collection=archiveSourceCollection(type);if(!collection)return;
-    const rec=collection.find(x=>x.id===id);if(!rec)return;
-    if(!Array.isArray(state.archivedInvoices))state.archivedInvoices=[];
-    if(!state.archivedInvoices.some(x=>x.sourceType===type&&x.sourceId===id)){
-      state.archivedInvoices.push({
-        id:uid(),
-        sourceType:type,
-        sourceId:id,
-        archivedAt:new Date().toISOString(),
-        data:JSON.parse(JSON.stringify(rec))
-      });
-    }
-    if(type==='Tender')state.financialInvoices=collection.filter(x=>x.id!==id);
-    else if(type==='SEAS/REGU/OTHER TO AGENT')state.otherInvoices=collection.filter(x=>x.id!==id);
-    else if(type==='OTHER')state.otherNewInvoices=collection.filter(x=>x.id!==id);
-    else if(type==='Supplier Payment')state.supplierPaymentInvoices=collection.filter(x=>x.id!==id);
-    else if(type==='Supplier to Agent Fee')state.supplierPaymentInvoices2=collection.filter(x=>x.id!==id);
-    save();
-    renderArchivedInvoices();
-    try{renderFinancial()}catch(e){}
-    try{renderOtherInvoices()}catch(e){}
-    try{renderOtherNewInvoices()}catch(e){}
-    try{renderSupplierPaymentInvoices()}catch(e){}
-    try{renderSupplierPaymentInvoices2()}catch(e){}
-  }
-  function restoreArchivedInvoice(id){
+ const collection=archiveSourceCollection(type);
+ if(!collection)return;
+
+ const rec=collection.find(x=>x.id===id);
+ if(!rec)return;
+
+ if(!Array.isArray(state.archivedInvoices))state.archivedInvoices=[];
+ if(!state.archivedInvoices.some(x=>x.sourceType===type&&x.sourceId===id)){
+   state.archivedInvoices.push({
+     id:uid(),
+     sourceType:type,
+     sourceId:id,
+     archivedAt:new Date().toISOString(),
+     data:JSON.parse(JSON.stringify(rec))
+   });
+ }
+
+ if(type==='Tender'&&rec.sourcePoId){
+   if(!Array.isArray(state.suppressedTenderInvoicePoIds))state.suppressedTenderInvoicePoIds=[];
+   if(!state.suppressedTenderInvoicePoIds.includes(rec.sourcePoId)){
+     state.suppressedTenderInvoicePoIds.push(rec.sourcePoId);
+   }
+ }
+
+ if(type==='Tender')state.financialInvoices=collection.filter(x=>x.id!==id);
+ else if(type==='SEAS/REGU/OTHER TO AGENT')state.otherInvoices=collection.filter(x=>x.id!==id);
+ else if(type==='OTHER')state.otherNewInvoices=collection.filter(x=>x.id!==id);
+ else if(type==='Supplier Payment')state.supplierPaymentInvoices=collection.filter(x=>x.id!==id);
+ else if(type==='Supplier to Agent Fee')state.supplierPaymentInvoices2=collection.filter(x=>x.id!==id);
+
+ save();
+ renderArchivedInvoices();
+ try{renderFinancial()}catch(e){console.error(e)}
+ try{renderOtherInvoices()}catch(e){}
+ try{renderOtherNewInvoices()}catch(e){}
+ try{renderSupplierPaymentInvoices()}catch(e){}
+ try{renderSupplierPaymentInvoices2()}catch(e){}
+}
+function restoreArchivedInvoice(id){
     const a=(state.archivedInvoices||[]).find(x=>x.id===id);if(!a)return;
     const target=archiveSourceCollection(a.sourceType);if(!target)return;
+     if(a.sourceType==='Tender'&&a.data?.sourcePoId){state.suppressedTenderInvoicePoIds=(state.suppressedTenderInvoicePoIds||[]).filter(poId=>poId!==a.data.sourcePoId);}
     if(!target.some(x=>x.id===a.sourceId))target.push({...a.data,id:a.sourceId});
     state.archivedInvoices=(state.archivedInvoices||[]).filter(x=>x.id!==id);
     save();renderArchivedInvoices();
