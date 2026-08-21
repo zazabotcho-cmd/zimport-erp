@@ -255,8 +255,11 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 }
 .profit-calculator-scroll{
   max-height:70vh;
-  overflow:auto;
+  overflow-x:scroll;
+  overflow-y:scroll;
   position:relative;
+  width:100%;
+  scrollbar-gutter:stable both-edges;
 }
 .profit-calculator-table thead th{
   position:sticky;
@@ -266,6 +269,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   box-shadow:0 1px 0 #dfe4ea;
 }
 .profit-calculator-table{
+  min-width:2600px;
   border-collapse:separate;
   border-spacing:0;
 }
@@ -298,6 +302,16 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 }
 </style>
 
+
+<style>
+.profit-calculator-table th.profit-manual-col,
+.profit-calculator-table td.profit-manual-col{
+  background:#f4f7fa;
+}
+.profit-calculator-table th.profit-manual-col{
+  background:#e9eef4;
+}
+</style>
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -520,7 +534,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
       <table>
         <thead><tr>
           <th>Country</th><th>Wine Candidate</th><th>Tender</th><th>Product Needs</th><th>Supplier</th>
-          <th>Score</th><th>Score Source</th><th>Supplier Quote</th><th>Supplier Currency</th>
+          <th>Score</th><th>Score Source</th><th>Supplier Quote</th><th class="profit-manual-col">Supplier Currency</th>
           <th>Agency to Register</th><th>Agency Margin</th><th>ERP CAD</th><th>Potential Winner Quantity</th>
           <th>Offered to LCBO Case Price</th><th>Head Office Action</th><th>History</th>
         </tr></thead>
@@ -803,17 +817,17 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <thead><tr>
    <th>Item Description</th>
    <th>PO #</th>
-   <th>Supplier Bottle Price</th>
+   <th class="profit-manual-col">Supplier Bottle Price</th>
    <th>Currency</th>
-   <th>1 CAD to Supplier Currency Calculator</th>
+   <th class="profit-manual-col">1 CAD to 1 Supplier Currency Exchange Rate</th>
    <th>Supplier Price Converted into CAD</th>
-   <th>Agency Fee HST Included</th>
    <th>CAD Transportation Price / Btl</th>
    <th>Bottles / Case</th>
    <th>Proforma Price / Bottle</th>
-   <th>HST %</th>
+   <th>GST/HST/OTHER</th>
    <th>Bottle Deposit</th>
    <th>Price Currency Difference / Bottle</th>
+   <th>Agency Fee HST Included</th>
    <th>RPIME Cost in CAD</th>
    <th>Selling Price / Bottle</th>
    <th>Total Case Qtty</th>
@@ -5696,19 +5710,19 @@ window.renderProfitItemCalculator=()=>{
     return `<tr>
       <td><b>${escapeHtml(desc)}</b></td>
       <td>${escapeHtml(r.po.number||'—')}</td>
-      <td>${profitCalcInput(r.key,'supplierBottlePrice',r.supplierBottlePrice)}</td>
-      <td><select style="width:80px" onchange="state.profitItemCalculator['${r.key}'].currency=this.value;save();renderProfitItemCalculator()">
+      <td class="profit-manual-col">${profitCalcInput(r.key,'supplierBottlePrice',r.supplierBottlePrice)}</td>
+      <td class="profit-manual-col"><select style="width:80px" onchange="state.profitItemCalculator['${r.key}'].currency=this.value;save();renderProfitItemCalculator()">
         ${['CAD','USD','GBP','EUR'].map(c=>`<option value="${c}" ${r.currency===c?'selected':''}>${c}</option>`).join('')}
       </select></td>
-      <td>${profitCalcInput(r.key,'cadToSupplierCurrency',r.cadToSupplierCurrency)}</td>
+      <td class="profit-manual-col">${profitCalcInput(r.key,'cadToSupplierCurrency',r.cadToSupplierCurrency)}</td>
       <td><b>CAD ${num(r.cadSupplierPrice).toFixed(4)}</b></td>
-      <td>${profitCalcInput(r.key,'agencyFee',r.agencyFee)}</td>
       <td>${profitCalcInput(r.key,'transportPerBtl',r.transportPerBtl)}</td>
       <td>${r.bpc.toLocaleString()}</td>
       <td>${profitCalcInput(r.key,'proformaPrice',r.proforma)}</td>
       <td>${profitCalcInput(r.key,'hstPct',r.hstPct,'0.01','0')}</td>
       <td>${profitCalcInput(r.key,'bottleDeposit',r.bottleDeposit)}</td>
       <td>${profitCalcInput(r.key,'currencyDiff',r.currencyDiff)}</td>
+      <td>${profitCalcInput(r.key,'agencyFee',r.agencyFee)}</td>
       <td><b>CAD ${num(r.rpime).toFixed(4)}</b></td>
       <td><b>CAD ${num(r.selling).toFixed(4)}</b></td>
       <td>${profitCalcInput(r.key,'totalCases',r.totalCases,'1','0')}</td>
