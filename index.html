@@ -276,8 +276,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <button class="tab active" data-tab="dashboard">Dashboard</button>
   <button class="tab" data-tab="all-proposals">ALL PROPOSALS</button>
   <button class="tab" data-tab="all-invoices">ALL INVOICES</button>
-  <button class="tab" data-tab="inventory-in-stock">Inventory in stock LCBO</button>
-  <button class="tab" data-tab="inventory-in-stock-office">Inventory in stock office</button>
+  <button class="tab" data-tab="inventory-stock">Inventory Stock</button>
   
   <button class="tab" data-tab="heads-recycle-bin">Head's Recycling Bin</button>
 </nav>
@@ -682,7 +681,18 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <button type="button" onclick="saveInventoryStockOutDate()">Save Date &amp; Update Invoice</button>
   </div>
 </div></div>
+<section id="inventory-stock" class="panel"><div class="box">
+ <div class="section-head"><div><h2>Inventory Stock</h2><p class="note">Select an inventory page below.</p></div></div>
+ <div class="invoice-page-row">
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
+ </div>
+</div></section>
 <section id="inventory-in-stock" class="panel"><div class="box">
+ <div class="invoice-page-row">
+  <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
+ </div>
  <div class="section-head">
   <div>
    <h2>Inventory in stock LCBO</h2>
@@ -702,6 +712,10 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
  </table></div>
 </div></section>
 <section id="inventory-in-stock-office" class="panel"><div class="box">
+ <div class="invoice-page-row">
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
+  <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
+ </div>
  <div class="section-head"><div><h2>Inventory in stock office</h2><p class="note">Inventory transferred from LCBO stock to office stock.</p></div></div>
  <div class="toolbar"><input id="officeInventorySearch" type="search" placeholder="Search PO, supplier, item or product" oninput="renderOfficeInventory()"></div>
  <div class="cards" id="officeInventoryKpis"></div>
@@ -1863,7 +1877,34 @@ function updateShipmentStatusFromRow(id,status){
   if(typeof renderHeadInventory==='function')renderHeadInventory();
 }
 window.updateShipmentStatusFromRow=updateShipmentStatusFromRow;
-function renderShipments(){if(!$('#shipmentRows'))return;const shipmentQuery=$('#transportationPageSearch')?.value||'';const rows=(state.shipments||[]).filter(sh=>{const poText=(sh.poLinks||[]).map(l=>(state.purchaseOrders||[]).find(p=>p.id===l.poId)?.number||'').join(' ');return pageSearchMatches(sh,shipmentQuery,poText)}).map(sh=>{const t=shipmentTotals(sh),payment=sh.paymentStatus==='Other'?(sh.paymentOther||'Other'):(sh.paymentStatus||'Not Paid'),warehouse=`<div><b>REF # and Pallet Labels Requested:</b> ${yesNoBadge(sh.refPalletStatus||'No')}</div><div><b>Export Files Sent:</b> ${yesNoBadge(sh.exportFilesStatus||'No')}</div>`,converter=`1 CAD = ${t.exchangeRate.toFixed(4)} ${escapeHtml(sh.currency||'CAD')}`;return `<tr><td><button type="button" class="shipment-name-link" onclick="openShipmentInfo('${sh.id}')">${escapeHtml(sh.name||'—')}</button></td><td>${escapeHtml(sh.company||'—')}</td><td>${(sh.poLinks||[]).map(l=>escapeHtml((state.purchaseOrders||[]).find(p=>p.id===l.poId)?.number||'—')).join(', ')||'—'}</td><td>${t.totalBottles.toLocaleString()}</td><td>${num(sh.palletQty).toLocaleString()}</td><td>${escapeHtml((sh.currency||'CAD')+' '+t.cost.toFixed(2))}</td><td>${escapeHtml((sh.currency||'CAD')+' '+t.costPerBottle.toFixed(4))}</td><td><span class="transport-converter"><span>${converter}</span></span></td><td><b>CAD ${t.costPerBottleCad.toFixed(4)}</b></td><td>${shipmentStatusSelect(sh)}<br><small>${escapeHtml(sh.statusDate||'—')}</small></td><td>${escapeHtml(formatTransportationDate(sh.pickupDate)||'—')}</td><td><b>${escapeHtml(formatTransportationDate(sh.deliveryDate)||'—')}</b><br><small>${escapeHtml(shipmentDeliveryLabel(sh.status))}</small></td><td>${warehouse}</td><td>${escapeHtml(payment)}</td><td><div class="shipment-actions"><button type="button" class="secondary small" onclick="openShipmentEditor('${sh.id}')">Edit</button><button type="button" class="danger small" onclick="deleteShipment('${sh.id}')">Delete</button></div></td></tr>`}).join('');$('#shipmentRows').innerHTML=rows||'<tr><td colspan="15">No shipments have been created.</td></tr>'}
+function transportationPoDisplay(link){
+  const po=(state.purchaseOrders||[]).find(p=>p.id===link.poId);
+  const poNumber=po?.number||link.poNumber||link.number||'—';
+  let descriptions=[];
+  if(po){
+    descriptions=(po.lines||[]).map(line=>line.yearProductName||line.productDescription||line.description||line.productName||'').filter(Boolean);
+  }
+  if(!descriptions.length){
+    const linkedLines=link.lines||link.items||[];
+    descriptions=linkedLines.map(line=>line.yearProductName||line.productDescription||line.description||line.productName||'').filter(Boolean);
+  }
+  descriptions=[...new Set(descriptions.map(x=>String(x).trim()).filter(Boolean))];
+  const descHtml=descriptions.length
+    ? `<div style="margin-top:3px;font-size:12px;line-height:1.35">${descriptions.map(d=>escapeHtml(d)).join('<br>')}</div>`
+    : '<div style="margin-top:3px;font-size:12px" class="note">No item description</div>';
+  return `<div class="transport-po-item" style="margin-bottom:8px"><b>${escapeHtml(poNumber)}</b>${descHtml}</div>`;
+}
+function transportationPoSearchText(sh){
+  return (sh.poLinks||[]).map(link=>{
+    const po=(state.purchaseOrders||[]).find(p=>p.id===link.poId);
+    const poNumber=po?.number||link.poNumber||link.number||'';
+    const descriptions=po
+      ? (po.lines||[]).map(line=>line.yearProductName||line.productDescription||line.description||line.productName||'')
+      : (link.lines||link.items||[]).map(line=>line.yearProductName||line.productDescription||line.description||line.productName||'');
+    return [poNumber,...descriptions].join(' ');
+  }).join(' ');
+}
+function renderShipments(){if(!$('#shipmentRows'))return;const shipmentQuery=$('#transportationPageSearch')?.value||'';const rows=(state.shipments||[]).filter(sh=>{const poText=transportationPoSearchText(sh);return pageSearchMatches(sh,shipmentQuery,poText)}).map(sh=>{const t=shipmentTotals(sh),payment=sh.paymentStatus==='Other'?(sh.paymentOther||'Other'):(sh.paymentStatus||'Not Paid'),warehouse=`<div><b>REF # and Pallet Labels Requested:</b> ${yesNoBadge(sh.refPalletStatus||'No')}</div><div><b>Export Files Sent:</b> ${yesNoBadge(sh.exportFilesStatus||'No')}</div>`,converter=`1 CAD = ${t.exchangeRate.toFixed(4)} ${escapeHtml(sh.currency||'CAD')}`;return `<tr><td><button type="button" class="shipment-name-link" onclick="openShipmentInfo('${sh.id}')">${escapeHtml(sh.name||'—')}</button></td><td>${escapeHtml(sh.company||'—')}</td><td>${(sh.poLinks||[]).map(transportationPoDisplay).join('')||'—'}</td><td>${t.totalBottles.toLocaleString()}</td><td>${num(sh.palletQty).toLocaleString()}</td><td>${escapeHtml((sh.currency||'CAD')+' '+t.cost.toFixed(2))}</td><td>${escapeHtml((sh.currency||'CAD')+' '+t.costPerBottle.toFixed(4))}</td><td><span class="transport-converter"><span>${converter}</span></span></td><td><b>CAD ${t.costPerBottleCad.toFixed(4)}</b></td><td>${shipmentStatusSelect(sh)}<br><small>${escapeHtml(sh.statusDate||'—')}</small></td><td>${escapeHtml(formatTransportationDate(sh.pickupDate)||'—')}</td><td><b>${escapeHtml(formatTransportationDate(sh.deliveryDate)||'—')}</b><br><small>${escapeHtml(shipmentDeliveryLabel(sh.status))}</small></td><td>${warehouse}</td><td>${escapeHtml(payment)}</td><td><div class="shipment-actions"><button type="button" class="secondary small" onclick="openShipmentEditor('${sh.id}')">Edit</button><button type="button" class="danger small" onclick="deleteShipment('${sh.id}')">Delete</button></div></td></tr>`}).join('');$('#shipmentRows').innerHTML=rows||'<tr><td colspan="15">No shipments have been created.</td></tr>'}
 function shipmentInfoField(label,value){const text=value===undefined||value===null||value===''?'—':String(value);return `<div class="info-field"><button type="button" class="copy-field" onclick='copyText(${JSON.stringify(text)})'>Copy</button><span>${escapeHtml(label)}</span><b>${escapeHtml(text)}</b></div>`}
 function openShipmentInfo(id){const sh=(state.shipments||[]).find(x=>x.id===id);if(!sh)return;const totals=shipmentTotals(sh),payment=sh.paymentStatus==='Other'?(sh.paymentOther||'Other'):(sh.paymentStatus||'Not Paid');const poRows=(sh.poLinks||[]).map(link=>{const po=(state.purchaseOrders||[]).find(x=>x.id===link.poId),poNo=po?.number||'—',suppliers=(po?.supplierNames||[]).join(', ')||'—',bottles=poBottleCount(po).toLocaleString(),ref=link.ref||'—';return `<tr><td><b>${escapeHtml(poNo)}</b><button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(poNo)})'>Copy</button></td><td>${escapeHtml(ref)}<button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(ref)})'>Copy</button></td><td>${escapeHtml(suppliers)}<button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(suppliers)})'>Copy</button></td><td>${escapeHtml(bottles)}<button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(bottles)})'>Copy</button></td></tr>`}).join('')||'<tr><td colspan="4">No POs added.</td></tr>';const files=[1,2,3,4,5,6].map(n=>sh['attachment'+n]).filter(Boolean);$('#shipmentInfoTitle').textContent=sh.name||'Shipment Information';$('#shipmentInfoContent').innerHTML=`<div class="info-section"><h3>Purchase Orders</h3><div class="table-wrap"><table class="shipment-detail-po-table"><thead><tr><th>PO #</th><th>Ref #</th><th>Suppliers</th><th>Bottles</th></tr></thead><tbody>${poRows}</tbody></table></div></div><div class="info-section"><h3>Transport Information</h3><div class="info-grid">${shipmentInfoField('Transport Company Name',sh.company)}${shipmentInfoField('Phone Number',sh.phone)}${shipmentInfoField('Email 1',sh.email1)}${shipmentInfoField('Email 2',sh.email2)}${shipmentInfoField('From',sh.from)}${shipmentInfoField('To',sh.to)}</div></div><div class="info-section"><h3>Shipment Information</h3><div class="info-grid">${shipmentInfoField('Shipment Status',sh.status||'Not Contacted')}${shipmentInfoField('Approximate Pickup Date',formatTransportationDate(sh.pickupDate)||'—')}${shipmentInfoField(shipmentDeliveryLabel(sh.status),formatTransportationDate(sh.deliveryDate)||'—')}${shipmentInfoField('REF # and Pallet Labels Requested',sh.refPalletStatus||'No')}${shipmentInfoField('Export Files Sent',sh.exportFilesStatus||'No')}${shipmentInfoField('Total Bottles',totals.totalBottles.toLocaleString())}${shipmentInfoField('Pallet Quantity',num(sh.palletQty).toLocaleString())}${shipmentInfoField('Cost of Shipment',(sh.currency||'CAD')+' '+totals.cost.toFixed(2))}${shipmentInfoField('Cost / Bottle',(sh.currency||'CAD')+' '+totals.costPerBottle.toFixed(4))}${shipmentInfoField('CAD to '+(sh.currency||'CAD')+' Converter','1 CAD = '+totals.exchangeRate.toFixed(4)+' '+(sh.currency||'CAD'))}${shipmentInfoField('Bottle Cost in CAD','CAD '+totals.costPerBottleCad.toFixed(4))}${shipmentInfoField('Transport LCBO PAYMENT STATUS',payment)}${shipmentInfoField('Notes',sh.notes)}</div></div><div class="info-section"><h3>Attached Files</h3><div class="info-grid">${files.length?files.map((f,i)=>`<div class="info-field"><span>File ${i+1}</span><b>${escapeHtml(f.name||'Attached file')}</b><div class="inline-actions"><button type="button" class="secondary small" onclick="openStoredShipmentInfoFile('${sh.id}',${i})">Open</button><button type="button" class="secondary small" onclick='copyText(${JSON.stringify(f.name||'Attached file')})'>Copy Name</button></div></div>`).join(''):'<div class="info-empty">No files attached.</div>'}</div></div>`;$('#copyAllShipmentInfo').onclick=()=>copyShipmentInfoAll(sh);$('#shipmentInfoModal').classList.remove('hidden')}
 function copyShipmentInfoAll(sh){const totals=shipmentTotals(sh),payment=sh.paymentStatus==='Other'?(sh.paymentOther||'Other'):(sh.paymentStatus||'Not Paid');const poText=(sh.poLinks||[]).map(link=>{const po=(state.purchaseOrders||[]).find(x=>x.id===link.poId);return `PO #: ${po?.number||'—'} | Ref #: ${link.ref||'—'} | Suppliers: ${(po?.supplierNames||[]).join(', ')||'—'} | Bottles: ${poBottleCount(po)}`}).join('\n');copyText(`Shipment: ${sh.name||'—'}\n${poText}\nTransport Company Name: ${sh.company||'—'}\nPhone Number: ${sh.phone||'—'}\nEmail 1: ${sh.email1||'—'}\nEmail 2: ${sh.email2||'—'}\nFrom: ${sh.from||'—'}\nTo: ${sh.to||'—'}\nShipment Status: ${sh.status||'Not Contacted'}\nApproximate Pickup Date: ${formatTransportationDate(sh.pickupDate)||'—'}\n${shipmentDeliveryLabel(sh.status)}: ${formatTransportationDate(sh.deliveryDate)||'—'}\nREF # and Pallet Labels Requested: ${sh.refPalletStatus||'No'}\nExport Files Sent: ${sh.exportFilesStatus||'No'}\nTotal Bottles: ${totals.totalBottles}\nPallet Quantity: ${num(sh.palletQty)}\nCost of Shipment: ${(sh.currency||'CAD')} ${totals.cost.toFixed(2)}\nCost / Bottle: ${(sh.currency||'CAD')} ${totals.costPerBottle.toFixed(4)}\nCAD to ${sh.currency||'CAD'} Converter: 1 CAD = ${totals.exchangeRate.toFixed(4)} ${sh.currency||'CAD'}\nBottle Cost in CAD: CAD ${totals.costPerBottleCad.toFixed(4)}\nTransport LCBO PAYMENT STATUS: ${payment}\nNotes: ${sh.notes||'—'}`)}
@@ -5350,38 +5391,62 @@ window.moveInventoryToOffice=(encodedKey,availableCases,encodedMeta)=>{
 };
 
 
-window.updateOfficeInventoryCases=(encodedId,currentCases)=>{
+
+window.toggleOfficeInventoryAction=(encodedId,mode)=>{
+  const id=decodeURIComponent(String(encodedId||''));
+  const box=document.getElementById('office-action-'+id);
+  if(!box)return;
+  const row=(state.officeInventory||[]).find(x=>String(x.id)===id);
+  if(!row)return;
+  const isUpdate=mode==='update';
+  box.innerHTML=`<div class="office-inline-action">
+    <input id="office-action-input-${id}" type="number" min="${isUpdate?'0':'0.0001'}" step="any" value="${isUpdate?num(row.cases):''}" placeholder="Quantity" style="width:95px">
+    <button type="button" class="small" onclick="confirmOfficeInventoryAction('${encodeURIComponent(id)}','${mode}')">${isUpdate?'Save':'Subtract'}</button>
+    <button type="button" class="secondary small" onclick="cancelOfficeInventoryAction('${encodeURIComponent(id)}')">Cancel</button>
+  </div>`;
+  setTimeout(()=>document.getElementById('office-action-input-'+id)?.focus(),0);
+};
+
+window.cancelOfficeInventoryAction=(encodedId)=>{
+  const id=decodeURIComponent(String(encodedId||''));
+  const box=document.getElementById('office-action-'+id);
+  if(box)box.innerHTML='';
+};
+
+window.confirmOfficeInventoryAction=(encodedId,mode)=>{
   const id=decodeURIComponent(String(encodedId||''));
   if(!Array.isArray(state.officeInventory))state.officeInventory=[];
   const row=state.officeInventory.find(x=>String(x.id)===id);
   if(!row)return;
-  const entered=prompt('Update Cases in Office:', String(num(currentCases)));
-  if(entered===null)return;
-  const qty=Number(entered);
-  if(!Number.isFinite(qty)||qty<0){alert('Enter a valid quantity of 0 or more.');return;}
-  row.cases=qty;
-  row.updatedAt=new Date().toISOString();
+  const input=document.getElementById('office-action-input-'+id);
+  const qty=Number(input?.value);
+
+  if(mode==='update'){
+    if(!Number.isFinite(qty)||qty<0){alert('Enter a valid quantity of 0 or more.');return;}
+    row.cases=qty;
+    row.updatedAt=new Date().toISOString();
+  }else if(mode==='stockout'){
+    const available=num(row.cases);
+    if(!Number.isFinite(qty)||qty<=0){alert('Enter a valid quantity greater than 0.');return;}
+    if(qty>available){alert('Stocked Out quantity cannot be greater than Cases in Office.');return;}
+    row.cases=Math.max(0,available-qty);
+    row.stockedOutTotal=num(row.stockedOutTotal)+qty;
+    row.lastStockedOutQty=qty;
+    row.lastStockedOutAt=new Date().toISOString();
+  }else{
+    return;
+  }
+
   save();
   renderOfficeInventory();
 };
 
-window.stockOutOfficeInventory=(encodedId,availableCases)=>{
-  const id=decodeURIComponent(String(encodedId||''));
-  if(!Array.isArray(state.officeInventory))state.officeInventory=[];
-  const row=state.officeInventory.find(x=>String(x.id)===id);
-  if(!row)return;
-  const available=num(row.cases);
-  const entered=prompt('Stocked Out quantity:', '');
-  if(entered===null)return;
-  const qty=Number(entered);
-  if(!Number.isFinite(qty)||qty<=0){alert('Enter a valid quantity greater than 0.');return;}
-  if(qty>available){alert('Stocked Out quantity cannot be greater than Cases in Office.');return;}
-  row.cases=Math.max(0,available-qty);
-  row.stockedOutTotal=num(row.stockedOutTotal)+qty;
-  row.lastStockedOutQty=qty;
-  row.lastStockedOutAt=new Date().toISOString();
-  save();
-  renderOfficeInventory();
+window.updateOfficeInventoryCases=(encodedId)=>{
+  toggleOfficeInventoryAction(encodedId,'update');
+};
+
+window.stockOutOfficeInventory=(encodedId)=>{
+  toggleOfficeInventoryAction(encodedId,'stockout');
 };
 
 window.deleteOfficeInventory=(encodedId)=>{
@@ -5416,7 +5481,7 @@ window.renderOfficeInventory=()=>{
     <td>${num(r.bpc).toLocaleString()}</td>
     <td><b>${(num(r.cases)*num(r.bpc)).toLocaleString()}</b></td>
     <td>${escapeHtml((r.movedAt||'').slice(0,10)||'—')}</td>
-    <td><button type="button" class="secondary small" onclick="updateOfficeInventoryCases('${encodeURIComponent(r.id)}',${num(r.cases)})">Update</button> <button type="button" class="secondary small" onclick="stockOutOfficeInventory('${encodeURIComponent(r.id)}',${num(r.cases)})" ${num(r.cases)<=0?'disabled':''}>Stocked Out</button> <button type="button" class="danger small" onclick="deleteOfficeInventory('${encodeURIComponent(r.id)}')">Delete</button></td>
+    <td><button type="button" class="secondary small" onclick="updateOfficeInventoryCases('${encodeURIComponent(r.id)}')">Update</button> <button type="button" class="secondary small" onclick="stockOutOfficeInventory('${encodeURIComponent(r.id)}')" ${num(r.cases)<=0?'disabled':''}>Stocked Out</button> <button type="button" class="danger small" onclick="deleteOfficeInventory('${encodeURIComponent(r.id)}')">Delete</button><div id="office-action-${escapeHtml(String(r.id))}" style="margin-top:6px"></div></td>
   </tr>`).join('')||'<tr><td colspan="10">No inventory has been moved to the office yet.</td></tr>';
   if(k){
     const totalCases=rows.reduce((a,r)=>a+num(r.cases),0);
