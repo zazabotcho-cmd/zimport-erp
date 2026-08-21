@@ -385,6 +385,98 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 }
 </style>
 
+
+<style>
+.financial-transport-import-modal{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:99999 !important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(15,23,42,.72) !important;
+  overflow:hidden !important;
+}
+.financial-transport-import-modal.hidden{
+  display:none !important;
+}
+.financial-transport-import-card{
+  width:min(1180px,96vw) !important;
+  max-width:1180px !important;
+  max-height:90vh !important;
+  margin:0 !important;
+  background:#fff !important;
+  border-radius:12px;
+  box-shadow:0 24px 70px rgba(0,0,0,.35);
+  overflow:hidden !important;
+  display:flex;
+  flex-direction:column;
+}
+.financial-transport-import-card .modal-head{
+  flex:0 0 auto;
+  padding:16px 18px;
+  border-bottom:1px solid #e5e7eb;
+  background:#fff;
+}
+.financial-import-top{
+  flex:0 0 auto;
+  display:grid;
+  grid-template-columns:minmax(280px,1fr) minmax(280px,1fr);
+  gap:12px;
+  padding:14px 18px 8px;
+  background:#fff;
+}
+.financial-import-top label{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  font-weight:600;
+}
+.financial-import-top select,
+.financial-import-top input{
+  width:100%;
+}
+.financial-import-selected{
+  flex:0 0 auto;
+  margin:0 18px 10px;
+  padding:8px 10px;
+  border:1px solid #d8dee8;
+  border-radius:7px;
+  background:#f8fafc;
+}
+.financial-transport-import-card > .table-wrap{
+  flex:1 1 auto;
+  min-height:0;
+  overflow:auto !important;
+  margin:0 18px;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+}
+.financial-transport-import-card table{
+  min-width:950px;
+}
+.financial-transport-import-card thead th{
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:#f8fafc;
+}
+.financial-import-row-selected td{
+  background:#eef6ff;
+}
+.financial-transport-import-card .modal-actions{
+  flex:0 0 auto;
+  padding:14px 18px;
+  border-top:1px solid #e5e7eb;
+  background:#fff;
+}
+@media (max-width:760px){
+  .financial-import-top{grid-template-columns:1fr;}
+  .financial-transport-import-modal{padding:10px;}
+}
+</style>
+
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -1454,15 +1546,18 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 <fieldset class="item-group"><legend>Consolidation Warehouse Status</legend><div class="form-grid two"><label>REF # and Pallet Labels Requested<select id="shipmentRefPalletStatusInput"><option value="No">No</option><option value="Yes">Yes</option></select></label><label>Export Files Sent<select id="shipmentExportFilesStatusInput"><option value="No">No</option><option value="Yes">Yes</option></select></label></div></fieldset>
 <div class="form-grid two shipment-bottom-row"><label>Cost of Shipment<div style="display:flex;gap:6px;align-items:center"><input id="shipmentCostInput" type="number" min="0" step="0.01" style="flex:1"><select id="shipmentCurrencyInput" style="width:82px"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></div></label><label>Transport LCBO PAYMENT STATUS<select id="shipmentPaymentStatusInput"><option value="Not Paid">Not Paid</option><option value="Paid">Paid</option><option value="Other">Other</option></select></label><label><span id="shipmentConverterLabel">Transportation CAD Converter — Enter Manually</span><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span>1 CAD =</span><input id="shipmentExchangeRateInput" type="number" min="0.0001" step="0.0001" style="width:90px" aria-label="Manual transportation exchange rate"><b id="shipmentConverterCurrency">CAD</b></div></label><label id="shipmentPaymentOtherWrap" class="hidden">Other Payment Status<input id="shipmentPaymentOtherInput" maxlength="50" placeholder="Type payment status"></label></div>
 <div class="modal-actions"><button id="deleteShipmentBtn" type="button" class="danger">Delete Shipment</button><span></span><button id="cancelShipmentBtn" type="button" class="secondary">Cancel</button><button id="saveShipmentBtn" type="button">Save Shipment</button></div></div></div>
-<div id="financialTransportImportModal" class="modal hidden"><div class="modal-card">
+<div id="financialTransportImportModal" class="modal hidden financial-transport-import-modal"><div class="modal-card financial-transport-import-card">
   <div class="modal-head"><div><h2>Import from Transportation</h2><p>Select one Transportation containing REGU / SEAS / OTHER POs.</p></div><button type="button" class="icon" onclick="closeFinancialTransportImport()">×</button></div>
   <input type="hidden" id="financialTransportImportPageId">
-  <div class="form-grid">
-    <label class="full">Transportation
+  <div class="financial-import-top">
+    <label>Transportation
       <select id="financialTransportImportSelect" onchange="selectFinancialTransportImport(this.value)"></select>
     </label>
+    <label>Search
+      <input id="financialTransportImportSearch" type="search" placeholder="Transportation, PO, item or status" oninput="renderFinancialTransportImportList()">
+    </label>
   </div>
-  <div class="toolbar"><input id="financialTransportImportSearch" type="search" placeholder="Search Transportation, PO, item or status" oninput="renderFinancialTransportImportList()"></div>
+  <div id="financialTransportImportSelected" class="note financial-import-selected">No Transportation selected.</div>
   <div class="table-wrap"><table>
     <thead><tr><th>Transportation</th><th>POs</th><th>Items</th><th>Status</th><th>Status Date</th><th>Action</th></tr></thead>
     <tbody id="financialTransportImportRows"></tbody>
@@ -6021,6 +6116,13 @@ window.selectFinancialTransportImport=(id)=>{
   selectedFinancialTransportImportId=String(id||'');
   const sel=document.getElementById('financialTransportImportSelect');
   if(sel&&sel.value!==selectedFinancialTransportImportId)sel.value=selectedFinancialTransportImportId;
+  const sh=(state.shipments||[]).find(x=>String(x.id)===selectedFinancialTransportImportId);
+  const summary=document.getElementById('financialTransportImportSelected');
+  if(summary){
+    summary.textContent=sh
+      ? `Selected: ${sh.name||'Transportation'} | Status: ${sh.status||'—'} | Status Date: ${sh.statusDate||'—'}`
+      : 'No Transportation selected.';
+  }
 };
 window.renderFinancialTransportImportList=()=>{
   const select=document.getElementById('financialTransportImportSelect');
@@ -6050,19 +6152,25 @@ window.renderFinancialTransportImportList=()=>{
     selectedFinancialTransportImportId='';
     select.value='';
   }
+  const selectedSummary=document.getElementById('financialTransportImportSelected');
+  const selectedSh=all.find(sh=>String(sh.id)===String(selectedFinancialTransportImportId));
+  if(selectedSummary)selectedSummary.textContent=selectedSh
+    ? `Selected: ${selectedSh.name||'Transportation'} | Status: ${selectedSh.status||'—'} | Status Date: ${selectedSh.statusDate||'—'}`
+    : 'No Transportation selected.';
 
   body.innerHTML=filtered.map(sh=>{
     const rows=financialImportEligibleRows(sh);
     const pos=financialImportEligiblePos(sh);
     const poText=pos.map(po=>`${po.number||'—'} (${profitCalcPoProgram(po)})`).join(', ');
     const itemText=rows.map(r=>r.line.yearProductName||r.line.productDescription||r.line.description||r.line.productName||'Item').join(', ');
-    return `<tr>
+    const selected=String(selectedFinancialTransportImportId)===String(sh.id);
+    return `<tr class="${selected?'financial-import-row-selected':''}">
       <td><b>${escapeHtml(sh.name||'—')}</b></td>
       <td>${escapeHtml(poText||'—')}</td>
       <td>${escapeHtml(itemText||'—')}</td>
       <td>${escapeHtml(sh.status||'—')}</td>
       <td>${escapeHtml(sh.statusDate||'—')}</td>
-      <td><button type="button" class="secondary small" onclick="selectFinancialTransportImport('${escapeHtml(String(sh.id))}')">Select</button></td>
+      <td><button type="button" class="${selected?'':'secondary'} small" onclick="selectFinancialTransportImport('${escapeHtml(String(sh.id))}');renderFinancialTransportImportList()">${selected?'Selected':'Select'}</button></td>
     </tr>`;
   }).join('')||'<tr><td colspan="6">No Transportation with REGU / SEAS / OTHER POs found.</td></tr>';
 };
