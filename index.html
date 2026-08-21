@@ -706,7 +706,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
  <div class="toolbar"><input id="officeInventorySearch" type="search" placeholder="Search PO, supplier, item or product" oninput="renderOfficeInventory()"></div>
  <div class="cards" id="officeInventoryKpis"></div>
  <div class="table-wrap"><table>
-  <thead><tr><th>PO #</th><th>PO Program</th><th>Vendor / Supplier</th><th>LCBO Item #</th><th>Product Name</th><th>Cases in Office</th><th>Bottles / Case</th><th>Total Bottles</th><th>Moved Date</th></tr></thead>
+  <thead><tr><th>PO #</th><th>PO Program</th><th>Vendor / Supplier</th><th>LCBO Item #</th><th>Product Name</th><th>Cases in Office</th><th>Bottles / Case</th><th>Total Bottles</th><th>Moved Date</th><th>Actions</th></tr></thead>
   <tbody id="officeInventoryRows"></tbody>
  </table></div>
 </div></section>
@@ -3091,7 +3091,7 @@ function moveToHeadsRecycleBin(type,page,record,restoreMeta={}){if(!record)retur
 function purgeExpiredRecycle(){if(!isAdminUser()){alert('Only an administrator can move expired Recycling Bin records to Head\'s Recycling Bin.');return}const now=Date.now();if(!Array.isArray(state.headsRecycleBin))state.headsRecycleBin=[];const keep=[];(state.recycleBin||[]).forEach(x=>{if(new Date(x.deleteAfter).getTime()<=now)state.headsRecycleBin.push({...x,movedToHeadsAt:new Date().toISOString()});else keep.push(x)});state.recycleBin=keep;save()}
 function restoreRecycleRecord(id){const x=(state.recycleBin||[]).find(v=>v.id===id);if(!x)return;const r=JSON.parse(JSON.stringify(x.record));const map={record:'records',tender:'tenders',item:'items',agency:'agencies',supplier:'suppliers',purchaseOrder:'purchaseOrders',shipment:'shipments',financialInvoice:'financialInvoices',supplierPaymentInvoice:'supplierPaymentInvoices',supplierPaymentInvoice2:'supplierPaymentInvoices2',otherInvoice:'otherInvoices',otherNewInvoice:'otherNewInvoices',archivedInvoice:'archivedInvoices',archivedShipment:'archivedShipments',archivedPo:'manuallyArchivedPurchaseOrders',countryWinery:'countryWineries',countryCandidate:'countryCandidates',countryBonus:'countryBonuses',countryOpportunity:'countryOpportunities'};if(x.type==='supplierItem'){const s=state.suppliers.find(v=>v.id===x.restoreMeta.supplierId);if(!s){alert('The original supplier no longer exists. Restore the supplier first.');return}(s.items||(s.items=[])).push(r)}else if(x.type==='workerItem'){const t=state.tenders.find(v=>v.id===x.restoreMeta.tenderId);if(!t){alert('The original tender no longer exists. Restore the tender first.');return}(t.workItems||(t.workItems=[])).push(r)}else{const key=x.restoreMeta?.collection||map[x.type];if(!key)return;if(!Array.isArray(state[key]))state[key]=[];if(!state[key].some(v=>v.id===r.id))state[key].push(r)}state.recycleBin=state.recycleBin.filter(v=>v.id!==id);save()}
 function permanentlyDeleteRecycle(id){if(!isAdminUser()){alert('Only an administrator can move records to Head\'s Recycling Bin.');return}const x=(state.recycleBin||[]).find(v=>v.id===id);if(!x)return;if(!confirm('Move this record to Head\'s Recycling Bin?'))return;if(!Array.isArray(state.headsRecycleBin))state.headsRecycleBin=[];state.headsRecycleBin.push({...x,movedToHeadsAt:new Date().toISOString()});state.recycleBin=state.recycleBin.filter(v=>v.id!==id);save()}
-function restoreHeadsRecycleRecord(id){if(!isAdminUser()){alert('Administrator access only.');return}const x=(state.headsRecycleBin||[]).find(v=>v.id===id);if(!x)return;if(x.directToHeads){const r=JSON.parse(JSON.stringify(x.record));const map={financialInvoice:'financialInvoices',supplierPaymentInvoice:'supplierPaymentInvoices',supplierPaymentInvoice2:'supplierPaymentInvoices2',otherInvoice:'otherInvoices',otherNewInvoice:'otherNewInvoices',archivedInvoice:'archivedInvoices'};const key=x.restoreMeta?.collection||map[x.type];if(!key)return;if(!Array.isArray(state[key]))state[key]=[];if(!state[key].some(v=>v.id===r.id))state[key].push(r);state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save();try{renderFinancial()}catch(e){}try{renderOtherInvoices()}catch(e){}try{renderOtherNewInvoices()}catch(e){}try{renderSupplierPaymentInvoices()}catch(e){}try{renderSupplierPaymentInvoices2()}catch(e){}try{renderArchivedInvoices()}catch(e){}return}if(!Array.isArray(state.recycleBin))state.recycleBin=[];const restored={...x};delete restored.movedToHeadsAt;if(!state.recycleBin.some(v=>v.id===restored.id))state.recycleBin.push(restored);state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save()}
+function restoreHeadsRecycleRecord(id){if(!isAdminUser()){alert('Administrator access only.');return}const x=(state.headsRecycleBin||[]).find(v=>v.id===id);if(!x)return;if(x.directToHeads){const r=JSON.parse(JSON.stringify(x.record));const map={financialInvoice:'financialInvoices',supplierPaymentInvoice:'supplierPaymentInvoices',supplierPaymentInvoice2:'supplierPaymentInvoices2',otherInvoice:'otherInvoices',otherNewInvoice:'otherNewInvoices',archivedInvoice:'archivedInvoices',officeInventory:'officeInventory'};const key=x.restoreMeta?.collection||map[x.type];if(!key)return;if(!Array.isArray(state[key]))state[key]=[];if(!state[key].some(v=>v.id===r.id))state[key].push(r);state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save();try{renderFinancial()}catch(e){}try{renderOtherInvoices()}catch(e){}try{renderOtherNewInvoices()}catch(e){}try{renderSupplierPaymentInvoices()}catch(e){}try{renderSupplierPaymentInvoices2()}catch(e){}try{renderArchivedInvoices()}catch(e){}try{renderOfficeInventory()}catch(e){}return}if(!Array.isArray(state.recycleBin))state.recycleBin=[];const restored={...x};delete restored.movedToHeadsAt;if(!state.recycleBin.some(v=>v.id===restored.id))state.recycleBin.push(restored);state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save()}
 function permanentlyDeleteHeadsRecycle(id){if(!isAdminUser()){alert('Administrator access only.');return}if(!confirm('Permanently delete this record? This cannot be undone.'))return;state.headsRecycleBin=(state.headsRecycleBin||[]).filter(v=>v.id!==id);save()}
 function renderHeadsRecycleBin(){const body=$('#headsRecycleRows');if(!body)return;const q=String($('#headsRecycleSearch')?.value||'').trim().toLowerCase();const rows=(state.headsRecycleBin||[]).filter(x=>!q||`${x.page} ${x.label}`.toLowerCase().includes(q)).sort((a,b)=>new Date(b.movedToHeadsAt||b.deletedAt)-new Date(a.movedToHeadsAt||a.deletedAt));body.innerHTML=rows.map(x=>`<tr><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.movedToHeadsAt||x.deletedAt).toLocaleString())}</td><td><button type=\"button\" onclick=\"restoreHeadsRecycleRecord('${x.id}')\">Restore</button> <button type=\"button\" class=\"danger\" onclick=\"permanentlyDeleteHeadsRecycle('${x.id}')\">Permanently Delete</button></td></tr>`).join('')||'<tr><td colspan=\"5\" class=\"note\">Head\'s Recycling Bin is empty.</td></tr>'}
 function renderRecycleBin(){const body=$('#recycleRows');if(!body)return;const q=String($('#recycleSearch')?.value||'').trim().toLowerCase();const canAdmin=isAdminUser();const rows=(state.recycleBin||[]).filter(x=>!q||`${x.page} ${x.label}`.toLowerCase().includes(q)).sort((a,b)=>new Date(b.deletedAt)-new Date(a.deletedAt));body.innerHTML=rows.map(x=>`<tr><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.deleteAfter).toLocaleDateString())}</td><td><button type="button" onclick="restoreRecycleRecord('${x.id}')">Restore</button>${canAdmin?` <button type="button" class="danger recycle-permanent-delete" onclick="permanentlyDeleteRecycle('${x.id}')">Delete Permanently</button>`:''}</td></tr>`).join('')||'<tr><td colspan="5" class="note">Recycling Bin is empty.</td></tr>';const sel=$('#recycleRetention');if(sel)sel.value=String(state.recycleRetentionDays||90);document.querySelectorAll('.recycle-admin-only').forEach(el=>el.style.display=canAdmin?'':'none')}
@@ -5349,6 +5349,54 @@ window.moveInventoryToOffice=(encodedKey,availableCases,encodedMeta)=>{
   renderOfficeInventory();
 };
 
+
+window.updateOfficeInventoryCases=(encodedId,currentCases)=>{
+  const id=decodeURIComponent(String(encodedId||''));
+  if(!Array.isArray(state.officeInventory))state.officeInventory=[];
+  const row=state.officeInventory.find(x=>String(x.id)===id);
+  if(!row)return;
+  const entered=prompt('Update Cases in Office:', String(num(currentCases)));
+  if(entered===null)return;
+  const qty=Number(entered);
+  if(!Number.isFinite(qty)||qty<0){alert('Enter a valid quantity of 0 or more.');return;}
+  row.cases=qty;
+  row.updatedAt=new Date().toISOString();
+  save();
+  renderOfficeInventory();
+};
+
+window.stockOutOfficeInventory=(encodedId,availableCases)=>{
+  const id=decodeURIComponent(String(encodedId||''));
+  if(!Array.isArray(state.officeInventory))state.officeInventory=[];
+  const row=state.officeInventory.find(x=>String(x.id)===id);
+  if(!row)return;
+  const available=num(row.cases);
+  const entered=prompt('Stocked Out quantity:', '');
+  if(entered===null)return;
+  const qty=Number(entered);
+  if(!Number.isFinite(qty)||qty<=0){alert('Enter a valid quantity greater than 0.');return;}
+  if(qty>available){alert('Stocked Out quantity cannot be greater than Cases in Office.');return;}
+  row.cases=Math.max(0,available-qty);
+  row.stockedOutTotal=num(row.stockedOutTotal)+qty;
+  row.lastStockedOutQty=qty;
+  row.lastStockedOutAt=new Date().toISOString();
+  save();
+  renderOfficeInventory();
+};
+
+window.deleteOfficeInventory=(encodedId)=>{
+  const id=decodeURIComponent(encodedId||'');
+  if(!Array.isArray(state.officeInventory))state.officeInventory=[];
+  const row=state.officeInventory.find(x=>String(x.id)===id);
+  if(!row)return;
+  if(!confirm(`Move ${row.product||row.poNumber||'this office inventory record'} to Head's Recycling Bin?`))return;
+  moveToHeadsRecycleBin('officeInventory','Inventory in stock office',row,{collection:'officeInventory'});
+  state.officeInventory=state.officeInventory.filter(x=>String(x.id)!==id);
+  save();
+  renderOfficeInventory();
+  try{renderHeadsRecycleBin()}catch(e){}
+};
+
 window.renderOfficeInventory=()=>{
   const body=document.getElementById('officeInventoryRows'),k=document.getElementById('officeInventoryKpis');
   if(!body)return;
@@ -5368,7 +5416,8 @@ window.renderOfficeInventory=()=>{
     <td>${num(r.bpc).toLocaleString()}</td>
     <td><b>${(num(r.cases)*num(r.bpc)).toLocaleString()}</b></td>
     <td>${escapeHtml((r.movedAt||'').slice(0,10)||'—')}</td>
-  </tr>`).join('')||'<tr><td colspan="9">No inventory has been moved to the office yet.</td></tr>';
+    <td><button type="button" class="secondary small" onclick="updateOfficeInventoryCases('${encodeURIComponent(r.id)}',${num(r.cases)})">Update</button> <button type="button" class="secondary small" onclick="stockOutOfficeInventory('${encodeURIComponent(r.id)}',${num(r.cases)})" ${num(r.cases)<=0?'disabled':''}>Stocked Out</button> <button type="button" class="danger small" onclick="deleteOfficeInventory('${encodeURIComponent(r.id)}')">Delete</button></td>
+  </tr>`).join('')||'<tr><td colspan="10">No inventory has been moved to the office yet.</td></tr>';
   if(k){
     const totalCases=rows.reduce((a,r)=>a+num(r.cases),0);
     const totalBottles=rows.reduce((a,r)=>a+num(r.cases)*num(r.bpc),0);
