@@ -201,7 +201,7 @@ select.candidate-approved-locked:disabled,
 textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowed}
 
 
-.invoice-page-row{display:flex;align-items:stretch;overflow-x:auto;white-space:nowrap;border:1px solid var(--line);border-radius:10px;background:#fff}.invoice-page-row .invoice-page-tab{flex:0 0 auto;background:transparent;color:#4b5a69;border:0;border-right:1px solid var(--line);border-radius:0;padding:14px 18px;font-weight:700}.invoice-page-row .invoice-page-tab:last-child{border-right:0}.invoice-page-row .invoice-page-tab:hover{background:#f5f8fb;color:var(--blue)}
+.invoice-page-row{display:flex;align-items:stretch;overflow-x:auto;white-space:nowrap;border:1px solid var(--line);border-radius:10px;background:#fff}.invoice-page-row .invoice-page-tab{flex:0 0 auto;background:transparent;color:#4b5a69;border:0;border-right:1px solid var(--line);border-radius:0;padding:14px 18px;font-weight:700}.invoice-page-row .invoice-page-tab:last-child{border-right:0}.invoice-page-row .invoice-page-tab:hover{background:#f5f8fb;color:var(--blue)}.invoice-page-row .invoice-page-tab.active{background:var(--blue);color:#fff}.invoice-page-row.invoice-subnav{margin-bottom:18px}
 .archive-status-select{min-width:190px}
 
 .country-source-country{margin-right:4px;padding:9px 13px;font-weight:800}
@@ -276,7 +276,8 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <button class="tab active" data-tab="dashboard">Dashboard</button>
   <button class="tab" data-tab="all-proposals">ALL PROPOSALS</button>
   <button class="tab" data-tab="all-invoices">ALL INVOICES</button>
-  <button class="tab" data-tab="inventory-in-stock">INVENTORY IN STOCK</button>
+  <button class="tab" data-tab="inventory-in-stock">Inventory in stock LCBO</button>
+  <button class="tab" data-tab="inventory-in-stock-office">Inventory in stock office</button>
   
   <button class="tab" data-tab="heads-recycle-bin">Head's Recycling Bin</button>
 </nav>
@@ -684,7 +685,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 <section id="inventory-in-stock" class="panel"><div class="box">
  <div class="section-head">
   <div>
-   <h2>Inventory in Stock</h2>
+   <h2>Inventory in stock LCBO</h2>
    <p class="note">Automatically includes every non-TENDER PO that is marked <b>Arrived in Canada</b>, including POs whose Transportation shipment is marked Arrived in Canada.</p>
   </div>
  </div>
@@ -700,6 +701,15 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <tbody id="headInventoryRows"></tbody>
  </table></div>
 </div></section>
+<section id="inventory-in-stock-office" class="panel"><div class="box">
+ <div class="section-head"><div><h2>Inventory in stock office</h2><p class="note">Inventory transferred from LCBO stock to office stock.</p></div></div>
+ <div class="toolbar"><input id="officeInventorySearch" type="search" placeholder="Search PO, supplier, item or product" oninput="renderOfficeInventory()"></div>
+ <div class="cards" id="officeInventoryKpis"></div>
+ <div class="table-wrap"><table>
+  <thead><tr><th>PO #</th><th>PO Program</th><th>Vendor / Supplier</th><th>LCBO Item #</th><th>Product Name</th><th>Cases in Office</th><th>Bottles / Case</th><th>Total Bottles</th><th>Moved Date</th></tr></thead>
+  <tbody id="officeInventoryRows"></tbody>
+ </table></div>
+</div></section>
 <section id="all-invoices" class="panel"><div class="box"><div class="section-head"><div><h2>All Invoices</h2><p class="note">Select an invoice page below.</p></div></div><div class="invoice-page-row">
   <button type="button" class="invoice-page-tab" onclick="activate('financial','heads-page')">LCBO to Agent Tender Invoices</button>
   <button type="button" class="invoice-page-tab" onclick="activate('all-other-invoices','heads-page')">SEAS/REGU/OTHER TO AGENT INVOICES</button>
@@ -708,7 +718,15 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments-2','heads-page')">Suppliers to Agent Fee Payment</button>
   <button type="button" class="invoice-page-tab" onclick="activate('archived-invoices','heads-page')">Archived Invoices</button>
 </div></div></section>
-<section id="financial" class="panel"><div class="box"><div class="section-head"><div><h2>LCBO to Agent Tender Invoices</h2><p class="note">Create and manage separate financial invoice records by PO number and invoice number.</p></div><button type="button" id="createFinancialInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleFinancialSearch">Search</button><div class="page-search-panel" id="financialSearchPanel"><label>Search Invoices<input id="financialPageSearch" type="search" placeholder="PO, invoice, submission, status, amount or currency"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearFinancialPageSearch">Clear Search</button></div></div>
+<section id="financial" class="panel"><div class="box">
+<div class="invoice-page-row invoice-subnav">
+  <button type="button" class="invoice-page-tab active" onclick="activate('financial','heads-page')">LCBO to Agent Tender Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('all-other-invoices','heads-page')">SEAS/REGU/OTHER TO AGENT INVOICES</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('other-invoices-new','heads-page')">Other Mixed Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments','heads-page')">Paying to Suppliers Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments-2','heads-page')">Suppliers to Agent Fee Payment</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('archived-invoices','heads-page')">Archived Invoices</button>
+</div><div class="section-head"><div><h2>LCBO to Agent Tender Invoices</h2><p class="note">Create and manage separate financial invoice records by PO number and invoice number.</p></div><button type="button" id="createFinancialInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleFinancialSearch">Search</button><div class="page-search-panel" id="financialSearchPanel"><label>Search Invoices<input id="financialPageSearch" type="search" placeholder="PO, invoice, submission, status, amount or currency"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearFinancialPageSearch">Clear Search</button></div></div>
 <div id="financialInvoiceList"><div class="table-wrap"><table><thead><tr><th>PO #</th><th>Invoice Number</th><th>Submission #</th><th>Total PO Quoted Value *</th><th>Total Netted Expenses</th><th>Total Advertising Expenses</th><th>Failed Sales LCBO Rebate</th><th>Other Expense Amount</th><th>Transportation Cost CAD</th><th>Supplier Payment CAD</th><th>LCBO PAYMENT STATUS</th><th>NET PROFIT CAD</th><th>Payment Status</th></tr></thead><tbody id="financialInvoiceRows"></tbody></table></div></div>
 <div id="financialInvoiceDetails" class="hidden"><div class="invoice-detail-actions"><button type="button" class="secondary" id="backFromFinancialDetails">Back to Invoice List</button><button type="button" class="secondary" id="copyAllFinancialDetails">Copy All Invoice Information</button><button type="button" id="editFromFinancialDetails">Edit Invoice</button></div><div id="financialInvoiceDetailsContent"></div></div>
 <div id="financialInvoiceEditor" class="hidden">
@@ -957,6 +975,14 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 
 
 <section id="all-other-invoices" class="panel"><div class="box">
+<div class="invoice-page-row invoice-subnav">
+  <button type="button" class="invoice-page-tab" onclick="activate('financial','heads-page')">LCBO to Agent Tender Invoices</button>
+  <button type="button" class="invoice-page-tab active" onclick="activate('all-other-invoices','heads-page')">SEAS/REGU/OTHER TO AGENT INVOICES</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('other-invoices-new','heads-page')">Other Mixed Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments','heads-page')">Paying to Suppliers Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments-2','heads-page')">Suppliers to Agent Fee Payment</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('archived-invoices','heads-page')">Archived Invoices</button>
+</div>
   <div class="section-head"><div><h2>SEAS/REGU/OTHER TO AGENT INVOICES</h2><p class="note">Create and manage invoices that do not belong to the supplier-payment or agency-fee pages.</p></div><button type="button" id="createOtherInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleOtherInvoiceSearch">Search</button><div class="page-search-panel" id="otherInvoiceSearchPanel"><label>Search Invoices<input id="otherInvoicePageSearch" type="search" placeholder="Invoice name, number, date, status, notes or amount"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearOtherInvoicePageSearch">Clear Search</button></div></div>
   <div id="otherInvoiceList"><div class="table-wrap"><table><thead><tr><th>Invoice Name</th><th>Invoice Number</th><th>Invoice Date</th><th>Amount</th><th>Paid Status</th><th>Attachment</th><th>Notes</th><th>Actions</th></tr></thead><tbody id="otherInvoiceRows"></tbody></table></div></div>
   <div id="otherInvoiceEditor" class="hidden">
@@ -979,6 +1005,14 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   </div>
 </div></section>
 <section id="other-invoices-new" class="panel"><div class="box">
+<div class="invoice-page-row invoice-subnav">
+  <button type="button" class="invoice-page-tab" onclick="activate('financial','heads-page')">LCBO to Agent Tender Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('all-other-invoices','heads-page')">SEAS/REGU/OTHER TO AGENT INVOICES</button>
+  <button type="button" class="invoice-page-tab active" onclick="activate('other-invoices-new','heads-page')">Other Mixed Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments','heads-page')">Paying to Suppliers Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments-2','heads-page')">Suppliers to Agent Fee Payment</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('archived-invoices','heads-page')">Archived Invoices</button>
+</div>
   <div class="section-head"><div><h2>OTHER MIXED INVOICES</h2><p class="note">Create and manage invoices that do not belong to the supplier-payment or agency-fee pages.</p></div><button type="button" id="createOtherNewInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleOtherNewInvoiceSearch">Search</button><div class="page-search-panel" id="otherNewInvoiceSearchPanel"><label>Search Invoices<input id="otherNewInvoicePageSearch" type="search" placeholder="Invoice name, number, date, status, notes or amount"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearOtherInvoicePageSearch">Clear Search</button></div></div>
   <div id="otherNewInvoiceList"><div class="table-wrap"><table><thead><tr><th>Invoice Number</th><th>Invoice Date</th><th>Invoice Amount</th><th>Currency</th><th>Invoice Notes</th><th>Paid Status</th><th>Actions</th></tr></thead><tbody id="otherNewInvoiceRows"></tbody></table></div></div>
   <div id="otherNewInvoiceEditor" class="hidden">
@@ -1002,17 +1036,39 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </div></section>
 
 <section id="archived-invoices" class="panel"><div class="box">
-  <div class="section-head"><div><h2>Archived Invoices</h2><p class="note">Invoices moved here manually from active invoice pages.</p></div></div>
-  <button type="button" class="secondary page-search-toggle" id="toggleArchivedInvoiceSearch">Search</button>
-  <div class="page-search-panel" id="archivedInvoiceSearchPanel">
-    <label>Search Archived Invoices<input id="archivedInvoicePageSearch" type="search" placeholder="PO, invoice, type, status, notes or amount"></label>
-    <div class="page-search-actions"><button type="button" class="secondary" id="clearArchivedInvoiceSearch">Clear Search</button></div>
+<div class="invoice-page-row invoice-subnav">
+  <button type="button" class="invoice-page-tab" onclick="activate('financial','heads-page')">LCBO to Agent Tender Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('all-other-invoices','heads-page')">SEAS/REGU/OTHER TO AGENT INVOICES</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('other-invoices-new','heads-page')">Other Mixed Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments','heads-page')">Paying to Suppliers Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments-2','heads-page')">Suppliers to Agent Fee Payment</button>
+  <button type="button" class="invoice-page-tab active" onclick="activate('archived-invoices','heads-page')">Archived Invoices</button>
+</div>
+  <div id="archivedInvoiceList">
+    <div class="section-head"><div><h2>Archived Invoices</h2><p class="note">Invoices moved here manually from active invoice pages. Click a PO number or invoice number to open the complete view-only invoice page.</p></div></div>
+    <button type="button" class="secondary page-search-toggle" id="toggleArchivedInvoiceSearch">Search</button>
+    <div class="page-search-panel" id="archivedInvoiceSearchPanel">
+      <label>Search Archived Invoices<input id="archivedInvoicePageSearch" type="search" placeholder="PO, invoice, type, status, notes or amount"></label>
+      <div class="page-search-actions"><button type="button" class="secondary" id="clearArchivedInvoiceSearch">Clear Search</button></div>
+    </div>
+    <div class="table-wrap"><table><thead><tr>
+      <th>Invoice Type</th><th>PO #</th><th>Invoice Number</th><th>Payment Status</th><th>Archived Date</th><th>Actions</th>
+    </tr></thead><tbody id="archivedInvoiceRows"></tbody></table></div>
   </div>
-  <div class="table-wrap"><table><thead><tr>
-    <th>Invoice Type</th><th>PO #</th><th>Invoice Number</th><th>Payment Status</th><th>Archived Date</th><th>Actions</th>
-  </tr></thead><tbody id="archivedInvoiceRows"></tbody></table></div>
+  <div id="archivedInvoiceDetails" class="hidden">
+    <div class="invoice-detail-actions"><button type="button" class="secondary" id="backFromArchivedInvoiceDetails">Back to Archived Invoices</button><button type="button" class="secondary" id="copyAllArchivedInvoiceDetails">Copy All Invoice Information</button></div>
+    <div id="archivedInvoiceDetailsContent"></div>
+  </div>
 </div></section>
 <section id="supplier-payments" class="panel"><div class="box">
+<div class="invoice-page-row invoice-subnav">
+  <button type="button" class="invoice-page-tab" onclick="activate('financial','heads-page')">LCBO to Agent Tender Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('all-other-invoices','heads-page')">SEAS/REGU/OTHER TO AGENT INVOICES</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('other-invoices-new','heads-page')">Other Mixed Invoices</button>
+  <button type="button" class="invoice-page-tab active" onclick="activate('supplier-payments','heads-page')">Paying to Suppliers Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments-2','heads-page')">Suppliers to Agent Fee Payment</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('archived-invoices','heads-page')">Archived Invoices</button>
+</div>
   <div class="section-head"><div><h2>Paying to Suppliers Invoices</h2><p class="note">Create supplier invoices and record up to four payments, comments, dates, and payment files.</p></div><button type="button" id="createSupplierPaymentInvoiceBtn">+ Create Supplier Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleSupplierPaymentSearch">Search</button><div class="page-search-panel" id="supplierPaymentSearchPanel"><label>Search Supplier Invoices<input id="supplierPaymentPageSearch" type="search" placeholder="PO, submission, supplier, invoice, date, status or amount"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearSupplierPaymentPageSearch">Clear Search</button></div></div>
   <div id="supplierPaymentInvoiceList"><div class="table-wrap"><table><thead><tr><th>PO #</th><th>Submission #</th><th>Supplier</th><th>Invoice Number</th><th>Invoice Date</th><th>Invoice Amount</th><th>Left to Pay</th><th>Paid Status</th><th>1st Payment</th><th>2nd Payment</th><th>3rd Payment</th><th>4th Payment</th><th>Actions</th></tr></thead><tbody id="supplierPaymentInvoiceRows"></tbody></table></div></div>
   <div id="supplierPaymentInvoiceEditor" class="hidden">
@@ -1044,6 +1100,14 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   </div>
 </div></section>
 <section id="supplier-payments-2" class="panel"><div class="box">
+<div class="invoice-page-row invoice-subnav">
+  <button type="button" class="invoice-page-tab" onclick="activate('financial','heads-page')">LCBO to Agent Tender Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('all-other-invoices','heads-page')">SEAS/REGU/OTHER TO AGENT INVOICES</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('other-invoices-new','heads-page')">Other Mixed Invoices</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments','heads-page')">Paying to Suppliers Invoices</button>
+  <button type="button" class="invoice-page-tab active" onclick="activate('supplier-payments-2','heads-page')">Suppliers to Agent Fee Payment</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('archived-invoices','heads-page')">Archived Invoices</button>
+</div>
   <div class="section-head"><div><h2>Suppliers to Agent Fee Payment</h2><p class="note">Create supplier invoices and record up to four payments, comments, dates, and payment files.</p></div><button type="button" id="createSupplierPayment2InvoiceBtn">+ Create Agency Fee Invoice for the Supplier</button></div><button type="button" class="secondary page-search-toggle" id="toggleSupplierPayment2Search">Search</button><div class="page-search-panel" id="supplierPayment2SearchPanel"><label>Search Agency Fee Invoices<input id="supplierPayment2PageSearch" type="search" placeholder="PO, submission, supplier, invoice, date, status, notes or amount"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearSupplierPayment2PageSearch">Clear Search</button></div></div>
   <div id="supplierPayment2InvoiceList"><div class="table-wrap"><table><thead><tr><th>PO #</th><th>Submission #</th><th>Supplier</th><th>Invoice Number</th><th>Invoice Date</th><th>Invoice Amount</th><th>Supplier Must Pay</th><th>Invoice Notes</th><th>Paid Status</th><th>1st Payment</th><th>2nd Payment</th><th>3rd Payment</th><th>4th Payment</th><th>Actions</th></tr></thead><tbody id="supplierPayment2InvoiceRows"></tbody></table></div></div>
   <div id="supplierPayment2InvoiceEditor" class="hidden">
@@ -1245,7 +1309,7 @@ if(!Array.isArray(state.countryPortfolioSuppliers))state.countryPortfolioSupplie
 });
 if(!Array.isArray(state.countrySourcingCountries)||!state.countrySourcingCountries.length)state.countrySourcingCountries=['Italy','Portugal','Spain','France'];
 state.countrySourcingCountries=[...new Set(state.countrySourcingCountries.map(x=>String(x||'').trim()).filter(Boolean))];
-if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};if(!state.inventoryStockOutDates||typeof state.inventoryStockOutDates!=='object')state.inventoryStockOutDates={};if(!Array.isArray(state.inventoryDeletedPoSnapshots))state.inventoryDeletedPoSnapshots=[];
+if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};if(!state.inventoryStockOutDates||typeof state.inventoryStockOutDates!=='object')state.inventoryStockOutDates={};if(!Array.isArray(state.inventoryDeletedPoSnapshots))state.inventoryDeletedPoSnapshots=[];if(!Array.isArray(state.officeInventory))state.officeInventory=[];
 state.purchaseOrders.forEach(po=>{if(String(po.poStatus||'').toUpperCase()==='ARRIVED IN CANADA')po.poStatus='Arrived in Canada'});
 if(!Array.isArray(state.manuallyArchivedPurchaseOrders))state.manuallyArchivedPurchaseOrders=[];
 if(!Array.isArray(state.shipments))state.shipments=[];
@@ -3845,6 +3909,52 @@ function restoreArchivedInvoice(id){
     const d=a.data||{};
     return d.lcboPaidStatus||d.paidStatus||d.invoicePaidStatus||d.status||'—';
   }
+  let currentArchivedInvoiceDetailId='';
+  function archivedInvoiceNumber(a){const d=a?.data||{};return d.invoiceNumber||d.number||'—'}
+  function archivedInvoiceTypeLabel(type){
+    if(type==='OTHER')return 'Other Mixed Invoices';
+    if(type==='Tender')return 'LCBO to Agent Tender Invoice';
+    if(type==='Supplier Payment')return 'Paying to Suppliers Invoice';
+    if(type==='Supplier to Agent Fee')return 'Supplier to Agent Fee Invoice';
+    if(type==='SEAS/REGU/OTHER TO AGENT')return 'SEAS/REGU/OTHER to Agent Invoice';
+    return type||'—';
+  }
+  function archivedInvoiceDetailSections(a){
+    const d=a.data||{};
+    let sections=[];
+    if(a.sourceType==='Tender')sections=financialDetailSections(d);
+    else if(a.sourceType==='Supplier Payment')sections=genericInvoiceDetailSections('supplier',d);
+    else if(a.sourceType==='Supplier to Agent Fee')sections=genericInvoiceDetailSections('agency',d);
+    else if(a.sourceType==='SEAS/REGU/OTHER TO AGENT')sections=genericInvoiceDetailSections('other',d);
+    else if(a.sourceType==='OTHER')sections=[['Invoice Information',[
+      ['Invoice Number',d.invoiceNumber],['Invoice Date',d.invoiceDate],['Invoice Amount',`${d.currency||'CAD'} ${num(d.invoiceAmount).toFixed(2)}`],['Currency',d.currency||'CAD'],['Invoice Notes',d.invoiceNotes],['Paid Status',d.paidStatus||'Not Paid'],['Other Status Comments',d.paidStatusOther]
+    ]]];
+    else sections=[['Invoice Information',Object.entries(d).filter(([k,v])=>k!=='id'&&typeof v!=='object').map(([k,v])=>[k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()),v])]];
+    sections.unshift(['Archive Information',[
+      ['Invoice Type',archivedInvoiceTypeLabel(a.sourceType)],['PO #',d.poNumber],['Invoice Number',archivedInvoiceNumber(a)],['Payment Status',archivedStatus(a)],['Archived Date',a.archivedAt?new Date(a.archivedAt).toLocaleString():'—']
+    ]]);
+    return sections;
+  }
+  function openArchivedInvoiceDetails(id){
+    const a=(state.archivedInvoices||[]).find(x=>x.id===id);if(!a)return;
+    currentArchivedInvoiceDetailId=id;
+    const sections=archivedInvoiceDetailSections(a),number=archivedInvoiceNumber(a);
+    const content=document.getElementById('archivedInvoiceDetailsContent');if(!content)return;
+    content.innerHTML=`<div class="section-head"><div><h2>Archived Invoice ${escapeHtml(number)}</h2><p class="note"><b>View only.</b> Complete archived invoice information is shown below. No fields can be edited from this page.</p></div></div><div class="invoice-detail-grid">${sections.map(([title,fields])=>`<div class="invoice-detail-section"><h3>${escapeHtml(title)}</h3>${fields.map(([label,value])=>financialDetailField(label,value)).join('')}</div>`).join('')}</div>`;
+    document.getElementById('archivedInvoiceList')?.classList.add('hidden');
+    document.getElementById('archivedInvoiceDetails')?.classList.remove('hidden');
+  }
+  function closeArchivedInvoiceDetails(){
+    currentArchivedInvoiceDetailId='';
+    document.getElementById('archivedInvoiceDetails')?.classList.add('hidden');
+    document.getElementById('archivedInvoiceList')?.classList.remove('hidden');
+    renderArchivedInvoices();
+  }
+  function copyAllArchivedInvoiceDetails(){
+    const a=(state.archivedInvoices||[]).find(x=>x.id===currentArchivedInvoiceDetailId);if(!a)return;
+    const text=archivedInvoiceDetailSections(a).flatMap(([title,fields])=>[title,...fields.map(([label,value])=>`${label}: ${value===undefined||value===null||value===''?'—':value}`),'']).join('\n');
+    copyText(text);
+  }
   function renderArchivedInvoices(){
     const tbody=document.getElementById('archivedInvoiceRows');if(!tbody)return;
     const q=(document.getElementById('archivedInvoicePageSearch')?.value||'').trim().toLowerCase();
@@ -3855,7 +3965,10 @@ function restoreArchivedInvoice(id){
     }).map(a=>{
       const d=a.data||{};
       const date=a.archivedAt?new Date(a.archivedAt).toLocaleDateString():'—';
-      return `<tr><td>${escapeHtml(a.sourceType==='OTHER'?'Other Mixed Invoices':(a.sourceType||'—'))}</td><td>${escapeHtml(d.poNumber||'—')}</td><td>${escapeHtml(d.invoiceNumber||'—')}</td><td>${escapeHtml(archivedStatus(a))}</td><td>${escapeHtml(date)}</td><td><button type="button" class="secondary small" onclick="restoreArchivedInvoice('${a.id}')">Restore</button> <button type="button" class="danger small" onclick="deleteArchivedInvoice('${a.id}')">Delete</button></td></tr>`;
+      const po=d.poNumber||'—',invoice=archivedInvoiceNumber(a);
+      const poCell=d.poNumber?`<button type="button" class="invoice-number-link" onclick="openArchivedInvoiceDetails('${a.id}')">${escapeHtml(po)}</button>`:escapeHtml(po);
+      const invoiceCell=invoice!=='—'?`<button type="button" class="invoice-number-link" onclick="openArchivedInvoiceDetails('${a.id}')">${escapeHtml(invoice)}</button>`:escapeHtml(invoice);
+      return `<tr><td>${escapeHtml(archivedInvoiceTypeLabel(a.sourceType))}</td><td>${poCell}</td><td>${invoiceCell}</td><td>${escapeHtml(archivedStatus(a))}</td><td>${escapeHtml(date)}</td><td><button type="button" class="secondary small" onclick="restoreArchivedInvoice('${a.id}')">Restore</button> <button type="button" class="danger small" onclick="deleteArchivedInvoice('${a.id}')">Delete</button></td></tr>`;
     }).join('');
     tbody.innerHTML=rows||'<tr><td colspan="6">No archived invoices.</td></tr>';
   }
@@ -3864,6 +3977,9 @@ function restoreArchivedInvoice(id){
   window.restoreArchivedInvoice=restoreArchivedInvoice;
   window.deleteArchivedInvoice=deleteArchivedInvoice;
   window.renderArchivedInvoices=renderArchivedInvoices;
+  window.openArchivedInvoiceDetails=openArchivedInvoiceDetails;
+  window.closeArchivedInvoiceDetails=closeArchivedInvoiceDetails;
+  window.copyAllArchivedInvoiceDetails=copyAllArchivedInvoiceDetails;
   const observer=new MutationObserver(()=>addArchiveButtons());
   document.addEventListener('DOMContentLoaded',()=>{
     const target=document.querySelector('main');if(target)observer.observe(target,{childList:true,subtree:true});
@@ -3871,6 +3987,8 @@ function restoreArchivedInvoice(id){
     t?.addEventListener('click',()=>p?.classList.toggle('open'));
     document.getElementById('archivedInvoicePageSearch')?.addEventListener('input',renderArchivedInvoices);
     document.getElementById('clearArchivedInvoiceSearch')?.addEventListener('click',()=>{const e=document.getElementById('archivedInvoicePageSearch');if(e)e.value='';renderArchivedInvoices()});
+    document.getElementById('backFromArchivedInvoiceDetails')?.addEventListener('click',closeArchivedInvoiceDetails);
+    document.getElementById('copyAllArchivedInvoiceDetails')?.addEventListener('click',copyAllArchivedInvoiceDetails);
     renderArchivedInvoices();addArchiveButtons();
   });
   setTimeout(()=>{renderArchivedInvoices();addArchiveButtons()},0);
@@ -5206,6 +5324,58 @@ window.saveInventoryStockOutDate=()=>{
   }
 })();
 
+window.moveInventoryToOffice=(encodedKey,availableCases,encodedMeta)=>{
+  const key=decodeURIComponent(String(encodedKey||''));
+  let meta={};
+  try{meta=JSON.parse(decodeURIComponent(String(encodedMeta||'')))}catch(e){meta={}}
+  const entered=prompt('Move quantity to Inventory in stock office:', '');
+  if(entered===null)return;
+  const qty=Number(entered);
+  if(!Number.isFinite(qty)||qty<=0){alert('Enter a valid quantity greater than 0.');return;}
+  if(qty>Number(availableCases||0)){alert('Move quantity cannot be greater than Cases in Stock.');return;}
+  if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};
+  state.inventoryCaseOverrides[key]=Math.max(0,Number(availableCases||0)-qty);
+  if(!Array.isArray(state.officeInventory))state.officeInventory=[];
+  const existing=state.officeInventory.find(x=>x.inventoryKey===key);
+  if(existing){
+    existing.cases=num(existing.cases)+qty;
+    existing.movedAt=new Date().toISOString();
+    Object.assign(existing,meta);
+  }else{
+    state.officeInventory.push({id:uid(),inventoryKey:key,cases:qty,movedAt:new Date().toISOString(),...meta});
+  }
+  save();
+  renderHeadInventory();
+  renderOfficeInventory();
+};
+
+window.renderOfficeInventory=()=>{
+  const body=document.getElementById('officeInventoryRows'),k=document.getElementById('officeInventoryKpis');
+  if(!body)return;
+  if(!Array.isArray(state.officeInventory))state.officeInventory=[];
+  const q=(document.getElementById('officeInventorySearch')?.value||'').trim().toLowerCase();
+  const rows=state.officeInventory.filter(x=>num(x.cases)>0).filter(x=>{
+    if(!q)return true;
+    return [x.poNumber,x.program,x.vendor,x.itemNo,x.product].join(' ').toLowerCase().includes(q);
+  });
+  body.innerHTML=rows.map(r=>`<tr>
+    <td><b>${escapeHtml(r.poNumber||'—')}</b></td>
+    <td>${escapeHtml(r.program||'—')}</td>
+    <td>${escapeHtml(r.vendor||'—')}</td>
+    <td>${escapeHtml(r.itemNo||'—')}</td>
+    <td><b>${escapeHtml(r.product||'—')}</b></td>
+    <td><b>${num(r.cases).toLocaleString()}</b></td>
+    <td>${num(r.bpc).toLocaleString()}</td>
+    <td><b>${(num(r.cases)*num(r.bpc)).toLocaleString()}</b></td>
+    <td>${escapeHtml((r.movedAt||'').slice(0,10)||'—')}</td>
+  </tr>`).join('')||'<tr><td colspan="9">No inventory has been moved to the office yet.</td></tr>';
+  if(k){
+    const totalCases=rows.reduce((a,r)=>a+num(r.cases),0);
+    const totalBottles=rows.reduce((a,r)=>a+num(r.cases)*num(r.bpc),0);
+    k.innerHTML=`<div class="card"><span>Office Inventory Items</span><strong>${rows.length}</strong></div><div class="card"><span>Total Cases in Office</span><strong>${totalCases.toLocaleString()}</strong></div><div class="card"><span>Total Bottles in Office</span><strong>${totalBottles.toLocaleString()}</strong></div>`;
+  }
+};
+
 window.renderHeadInventory=()=>{
  const body=document.getElementById('headInventoryRows'),k=document.getElementById('headInventoryKpis');
  if(!body)return;
@@ -5271,7 +5441,7 @@ window.renderHeadInventory=()=>{
     <td>${escapeHtml(r.itemNo)}</td>
     <td><b>${escapeHtml(r.product)}</b></td>
     <td><b>${r.totalQuotedValue?escapeHtml((r.quoteCurrency?r.quoteCurrency+' ':'')+r.totalQuotedValue.toFixed(2)):'—'}</b></td>
-    <td><b>${r.cases.toLocaleString()}</b> <button type="button" class="secondary small" onclick="updateInventoryCases('${keyArg}',${r.cases})">Update</button>${zeroControls}</td>
+    <td><b>${r.cases.toLocaleString()}</b> <button type="button" class="secondary small" onclick="updateInventoryCases('${keyArg}',${r.cases})">Update</button> <button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${encodeURIComponent(JSON.stringify({poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${r.cases<=0?'disabled':''}>Move to Inventory in stock office</button>${zeroControls}</td>
     <td>${r.bpc.toLocaleString()}</td>
     <td><b>${r.bottles.toLocaleString()}</b></td>
     <td>${escapeHtml(r.shipment)}</td>
@@ -5799,3 +5969,5 @@ document.addEventListener('DOMContentLoaded',renderItalySourcing);setTimeout(ren
 })();
 </script>
 </body></html>
+
+<script>document.addEventListener('DOMContentLoaded',()=>{if(typeof renderOfficeInventory==='function')renderOfficeInventory();});</script>
