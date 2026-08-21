@@ -367,6 +367,23 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 }
 </style>
 
+
+<style>
+.inventory-sticky-nav,
+#inventory-stock .invoice-page-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.transport-profit-nav-buttons{
+  display:contents;
+}
+.invoice-page-tab.transport-profit-tab{
+  display:inline-flex;
+}
+</style>
+
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -809,17 +826,17 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 <section id="inventory-stock" class="panel"><div class="box">
  <div class="section-head"><div><h2>Inventory Stock</h2><p class="note">Select an inventory page below.</p></div></div>
  <div class="invoice-page-row">
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page')">Profit Each REGU/SEAS/OTHER Item Calculator</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page');syncInventoryStockSubnav('inventory-in-stock')">Inventory in stock LCBO</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page');syncInventoryStockSubnav('inventory-in-stock-office')">Inventory in stock office</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page');syncInventoryStockSubnav('inventory-profit-calculator')">Profit Each REGU/SEAS/OTHER Item Calculator</button>
   <span class="transport-profit-nav-buttons"></span>
  </div>
 </div></section>
 <section id="inventory-in-stock" class="panel"><div class="box">
  <div class="invoice-page-row inventory-sticky-nav">
-  <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page')">Profit Each REGU/SEAS/OTHER Item Calculator</button>
+  <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock','heads-page');syncInventoryStockSubnav('inventory-in-stock')">Inventory in stock LCBO</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page');syncInventoryStockSubnav('inventory-in-stock-office')">Inventory in stock office</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page');syncInventoryStockSubnav('inventory-profit-calculator')">Profit Each REGU/SEAS/OTHER Item Calculator</button>
   <span class="transport-profit-nav-buttons"></span>
  </div>
  <div class="section-head">
@@ -842,9 +859,10 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </div></section>
 <section id="inventory-in-stock-office" class="panel"><div class="box">
  <div class="invoice-page-row inventory-sticky-nav">
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
-  <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page')">Profit Each REGU/SEAS/OTHER Item Calculator</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page');syncInventoryStockSubnav('inventory-in-stock')">Inventory in stock LCBO</button>
+  <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock-office','heads-page');syncInventoryStockSubnav('inventory-in-stock-office')">Inventory in stock office</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page');syncInventoryStockSubnav('inventory-profit-calculator')">Profit Each REGU/SEAS/OTHER Item Calculator</button>
+  <span class="transport-profit-nav-buttons"></span>
  </div>
  <div class="section-head"><div><h2>Inventory in stock office</h2><p class="note">Inventory transferred from LCBO stock to office stock.</p></div></div>
  <div class="toolbar"><input id="officeInventorySearch" type="search" placeholder="Search PO, supplier, item or product" oninput="renderOfficeInventory()"></div>
@@ -856,9 +874,9 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </div></section>
 <section id="inventory-profit-calculator" class="panel"><div class="box">
  <div class="invoice-page-row inventory-sticky-nav">
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
-  <button type="button" class="invoice-page-tab active" onclick="activate('inventory-profit-calculator','heads-page')">Profit Each REGU/SEAS/OTHER Item Calculator</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page');syncInventoryStockSubnav('inventory-in-stock')">Inventory in stock LCBO</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page');syncInventoryStockSubnav('inventory-in-stock-office')">Inventory in stock office</button>
+  <button type="button" class="invoice-page-tab active" onclick="activate('inventory-profit-calculator','heads-page');syncInventoryStockSubnav('inventory-profit-calculator')">Profit Each REGU/SEAS/OTHER Item Calculator</button>
   <span class="transport-profit-nav-buttons"></span>
  </div>
  <div class="section-head">
@@ -3366,6 +3384,12 @@ function activate(tab,preferredSection=''){
     }
   }
   const panel=$('#'+tab);if(panel)panel.classList.add('active');
+  if(preferredSection==='heads-page' && (['inventory-in-stock','inventory-in-stock-office','inventory-profit-calculator'].includes(tab)||String(tab).startsWith('transport-profit-'))){
+    $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav==='heads-page'));
+    $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section==='heads-page'));
+    const hubTab=$('.subnav[data-section-nav="heads-page"] .tab[data-tab="inventory-stock"]');if(hubTab)hubTab.classList.add('active');
+    if(typeof syncInventoryStockSubnav==='function')syncInventoryStockSubnav(tab);
+  }
   if(preferredSection==='heads-page' && ['financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices'].includes(tab)){
     $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav==='heads-page'));
     $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section==='heads-page'));
@@ -5876,18 +5900,32 @@ function transportProfitRowsData(sh){
   });
   return rows;
 }
+
+function syncInventoryStockSubnav(target){
+  document.querySelectorAll('.invoice-page-row .invoice-page-tab').forEach(btn=>{
+    const click=btn.getAttribute('onclick')||'';
+    const dynamicTarget=btn.dataset?.profitTarget||'';
+    const isActive=dynamicTarget===target || click.includes(`'${target}'`);
+    btn.classList.toggle('active',isActive);
+  });
+  document.querySelectorAll('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav==='heads-page'));
+  document.querySelectorAll('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section==='heads-page'));
+  const hub=document.querySelector('.subnav[data-section-nav="heads-page"] .tab[data-tab="inventory-stock"]');
+  if(hub)hub.classList.add('active');
+}
+window.syncInventoryStockSubnav=syncInventoryStockSubnav;
 function renderTransportProfitNav(){
   const shipments=transportProfitEligibleShipments();
   document.querySelectorAll('.transport-profit-nav-buttons').forEach(host=>{
-    host.innerHTML=shipments.map(sh=>`<button type="button" class="invoice-page-tab" onclick="activate('${transportProfitPageId(sh)}','heads-page')">${escapeHtml((sh.name||'Transportation')+' Profit Each REGU/SEAS/OTHER Item Calculator')}</button>`).join('');
+    host.innerHTML=shipments.map(sh=>`<button type="button" class="invoice-page-tab transport-profit-tab" data-profit-target="${transportProfitPageId(sh)}" onclick="activate('${transportProfitPageId(sh)}','heads-page');syncInventoryStockSubnav('${transportProfitPageId(sh)}')">${escapeHtml((sh.name||'Transportation')+' Profit Each REGU/SEAS/OTHER Item Calculator')}</button>`).join('');
   });
 }
 function transportProfitTableHtml(sh){
   return `<section id="${transportProfitPageId(sh)}" class="panel"><div class="box">
     <div class="invoice-page-row inventory-sticky-nav">
-      <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
-      <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
-      <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page')">Profit Each REGU/SEAS/OTHER Item Calculator</button>
+      <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page');syncInventoryStockSubnav('inventory-in-stock')">Inventory in stock LCBO</button>
+      <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page');syncInventoryStockSubnav('inventory-in-stock-office')">Inventory in stock office</button>
+      <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page');syncInventoryStockSubnav('inventory-profit-calculator')">Profit Each REGU/SEAS/OTHER Item Calculator</button>
       <span class="transport-profit-nav-buttons"></span>
     </div>
     <div class="section-head"><div>
@@ -5922,9 +5960,14 @@ function renderTransportProfitPages(){
   const host=document.getElementById('transportProfitDynamicPages');
   if(!host)return;
   const shipments=transportProfitEligibleShipments();
+  const activeDynamic=document.querySelector('#transportProfitDynamicPages .panel.active')?.id||'';
   host.innerHTML=shipments.map(transportProfitTableHtml).join('');
   renderTransportProfitNav();
   shipments.forEach(sh=>renderSingleTransportProfitPage(sh.id));
+  if(activeDynamic && document.getElementById(activeDynamic)){
+    document.getElementById(activeDynamic).classList.add('active');
+    syncInventoryStockSubnav(activeDynamic);
+  }
 }
 window.renderSingleTransportProfitPage=(shipmentId)=>{
   const sh=(state.shipments||[]).find(x=>String(x.id)===String(shipmentId));
