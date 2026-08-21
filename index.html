@@ -686,12 +686,14 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
  <div class="invoice-page-row">
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page')">Profit Each REGU/SEAS/OTHER Item Calculator</button>
  </div>
 </div></section>
 <section id="inventory-in-stock" class="panel"><div class="box">
  <div class="invoice-page-row">
   <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page')">Profit Each REGU/SEAS/OTHER Item Calculator</button>
  </div>
  <div class="section-head">
   <div>
@@ -715,6 +717,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
  <div class="invoice-page-row">
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
   <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page')">Profit Each REGU/SEAS/OTHER Item Calculator</button>
  </div>
  <div class="section-head"><div><h2>Inventory in stock office</h2><p class="note">Inventory transferred from LCBO stock to office stock.</p></div></div>
  <div class="toolbar"><input id="officeInventorySearch" type="search" placeholder="Search PO, supplier, item or product" oninput="renderOfficeInventory()"></div>
@@ -722,6 +725,51 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
  <div class="table-wrap"><table>
   <thead><tr><th>PO #</th><th>PO Program</th><th>Vendor / Supplier</th><th>LCBO Item #</th><th>Product Name</th><th>Cases in Office</th><th>Bottles / Case</th><th>Total Bottles</th><th>Moved Date</th><th>Actions</th></tr></thead>
   <tbody id="officeInventoryRows"></tbody>
+ </table></div>
+</div></section>
+<section id="inventory-profit-calculator" class="panel"><div class="box">
+ <div class="invoice-page-row">
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
+  <button type="button" class="invoice-page-tab active" onclick="activate('inventory-profit-calculator','heads-page')">Profit Each REGU/SEAS/OTHER Item Calculator</button>
+ </div>
+ <div class="section-head">
+  <div>
+   <h2>Profit Each REGU/SEAS/OTHER Item Calculator</h2>
+   <p class="note">Automatically shows every REGU, SEAS and OTHER PO item marked Arrived in Canada. Manual fields are saved per PO item.</p>
+  </div>
+ </div>
+ <div class="toolbar">
+  <input id="profitItemSearch" type="search" placeholder="Search item, PO or supplier" oninput="renderProfitItemCalculator()">
+ </div>
+ <div class="cards" id="profitItemKpis"></div>
+ <div class="table-wrap"><table>
+  <thead><tr>
+   <th>Item Description</th>
+   <th>PO #</th>
+   <th>Supplier Bottle Price</th>
+   <th>Currency</th>
+   <th>Supplier Currency to CAD Calculator</th>
+   <th>CAD Supplier Price Converted</th>
+   <th>Agency Fee HST Included</th>
+   <th>CAD Transportation Price / Btl</th>
+   <th>Bottles / Case</th>
+   <th>Proforma Price / Bottle</th>
+   <th>HST %</th>
+   <th>Bottle Deposit</th>
+   <th>Price Currency Difference / Bottle</th>
+   <th>RPIME Cost in CAD</th>
+   <th>Selling Price / Bottle</th>
+   <th>Total Case Qtty</th>
+   <th>Lab / Other Cost</th>
+   <th>Net Profit</th>
+   <th>Total Money Needed</th>
+   <th>Approx Sales Month Qtty</th>
+   <th>Profit Approx Net / Month</th>
+   <th>Actually Was Sold in # Month</th>
+   <th>Actual Monthly Profit</th>
+  </tr></thead>
+  <tbody id="profitItemRows"></tbody>
  </table></div>
 </div></section>
 <section id="all-invoices" class="panel"><div class="box"><div class="section-head"><div><h2>All Invoices</h2><p class="note">Select an invoice page below.</p></div></div><div class="invoice-page-row">
@@ -1224,6 +1272,12 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 <fieldset class="item-group"><legend>Consolidation Warehouse Status</legend><div class="form-grid two"><label>REF # and Pallet Labels Requested<select id="shipmentRefPalletStatusInput"><option value="No">No</option><option value="Yes">Yes</option></select></label><label>Export Files Sent<select id="shipmentExportFilesStatusInput"><option value="No">No</option><option value="Yes">Yes</option></select></label></div></fieldset>
 <div class="form-grid two shipment-bottom-row"><label>Cost of Shipment<div style="display:flex;gap:6px;align-items:center"><input id="shipmentCostInput" type="number" min="0" step="0.01" style="flex:1"><select id="shipmentCurrencyInput" style="width:82px"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></div></label><label>Transport LCBO PAYMENT STATUS<select id="shipmentPaymentStatusInput"><option value="Not Paid">Not Paid</option><option value="Paid">Paid</option><option value="Other">Other</option></select></label><label><span id="shipmentConverterLabel">Transportation CAD Converter — Enter Manually</span><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span>1 CAD =</span><input id="shipmentExchangeRateInput" type="number" min="0.0001" step="0.0001" style="width:90px" aria-label="Manual transportation exchange rate"><b id="shipmentConverterCurrency">CAD</b></div></label><label id="shipmentPaymentOtherWrap" class="hidden">Other Payment Status<input id="shipmentPaymentOtherInput" maxlength="50" placeholder="Type payment status"></label></div>
 <div class="modal-actions"><button id="deleteShipmentBtn" type="button" class="danger">Delete Shipment</button><span></span><button id="cancelShipmentBtn" type="button" class="secondary">Cancel</button><button id="saveShipmentBtn" type="button">Save Shipment</button></div></div></div>
+<div id="poDetailsModal" class="modal hidden"><div class="modal-card item-info-page">
+  <div class="modal-head"><div><h2 id="poDetailsTitle">PO Details</h2><p>Complete purchase order information.</p></div><button id="closePoDetails" class="icon" onclick="closePoDetails()">×</button></div>
+  <div class="info-toolbar"><button type="button" class="secondary" onclick="copyAllPoDetails()">Copy All PO Information</button></div>
+  <div id="poDetailsContent"></div>
+  <div class="modal-actions"><span></span><button type="button" onclick="closePoDetails()">Close</button></div>
+</div></div>
 <div id="poModal" class="modal hidden"><div class="modal-card po-modal-card"><div class="modal-head"><div><h2 id="poModalTitle">Create New PO</h2><p>Attach a PO file to fill available information automatically, then review and save.</p></div><button id="closePoModal" class="icon">×</button></div><input type="hidden" id="poRecordId">
 <fieldset class="item-group"><legend>Attach PO File</legend><label>Choose PO File<input id="poFileInput" type="file"></label><div id="poFileStatus" class="attachment-status">No file uploaded</div><div class="note">The attached file is saved with the PO. Enter the PO information manually in the fields below.</div><div class="inline-actions"><button id="openPoRecordFileBtn" type="button" class="secondary small">Open Attached File</button><button id="removePoRecordFileBtn" type="button" class="danger small">Remove File</button></div></fieldset>
 <div class="form-grid three">
@@ -1324,6 +1378,7 @@ if(!Array.isArray(state.countryPortfolioSuppliers))state.countryPortfolioSupplie
 if(!Array.isArray(state.countrySourcingCountries)||!state.countrySourcingCountries.length)state.countrySourcingCountries=['Italy','Portugal','Spain','France'];
 state.countrySourcingCountries=[...new Set(state.countrySourcingCountries.map(x=>String(x||'').trim()).filter(Boolean))];
 if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};if(!state.inventoryStockOutDates||typeof state.inventoryStockOutDates!=='object')state.inventoryStockOutDates={};if(!Array.isArray(state.inventoryDeletedPoSnapshots))state.inventoryDeletedPoSnapshots=[];if(!Array.isArray(state.officeInventory))state.officeInventory=[];
+if(!state.profitItemCalculator||typeof state.profitItemCalculator!=='object')state.profitItemCalculator={};
 state.purchaseOrders.forEach(po=>{if(String(po.poStatus||'').toUpperCase()==='ARRIVED IN CANADA')po.poStatus='Arrived in Canada'});
 if(!Array.isArray(state.manuallyArchivedPurchaseOrders))state.manuallyArchivedPurchaseOrders=[];
 if(!Array.isArray(state.shipments))state.shipments=[];
@@ -1874,7 +1929,7 @@ function updateShipmentStatusFromRow(id,status){
   renderPurchaseOrders();
   renderArchivedPurchaseOrders();
   if(typeof renderFinancial==='function')renderFinancial();
-  if(typeof renderHeadInventory==='function')renderHeadInventory();
+  if(typeof renderHeadInventory==='function')renderHeadInventory();if(typeof renderProfitItemCalculator==='function')renderProfitItemCalculator();
 }
 window.updateShipmentStatusFromRow=updateShipmentStatusFromRow;
 function transportationPoDisplay(link){
@@ -1892,8 +1947,91 @@ function transportationPoDisplay(link){
   const descHtml=descriptions.length
     ? `<div style="margin-top:3px;font-size:12px;line-height:1.35">${descriptions.map(d=>escapeHtml(d)).join('<br>')}</div>`
     : '<div style="margin-top:3px;font-size:12px" class="note">No item description</div>';
-  return `<div class="transport-po-item" style="margin-bottom:8px"><b>${escapeHtml(poNumber)}</b>${descHtml}</div>`;
+  return `<div class="transport-po-item" style="margin-bottom:8px"><button type="button" class="shipment-name-link" onclick="openPoDetails('${escapeHtml(String(link.poId||''))}')">${escapeHtml(poNumber)}</button>${descHtml}</div>`;
 }
+
+let currentPoDetailsId='';
+function poDetailField(label,value){
+  const text=value===undefined||value===null||value===''?'—':String(value);
+  return `<div class="info-field"><button type="button" class="copy-field" onclick='copyText(${JSON.stringify(text)})'>Copy</button><span>${escapeHtml(label)}</span><b>${escapeHtml(text)}</b></div>`;
+}
+function poDetailValueList(values){
+  const arr=(values||[]).filter(Boolean);
+  return arr.length?arr.join(', '):'—';
+}
+function openPoDetails(id){
+  const po=(state.purchaseOrders||[]).find(x=>String(x.id)===String(id));
+  if(!po){alert('PO details are not available.');return;}
+  currentPoDetailsId=po.id;
+  const title=document.getElementById('poDetailsTitle');
+  if(title)title.textContent=`PO Details — ${po.number||'PO'}`;
+  const content=document.getElementById('poDetailsContent');
+  if(!content)return;
+  const vendors=(po.vendors||[]).length?(po.vendors||[]):((po.supplierNames||[]).length?(po.supplierNames||[]):[po.vendor||'']);
+  const totalQuoted=(po.lines||[]).reduce((sum,line)=>sum+num(line.totalQuantity)*num(line.quotedPricePerCase),0);
+  const totalCases=(po.lines||[]).reduce((sum,line)=>sum+num(line.totalQuantity),0);
+  const totalBottles=(po.lines||[]).reduce((sum,line)=>sum+num(line.totalQuantity)*num(line.unitsPerCase),0);
+  const general=[
+    ['PO Number',po.number],
+    ['PO Program',poProgramLabel(po)],
+    ['PO Date',po.date||po.poDate],
+    ['Vendor / Supplier',poDetailValueList(vendors)],
+    ['Currency',po.currency||po.quotationCurrency||po.supplierCurrency],
+    ['PO Status',po.poStatus],
+    ['Total Cases',totalCases.toLocaleString()],
+    ['Total Bottles',totalBottles.toLocaleString()],
+    ['Total PO Quoted Value',`${po.currency||po.quotationCurrency||po.supplierCurrency||''} ${totalQuoted.toFixed(2)}`.trim()],
+    ['Attached File',po.fileName||'—'],
+    ['Notes',po.notes]
+  ];
+  const itemRows=(po.lines||[]).map((line,i)=>`<tr>
+    <td>${i+1}</td>
+    <td>${escapeHtml(line.itemNo||'—')}</td>
+    <td>${escapeHtml(line.yearProductName||line.productDescription||line.description||line.productName||'—')}</td>
+    <td>${escapeHtml(line.unitSize||line.unitSizeMl||line.size||'—')}</td>
+    <td>${num(line.totalQuantity).toLocaleString()}</td>
+    <td>${num(line.unitsPerCase).toLocaleString()}</td>
+    <td>${(num(line.totalQuantity)*num(line.unitsPerCase)).toLocaleString()}</td>
+    <td>${escapeHtml((po.currency||po.quotationCurrency||po.supplierCurrency||'')+' '+num(line.quotedPricePerCase).toFixed(2))}</td>
+    <td>${escapeHtml((po.currency||po.quotationCurrency||po.supplierCurrency||'')+' '+(num(line.totalQuantity)*num(line.quotedPricePerCase)).toFixed(2))}</td>
+  </tr>`).join('')||'<tr><td colspan="9">No PO item lines.</td></tr>';
+  content.innerHTML=`<div class="info-section"><h3>PO Information</h3><div class="info-grid">${general.map(([l,v])=>poDetailField(l,v)).join('')}</div></div>
+    <div class="info-section"><h3>PO Items</h3><div class="table-wrap"><table><thead><tr><th>#</th><th>Item No.</th><th>Item Description</th><th>Unit Size</th><th>Cases</th><th>Units / Case</th><th>Total Bottles</th><th>Quoted Price / Case</th><th>Line Total</th></tr></thead><tbody>${itemRows}</tbody></table></div></div>`;
+  document.getElementById('poDetailsModal')?.classList.remove('hidden');
+}
+function closePoDetails(){
+  document.getElementById('poDetailsModal')?.classList.add('hidden');
+  currentPoDetailsId='';
+}
+function copyAllPoDetails(){
+  const po=(state.purchaseOrders||[]).find(x=>String(x.id)===String(currentPoDetailsId));
+  if(!po)return;
+  const lines=(po.lines||[]).map((line,i)=>[
+    `Item ${i+1}`,
+    `Item No.: ${line.itemNo||'—'}`,
+    `Description: ${line.yearProductName||line.productDescription||line.description||line.productName||'—'}`,
+    `Unit Size: ${line.unitSize||line.unitSizeMl||line.size||'—'}`,
+    `Cases: ${num(line.totalQuantity)}`,
+    `Units/Case: ${num(line.unitsPerCase)}`,
+    `Quoted Price/Case: ${(po.currency||po.quotationCurrency||po.supplierCurrency||'')} ${num(line.quotedPricePerCase).toFixed(2)}`
+  ].join(' | ')).join('\n');
+  const txt=[
+    `PO Number: ${po.number||'—'}`,
+    `PO Program: ${poProgramLabel(po)}`,
+    `PO Date: ${po.date||po.poDate||'—'}`,
+    `Vendor / Supplier: ${poDetailValueList((po.vendors||[]).length?po.vendors:((po.supplierNames||[]).length?po.supplierNames:[po.vendor||'']))}`,
+    `Currency: ${po.currency||po.quotationCurrency||po.supplierCurrency||'—'}`,
+    `PO Status: ${po.poStatus||'—'}`,
+    `Notes: ${po.notes||'—'}`,
+    '',
+    lines
+  ].join('\n');
+  copyText(txt);
+}
+window.openPoDetails=openPoDetails;
+window.closePoDetails=closePoDetails;
+window.copyAllPoDetails=copyAllPoDetails;
+
 function transportationPoSearchText(sh){
   return (sh.poLinks||[]).map(link=>{
     const po=(state.purchaseOrders||[]).find(p=>p.id===link.poId);
@@ -3136,7 +3274,7 @@ function restoreHeadsRecycleRecord(id){if(!isAdminUser()){alert('Administrator a
 function permanentlyDeleteHeadsRecycle(id){if(!isAdminUser()){alert('Administrator access only.');return}if(!confirm('Permanently delete this record? This cannot be undone.'))return;state.headsRecycleBin=(state.headsRecycleBin||[]).filter(v=>v.id!==id);save()}
 function renderHeadsRecycleBin(){const body=$('#headsRecycleRows');if(!body)return;const q=String($('#headsRecycleSearch')?.value||'').trim().toLowerCase();const rows=(state.headsRecycleBin||[]).filter(x=>!q||`${x.page} ${x.label}`.toLowerCase().includes(q)).sort((a,b)=>new Date(b.movedToHeadsAt||b.deletedAt)-new Date(a.movedToHeadsAt||a.deletedAt));body.innerHTML=rows.map(x=>`<tr><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.movedToHeadsAt||x.deletedAt).toLocaleString())}</td><td><button type=\"button\" onclick=\"restoreHeadsRecycleRecord('${x.id}')\">Restore</button> <button type=\"button\" class=\"danger\" onclick=\"permanentlyDeleteHeadsRecycle('${x.id}')\">Permanently Delete</button></td></tr>`).join('')||'<tr><td colspan=\"5\" class=\"note\">Head\'s Recycling Bin is empty.</td></tr>'}
 function renderRecycleBin(){const body=$('#recycleRows');if(!body)return;const q=String($('#recycleSearch')?.value||'').trim().toLowerCase();const canAdmin=isAdminUser();const rows=(state.recycleBin||[]).filter(x=>!q||`${x.page} ${x.label}`.toLowerCase().includes(q)).sort((a,b)=>new Date(b.deletedAt)-new Date(a.deletedAt));body.innerHTML=rows.map(x=>`<tr><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.deleteAfter).toLocaleDateString())}</td><td><button type="button" onclick="restoreRecycleRecord('${x.id}')">Restore</button>${canAdmin?` <button type="button" class="danger recycle-permanent-delete" onclick="permanentlyDeleteRecycle('${x.id}')">Delete Permanently</button>`:''}</td></tr>`).join('')||'<tr><td colspan="5" class="note">Recycling Bin is empty.</td></tr>';const sel=$('#recycleRetention');if(sel)sel.value=String(state.recycleRetentionDays||90);document.querySelectorAll('.recycle-admin-only').forEach(el=>el.style.display=canAdmin?'':'none')}
-function renderAll(){syncTenderItemCategoriesFromItems();renderDashboard();renderAgencies();renderSuppliers();renderTenders();populateWinnerAgencySearch();renderTable();renderItems();renderSupplierAllItems();renderPurchaseOrders();renderArchivedPurchaseOrders();renderShipments();renderFinancial();renderSupplierPaymentInvoices();renderSupplierPayment2Invoices();renderOtherInvoices();renderRecycleBin();renderHeadsRecycleBin();renderSavedProformas();if(typeof window.renderHeadBonuses==='function')window.renderHeadBonuses();if(typeof window.renderSourcingCountryControls==='function')window.renderSourcingCountryControls();renderSettings();if(typeof renderHeadInventory==='function')renderHeadInventory();applySharedCurrencyOptions()}
+function renderAll(){syncTenderItemCategoriesFromItems();renderDashboard();renderAgencies();renderSuppliers();renderTenders();populateWinnerAgencySearch();renderTable();renderItems();renderSupplierAllItems();renderPurchaseOrders();renderArchivedPurchaseOrders();renderShipments();renderFinancial();renderSupplierPaymentInvoices();renderSupplierPayment2Invoices();renderOtherInvoices();renderRecycleBin();renderHeadsRecycleBin();renderSavedProformas();if(typeof window.renderHeadBonuses==='function')window.renderHeadBonuses();if(typeof window.renderSourcingCountryControls==='function')window.renderSourcingCountryControls();renderSettings();if(typeof renderHeadInventory==='function')renderHeadInventory();if(typeof renderProfitItemCalculator==='function')renderProfitItemCalculator();applySharedCurrencyOptions()}
 function openAgency(id=''){const a=state.agencies.find(x=>x.id===id)||{id:'',name:'',short:'',contactName:'',address1:'',address2:'',cityProvincePostal:'',phone:'',email:'',notes:''};$('#agencyId').value=a.id||'';$('#agencyName').value=a.name||'';$('#agencyShort').value=a.short||'';$('#agencyContactName').value=a.contactName||'';$('#agencyAddress1').value=a.address1||'';$('#agencyAddress2').value=a.address2||'';$('#agencyCityProvincePostal').value=a.cityProvincePostal||'';$('#agencyPhone').value=a.phone||'';$('#agencyEmail').value=a.email||'';$('#agencyNotes').value=a.notes||'';$('#agencyModalTitle').textContent=a.id?'Edit Agency':'Add Agency';$('#deleteAgency').style.visibility=a.id?'visible':'hidden';$('#agencyModal').classList.remove('hidden')}
 function editAgency(id){openAgency(id)}
 function closeAgency(){$('#agencyModal').classList.add('hidden')}
@@ -5490,6 +5628,133 @@ window.renderOfficeInventory=()=>{
   }
 };
 
+
+function profitCalcPoProgram(po){
+  return String(po?.program||po?.poProgram||'').toUpperCase();
+}
+function profitCalcArrived(po){
+  const s=String(po?.poStatus||'').toLowerCase();
+  if(s==='arrived in canada')return true;
+  return (state.shipments||[]).some(sh=>(sh.poLinks||[]).some(l=>l.poId===po.id)&&String(sh.status||'').toLowerCase()==='arrived in canada');
+}
+function profitCalcKey(po,line,index){
+  return `${po.id||po.number||'po'}::${line.itemNo||line.yearProductName||index}`;
+}
+function profitCalcStore(key){
+  if(!state.profitItemCalculator||typeof state.profitItemCalculator!=='object')state.profitItemCalculator={};
+  if(!state.profitItemCalculator[key])state.profitItemCalculator[key]={};
+  return state.profitItemCalculator[key];
+}
+function profitCalcInput(key,field,value,step='any',min=''){
+  return `<input type="number" step="${step}" ${min!==''?`min="${min}"`:''} value="${Number.isFinite(Number(value))?Number(value):0}" style="width:95px" onchange="updateProfitCalcField('${encodeURIComponent(key)}','${field}',this.value)">`;
+}
+window.updateProfitCalcField=(encodedKey,field,value)=>{
+  const key=decodeURIComponent(encodedKey||'');
+  const store=profitCalcStore(key);
+  store[field]=Number(value)||0;
+  save();
+  renderProfitItemCalculator();
+};
+function profitCalcTransportationPerBottle(po,line){
+  const linked=(state.shipments||[]).filter(sh=>(sh.poLinks||[]).some(l=>l.poId===po.id));
+  if(!linked.length)return 0;
+  let totalCost=0,totalBottles=0;
+  linked.forEach(sh=>{
+    try{
+      const t=shipmentTotals(sh);
+      totalCost+=num(t.costPerBottleCad||0)*num(line.totalQuantity)*num(line.unitsPerCase);
+      totalBottles+=num(line.totalQuantity)*num(line.unitsPerCase);
+    }catch(e){}
+  });
+  return totalBottles?totalCost/totalBottles:0;
+}
+function profitCalcRowsData(){
+  const rows=[];
+  (state.purchaseOrders||[]).forEach(po=>{
+    const program=profitCalcPoProgram(po);
+    if(!['REGU','SEAS','OTHER'].includes(program)||!profitCalcArrived(po))return;
+    (po.lines||[]).forEach((line,index)=>{
+      const key=profitCalcKey(po,line,index);
+      const s=profitCalcStore(key);
+      const supplierBottleDefault = num(line.quotedPricePerCase)/(num(line.unitsPerCase)||1);
+      const currency = s.currency || po.currency || po.quotationCurrency || po.supplierCurrency || 'CAD';
+      const supplierBottlePrice = s.supplierBottlePrice ?? supplierBottleDefault;
+      const currencyToCad = s.currencyToCad ?? 1;
+      const cadSupplierPrice = num(supplierBottlePrice)*num(currencyToCad);
+      const agencyFee = s.agencyFee ?? 0;
+      const transportPerBtl = s.transportPerBtl ?? profitCalcTransportationPerBottle(po,line);
+      const bpc = num(line.unitsPerCase)||0;
+      const proforma = s.proformaPrice ?? cadSupplierPrice;
+      const hstPct = s.hstPct ?? 13;
+      const bottleDeposit = s.bottleDeposit ?? 0;
+      const currencyDiff = s.currencyDiff ?? 0;
+      const hstAmount = num(proforma)*num(hstPct)/100;
+      const rpime = num(transportPerBtl)+num(proforma)+hstAmount+num(bottleDeposit)+num(currencyDiff);
+      const selling = num(agencyFee)+rpime;
+      const totalCases = s.totalCases ?? num(line.totalQuantity);
+      const labOther = s.labOther ?? 0;
+      const netProfit = (num(agencyFee)*bpc*num(totalCases))-num(labOther);
+      const totalMoneyNeeded = (num(transportPerBtl)*bpc*num(totalCases)) + ((rpime + rpime*13/100)*bpc*num(totalCases));
+      const approxMonths = s.approxMonths ?? 0;
+      const approxMonthlyProfit = num(approxMonths)>0 ? netProfit/num(approxMonths) : 0;
+      const actualMonths = s.actualMonths ?? 0;
+      const actualMonthlyProfit = num(actualMonths)>0 ? netProfit/num(actualMonths) : 0;
+      rows.push({
+        key,po,line,program,currency,supplierBottlePrice,currencyToCad,cadSupplierPrice,agencyFee,
+        transportPerBtl,bpc,proforma,hstPct,bottleDeposit,currencyDiff,rpime,selling,totalCases,
+        labOther,netProfit,totalMoneyNeeded,approxMonths,approxMonthlyProfit,actualMonths,actualMonthlyProfit
+      });
+    });
+  });
+  return rows;
+}
+window.renderProfitItemCalculator=()=>{
+  const body=document.getElementById('profitItemRows'),kpis=document.getElementById('profitItemKpis');
+  if(!body)return;
+  const q=(document.getElementById('profitItemSearch')?.value||'').trim().toLowerCase();
+  let rows=profitCalcRowsData().filter(r=>{
+    const supplier=(r.po.supplierNames||r.po.vendors||[]).join(' ')||r.po.vendor||'';
+    const hay=[r.po.number,r.line.itemNo,r.line.yearProductName,r.line.productDescription,r.line.description,r.line.productName,supplier].join(' ').toLowerCase();
+    return !q||hay.includes(q);
+  });
+  body.innerHTML=rows.map(r=>{
+    const key=encodeURIComponent(r.key);
+    const desc=r.line.yearProductName||r.line.productDescription||r.line.description||r.line.productName||'—';
+    return `<tr>
+      <td><b>${escapeHtml(desc)}</b></td>
+      <td>${escapeHtml(r.po.number||'—')}</td>
+      <td>${profitCalcInput(r.key,'supplierBottlePrice',r.supplierBottlePrice)}</td>
+      <td><input value="${escapeHtml(r.currency)}" style="width:70px" onchange="state.profitItemCalculator['${r.key}'].currency=this.value;save();renderProfitItemCalculator()"></td>
+      <td>${profitCalcInput(r.key,'currencyToCad',r.currencyToCad)}</td>
+      <td><b>CAD ${num(r.cadSupplierPrice).toFixed(4)}</b></td>
+      <td>${profitCalcInput(r.key,'agencyFee',r.agencyFee)}</td>
+      <td>${profitCalcInput(r.key,'transportPerBtl',r.transportPerBtl)}</td>
+      <td>${r.bpc.toLocaleString()}</td>
+      <td>${profitCalcInput(r.key,'proformaPrice',r.proforma)}</td>
+      <td>${profitCalcInput(r.key,'hstPct',r.hstPct,'0.01','0')}</td>
+      <td>${profitCalcInput(r.key,'bottleDeposit',r.bottleDeposit)}</td>
+      <td>${profitCalcInput(r.key,'currencyDiff',r.currencyDiff)}</td>
+      <td><b>CAD ${num(r.rpime).toFixed(4)}</b></td>
+      <td><b>CAD ${num(r.selling).toFixed(4)}</b></td>
+      <td>${profitCalcInput(r.key,'totalCases',r.totalCases,'1','0')}</td>
+      <td>${profitCalcInput(r.key,'labOther',r.labOther)}</td>
+      <td><b>CAD ${num(r.netProfit).toFixed(2)}</b></td>
+      <td><b>CAD ${num(r.totalMoneyNeeded).toFixed(2)}</b></td>
+      <td>${profitCalcInput(r.key,'approxMonths',r.approxMonths,'0.01','0')}</td>
+      <td><b>CAD ${num(r.approxMonthlyProfit).toFixed(2)}</b></td>
+      <td>${profitCalcInput(r.key,'actualMonths',r.actualMonths,'0.01','0')}</td>
+      <td><b>CAD ${num(r.actualMonthlyProfit).toFixed(2)}</b></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="23">No REGU / SEAS / OTHER PO items are marked Arrived in Canada.</td></tr>';
+
+  if(kpis){
+    const totalNet=rows.reduce((a,r)=>a+num(r.netProfit),0);
+    const totalMoney=rows.reduce((a,r)=>a+num(r.totalMoneyNeeded),0);
+    kpis.innerHTML=`<div class="card"><span>Items</span><strong>${rows.length}</strong></div>
+      <div class="card"><span>Total Net Profit</span><strong>CAD ${totalNet.toFixed(2)}</strong></div>
+      <div class="card"><span>Total Money Needed</span><strong>CAD ${totalMoney.toFixed(2)}</strong></div>`;
+  }
+};
 window.renderHeadInventory=()=>{
  const body=document.getElementById('headInventoryRows'),k=document.getElementById('headInventoryKpis');
  if(!body)return;
