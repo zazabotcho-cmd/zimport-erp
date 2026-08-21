@@ -355,6 +355,20 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </style>
 
 
+
+<style>
+.financial-child-path{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:8px 0 12px;
+  font-size:13px;
+}
+#inventory-profit-calculator .financial-parent-active{
+  font-weight:700;
+}
+</style>
+
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -844,9 +858,10 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
  <div class="invoice-page-row inventory-sticky-nav">
    <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
    <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
-   <button type="button" class="invoice-page-tab" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
+   <button type="button" class="invoice-page-tab active financial-parent-active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
    <button type="button" class="invoice-page-tab active" onclick="activate('inventory-profit-calculator','heads-page')">Profit Calulator REGU/SEAS/OTHER</button>
   </div>
+ <div class="financial-child-path"><button type="button" class="invoice-page-tab active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button><span>›</span><strong>Profit Calulator REGU/SEAS/OTHER</strong></div>
  <div class="section-head">
   <div>
    <h2>Profit Calulator REGU/SEAS/OTHER</h2>
@@ -895,6 +910,8 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <tbody id="profitItemRows"></tbody>
  </table></div>
 </div></section>
+<div id="financialProfitDynamicPages"></div>
+
 
 <section id="inventory-financial-regu-seas-other" class="panel">
  <div class="box">
@@ -911,6 +928,8 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   </div>
   <div class="invoice-page-row financial-regu-child-nav">
    <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page')">Profit Calulator REGU/SEAS/OTHER</button>
+   <span id="financialProfitDynamicTabs"></span>
+   <button type="button" class="secondary invoice-page-tab" onclick="addFinancialProfitPage()">+ Profit Calulator REGU/SEAS/OTHER</button>
   </div>
  </div>
 </section>
@@ -1415,6 +1434,16 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 <fieldset class="item-group"><legend>Consolidation Warehouse Status</legend><div class="form-grid two"><label>REF # and Pallet Labels Requested<select id="shipmentRefPalletStatusInput"><option value="No">No</option><option value="Yes">Yes</option></select></label><label>Export Files Sent<select id="shipmentExportFilesStatusInput"><option value="No">No</option><option value="Yes">Yes</option></select></label></div></fieldset>
 <div class="form-grid two shipment-bottom-row"><label>Cost of Shipment<div style="display:flex;gap:6px;align-items:center"><input id="shipmentCostInput" type="number" min="0" step="0.01" style="flex:1"><select id="shipmentCurrencyInput" style="width:82px"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></div></label><label>Transport LCBO PAYMENT STATUS<select id="shipmentPaymentStatusInput"><option value="Not Paid">Not Paid</option><option value="Paid">Paid</option><option value="Other">Other</option></select></label><label><span id="shipmentConverterLabel">Transportation CAD Converter — Enter Manually</span><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span>1 CAD =</span><input id="shipmentExchangeRateInput" type="number" min="0.0001" step="0.0001" style="width:90px" aria-label="Manual transportation exchange rate"><b id="shipmentConverterCurrency">CAD</b></div></label><label id="shipmentPaymentOtherWrap" class="hidden">Other Payment Status<input id="shipmentPaymentOtherInput" maxlength="50" placeholder="Type payment status"></label></div>
 <div class="modal-actions"><button id="deleteShipmentBtn" type="button" class="danger">Delete Shipment</button><span></span><button id="cancelShipmentBtn" type="button" class="secondary">Cancel</button><button id="saveShipmentBtn" type="button">Save Shipment</button></div></div></div>
+<div id="financialTransportImportModal" class="modal hidden"><div class="modal-card">
+  <div class="modal-head"><div><h2>Import from Transportation</h2><p>Select the Transportation to import into this calculator page.</p></div><button type="button" class="icon" onclick="closeFinancialTransportImport()">×</button></div>
+  <input type="hidden" id="financialTransportImportPageId">
+  <div class="toolbar"><input id="financialTransportImportSearch" type="search" placeholder="Search Transportation, PO or status" oninput="renderFinancialTransportImportList()"></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Select</th><th>Transportation</th><th>POs</th><th>Status</th><th>Status Date</th></tr></thead>
+    <tbody id="financialTransportImportRows"></tbody>
+  </table></div>
+  <div class="modal-actions"><span></span><button type="button" class="secondary" onclick="closeFinancialTransportImport()">Cancel</button><button type="button" onclick="importSelectedTransportationToFinancialPage()">Import Selected</button></div>
+</div></div>
 <div id="poDetailsModal" class="modal hidden"><div class="modal-card item-info-page">
   <div class="modal-head"><div><h2 id="poDetailsTitle">PO Details</h2><p>Complete purchase order information.</p></div><button id="closePoDetails" class="icon" onclick="closePoDetails()">×</button></div>
   <div class="info-toolbar"><button type="button" class="secondary" onclick="copyAllPoDetails()">Copy All PO Information</button></div>
@@ -1522,6 +1551,8 @@ if(!Array.isArray(state.countrySourcingCountries)||!state.countrySourcingCountri
 state.countrySourcingCountries=[...new Set(state.countrySourcingCountries.map(x=>String(x||'').trim()).filter(Boolean))];
 if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};if(!state.inventoryStockOutDates||typeof state.inventoryStockOutDates!=='object')state.inventoryStockOutDates={};if(!Array.isArray(state.inventoryDeletedPoSnapshots))state.inventoryDeletedPoSnapshots=[];if(!Array.isArray(state.officeInventory))state.officeInventory=[];
 if(!state.profitItemCalculator||typeof state.profitItemCalculator!=='object')state.profitItemCalculator={};
+if(!Array.isArray(state.financialProfitPages))state.financialProfitPages=[];
+if(!state.financialProfitPageData||typeof state.financialProfitPageData!=='object')state.financialProfitPageData={};
 if(!Array.isArray(state.deletedProfitItems))state.deletedProfitItems=[];
 state.purchaseOrders.forEach(po=>{if(String(po.poStatus||'').toUpperCase()==='ARRIVED IN CANADA')po.poStatus='Arrived in Canada'});
 if(!Array.isArray(state.manuallyArchivedPurchaseOrders))state.manuallyArchivedPurchaseOrders=[];
@@ -3370,10 +3401,13 @@ function activate(tab,preferredSection=''){
     }
   }
   const panel=$('#'+tab);if(panel)panel.classList.add('active');
-  if(preferredSection==='heads-page' && (['inventory-in-stock','inventory-in-stock-office','inventory-profit-calculator','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('transport-profit-'))){
+  if(preferredSection==='heads-page' && (['inventory-in-stock','inventory-in-stock-office','inventory-profit-calculator','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
     $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav==='heads-page'));
     $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section==='heads-page'));
     const hubTab=$('.subnav[data-section-nav="heads-page"] .tab[data-tab="inventory-stock"]');if(hubTab)hubTab.classList.add('active');
+    if(tab==='inventory-profit-calculator'){
+      document.querySelectorAll('#inventory-profit-calculator .financial-parent-active').forEach(x=>x.classList.add('active'));
+    }
     if(typeof syncInventoryStockSubnav==='function')syncInventoryStockSubnav(tab);
   }
   if(preferredSection==='heads-page' && ['financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices'].includes(tab)){
@@ -5806,6 +5840,281 @@ window.deleteProfitCalculatorItem=(encodedKey)=>{
   try{renderHeadsRecycleBin()}catch(e){}
 };
 
+
+function financialProfitPageId(p){
+  return `financial-profit-${String(p.id||'').replace(/[^a-zA-Z0-9_-]/g,'')}`;
+}
+
+function financialProfitEmptyRecord(){
+  return {
+    supplierBottlePrice:0,
+    currency:'CAD',
+    cadToSupplierCurrency:0,
+    agencyFee:0,
+    transportPerBtl:0,
+    proformaPrice:0,
+    hstPct:0,
+    bottleDeposit:0,
+    currencyDiff:0,
+    totalCases:0,
+    labOther:0,
+    approxMonths:0,
+    actualMonths:0
+  };
+}
+function financialProfitSourceRows(){
+  return profitCalcRowsData();
+}
+function financialProfitPageRows(p){
+  if(!state.financialProfitPageData||typeof state.financialProfitPageData!=='object')state.financialProfitPageData={};
+  if(!state.financialProfitPageData[p.id])state.financialProfitPageData[p.id]={rows:{}};
+  if(!state.financialProfitPageData[p.id].rows||Array.isArray(state.financialProfitPageData[p.id].rows))state.financialProfitPageData[p.id].rows={};
+  const pageData=state.financialProfitPageData[p.id];
+  const store=pageData.rows;
+  let sourceRows=financialProfitSourceRows();
+  if(pageData.transportationId){
+    const sh=(state.shipments||[]).find(x=>String(x.id)===String(pageData.transportationId));
+    const poIds=new Set((sh?.poLinks||[]).map(x=>x.poId));
+    sourceRows=sourceRows.filter(src=>poIds.has(src.po.id)&&['REGU','SEAS','OTHER'].includes(src.program));
+  }
+  return sourceRows.map(src=>{
+    if(!store[src.key])store[src.key]=financialProfitEmptyRecord();
+    return {source:src,key:src.key,data:store[src.key]};
+  });
+}
+window.addFinancialProfitPage=()=>{
+  if(!Array.isArray(state.financialProfitPages))state.financialProfitPages=[];
+  const suggested=`Profit Calulator REGU/SEAS/OTHER ${state.financialProfitPages.length+2}`;
+  const name=prompt('Enter new calculator page name:',suggested);
+  if(name===null)return;
+  const clean=String(name||'').trim()||suggested;
+  const page={id:uid(),name:clean,createdAt:new Date().toISOString()};
+  state.financialProfitPages.push(page);
+  if(!state.financialProfitPageData||typeof state.financialProfitPageData!=='object')state.financialProfitPageData={};
+  state.financialProfitPageData[page.id]={rows:{}};
+  // Initialize a clean independent calculator record for every item currently
+  // visible in the main calculator, without copying any filled financial values.
+  financialProfitSourceRows().forEach(r=>{
+    state.financialProfitPageData[page.id].rows[r.key]=financialProfitEmptyRecord();
+  });
+  save();
+  renderFinancialProfitPages();
+  activate(financialProfitPageId(page),'heads-page');
+};
+window.deleteFinancialProfitPage=(id)=>{
+  if(!confirm('Delete this calculator page?'))return;
+  state.financialProfitPages=(state.financialProfitPages||[]).filter(p=>String(p.id)!==String(id));
+  if(state.financialProfitPageData&&typeof state.financialProfitPageData==='object')delete state.financialProfitPageData[id];
+  save();
+  renderFinancialProfitPages();
+  activate('inventory-financial-regu-seas-other','heads-page');
+};
+window.updateFinancialProfitCopyField=(pageId,key,field,value)=>{
+  const store=state.financialProfitPageData?.[pageId]?.rows?.[key];if(!store)return;
+  if(field==='currency')store[field]=String(value||'CAD');
+  else store[field]=Number(value)||0;
+  save();
+  renderFinancialProfitPages();
+  const p=(state.financialProfitPages||[]).find(x=>String(x.id)===String(pageId));
+  if(p)activate(financialProfitPageId(p),'heads-page');
+};
+function financialProfitCopyValues(r,src){
+  const supplierBottlePrice=num(r.supplierBottlePrice);
+  const rate=num(r.cadToSupplierCurrency);
+  const cadSupplierPrice=rate>0?supplierBottlePrice/rate:0;
+  const hstAmount=num(r.proformaPrice)*num(r.hstPct)/100;
+  const rpime=num(r.transportPerBtl)+num(r.proformaPrice)+hstAmount+num(r.bottleDeposit)+num(r.currencyDiff);
+  const selling=num(r.agencyFee)+rpime;
+  const bpc=num(src.bpc);
+  const totalCases=num(r.totalCases);
+  const netProfit=(num(r.agencyFee)*bpc*totalCases)-num(r.labOther);
+  const totalMoneyNeeded=(num(r.transportPerBtl)*bpc*totalCases)+((rpime+rpime*13/100)*bpc*totalCases);
+  const approxMonthlyProfit=num(r.approxMonths)>0?netProfit/num(r.approxMonths):0;
+  const actualMonthlyProfit=num(r.actualMonths)>0?netProfit/num(r.actualMonths):0;
+  return {cadSupplierPrice,rpime,selling,netProfit,totalMoneyNeeded,approxMonthlyProfit,actualMonthlyProfit};
+}
+function financialProfitCopyInput(pageId,key,field,value){
+  const n=Number(value);
+  const shown=n===0?'':(Number.isFinite(n)?n.toFixed(2):'');
+  return `<input type="number" step="0.01" value="${shown}" placeholder="0.00" style="width:95px" onchange="updateFinancialProfitCopyField('${pageId}','${String(key).replace(/'/g,"\\'")}','${field}',this.value)">`;
+}
+
+let selectedFinancialTransportImportId='';
+window.openFinancialTransportImport=(pageId)=>{
+  document.getElementById('financialTransportImportPageId').value=pageId;
+  selectedFinancialTransportImportId='';
+  const search=document.getElementById('financialTransportImportSearch');
+  if(search)search.value='';
+  renderFinancialTransportImportList();
+  document.getElementById('financialTransportImportModal')?.classList.remove('hidden');
+};
+window.closeFinancialTransportImport=()=>{
+  document.getElementById('financialTransportImportModal')?.classList.add('hidden');
+  selectedFinancialTransportImportId='';
+};
+function financialImportEligiblePos(sh){
+  return (sh.poLinks||[]).map(link=>(state.purchaseOrders||[]).find(po=>po.id===link.poId)).filter(po=>po&&['REGU','SEAS','OTHER'].includes(profitCalcPoProgram(po)));
+}
+window.renderFinancialTransportImportList=()=>{
+  const body=document.getElementById('financialTransportImportRows');if(!body)return;
+  const q=(document.getElementById('financialTransportImportSearch')?.value||'').trim().toLowerCase();
+  const shipments=(state.shipments||[]).filter(sh=>{
+    const pos=financialImportEligiblePos(sh);
+    if(!pos.length)return false;
+    const hay=[sh.name,sh.status,sh.statusDate,...pos.map(po=>po.number)].join(' ').toLowerCase();
+    return !q||hay.includes(q);
+  });
+  body.innerHTML=shipments.map(sh=>{
+    const pos=financialImportEligiblePos(sh);
+    const poText=pos.map(po=>`${po.number||'—'} (${profitCalcPoProgram(po)})`).join(', ');
+    return `<tr>
+      <td><input type="radio" name="financialTransportImportChoice" value="${escapeHtml(String(sh.id))}" onchange="selectedFinancialTransportImportId=this.value"></td>
+      <td><b>${escapeHtml(sh.name||'—')}</b></td>
+      <td>${escapeHtml(poText||'—')}</td>
+      <td>${escapeHtml(sh.status||'—')}</td>
+      <td>${escapeHtml(sh.statusDate||'—')}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="5">No Transportation with REGU / SEAS / OTHER POs found.</td></tr>';
+};
+function copyProfitFinancialValuesFromMain(key){
+  const src=(state.profitItemCalculator||{})[key]||{};
+  return {
+    supplierBottlePrice:num(src.supplierBottlePrice),
+    currency:src.currency||'CAD',
+    cadToSupplierCurrency:num(src.cadToSupplierCurrency),
+    agencyFee:num(src.agencyFee),
+    transportPerBtl:num(src.transportPerBtl),
+    proformaPrice:num(src.proformaPrice),
+    hstPct:num(src.hstPct),
+    bottleDeposit:num(src.bottleDeposit),
+    currencyDiff:num(src.currencyDiff),
+    totalCases:num(src.totalCases),
+    labOther:num(src.labOther),
+    approxMonths:num(src.approxMonths),
+    actualMonths:num(src.actualMonths)
+  };
+}
+window.importSelectedTransportationToFinancialPage=()=>{
+  const pageId=document.getElementById('financialTransportImportPageId')?.value||'';
+  const p=(state.financialProfitPages||[]).find(x=>String(x.id)===String(pageId));
+  if(!p)return;
+  if(!selectedFinancialTransportImportId){alert('Select a Transportation first.');return;}
+  const sh=(state.shipments||[]).find(x=>String(x.id)===String(selectedFinancialTransportImportId));
+  if(!sh){alert('Transportation not found.');return;}
+  if(!state.financialProfitPageData||typeof state.financialProfitPageData!=='object')state.financialProfitPageData={};
+  if(!state.financialProfitPageData[p.id])state.financialProfitPageData[p.id]={rows:{}};
+  if(!state.financialProfitPageData[p.id].rows||Array.isArray(state.financialProfitPageData[p.id].rows))state.financialProfitPageData[p.id].rows={};
+  const rowsStore=state.financialProfitPageData[p.id].rows;
+
+  const selectedPoIds=new Set((sh.poLinks||[]).map(x=>x.poId));
+  const eligibleRows=profitCalcRowsData().filter(r=>selectedPoIds.has(r.po.id)&&['REGU','SEAS','OTHER'].includes(r.program));
+  if(!eligibleRows.length){alert('No REGU / SEAS / OTHER items found in this Transportation.');return;}
+
+  // Replace page contents with selected Transportation items only.
+  const newRows={};
+  eligibleRows.forEach(r=>{
+    newRows[r.key]=copyProfitFinancialValuesFromMain(r.key);
+  });
+  state.financialProfitPageData[p.id].rows=newRows;
+  state.financialProfitPageData[p.id].transportationId=sh.id;
+  state.financialProfitPageData[p.id].transportationName=sh.name||'';
+  state.financialProfitPageData[p.id].transportationStatus=sh.status||'';
+  state.financialProfitPageData[p.id].transportationStatusDate=sh.statusDate||'';
+  save();
+  closeFinancialTransportImport();
+  renderFinancialProfitPages();
+  activate(financialProfitPageId(p),'heads-page');
+};
+function financialProfitPageHtml(p){
+  const pid=financialProfitPageId(p);
+  return `<section id="${pid}" class="panel"><div class="box">
+    <div class="invoice-page-row inventory-sticky-nav">
+      <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
+      <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
+      <button type="button" class="invoice-page-tab active financial-parent-active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
+      <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page')">Profit Calulator REGU/SEAS/OTHER</button>
+      <span class="financial-profit-dynamic-tabs"></span>
+      <button type="button" class="secondary invoice-page-tab" onclick="addFinancialProfitPage()">+ Profit Calulator REGU/SEAS/OTHER</button>
+    </div>
+    <div class="financial-child-path"><button type="button" class="invoice-page-tab active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button><span>›</span><strong>${escapeHtml(p.name)}</strong></div>
+    <div class="section-head"><div><h2>${escapeHtml(p.name)}</h2><p class="note">Independent calculator copy. Use Import from Transportation to load REGU / SEAS / OTHER items and their entered financial values.</p><div id="${pid}-transportSummary" class="note"></div></div>
+      <div><button type="button" class="secondary small" onclick="openFinancialTransportImport('${p.id}')">Import from Transportation</button> <button type="button" class="danger small" onclick="deleteFinancialProfitPage('${p.id}')">Delete Page</button></div>
+    </div>
+    <div class="table-wrap profit-calculator-scroll"><table class="profit-calculator-table">
+      <thead>
+      <tr class="profit-grand-total-row">
+       <th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+       <th id="${pid}-grandCases" class="profit-grand-total">Grand Total Case Qtty<br><b>0.00</b></th>
+       <th></th>
+       <th id="${pid}-grandNet" class="profit-grand-total profit-green">Grand Total Net Profit<br><b>CAD 0.00</b></th>
+       <th id="${pid}-grandMoney" class="profit-grand-total profit-orange">Grand Total Money Needed<br><b>CAD 0.00</b></th>
+       <th></th><th></th><th></th><th></th><th></th>
+      </tr>
+      <tr>
+       <th>Item Description</th><th>PO #</th><th class="profit-manual-col">Supplier Bottle Price</th><th class="profit-manual-col">Supplier Currency</th><th class="profit-manual-col">1 CAD to 1 Supplier Currency Exchange Rate</th>
+       <th>Supplier Price Converted into CAD</th><th>CAD Transportation Price / Btl</th><th>Bottles / Case</th><th>Proforma Price / Bottle</th><th>GST/HST/OTHER</th><th>Bottle Deposit</th><th>Price Currency Difference / Bottle</th><th class="profit-green">Agency Fee HST Included</th><th>RPIME Cost in CAD</th><th>Selling Price / Bottle</th><th>Total Case Qtty</th><th>Lab / Other Cost</th><th class="profit-green">Net Profit</th><th class="profit-orange">Total Money Needed</th><th>Approx Sales Month Qtty</th><th>Profit Approx Net / Month</th><th>Actually Was Sold in # Month</th><th class="profit-green">Actual Monthly Profit</th><th>Action</th>
+      </tr></thead>
+      <tbody id="${pid}-rows"></tbody>
+    </table></div>
+  </div></section>`;
+}
+function renderFinancialProfitTabs(){
+  const html=(state.financialProfitPages||[]).map(p=>`<button type="button" class="invoice-page-tab" onclick="activate('${financialProfitPageId(p)}','heads-page')">${escapeHtml(p.name)}</button>`).join('');
+  const parent=document.getElementById('financialProfitDynamicTabs');if(parent)parent.innerHTML=html;
+  document.querySelectorAll('.financial-profit-dynamic-tabs').forEach(x=>x.innerHTML=html);
+}
+
+function renderSingleFinancialProfitPage(p){
+  const pid=financialProfitPageId(p),body=document.getElementById(pid+'-rows');
+  if(!body)return;
+  const rows=financialProfitPageRows(p);
+  const pageData=state.financialProfitPageData?.[p.id]||{};
+  const summary=document.getElementById(pid+'-transportSummary');
+  if(summary)summary.textContent=pageData.transportationId?`Imported from: ${pageData.transportationName||'Transportation'} | Status: ${pageData.transportationStatus||'—'} | Status Date: ${pageData.transportationStatusDate||'—'}`:'No Transportation imported yet.';
+  let grandCases=0,grandNet=0,grandMoney=0;
+  body.innerHTML=rows.map(entry=>{
+    const src=entry.source,r=entry.data,key=entry.key,c=financialProfitCopyValues(r,src);
+    grandCases+=num(r.totalCases);grandNet+=c.netProfit;grandMoney+=c.totalMoneyNeeded;
+    const desc=src.line.yearProductName||src.line.productDescription||src.line.description||src.line.productName||'—';
+    const poNo=src.po.number||'—';
+    return `<tr>
+      <td><b>${escapeHtml(desc)}</b></td>
+      <td>${escapeHtml(poNo)}</td>
+      <td class="profit-manual-col">${financialProfitCopyInput(p.id,key,'supplierBottlePrice',r.supplierBottlePrice)}</td>
+      <td class="profit-manual-col"><select style="width:80px" onchange="updateFinancialProfitCopyField('${p.id}','${String(key).replace(/'/g,"\\'")}','currency',this.value)"><option value="CAD" ${r.currency==='CAD'?'selected':''}>CAD</option><option value="USD" ${r.currency==='USD'?'selected':''}>USD</option><option value="GBP" ${r.currency==='GBP'?'selected':''}>GBP</option><option value="EUR" ${r.currency==='EUR'?'selected':''}>EUR</option></select></td>
+      <td class="profit-manual-col">${financialProfitCopyInput(p.id,key,'cadToSupplierCurrency',r.cadToSupplierCurrency)}</td>
+      <td><b>CAD ${c.cadSupplierPrice.toFixed(2)}</b></td>
+      <td>${financialProfitCopyInput(p.id,key,'transportPerBtl',r.transportPerBtl)}</td>
+      <td>${num(src.bpc).toFixed(2)}</td>
+      <td>${financialProfitCopyInput(p.id,key,'proformaPrice',r.proformaPrice)}</td>
+      <td>${financialProfitCopyInput(p.id,key,'hstPct',r.hstPct)}</td>
+      <td>${financialProfitCopyInput(p.id,key,'bottleDeposit',r.bottleDeposit)}</td>
+      <td>${financialProfitCopyInput(p.id,key,'currencyDiff',r.currencyDiff)}</td>
+      <td class="profit-green-cell">${financialProfitCopyInput(p.id,key,'agencyFee',r.agencyFee)}</td>
+      <td><b>CAD ${c.rpime.toFixed(2)}</b></td>
+      <td><b>CAD ${c.selling.toFixed(2)}</b></td>
+      <td>${financialProfitCopyInput(p.id,key,'totalCases',r.totalCases)}</td>
+      <td>${financialProfitCopyInput(p.id,key,'labOther',r.labOther)}</td>
+      <td class="profit-green-cell"><b>CAD ${c.netProfit.toFixed(2)}</b></td>
+      <td class="profit-orange-cell"><b>CAD ${c.totalMoneyNeeded.toFixed(2)}</b></td>
+      <td>${financialProfitCopyInput(p.id,key,'approxMonths',r.approxMonths)}</td>
+      <td><b>CAD ${c.approxMonthlyProfit.toFixed(2)}</b></td>
+      <td>${financialProfitCopyInput(p.id,key,'actualMonths',r.actualMonths)}</td>
+      <td class="profit-green-cell"><b>CAD ${c.actualMonthlyProfit.toFixed(2)}</b></td>
+      <td></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="24">No REGU / SEAS / OTHER items are currently available in the main calculator.</td></tr>';
+  const gc=document.getElementById(pid+'-grandCases'),gn=document.getElementById(pid+'-grandNet'),gm=document.getElementById(pid+'-grandMoney');
+  if(gc)gc.innerHTML=`Grand Total Case Qtty<br><b>${grandCases.toFixed(2)}</b>`;
+  if(gn)gn.innerHTML=`Grand Total Net Profit<br><b>CAD ${grandNet.toFixed(2)}</b>`;
+  if(gm)gm.innerHTML=`Grand Total Money Needed<br><b>CAD ${grandMoney.toFixed(2)}</b>`;
+}
+function renderFinancialProfitPages(){
+  const host=document.getElementById('financialProfitDynamicPages');if(!host)return;
+  host.innerHTML=(state.financialProfitPages||[]).map(financialProfitPageHtml).join('');
+  renderFinancialProfitTabs();
+  (state.financialProfitPages||[]).forEach(renderSingleFinancialProfitPage);
+}
 window.renderProfitItemCalculator=()=>{
   const body=document.getElementById('profitItemRows'),kpis=document.getElementById('profitItemKpis');
   if(!body)return;
