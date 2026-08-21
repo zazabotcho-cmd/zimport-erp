@@ -254,12 +254,11 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   border-bottom:1px solid #dfe4ea;
 }
 .profit-calculator-scroll{
-  max-height:70vh;
   overflow-x:scroll;
-  overflow-y:scroll;
+  overflow-y:visible;
   position:relative;
   width:100%;
-  scrollbar-gutter:stable both-edges;
+  scrollbar-gutter:auto;
 }
 .profit-calculator-table thead th{
   position:sticky;
@@ -812,7 +811,6 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
  <div class="toolbar">
   <input id="profitItemSearch" type="search" placeholder="Search item, PO or supplier" oninput="renderProfitItemCalculator()">
  </div>
- <div class="cards" id="profitItemKpis"></div>
  <div class="table-wrap profit-calculator-scroll"><table class="profit-calculator-table">
   <thead><tr>
    <th>Item Description</th>
@@ -5736,13 +5734,7 @@ window.renderProfitItemCalculator=()=>{
     </tr>`;
   }).join('')||'<tr><td colspan="23">No REGU / SEAS / OTHER PO items are marked Arrived in Canada.</td></tr>';
 
-  if(kpis){
-    const totalNet=rows.reduce((a,r)=>a+num(r.netProfit),0);
-    const totalMoney=rows.reduce((a,r)=>a+num(r.totalMoneyNeeded),0);
-    kpis.innerHTML=`<div class="card"><span>Items</span><strong>${rows.length}</strong></div>
-      <div class="card"><span>Total Net Profit</span><strong>CAD ${totalNet.toFixed(2)}</strong></div>
-      <div class="card"><span>Total Money Needed</span><strong>CAD ${totalMoney.toFixed(2)}</strong></div>`;
-  }
+
 };
 window.renderHeadInventory=()=>{
  const body=document.getElementById('headInventoryRows'),k=document.getElementById('headInventoryKpis');
