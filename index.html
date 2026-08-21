@@ -311,6 +311,49 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   background:#e9eef4;
 }
 </style>
+
+<style>
+.profit-calculator-table th.profit-green,
+.profit-calculator-table td.profit-green-cell{
+  color:#176b2c;
+  font-weight:700;
+}
+.profit-calculator-table td.profit-green-cell input{
+  color:#176b2c;
+  font-weight:700;
+}
+.profit-calculator-table th.profit-orange,
+.profit-calculator-table td.profit-orange-cell{
+  color:#a94f00;
+  font-weight:700;
+}
+</style>
+
+
+<style>
+.profit-calculator-table thead .profit-grand-total-row th{
+  top:0;
+  height:48px;
+  vertical-align:middle;
+  background:#f7f8fa;
+  font-size:12px;
+  white-space:nowrap;
+}
+.profit-calculator-table thead tr:nth-child(2) th{
+  top:48px;
+}
+.profit-calculator-table th.profit-grand-total{
+  font-weight:700;
+  border-bottom:2px solid #cfd6de;
+}
+.profit-calculator-table th.profit-grand-total.profit-green{
+  color:#176b2c;
+}
+.profit-calculator-table th.profit-grand-total.profit-orange{
+  color:#a94f00;
+}
+</style>
+
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -812,7 +855,16 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <input id="profitItemSearch" type="search" placeholder="Search item, PO or supplier" oninput="renderProfitItemCalculator()">
  </div>
  <div class="table-wrap profit-calculator-scroll"><table class="profit-calculator-table">
-  <thead><tr>
+  <thead>
+  <tr class="profit-grand-total-row">
+   <th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+   <th id="profitGrandCases" class="profit-grand-total">Grand Total Case Qtty<br><b>0.00</b></th>
+   <th></th>
+   <th id="profitGrandNet" class="profit-grand-total profit-green">Grand Total Net Profit<br><b>CAD 0.00</b></th>
+   <th id="profitGrandMoney" class="profit-grand-total profit-orange">Grand Total Money Needed<br><b>CAD 0.00</b></th>
+   <th></th><th></th><th></th><th></th><th></th>
+  </tr>
+  <tr>
    <th>Item Description</th>
    <th>PO #</th>
    <th class="profit-manual-col">Supplier Bottle Price</th>
@@ -825,17 +877,18 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
    <th>GST/HST/OTHER</th>
    <th>Bottle Deposit</th>
    <th>Price Currency Difference / Bottle</th>
-   <th>Agency Fee HST Included</th>
+   <th class="profit-green">Agency Fee HST Included</th>
    <th>RPIME Cost in CAD</th>
    <th>Selling Price / Bottle</th>
    <th>Total Case Qtty</th>
    <th>Lab / Other Cost</th>
-   <th>Net Profit</th>
-   <th>Total Money Needed</th>
+   <th class="profit-green">Net Profit</th>
+   <th class="profit-orange">Total Money Needed</th>
    <th>Approx Sales Month Qtty</th>
    <th>Profit Approx Net / Month</th>
    <th>Actually Was Sold in # Month</th>
-   <th>Actual Monthly Profit</th>
+   <th class="profit-green">Actual Monthly Profit</th>
+   <th>Action</th>
   </tr></thead>
   <tbody id="profitItemRows"></tbody>
  </table></div>
@@ -1447,6 +1500,7 @@ if(!Array.isArray(state.countrySourcingCountries)||!state.countrySourcingCountri
 state.countrySourcingCountries=[...new Set(state.countrySourcingCountries.map(x=>String(x||'').trim()).filter(Boolean))];
 if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};if(!state.inventoryStockOutDates||typeof state.inventoryStockOutDates!=='object')state.inventoryStockOutDates={};if(!Array.isArray(state.inventoryDeletedPoSnapshots))state.inventoryDeletedPoSnapshots=[];if(!Array.isArray(state.officeInventory))state.officeInventory=[];
 if(!state.profitItemCalculator||typeof state.profitItemCalculator!=='object')state.profitItemCalculator={};
+if(!Array.isArray(state.deletedProfitItems))state.deletedProfitItems=[];
 state.purchaseOrders.forEach(po=>{if(String(po.poStatus||'').toUpperCase()==='ARRIVED IN CANADA')po.poStatus='Arrived in Canada'});
 if(!Array.isArray(state.manuallyArchivedPurchaseOrders))state.manuallyArchivedPurchaseOrders=[];
 if(!Array.isArray(state.shipments))state.shipments=[];
@@ -3256,7 +3310,7 @@ function moveToHeadsRecycleBin(type,page,record,restoreMeta={}){if(!record)retur
 function purgeExpiredRecycle(){if(!isAdminUser()){alert('Only an administrator can move expired Recycling Bin records to Head\'s Recycling Bin.');return}const now=Date.now();if(!Array.isArray(state.headsRecycleBin))state.headsRecycleBin=[];const keep=[];(state.recycleBin||[]).forEach(x=>{if(new Date(x.deleteAfter).getTime()<=now)state.headsRecycleBin.push({...x,movedToHeadsAt:new Date().toISOString()});else keep.push(x)});state.recycleBin=keep;save()}
 function restoreRecycleRecord(id){const x=(state.recycleBin||[]).find(v=>v.id===id);if(!x)return;const r=JSON.parse(JSON.stringify(x.record));const map={record:'records',tender:'tenders',item:'items',agency:'agencies',supplier:'suppliers',purchaseOrder:'purchaseOrders',shipment:'shipments',financialInvoice:'financialInvoices',supplierPaymentInvoice:'supplierPaymentInvoices',supplierPaymentInvoice2:'supplierPaymentInvoices2',otherInvoice:'otherInvoices',otherNewInvoice:'otherNewInvoices',archivedInvoice:'archivedInvoices',archivedShipment:'archivedShipments',archivedPo:'manuallyArchivedPurchaseOrders',countryWinery:'countryWineries',countryCandidate:'countryCandidates',countryBonus:'countryBonuses',countryOpportunity:'countryOpportunities'};if(x.type==='supplierItem'){const s=state.suppliers.find(v=>v.id===x.restoreMeta.supplierId);if(!s){alert('The original supplier no longer exists. Restore the supplier first.');return}(s.items||(s.items=[])).push(r)}else if(x.type==='workerItem'){const t=state.tenders.find(v=>v.id===x.restoreMeta.tenderId);if(!t){alert('The original tender no longer exists. Restore the tender first.');return}(t.workItems||(t.workItems=[])).push(r)}else{const key=x.restoreMeta?.collection||map[x.type];if(!key)return;if(!Array.isArray(state[key]))state[key]=[];if(!state[key].some(v=>v.id===r.id))state[key].push(r)}state.recycleBin=state.recycleBin.filter(v=>v.id!==id);save()}
 function permanentlyDeleteRecycle(id){if(!isAdminUser()){alert('Only an administrator can move records to Head\'s Recycling Bin.');return}const x=(state.recycleBin||[]).find(v=>v.id===id);if(!x)return;if(!confirm('Move this record to Head\'s Recycling Bin?'))return;if(!Array.isArray(state.headsRecycleBin))state.headsRecycleBin=[];state.headsRecycleBin.push({...x,movedToHeadsAt:new Date().toISOString()});state.recycleBin=state.recycleBin.filter(v=>v.id!==id);save()}
-function restoreHeadsRecycleRecord(id){if(!isAdminUser()){alert('Administrator access only.');return}const x=(state.headsRecycleBin||[]).find(v=>v.id===id);if(!x)return;if(x.directToHeads){const r=JSON.parse(JSON.stringify(x.record));const map={financialInvoice:'financialInvoices',supplierPaymentInvoice:'supplierPaymentInvoices',supplierPaymentInvoice2:'supplierPaymentInvoices2',otherInvoice:'otherInvoices',otherNewInvoice:'otherNewInvoices',archivedInvoice:'archivedInvoices',officeInventory:'officeInventory'};const key=x.restoreMeta?.collection||map[x.type];if(!key)return;if(!Array.isArray(state[key]))state[key]=[];if(!state[key].some(v=>v.id===r.id))state[key].push(r);state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save();try{renderFinancial()}catch(e){}try{renderOtherInvoices()}catch(e){}try{renderOtherNewInvoices()}catch(e){}try{renderSupplierPaymentInvoices()}catch(e){}try{renderSupplierPaymentInvoices2()}catch(e){}try{renderArchivedInvoices()}catch(e){}try{renderOfficeInventory()}catch(e){}return}if(!Array.isArray(state.recycleBin))state.recycleBin=[];const restored={...x};delete restored.movedToHeadsAt;if(!state.recycleBin.some(v=>v.id===restored.id))state.recycleBin.push(restored);state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save()}
+function restoreHeadsRecycleRecord(id){if(!isAdminUser()){alert('Administrator access only.');return}const x=(state.headsRecycleBin||[]).find(v=>v.id===id);if(!x)return;if(x.directToHeads){const r=JSON.parse(JSON.stringify(x.record));const map={financialInvoice:'financialInvoices',supplierPaymentInvoice:'supplierPaymentInvoices',supplierPaymentInvoice2:'supplierPaymentInvoices2',otherInvoice:'otherInvoices',otherNewInvoice:'otherNewInvoices',archivedInvoice:'archivedInvoices',officeInventory:'officeInventory',profitCalculatorItem:'profitCalculatorItem'};const key=x.restoreMeta?.collection||map[x.type];if(!key)return;if(!Array.isArray(state[key]))state[key]=[];if(!state[key].some(v=>v.id===r.id))state[key].push(r);state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save();try{renderFinancial()}catch(e){}try{renderOtherInvoices()}catch(e){}try{renderOtherNewInvoices()}catch(e){}try{renderSupplierPaymentInvoices()}catch(e){}try{renderSupplierPaymentInvoices2()}catch(e){}try{renderArchivedInvoices()}catch(e){}try{renderOfficeInventory()}catch(e){}try{renderProfitItemCalculator()}catch(e){}return}if(!Array.isArray(state.recycleBin))state.recycleBin=[];const restored={...x};delete restored.movedToHeadsAt;if(!state.recycleBin.some(v=>v.id===restored.id))state.recycleBin.push(restored);state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save()}
 function permanentlyDeleteHeadsRecycle(id){if(!isAdminUser()){alert('Administrator access only.');return}if(!confirm('Permanently delete this record? This cannot be undone.'))return;state.headsRecycleBin=(state.headsRecycleBin||[]).filter(v=>v.id!==id);save()}
 function renderHeadsRecycleBin(){const body=$('#headsRecycleRows');if(!body)return;const q=String($('#headsRecycleSearch')?.value||'').trim().toLowerCase();const rows=(state.headsRecycleBin||[]).filter(x=>!q||`${x.page} ${x.label}`.toLowerCase().includes(q)).sort((a,b)=>new Date(b.movedToHeadsAt||b.deletedAt)-new Date(a.movedToHeadsAt||a.deletedAt));body.innerHTML=rows.map(x=>`<tr><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.movedToHeadsAt||x.deletedAt).toLocaleString())}</td><td><button type=\"button\" onclick=\"restoreHeadsRecycleRecord('${x.id}')\">Restore</button> <button type=\"button\" class=\"danger\" onclick=\"permanentlyDeleteHeadsRecycle('${x.id}')\">Permanently Delete</button></td></tr>`).join('')||'<tr><td colspan=\"5\" class=\"note\">Head\'s Recycling Bin is empty.</td></tr>'}
 function renderRecycleBin(){const body=$('#recycleRows');if(!body)return;const q=String($('#recycleSearch')?.value||'').trim().toLowerCase();const canAdmin=isAdminUser();const rows=(state.recycleBin||[]).filter(x=>!q||`${x.page} ${x.label}`.toLowerCase().includes(q)).sort((a,b)=>new Date(b.deletedAt)-new Date(a.deletedAt));body.innerHTML=rows.map(x=>`<tr><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.deleteAfter).toLocaleDateString())}</td><td><button type="button" onclick="restoreRecycleRecord('${x.id}')">Restore</button>${canAdmin?` <button type="button" class="danger recycle-permanent-delete" onclick="permanentlyDeleteRecycle('${x.id}')">Delete Permanently</button>`:''}</td></tr>`).join('')||'<tr><td colspan="5" class="note">Recycling Bin is empty.</td></tr>';const sel=$('#recycleRetention');if(sel)sel.value=String(state.recycleRetentionDays||90);document.querySelectorAll('.recycle-admin-only').forEach(el=>el.style.display=canAdmin?'':'none')}
@@ -5631,8 +5685,10 @@ function profitCalcStore(key){
   if(!state.profitItemCalculator[key])state.profitItemCalculator[key]={};
   return state.profitItemCalculator[key];
 }
-function profitCalcInput(key,field,value,step='any',min=''){
-  return `<input type="number" step="${step}" ${min!==''?`min="${min}"`:''} value="${Number.isFinite(Number(value))?Number(value):0}" style="width:95px" onchange="updateProfitCalcField('${encodeURIComponent(key)}','${field}',this.value)">`;
+function profitCalcInput(key,field,value,step='0.01',min=''){
+  const n=Number(value);
+  const shown=Number.isFinite(n)?n.toFixed(2):'0.00';
+  return `<input type="number" step="${step}" ${min!==''?`min="${min}"`:''} value="${shown}" style="width:95px" onchange="updateProfitCalcField('${encodeURIComponent(key)}','${field}',this.value)">`;
 }
 window.updateProfitCalcField=(encodedKey,field,value)=>{
   const key=decodeURIComponent(encodedKey||'');
@@ -5661,6 +5717,7 @@ function profitCalcRowsData(){
     if(!['REGU','SEAS','OTHER'].includes(program)||!profitCalcArrived(po))return;
     (po.lines||[]).forEach((line,index)=>{
       const key=profitCalcKey(po,line,index);
+      if((state.deletedProfitItems||[]).includes(key))return;
       const s=profitCalcStore(key);
       const currency = s.currency || 'CAD';
       const supplierBottlePrice = s.supplierBottlePrice ?? 0;
@@ -5693,6 +5750,30 @@ function profitCalcRowsData(){
   });
   return rows;
 }
+
+window.deleteProfitCalculatorItem=(encodedKey)=>{
+  const key=decodeURIComponent(encodedKey||'');
+  const row=profitCalcRowsData().find(r=>r.key===key);
+  if(!row)return;
+  const desc=row.line.yearProductName||row.line.productDescription||row.line.description||row.line.productName||'this item';
+  if(!confirm(`Move ${desc} to Head's Recycling Bin?`))return;
+  const recycleRecord={
+    id:'profit-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
+    key,
+    poId:row.po.id,
+    poNumber:row.po.number||'',
+    program:row.program,
+    item:JSON.parse(JSON.stringify(row.line||{})),
+    calculator:JSON.parse(JSON.stringify((state.profitItemCalculator||{})[key]||{})),
+    itemDescription:desc
+  };
+  moveToHeadsRecycleBin('profitCalculatorItem','Profit Each REGU/SEAS/OTHER Item Calculator',recycleRecord,{collection:'profitCalculatorItem'});
+  if(!Array.isArray(state.deletedProfitItems))state.deletedProfitItems=[];
+  if(!state.deletedProfitItems.includes(key))state.deletedProfitItems.push(key);
+  save();
+  renderProfitItemCalculator();
+  try{renderHeadsRecycleBin()}catch(e){}
+};
 window.renderProfitItemCalculator=()=>{
   const body=document.getElementById('profitItemRows'),kpis=document.getElementById('profitItemKpis');
   if(!body)return;
@@ -5702,6 +5783,15 @@ window.renderProfitItemCalculator=()=>{
     const hay=[r.po.number,r.line.itemNo,r.line.yearProductName,r.line.productDescription,r.line.description,r.line.productName,supplier].join(' ').toLowerCase();
     return !q||hay.includes(q);
   });
+  const grandCases=rows.reduce((sum,r)=>sum+num(r.totalCases),0);
+  const grandNet=rows.reduce((sum,r)=>sum+num(r.netProfit),0);
+  const grandMoney=rows.reduce((sum,r)=>sum+num(r.totalMoneyNeeded),0);
+  const grandCasesEl=document.getElementById('profitGrandCases');
+  const grandNetEl=document.getElementById('profitGrandNet');
+  const grandMoneyEl=document.getElementById('profitGrandMoney');
+  if(grandCasesEl)grandCasesEl.innerHTML=`Grand Total Case Qtty<br><b>${grandCases.toFixed(2)}</b>`;
+  if(grandNetEl)grandNetEl.innerHTML=`Grand Total Net Profit<br><b>CAD ${grandNet.toFixed(2)}</b>`;
+  if(grandMoneyEl)grandMoneyEl.innerHTML=`Grand Total Money Needed<br><b>CAD ${grandMoney.toFixed(2)}</b>`;
   body.innerHTML=rows.map(r=>{
     const key=encodeURIComponent(r.key);
     const desc=r.line.yearProductName||r.line.productDescription||r.line.description||r.line.productName||'—';
@@ -5713,26 +5803,27 @@ window.renderProfitItemCalculator=()=>{
         ${['CAD','USD','GBP','EUR'].map(c=>`<option value="${c}" ${r.currency===c?'selected':''}>${c}</option>`).join('')}
       </select></td>
       <td class="profit-manual-col">${profitCalcInput(r.key,'cadToSupplierCurrency',r.cadToSupplierCurrency)}</td>
-      <td><b>CAD ${num(r.cadSupplierPrice).toFixed(4)}</b></td>
+      <td><b>CAD ${num(r.cadSupplierPrice).toFixed(2)}</b></td>
       <td>${profitCalcInput(r.key,'transportPerBtl',r.transportPerBtl)}</td>
       <td>${r.bpc.toLocaleString()}</td>
       <td>${profitCalcInput(r.key,'proformaPrice',r.proforma)}</td>
       <td>${profitCalcInput(r.key,'hstPct',r.hstPct,'0.01','0')}</td>
       <td>${profitCalcInput(r.key,'bottleDeposit',r.bottleDeposit)}</td>
       <td>${profitCalcInput(r.key,'currencyDiff',r.currencyDiff)}</td>
-      <td>${profitCalcInput(r.key,'agencyFee',r.agencyFee)}</td>
-      <td><b>CAD ${num(r.rpime).toFixed(4)}</b></td>
-      <td><b>CAD ${num(r.selling).toFixed(4)}</b></td>
-      <td>${profitCalcInput(r.key,'totalCases',r.totalCases,'1','0')}</td>
+      <td class="profit-green-cell">${profitCalcInput(r.key,'agencyFee',r.agencyFee)}</td>
+      <td><b>CAD ${num(r.rpime).toFixed(2)}</b></td>
+      <td><b>CAD ${num(r.selling).toFixed(2)}</b></td>
+      <td>${profitCalcInput(r.key,'totalCases',r.totalCases,'0.01','0')}</td>
       <td>${profitCalcInput(r.key,'labOther',r.labOther)}</td>
-      <td><b>CAD ${num(r.netProfit).toFixed(2)}</b></td>
-      <td><b>CAD ${num(r.totalMoneyNeeded).toFixed(2)}</b></td>
+      <td class="profit-green-cell"><b>CAD ${num(r.netProfit).toFixed(2)}</b></td>
+      <td class="profit-orange-cell"><b>CAD ${num(r.totalMoneyNeeded).toFixed(2)}</b></td>
       <td>${profitCalcInput(r.key,'approxMonths',r.approxMonths,'0.01','0')}</td>
       <td><b>CAD ${num(r.approxMonthlyProfit).toFixed(2)}</b></td>
       <td>${profitCalcInput(r.key,'actualMonths',r.actualMonths,'0.01','0')}</td>
-      <td><b>CAD ${num(r.actualMonthlyProfit).toFixed(2)}</b></td>
+      <td class="profit-green-cell"><b>CAD ${num(r.actualMonthlyProfit).toFixed(2)}</b></td>
+      <td><button type="button" class="danger small" onclick="deleteProfitCalculatorItem('${key}')">Delete</button></td>
     </tr>`;
-  }).join('')||'<tr><td colspan="23">No REGU / SEAS / OTHER PO items are marked Arrived in Canada.</td></tr>';
+  }).join('')||'<tr><td colspan="24">No REGU / SEAS / OTHER PO items are marked Arrived in Canada.</td></tr>';
 
 
 };
