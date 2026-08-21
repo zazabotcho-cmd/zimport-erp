@@ -1558,6 +1558,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     </label>
   </div>
   <div id="financialTransportImportSelected" class="note financial-import-selected">No Transportation selected.</div>
+  <div class="note" style="margin:0 18px 10px">Transportation records already imported into another Profit Calulator REGU/SEAS/OTHER page are not shown.</div>
   <div class="table-wrap"><table>
     <thead><tr><th>Transportation</th><th>POs</th><th>Items</th><th>Status</th><th>Status Date</th><th>Action</th></tr></thead>
     <tbody id="financialTransportImportRows"></tbody>
@@ -2221,6 +2222,7 @@ function updateShipmentStatusFromRow(id,status){
   }
   save();
   renderShipments();
+  syncAutoFinancialProfitPagesFromTransportation();
   if(typeof renderProfitItemCalculator==='function')renderProfitItemCalculator();
   if(typeof renderTransportProfitPages==='function')
   renderPurchaseOrders();
@@ -6063,6 +6065,49 @@ function financialProfitCopyInput(pageId,key,field,value){
 
 let selectedFinancialTransportImportId='';
 
+
+function ensureFinancialProfitPageForTransportation(sh){
+  if(!sh)return null;
+  const eligibleRows=financialImportEligibleRows(sh);
+  if(!eligibleRows.length)return null;
+
+  if(!Array.isArray(state.financialProfitPages))state.financialProfitPages=[];
+  if(!state.financialProfitPageData||typeof state.financialProfitPageData!=='object')state.financialProfitPageData={};
+
+  let page=state.financialProfitPages.find(p=>String(state.financialProfitPageData?.[p.id]?.transportationId||'')===String(sh.id));
+  if(!page){
+    page={
+      id:uid(),
+      name:`${sh.name||'Transportation'} Profit Calulator REGU/SEAS/OTHER`,
+      createdAt:new Date().toISOString(),
+      autoCreatedFromTransportation:true
+    };
+    state.financialProfitPages.push(page);
+  }else{
+    page.name=`${sh.name||'Transportation'} Profit Calulator REGU/SEAS/OTHER`;
+  }
+
+  const rows={};
+  eligibleRows.forEach(sourceRow=>{
+    const existing=state.financialProfitPageData?.[page.id]?.rows?.[sourceRow.key];
+    rows[sourceRow.key]=existing || copyProfitFinancialValuesFromMain(sourceRow.key,sourceRow);
+  });
+
+  state.financialProfitPageData[page.id]={
+    ...(state.financialProfitPageData[page.id]||{}),
+    rows,
+    transportationId:sh.id,
+    transportationName:sh.name||'',
+    importedAt:state.financialProfitPageData?.[page.id]?.importedAt||new Date().toISOString(),
+    autoCreated:true
+  };
+  return page;
+}
+function syncAutoFinancialProfitPagesFromTransportation(){
+  (state.shipments||[]).forEach(sh=>ensureFinancialProfitPageForTransportation(sh));
+  save();
+  if(typeof renderFinancialProfitPages==='function')renderFinancialProfitPages();
+}
 function financialImportEligiblePos(sh){
   const seen=new Set(),out=[];
   (sh?.poLinks||[]).forEach(link=>{
@@ -6092,8 +6137,16 @@ function financialImportEligibleRows(sh){
   });
   return out;
 }
-function financialImportShipments(){
-  return (state.shipments||[]).filter(sh=>financialImportEligibleRows(sh).length>0);
+function financialImportShipments(currentPageId=''){
+  const usedByOtherPages=new Set();
+  Object.entries(state.financialProfitPageData||{}).forEach(([pageId,data])=>{
+    if(String(pageId)===String(currentPageId))return;
+    if(data?.transportationId)usedByOtherPages.add(String(data.transportationId));
+  });
+  return (state.shipments||[]).filter(sh=>{
+    if(!financialImportEligibleRows(sh).length)return false;
+    return !usedByOtherPages.has(String(sh.id));
+  });
 }
 window.openFinancialTransportImport=(pageId)=>{
   const page=(state.financialProfitPages||[]).find(p=>String(p.id)===String(pageId));
@@ -6129,7 +6182,8 @@ window.renderFinancialTransportImportList=()=>{
   const body=document.getElementById('financialTransportImportRows');
   if(!select||!body)return;
 
-  const all=financialImportShipments();
+  const currentPageId=String(document.getElementById('financialTransportImportPageId')?.value||'');
+  const all=financialImportShipments(currentPageId);
   const q=(document.getElementById('financialTransportImportSearch')?.value||'').trim().toLowerCase();
   const filtered=all.filter(sh=>{
     const rows=financialImportEligibleRows(sh);
@@ -6242,8 +6296,8 @@ function financialProfitPageHtml(p){
       <button type="button" class="secondary invoice-page-tab" onclick="addFinancialProfitPage()">+ Profit Calulator REGU/SEAS/OTHER</button>
     </div>
     <div class="financial-child-path"><button type="button" class="invoice-page-tab active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button><span>›</span><strong>${escapeHtml(p.name)}</strong></div>
-    <div class="section-head"><div><h2>${escapeHtml(p.name)}</h2><p class="note">Independent calculator copy. Use Import from Transportation to load REGU / SEAS / OTHER items and their entered financial values.</p><div id="${pid}-transportSummary" class="note"></div></div>
-      <div><button type="button" class="secondary small" onclick="openFinancialTransportImport('${p.id}')">Import from Transportation</button> <button type="button" class="danger small" onclick="deleteFinancialProfitPage('${p.id}')">Delete Page</button></div>
+    <div class="section-head"><div><h2>${escapeHtml(p.name)}</h2><p class="note">Calculator linked to Transportation. REGU / SEAS / OTHER PO items and existing financial inputs are filled automatically; formulas and totals update automatically.</p><div id="${pid}-transportSummary" class="note"></div></div>
+      <div>${p.autoCreatedFromTransportation?'':`<button type="button" class="secondary small" onclick="openFinancialTransportImport('${p.id}')">Import from Transportation</button> `}<button type="button" class="danger small" onclick="deleteFinancialProfitPage('${p.id}')">Delete Page</button></div>
     </div>
     <div class="table-wrap profit-calculator-scroll"><table class="profit-calculator-table">
       <thead>
