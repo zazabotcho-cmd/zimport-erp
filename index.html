@@ -354,6 +354,19 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 }
 </style>
 
+
+<style>
+.profit-transport-status{
+  margin:10px 0 14px;
+}
+.profit-status-table{
+  min-width:700px;
+}
+.profit-status-table th{
+  white-space:nowrap;
+}
+</style>
+
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -848,9 +861,10 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
  <div class="section-head">
   <div>
    <h2>Profit Each REGU/SEAS/OTHER Item Calculator</h2>
-   <p class="note">Automatically shows every REGU, SEAS and OTHER PO item marked Arrived in Canada. Manual fields are saved per PO item.</p>
+   <p class="note">Automatically shows every REGU, SEAS and OTHER PO item as soon as it is added to a Transportation record. TENDER POs are excluded. Manual fields are saved per PO item.</p>
   </div>
  </div>
+ <div id="profitTransportationStatus" class="profit-transport-status"></div>
  <div class="toolbar">
   <input id="profitItemSearch" type="search" placeholder="Search item, PO or supplier" oninput="renderProfitItemCalculator()">
  </div>
@@ -2048,6 +2062,7 @@ function updateShipmentStatusFromRow(id,status){
   }
   save();
   renderShipments();
+  if(typeof renderProfitItemCalculator==='function')renderProfitItemCalculator();
   renderPurchaseOrders();
   renderArchivedPurchaseOrders();
   if(typeof renderFinancial==='function')renderFinancial();
@@ -5672,10 +5687,8 @@ window.renderOfficeInventory=()=>{
 function profitCalcPoProgram(po){
   return String(po?.program||po?.poProgram||'').toUpperCase();
 }
-function profitCalcArrived(po){
-  const s=String(po?.poStatus||'').toLowerCase();
-  if(s==='arrived in canada')return true;
-  return (state.shipments||[]).some(sh=>(sh.poLinks||[]).some(l=>l.poId===po.id)&&String(sh.status||'').toLowerCase()==='arrived in canada');
+function profitCalcHasTransportation(po){
+  return (state.shipments||[]).some(sh=>(sh.poLinks||[]).some(l=>l.poId===po.id));
 }
 function profitCalcKey(po,line,index){
   return `${po.id||po.number||'po'}::${line.itemNo||line.yearProductName||index}`;
@@ -5714,7 +5727,7 @@ function profitCalcRowsData(){
   const rows=[];
   (state.purchaseOrders||[]).forEach(po=>{
     const program=profitCalcPoProgram(po);
-    if(!['REGU','SEAS','OTHER'].includes(program)||!profitCalcArrived(po))return;
+    if(!['REGU','SEAS','OTHER'].includes(program)||!profitCalcHasTransportation(po))return;
     (po.lines||[]).forEach((line,index)=>{
       const key=profitCalcKey(po,line,index);
       if((state.deletedProfitItems||[]).includes(key))return;
@@ -5774,7 +5787,40 @@ window.deleteProfitCalculatorItem=(encodedKey)=>{
   renderProfitItemCalculator();
   try{renderHeadsRecycleBin()}catch(e){}
 };
+
+function profitTransportationStatusRows(){
+  const rows=[];
+  (state.shipments||[]).forEach(sh=>{
+    (sh.poLinks||[]).forEach(link=>{
+      const po=(state.purchaseOrders||[]).find(p=>p.id===link.poId);
+      if(!po)return;
+      const program=profitCalcPoProgram(po);
+      if(!['REGU','SEAS','OTHER'].includes(program))return;
+      rows.push({
+        shipmentName:sh.name||'—',
+        poNumber:po.number||'—',
+        program,
+        status:sh.status||'Not Contacted',
+        statusDate:sh.statusDate||'—'
+      });
+    });
+  });
+  return rows;
+}
+function renderProfitTransportationStatus(){
+  const el=document.getElementById('profitTransportationStatus');
+  if(!el)return;
+  const rows=profitTransportationStatusRows();
+  el.innerHTML=rows.length?`
+    <div class="section-head"><div><h3>Transportation Status Updates</h3><p class="note">Current transportation status and latest status date for all REGU / SEAS / OTHER POs in this calculator.</p></div></div>
+    <div class="table-wrap"><table class="profit-status-table">
+      <thead><tr><th>Transportation</th><th>PO #</th><th>PO Program</th><th>Status</th><th>Status Date</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr><td>${escapeHtml(r.shipmentName)}</td><td><b>${escapeHtml(r.poNumber)}</b></td><td>${escapeHtml(r.program)}</td><td>${escapeHtml(r.status)}</td><td>${escapeHtml(r.statusDate)}</td></tr>`).join('')}</tbody>
+    </table></div>`:
+    '<div class="note" style="margin:10px 0">No REGU / SEAS / OTHER POs have been added to Transportation yet.</div>';
+}
 window.renderProfitItemCalculator=()=>{
+  renderProfitTransportationStatus();
   const body=document.getElementById('profitItemRows'),kpis=document.getElementById('profitItemKpis');
   if(!body)return;
   const q=(document.getElementById('profitItemSearch')?.value||'').trim().toLowerCase();
@@ -5823,7 +5869,7 @@ window.renderProfitItemCalculator=()=>{
       <td class="profit-green-cell"><b>CAD ${num(r.actualMonthlyProfit).toFixed(2)}</b></td>
       <td><button type="button" class="danger small" onclick="deleteProfitCalculatorItem('${key}')">Delete</button></td>
     </tr>`;
-  }).join('')||'<tr><td colspan="24">No REGU / SEAS / OTHER PO items are marked Arrived in Canada.</td></tr>';
+  }).join('')||'<tr><td colspan="24">No REGU / SEAS / OTHER PO items have been added to Transportation yet.</td></tr>';
 
 
 };
