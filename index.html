@@ -376,7 +376,13 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   padding-left:12px;
   border-left:3px solid #d7dce2;
 }
-
+.financial-regu-child-nav.profit-child-nav::before{
+  content:"Under FINANCIAL REGU/SEAS/OTHER";
+  font-size:11px;
+  font-weight:700;
+  opacity:.65;
+  margin-right:6px;
+}
 </style>
 
 
@@ -956,7 +962,66 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <tbody id="officeInventoryRows"></tbody>
  </table></div>
 </div></section>
-
+<section id="inventory-profit-calculator" class="panel"><div class="box">
+ <div class="invoice-page-row inventory-sticky-nav">
+   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
+   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
+   <button type="button" class="invoice-page-tab active financial-parent-active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
+  </div>
+ <div class="invoice-page-row financial-regu-child-nav profit-child-nav">
+   <button type="button" class="invoice-page-tab active" onclick="activate('inventory-profit-calculator','heads-page')">Profit Calulator REGU/SEAS/OTHER</button>
+   <span class="financial-profit-dynamic-tabs"></span>
+   <button type="button" class="secondary invoice-page-tab" onclick="addFinancialProfitPage()">+ Profit Calulator REGU/SEAS/OTHER</button>
+  </div>
+  <div class="financial-child-path"><button type="button" class="invoice-page-tab active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button><span>›</span><strong>Profit Calulator REGU/SEAS/OTHER</strong></div>
+ <div class="section-head">
+  <div>
+   <h2>Profit Calulator REGU/SEAS/OTHER</h2>
+   <p class="note">Automatically shows every REGU, SEAS and OTHER PO item as soon as it is added to a Transportation record. TENDER POs are excluded. Manual fields are saved per PO item.</p>
+  </div>
+ </div>
+ <div class="toolbar">
+  <input id="profitItemSearch" type="search" placeholder="Search item, PO or supplier" oninput="renderProfitItemCalculator()">
+ </div>
+ <div class="table-wrap profit-calculator-scroll"><table class="profit-calculator-table">
+  <thead>
+  <tr class="profit-grand-total-row">
+   <th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+   <th id="profitGrandCases" class="profit-grand-total">Grand Total Case Qtty<br><b>0.00</b></th>
+   <th></th>
+   <th id="profitGrandNet" class="profit-grand-total profit-green">Grand Total Net Profit<br><b>CAD 0.00</b></th>
+   <th id="profitGrandMoney" class="profit-grand-total profit-orange">Grand Total Money Needed<br><b>CAD 0.00</b></th>
+   <th></th><th></th><th></th><th></th><th></th>
+  </tr>
+  <tr>
+   <th>Item Description</th>
+   <th>PO #</th>
+   <th class="profit-manual-col">Supplier Bottle Price</th>
+   <th>Currency</th>
+   <th class="profit-manual-col">1 CAD to 1 Supplier Currency Exchange Rate</th>
+   <th>Supplier Price Converted into CAD</th>
+   <th>CAD Transportation Price / Btl</th>
+   <th>Bottles / Case</th>
+   <th>Proforma Price / Bottle</th>
+   <th>GST/HST/OTHER</th>
+   <th>Bottle Deposit</th>
+   <th>Price Currency Difference / Bottle</th>
+   <th class="profit-green">Agency Fee HST Included</th>
+   <th>RPIME Cost in CAD</th>
+   <th>Selling Price / Bottle</th>
+   <th>Total Case Qtty</th>
+   <th>Lab / Other Cost</th>
+   <th class="profit-green">Net Profit</th>
+   <th class="profit-orange">Total Money Needed</th>
+   <th>Approx Sales Month Qtty</th>
+   <th>Profit Approx Net / Month</th>
+   <th>Actually Was Sold in # Month</th>
+   <th class="profit-green">Actual Monthly Profit</th>
+   <th>Action</th>
+  </tr></thead>
+  <tbody id="profitItemRows"></tbody>
+ </table></div>
+</div></section>
 <div id="financialProfitDynamicPages"></div>
 
 
@@ -974,6 +1039,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
    </div>
   </div>
   <div class="invoice-page-row financial-regu-child-nav">
+   <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page')">Profit Calulator REGU/SEAS/OTHER</button>
    <span id="financialProfitDynamicTabs"></span>
    <button type="button" class="secondary invoice-page-tab" onclick="addFinancialProfitPage()">+ Profit Calulator REGU/SEAS/OTHER</button>
   </div>
@@ -2157,12 +2223,12 @@ function updateShipmentStatusFromRow(id,status){
   save();
   renderShipments();
   syncAutoFinancialProfitPagesFromTransportation();
-  
+  if(typeof renderProfitItemCalculator==='function')renderProfitItemCalculator();
   if(typeof renderTransportProfitPages==='function')
   renderPurchaseOrders();
   renderArchivedPurchaseOrders();
   if(typeof renderFinancial==='function')renderFinancial();
-  if(typeof renderHeadInventory==='function')renderHeadInventory();
+  if(typeof renderHeadInventory==='function')renderHeadInventory();if(typeof renderProfitItemCalculator==='function')renderProfitItemCalculator();
 }
 window.updateShipmentStatusFromRow=updateShipmentStatusFromRow;
 function transportationPoDisplay(link){
@@ -2282,8 +2348,10 @@ function saveShipment(){
    });
  }
  [...new Set([...(previousShipment?.poLinks||[]).map(x=>x.poId),...(sh.poLinks||[]).map(x=>x.poId)])].filter(Boolean).forEach(refreshSplitPoStatus);
+ if(typeof ensureFinancialProfitPageForTransportation==='function')ensureFinancialProfitPageForTransportation(sh);
  save();
  if(typeof renderHeadInventory==='function')renderHeadInventory();
+ if(typeof renderFinancialProfitPages==='function')renderFinancialProfitPages();
  closeShipmentEditor();
 }
 function deleteShipment(id){
@@ -3425,7 +3493,7 @@ function restoreHeadsRecycleRecord(id){if(!isAdminUser()){alert('Administrator a
 function permanentlyDeleteHeadsRecycle(id){if(!isAdminUser()){alert('Administrator access only.');return}if(!confirm('Permanently delete this record? This cannot be undone.'))return;state.headsRecycleBin=(state.headsRecycleBin||[]).filter(v=>v.id!==id);save()}
 function renderHeadsRecycleBin(){const body=$('#headsRecycleRows');if(!body)return;const q=String($('#headsRecycleSearch')?.value||'').trim().toLowerCase();const rows=(state.headsRecycleBin||[]).filter(x=>!q||`${x.page} ${x.label}`.toLowerCase().includes(q)).sort((a,b)=>new Date(b.movedToHeadsAt||b.deletedAt)-new Date(a.movedToHeadsAt||a.deletedAt));body.innerHTML=rows.map(x=>`<tr><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.movedToHeadsAt||x.deletedAt).toLocaleString())}</td><td><button type=\"button\" onclick=\"restoreHeadsRecycleRecord('${x.id}')\">Restore</button> <button type=\"button\" class=\"danger\" onclick=\"permanentlyDeleteHeadsRecycle('${x.id}')\">Permanently Delete</button></td></tr>`).join('')||'<tr><td colspan=\"5\" class=\"note\">Head\'s Recycling Bin is empty.</td></tr>'}
 function renderRecycleBin(){const body=$('#recycleRows');if(!body)return;const q=String($('#recycleSearch')?.value||'').trim().toLowerCase();const canAdmin=isAdminUser();const rows=(state.recycleBin||[]).filter(x=>!q||`${x.page} ${x.label}`.toLowerCase().includes(q)).sort((a,b)=>new Date(b.deletedAt)-new Date(a.deletedAt));body.innerHTML=rows.map(x=>`<tr><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.deleteAfter).toLocaleDateString())}</td><td><button type="button" onclick="restoreRecycleRecord('${x.id}')">Restore</button>${canAdmin?` <button type="button" class="danger recycle-permanent-delete" onclick="permanentlyDeleteRecycle('${x.id}')">Delete Permanently</button>`:''}</td></tr>`).join('')||'<tr><td colspan="5" class="note">Recycling Bin is empty.</td></tr>';const sel=$('#recycleRetention');if(sel)sel.value=String(state.recycleRetentionDays||90);document.querySelectorAll('.recycle-admin-only').forEach(el=>el.style.display=canAdmin?'':'none')}
-function renderAll(){syncTenderItemCategoriesFromItems();renderDashboard();renderAgencies();renderSuppliers();renderTenders();populateWinnerAgencySearch();renderTable();renderItems();renderSupplierAllItems();renderPurchaseOrders();renderArchivedPurchaseOrders();renderShipments();renderFinancial();renderSupplierPaymentInvoices();renderSupplierPayment2Invoices();renderOtherInvoices();renderRecycleBin();renderHeadsRecycleBin();renderSavedProformas();if(typeof window.renderHeadBonuses==='function')window.renderHeadBonuses();if(typeof window.renderSourcingCountryControls==='function')window.renderSourcingCountryControls();renderSettings();if(typeof renderHeadInventory==='function')renderHeadInventory();if(typeof renderTransportProfitPages==='function')if(typeof renderManualProfitPages==='function')applySharedCurrencyOptions()}
+function renderAll(){syncTenderItemCategoriesFromItems();renderDashboard();renderAgencies();renderSuppliers();renderTenders();populateWinnerAgencySearch();renderTable();renderItems();renderSupplierAllItems();renderPurchaseOrders();renderArchivedPurchaseOrders();renderShipments();renderFinancial();renderSupplierPaymentInvoices();renderSupplierPayment2Invoices();renderOtherInvoices();renderRecycleBin();renderHeadsRecycleBin();renderSavedProformas();if(typeof window.renderHeadBonuses==='function')window.renderHeadBonuses();if(typeof window.renderSourcingCountryControls==='function')window.renderSourcingCountryControls();renderSettings();if(typeof renderHeadInventory==='function')renderHeadInventory();if(typeof renderProfitItemCalculator==='function')renderProfitItemCalculator();if(typeof renderTransportProfitPages==='function')if(typeof renderManualProfitPages==='function')applySharedCurrencyOptions()}
 function openAgency(id=''){const a=state.agencies.find(x=>x.id===id)||{id:'',name:'',short:'',contactName:'',address1:'',address2:'',cityProvincePostal:'',phone:'',email:'',notes:''};$('#agencyId').value=a.id||'';$('#agencyName').value=a.name||'';$('#agencyShort').value=a.short||'';$('#agencyContactName').value=a.contactName||'';$('#agencyAddress1').value=a.address1||'';$('#agencyAddress2').value=a.address2||'';$('#agencyCityProvincePostal').value=a.cityProvincePostal||'';$('#agencyPhone').value=a.phone||'';$('#agencyEmail').value=a.email||'';$('#agencyNotes').value=a.notes||'';$('#agencyModalTitle').textContent=a.id?'Edit Agency':'Add Agency';$('#deleteAgency').style.visibility=a.id?'visible':'hidden';$('#agencyModal').classList.remove('hidden')}
 function editAgency(id){openAgency(id)}
 function closeAgency(){$('#agencyModal').classList.add('hidden')}
@@ -3457,11 +3525,11 @@ function activate(tab,preferredSection=''){
     }
   }
   const panel=$('#'+tab);if(panel)panel.classList.add('active');
-  if(preferredSection==='heads-page' && (['inventory-in-stock','inventory-in-stock-office','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
+  if(preferredSection==='heads-page' && (['inventory-in-stock','inventory-in-stock-office','inventory-profit-calculator','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
     $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav==='heads-page'));
     $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section==='heads-page'));
     const hubTab=$('.subnav[data-section-nav="heads-page"] .tab[data-tab="inventory-stock"]');if(hubTab)hubTab.classList.add('active');
-    if(false && tab==='inventory-profit-calculator'){
+    if(tab==='inventory-profit-calculator'){
       document.querySelectorAll('#inventory-profit-calculator .financial-parent-active').forEach(x=>x.classList.add('active'));
     }
     if(typeof syncInventoryStockSubnav==='function')syncInventoryStockSubnav(tab);
@@ -6012,13 +6080,13 @@ function ensureFinancialProfitPageForTransportation(sh){
   if(!page){
     page={
       id:uid(),
-      name:`${sh.name||'Transportation'} Profit Calulator REGU/SEAS/OTHER`,
+      name:`Profit Calulator REGU/SEAS/OTHER + ${sh.name||'Transportation'}`,
       createdAt:new Date().toISOString(),
       autoCreatedFromTransportation:true
     };
     state.financialProfitPages.push(page);
   }else{
-    page.name=`${sh.name||'Transportation'} Profit Calulator REGU/SEAS/OTHER`;
+    page.name=`Profit Calulator REGU/SEAS/OTHER + ${sh.name||'Transportation'}`;
   }
 
   const rows={};
@@ -6225,11 +6293,12 @@ function financialProfitPageHtml(p){
       <button type="button" class="invoice-page-tab active financial-parent-active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
     </div>
     <div class="invoice-page-row financial-regu-child-nav profit-child-nav">
+      <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page')">Profit Calulator REGU/SEAS/OTHER</button>
       <span class="financial-profit-dynamic-tabs"></span>
       <button type="button" class="secondary invoice-page-tab" onclick="addFinancialProfitPage()">+ Profit Calulator REGU/SEAS/OTHER</button>
     </div>
     <div class="financial-child-path"><button type="button" class="invoice-page-tab active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button><span>›</span><strong>${escapeHtml(p.name)}</strong></div>
-    <div class="section-head"><div><h2>${escapeHtml(p.name)}</h2><p class="note">Calculator linked to Transportation. REGU / SEAS / OTHER PO items and existing financial inputs are filled automatically; formulas and totals update automatically.</p><div id="${pid}-transportSummary" class="note"></div></div>
+    <div class="section-head"><div><h2>${escapeHtml(p.name)}</h2><p class="note">Automatically created from Transportation. REGU / SEAS / OTHER PO items, saved financial inputs, formulas, totals, and Transportation status information are filled automatically.</p><div id="${pid}-transportSummary" class="note"></div></div>
       <div>${p.autoCreatedFromTransportation?'':`<button type="button" class="secondary small" onclick="openFinancialTransportImport('${p.id}')">Import from Transportation</button> `}<button type="button" class="danger small" onclick="deleteFinancialProfitPage('${p.id}')">Delete Page</button></div>
     </div>
     <div class="table-wrap profit-calculator-scroll"><table class="profit-calculator-table">
