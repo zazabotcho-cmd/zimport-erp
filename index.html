@@ -1543,6 +1543,7 @@ if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];if(!state.invent
 if(!state.profitItemCalculator||typeof state.profitItemCalculator!=='object')state.profitItemCalculator={};
 if(!Array.isArray(state.deletedProfitItems))state.deletedProfitItems=[];
 if(!Array.isArray(state.manualProfitPages))state.manualProfitPages=[];
+if(!state.manualProfitPageData||typeof state.manualProfitPageData!=='object')state.manualProfitPageData={};
 state.purchaseOrders.forEach(po=>{if(String(po.poStatus||'').toUpperCase()==='ARRIVED IN CANADA')po.poStatus='Arrived in Canada'});
 if(!Array.isArray(state.manuallyArchivedPurchaseOrders))state.manuallyArchivedPurchaseOrders=[];
 if(!Array.isArray(state.shipments))state.shipments=[];
@@ -5745,6 +5746,7 @@ window.updateProfitCalcField=(encodedKey,field,value)=>{
   save();
   renderProfitItemCalculator();
   renderTransportProfitPages();
+  renderManualProfitPages();
 };
 function profitCalcTransportationPerBottle(po,line){
   const linked=(state.shipments||[]).filter(sh=>(sh.poLinks||[]).some(l=>l.poId===po.id));
@@ -5869,6 +5871,8 @@ window.addManualProfitCalculatorPage=()=>{
   const clean=String(name||'').trim()||suggested;
   const page={id:uid(),name:clean,createdAt:new Date().toISOString()};
   state.manualProfitPages.push(page);
+  if(!state.manualProfitPageData||typeof state.manualProfitPageData!=='object')state.manualProfitPageData={};
+  state.manualProfitPageData[page.id]={selectedKeys:[]};
   save();
   renderManualProfitPages();
   renderTransportProfitNav();
@@ -5878,6 +5882,7 @@ window.addManualProfitCalculatorPage=()=>{
 window.deleteManualProfitCalculatorPage=(id)=>{
   if(!confirm('Delete this calculator page?'))return;
   state.manualProfitPages=(state.manualProfitPages||[]).filter(p=>String(p.id)!==String(id));
+  if(state.manualProfitPageData&&typeof state.manualProfitPageData==='object')delete state.manualProfitPageData[id];
   save();
   renderManualProfitPages();
   activate('inventory-profit-calculator','heads-page');
@@ -5886,6 +5891,41 @@ window.deleteManualProfitCalculatorPage=(id)=>{
 function manualProfitNavButtons(){
   return (state.manualProfitPages||[]).map(p=>`<button type="button" class="invoice-page-tab transport-profit-tab" data-profit-target="${manualProfitPageId(p)}" onclick="activate('${manualProfitPageId(p)}','heads-page');syncInventoryStockSubnav('${manualProfitPageId(p)}')">${escapeHtml(p.name+' Profit Each REGU/SEAS/OTHER Item Calculator')}</button>`).join('');
 }
+
+function manualProfitPageRowsData(p){
+  const pageStore=(state.manualProfitPageData&&state.manualProfitPageData[p.id])||{};
+  const selectedKeys=Array.isArray(pageStore.selectedKeys)?pageStore.selectedKeys:[];
+  const all=profitCalcRowsData();
+  return all.filter(r=>selectedKeys.includes(r.key));
+}
+function manualProfitAvailableRows(p){
+  const pageStore=(state.manualProfitPageData&&state.manualProfitPageData[p.id])||{};
+  const selectedKeys=Array.isArray(pageStore.selectedKeys)?pageStore.selectedKeys:[];
+  return profitCalcRowsData().filter(r=>!selectedKeys.includes(r.key));
+}
+window.addItemToManualProfitPage=(pageId)=>{
+  const p=(state.manualProfitPages||[]).find(x=>String(x.id)===String(pageId));if(!p)return;
+  const available=manualProfitAvailableRows(p);
+  if(!available.length){alert('No available REGU / SEAS / OTHER items to add.');return;}
+  const options=available.map((r,i)=>`${i+1}. ${r.po.number||'—'} — ${r.line.yearProductName||r.line.productDescription||r.line.description||r.line.productName||'Item'}`).join('\n');
+  const entered=prompt(`Enter item number to add:\n${options}`,'1');
+  if(entered===null)return;
+  const idx=Number(entered)-1;
+  if(!Number.isInteger(idx)||idx<0||idx>=available.length){alert('Select a valid item number.');return;}
+  if(!state.manualProfitPageData||typeof state.manualProfitPageData!=='object')state.manualProfitPageData={};
+  if(!state.manualProfitPageData[p.id])state.manualProfitPageData[p.id]={selectedKeys:[]};
+  if(!Array.isArray(state.manualProfitPageData[p.id].selectedKeys))state.manualProfitPageData[p.id].selectedKeys=[];
+  state.manualProfitPageData[p.id].selectedKeys.push(available[idx].key);
+  save();renderManualProfitPages();activate(manualProfitPageId(p),'heads-page');syncInventoryStockSubnav(manualProfitPageId(p));
+};
+window.removeItemFromManualProfitPage=(pageId,encodedKey)=>{
+  const key=decodeURIComponent(encodedKey||'');
+  const store=state.manualProfitPageData?.[pageId];if(!store)return;
+  store.selectedKeys=(store.selectedKeys||[]).filter(k=>k!==key);
+  save();renderManualProfitPages();
+  const p=(state.manualProfitPages||[]).find(x=>String(x.id)===String(pageId));
+  if(p){activate(manualProfitPageId(p),'heads-page');syncInventoryStockSubnav(manualProfitPageId(p));}
+};
 function manualProfitPageHtml(p){
   return `<section id="${manualProfitPageId(p)}" class="panel"><div class="box">
     <div class="invoice-page-row inventory-sticky-nav">
@@ -5897,16 +5937,71 @@ function manualProfitPageHtml(p){
     </div>
     <div class="section-head"><div>
       <h2>${escapeHtml(p.name+' Profit Each REGU/SEAS/OTHER Item Calculator')}</h2>
-      <p class="note">Manually created calculator page.</p>
-    </div><button type="button" class="danger small" onclick="deleteManualProfitCalculatorPage('${p.id}')">Delete Page</button></div>
-    <div class="note">This manual page is ready for separate calculator records.</div>
+      <p class="note">Same calculator structure and formulas as the main Profit Each REGU/SEAS/OTHER Item Calculator.</p>
+    </div><div><button type="button" class="secondary small" onclick="addItemToManualProfitPage('${p.id}')">+ Add Item</button> <button type="button" class="danger small" onclick="deleteManualProfitCalculatorPage('${p.id}')">Delete Page</button></div></div>
+    <div class="toolbar"><input id="${manualProfitPageId(p)}-search" type="search" placeholder="Search item, PO or supplier" oninput="renderSingleManualProfitPage('${p.id}')"></div>
+    <div class="table-wrap profit-calculator-scroll"><table class="profit-calculator-table">
+      <thead>
+      <tr class="profit-grand-total-row">
+       <th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+       <th id="${manualProfitPageId(p)}-grandCases" class="profit-grand-total">Grand Total Case Qtty<br><b>0.00</b></th>
+       <th></th>
+       <th id="${manualProfitPageId(p)}-grandNet" class="profit-grand-total profit-green">Grand Total Net Profit<br><b>CAD 0.00</b></th>
+       <th id="${manualProfitPageId(p)}-grandMoney" class="profit-grand-total profit-orange">Grand Total Money Needed<br><b>CAD 0.00</b></th>
+       <th></th><th></th><th></th><th></th><th></th>
+      </tr>
+      <tr>
+       <th>Item Description</th><th>PO #</th><th class="profit-manual-col">Supplier Bottle Price</th><th class="profit-manual-col">Supplier Currency</th><th class="profit-manual-col">1 CAD to 1 Supplier Currency Exchange Rate</th>
+       <th>Supplier Price Converted into CAD</th><th>CAD Transportation Price / Btl</th><th>Bottles / Case</th><th>Proforma Price / Bottle</th><th>GST/HST/OTHER</th><th>Bottle Deposit</th><th>Price Currency Difference / Bottle</th><th class="profit-green">Agency Fee HST Included</th><th>RPIME Cost in CAD</th><th>Selling Price / Bottle</th><th>Total Case Qtty</th><th>Lab / Other Cost</th><th class="profit-green">Net Profit</th><th class="profit-orange">Total Money Needed</th><th>Approx Sales Month Qtty</th><th>Profit Approx Net / Month</th><th>Actually Was Sold in # Month</th><th class="profit-green">Actual Monthly Profit</th><th>Action</th>
+      </tr></thead>
+      <tbody id="${manualProfitPageId(p)}-rows"></tbody>
+    </table></div>
   </div></section>`;
 }
+window.renderSingleManualProfitPage=(pageId)=>{
+  const p=(state.manualProfitPages||[]).find(x=>String(x.id)===String(pageId));if(!p)return;
+  const pid=manualProfitPageId(p);
+  const body=document.getElementById(pid+'-rows');if(!body)return;
+  const q=(document.getElementById(pid+'-search')?.value||'').trim().toLowerCase();
+  let rows=manualProfitPageRowsData(p).filter(r=>{
+    const supplier=(r.po.supplierNames||r.po.vendors||[]).join(' ')||r.po.vendor||'';
+    const hay=[r.po.number,r.line.itemNo,r.line.yearProductName,r.line.productDescription,r.line.description,r.line.productName,supplier].join(' ').toLowerCase();
+    return !q||hay.includes(q);
+  });
+  const gc=rows.reduce((s,r)=>s+num(r.totalCases),0),gn=rows.reduce((s,r)=>s+num(r.netProfit),0),gm=rows.reduce((s,r)=>s+num(r.totalMoneyNeeded),0);
+  const gce=document.getElementById(pid+'-grandCases'),gne=document.getElementById(pid+'-grandNet'),gme=document.getElementById(pid+'-grandMoney');
+  if(gce)gce.innerHTML=`Grand Total Case Qtty<br><b>${gc.toFixed(2)}</b>`;
+  if(gne)gne.innerHTML=`Grand Total Net Profit<br><b>CAD ${gn.toFixed(2)}</b>`;
+  if(gme)gme.innerHTML=`Grand Total Money Needed<br><b>CAD ${gm.toFixed(2)}</b>`;
+  body.innerHTML=rows.map(r=>{
+    const key=encodeURIComponent(r.key),desc=r.line.yearProductName||r.line.productDescription||r.line.description||r.line.productName||'—';
+    return `<tr>
+      <td><b>${escapeHtml(desc)}</b></td><td>${escapeHtml(r.po.number||'—')}</td>
+      <td class="profit-manual-col">${profitCalcInput(r.key,'supplierBottlePrice',r.supplierBottlePrice)}</td>
+      <td class="profit-manual-col"><select style="width:80px" onchange="state.profitItemCalculator['${r.key}'].currency=this.value;save();renderManualProfitPages();renderProfitItemCalculator()">${['CAD','USD','GBP','EUR'].map(c=>`<option value="${c}" ${r.currency===c?'selected':''}>${c}</option>`).join('')}</select></td>
+      <td class="profit-manual-col">${profitCalcInput(r.key,'cadToSupplierCurrency',r.cadToSupplierCurrency)}</td>
+      <td><b>CAD ${num(r.cadSupplierPrice).toFixed(2)}</b></td><td>${profitCalcInput(r.key,'transportPerBtl',r.transportPerBtl)}</td><td>${num(r.bpc).toFixed(2)}</td>
+      <td>${profitCalcInput(r.key,'proformaPrice',r.proforma)}</td><td>${profitCalcInput(r.key,'hstPct',r.hstPct,'0.01','0')}</td><td>${profitCalcInput(r.key,'bottleDeposit',r.bottleDeposit)}</td>
+      <td>${profitCalcInput(r.key,'currencyDiff',r.currencyDiff)}</td><td class="profit-green-cell">${profitCalcInput(r.key,'agencyFee',r.agencyFee)}</td><td><b>CAD ${num(r.rpime).toFixed(2)}</b></td>
+      <td><b>CAD ${num(r.selling).toFixed(2)}</b></td><td>${profitCalcInput(r.key,'totalCases',r.totalCases,'0.01','0')}</td><td>${profitCalcInput(r.key,'labOther',r.labOther)}</td>
+      <td class="profit-green-cell"><b>CAD ${num(r.netProfit).toFixed(2)}</b></td><td class="profit-orange-cell"><b>CAD ${num(r.totalMoneyNeeded).toFixed(2)}</b></td>
+      <td>${profitCalcInput(r.key,'approxMonths',r.approxMonths,'0.01','0')}</td><td><b>CAD ${num(r.approxMonthlyProfit).toFixed(2)}</b></td>
+      <td>${profitCalcInput(r.key,'actualMonths',r.actualMonths,'0.01','0')}</td><td class="profit-green-cell"><b>CAD ${num(r.actualMonthlyProfit).toFixed(2)}</b></td>
+      <td><button type="button" class="danger small" onclick="removeItemFromManualProfitPage('${p.id}','${key}')">Remove</button></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="24">No items added to this calculator page yet. Use + Add Item.</td></tr>';
+};
 function renderManualProfitPages(){
   const host=document.getElementById('manualProfitDynamicPages');
   if(!host)return;
+  const activeManual=host.querySelector('.panel.active')?.id||'';
   host.innerHTML=(state.manualProfitPages||[]).map(manualProfitPageHtml).join('');
   renderTransportProfitNav();
+  (state.manualProfitPages||[]).forEach(p=>renderSingleManualProfitPage(p.id));
+  if(activeManual&&document.getElementById(activeManual)){
+    document.getElementById(activeManual).classList.add('active');
+    syncInventoryStockSubnav(activeManual);
+  }
 }
 function transportProfitEligibleShipments(){
   return (state.shipments||[]).filter(sh=>{
