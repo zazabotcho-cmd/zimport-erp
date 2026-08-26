@@ -5417,7 +5417,17 @@ window.proposeItalyCandidateToHeadOffice=async function(button){
  }
 };
 
-window.deleteItalyCandidateFromModal=async()=>{const id=document.getElementById('itCanRecordId').value;if(!id)return closeItalyCandidateForm();if(!confirm('Delete this wine candidate?'))return;const rec=(state.countryCandidates||[]).find(x=>x.id===id);try{await deleteItemAttachments(id)}catch(e){}if(window.ZimportOnline?.deleteFile){for(const p of (rec?.itemPhotos||[]).map(x=>x?.path).filter(Boolean)){try{await window.ZimportOnline.deleteFile(p)}catch(e){console.warn(e)}}}state.countryCandidates=state.countryCandidates.filter(x=>x.id!==id);save();closeItalyCandidateForm();renderItalySourcing()};
+function wineCandidateDeleteBlockedStatus(candidate){
+ const status=normalizeHeadProposalStatus(candidate?.headOfficeActionStatus||candidate?.status);
+ return ['In Progress','Approved for LCBO Submission','Additional Information Required'].includes(status)?status:'';
+}
+function showWineCandidateDeleteBlocked(candidate){
+ const status=wineCandidateDeleteBlockedStatus(candidate);
+ if(!status)return false;
+ alert(`This wine candidate cannot be deleted because its Head Office Action status is: ${status}.`);
+ return true;
+}
+window.deleteItalyCandidateFromModal=async()=>{const id=document.getElementById('itCanRecordId').value;if(!id)return closeItalyCandidateForm();const rec=(state.countryCandidates||[]).find(x=>x.id===id);if(showWineCandidateDeleteBlocked(rec))return;if(!confirm('Delete this wine candidate?'))return;try{await deleteItemAttachments(id)}catch(e){}if(window.ZimportOnline?.deleteFile){for(const p of (rec?.itemPhotos||[]).map(x=>x?.path).filter(Boolean)){try{await window.ZimportOnline.deleteFile(p)}catch(e){console.warn(e)}}}state.countryCandidates=state.countryCandidates.filter(x=>x.id!==id);save();closeItalyCandidateForm();renderItalySourcing()};
 document.getElementById('italyCandidateDetailedForm')?.addEventListener('submit',e=>{e.preventDefault();proposeItalyCandidateToHeadOffice(document.getElementById('proposeItalyCandidateBtn'))});
 
 window.saveItalyBonus=()=>{state.countryBonuses.push({id:uid(),country:currentSourcingCountry,type:document.getElementById('itBonusType').value,amount:num(document.getElementById('itBonusAmount').value),currency:document.getElementById('itBonusCurrency').value,related:document.getElementById('itBonusRelated').value.trim(),status:document.getElementById('itBonusStatus').value,date:document.getElementById('itBonusDate').value,notes:document.getElementById('itBonusNotes').value.trim()});save();closeItalyBonusForm();renderItalySourcing()};
@@ -5426,7 +5436,9 @@ window.deleteItalySource=(kind,id)=>{
  type={opp:'countryOpportunity',win:'countryWinery',can:'countryCandidate',bonus:'countryBonus'}[kind],
  page={opp:'TENDER',win:'Supplier Information',can:'Wine Candidates',bonus:'Performance & Bonuses'}[kind],
  x=(state[key]||[]).find(v=>v.id===id);
- if(!x||!confirm('Move this record to the Portfolio Manager Recycling Bin?'))return;
+ if(!x)return;
+ if(kind==='can'&&showWineCandidateDeleteBlocked(x))return;
+ if(!confirm('Move this record to the Portfolio Manager Recycling Bin?'))return;
  moveToPortfolioManagerRecycleBin(type,page,x,{collection:key});
  state[key]=state[key].filter(v=>v.id!==id);
  save();renderItalySourcing();
@@ -6557,6 +6569,78 @@ window.saveHeadProposalFinancial=function(id,field,value){
 };
 
 
+
+function ensureApprovedCandidateTenderDatabaseItem(candidate,tender,workItem){
+ if(!candidate||!tender||!workItem)return null;
+ if(!Array.isArray(state.items))state.items=[];
+
+ // Reuse an item already created from this Wine Candidate.
+ let item=state.items.find(i=>i.sourceCandidateId===candidate.id)||null;
+ if(!item&&workItem.itemId)item=state.items.find(i=>i.id===workItem.itemId)||null;
+ if(!item){
+   const normalizedName=String(candidate.productDescription||candidate.name||workItem.itemName||'').trim().toLowerCase();
+   item=state.items.find(i=>{
+     const sameName=String(i.productDescription||'').trim().toLowerCase()===normalizedName;
+     const sameTender=String(i.sourceTenderId||'')===String(tender.id||'');
+     return normalizedName&&sameName&&sameTender;
+   })||null;
+ }
+
+ const offeredPrice=(candidate.headOfferedLcboCasePrice!==''&&candidate.headOfferedLcboCasePrice!=null)
+   ? num(candidate.headOfferedLcboCasePrice)
+   : num(candidate.supplierPricePerCase||workItem.offeredPrice);
+ const offeredCurrency=(candidate.headOfferedLcboCasePrice!==''&&candidate.headOfferedLcboCasePrice!=null)
+   ? 'CAD'
+   : (candidate.supplierCurrency||candidate.currency||workItem.currency||'CAD');
+
+ if(!item){
+   const source={...candidate};
+   [
+     'id','country','opportunityId','tenderRecordId','tenderId','status','headOfficeActionStatus','headOfficeComment',
+     'headOfficeActions','headOfficeUpdatedAt','headAgencyMargin','headErpCad','headPotentialWinnerQuantity',
+     'headOfferedLcboCasePrice','headAgencyToRegisterId','headAgencyToRegisterName','createdAt','updatedAt',
+     'itemPhotos','attachmentSaveWarning'
+   ].forEach(k=>delete source[k]);
+   item={
+     ...source,
+     id:uid(),
+     sourceCandidateId:candidate.id,
+     sourceTenderId:tender.id,
+     sourceLcboSubmissionWorkId:workItem.id,
+     productDescription:candidate.productDescription||candidate.name||workItem.itemName||'Untitled Item',
+     supplierName:candidate.supplierName||candidate.producerName||workItem.supplierName||'',
+     quotePerCase:offeredPrice,
+     quotationCurrency:offeredCurrency,
+     score:candidate.score||workItem.candidateScore||'',
+     scoreSource:candidate.scoreSource||candidate.scoreSourceOther||workItem.candidateScoreSource||'',
+     estimatedRetailPrice:candidate.headErpCad??candidate.localRetailPricePerBottle??'',
+     sellingUnitsPerShippingCase:candidate.bottlesPerCase??'',
+     productCategory:candidate.productCategory||'Wine',
+     addedFromHeadOfficeApproval:true,
+     addedFromHeadOfficeApprovalAt:new Date().toISOString()
+   };
+   state.items.push(item);
+ }else{
+   item.sourceCandidateId=candidate.id;
+   item.sourceTenderId=tender.id;
+   item.sourceLcboSubmissionWorkId=workItem.id;
+   item.productDescription=candidate.productDescription||candidate.name||item.productDescription||workItem.itemName||'Untitled Item';
+   item.supplierName=candidate.supplierName||candidate.producerName||item.supplierName||workItem.supplierName||'';
+   item.quotePerCase=offeredPrice;
+   item.quotationCurrency=offeredCurrency;
+   if(candidate.score)item.score=candidate.score;
+   if(candidate.scoreSource||candidate.scoreSourceOther)item.scoreSource=candidate.scoreSource||candidate.scoreSourceOther;
+ }
+
+ workItem.itemId=item.id;
+ workItem.itemName=item.productDescription;
+ workItem.supplierName=item.supplierName||workItem.supplierName||'';
+ workItem.offeredPrice=offeredPrice;
+ workItem.currency=offeredCurrency;
+ return item;
+}
+window.ensureApprovedCandidateTenderDatabaseItem=ensureApprovedCandidateTenderDatabaseItem;
+
 function ensureApprovedCandidateInLcboSubmissions(candidate){
  if(!candidate||normalizeHeadProposalStatus(candidate.headOfficeActionStatus||candidate.status)!=='Approved for LCBO Submission')return null;
  if(!Array.isArray(state.tenders))state.tenders=[];
@@ -6614,6 +6698,10 @@ function ensureApprovedCandidateInLcboSubmissions(candidate){
  workItem.updatedAt=new Date().toISOString();
 
  if(!existing)tender.workItems.push(workItem);
+
+ // Approval must behave exactly like adding a new LCBO submission item manually:
+ // create/link its Tender Item Database record and carry the registration details over.
+ ensureApprovedCandidateTenderDatabaseItem(candidate,tender,workItem);
  return workItem;
 }
 window.ensureApprovedCandidateInLcboSubmissions=ensureApprovedCandidateInLcboSubmissions;
