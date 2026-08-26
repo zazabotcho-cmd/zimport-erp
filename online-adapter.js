@@ -74,7 +74,66 @@
   async function getProfile(){const r=await client.from('profiles').select('*').eq('id',user.id).maybeSingle();if(r.error)throw r.error;profile=r.data||{role:'readonly',full_name:user.email};window.ZIMPORT_CURRENT_ROLE=profile.role||'readonly';window.dispatchEvent(new CustomEvent('zimport-online-role',{detail:{role:window.ZIMPORT_CURRENT_ROLE}}));if($('onlineUserLabel'))$('onlineUserLabel').textContent=`${profile.full_name||user.email} · ${window.ZIMPORT_CURRENT_ROLE}`;}
   async function afterLogin(session){user=session?.user||null;if(!user)return showLogin();await getProfile();$('onlineLoginGate')?.classList.add('hidden');if($('onlineSignOut'))$('onlineSignOut').style.display='';await loadState();subscribeRealtime();}
   function showLogin(){user=null;profile=null;$('onlineLoginGate')?.classList.remove('hidden');if($('onlineSignOut'))$('onlineSignOut').style.display='none';if($('onlineUserLabel'))$('onlineUserLabel').textContent='';status(configured()?'Sign in required':'Supabase not configured');}
-  async function init(){if(!configured()){showLogin();if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Supabase is not configured.';return;}client=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true}});if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Use your assigned email and password.';$('onlineLoginForm')?.addEventListener('submit',async e=>{e.preventDefault();$('onlineLoginError').textContent='';const r=await client.auth.signInWithPassword({email:$('onlineEmail').value.trim(),password:$('onlinePassword').value});if(r.error){$('onlineLoginError').textContent=r.error.message;return;}await afterLogin(r.data.session);});if($('onlineForgotPassword'))$('onlineForgotPassword').onclick=async()=>{const email=$('onlineEmail').value.trim();if(!email){$('onlineLoginError').textContent='Enter your email first.';return;}const r=await client.auth.resetPasswordForEmail(email,{redirectTo:location.href});$('onlineLoginError').textContent=r.error?r.error.message:'Password reset email sent.';};if($('onlineSignOut'))$('onlineSignOut').onclick=async()=>{await client.auth.signOut();showLogin();};$('cloudForceSync')?.addEventListener('click',()=>window.ZimportOnline.syncNow());const {data}=await client.auth.getSession();if(data.session)await afterLogin(data.session);else showLogin();client.auth.onAuthStateChange((_e,s)=>{if(s&&!user)afterLogin(s);if(!s)showLogin();});}
+  function addRetryButton(){
+    if($('onlineRetryConnection'))return;
+    const anchor=$('onlineSetupMessage');if(!anchor)return;
+    const btn=document.createElement('button');
+    btn.type='button';btn.id='onlineRetryConnection';btn.className='secondary';
+    btn.style.marginTop='10px';btn.style.display='block';
+    btn.textContent='Retry connection';
+    btn.onclick=()=>location.reload();
+    anchor.insertAdjacentElement('afterend',btn);
+  }
+  function attachStaticHandlers(){
+    // These are wired up unconditionally so the login form is never dead, even if the
+    // Supabase library failed to load or the client could not be created (see init()).
+    $('onlineLoginForm')?.addEventListener('submit',async e=>{
+      e.preventDefault();$('onlineLoginError').textContent='';
+      if(!client){$('onlineLoginError').textContent='Cloud connection is not ready. Check your internet connection, then click Retry connection or reload the page.';return;}
+      const r=await client.auth.signInWithPassword({email:$('onlineEmail').value.trim(),password:$('onlinePassword').value});
+      if(r.error){$('onlineLoginError').textContent=r.error.message;return;}
+      await afterLogin(r.data.session);
+    });
+    if($('onlineForgotPassword'))$('onlineForgotPassword').onclick=async()=>{
+      if(!client){$('onlineLoginError').textContent='Cloud connection is not ready. Check your internet connection, then click Retry connection or reload the page.';return;}
+      const email=$('onlineEmail').value.trim();if(!email){$('onlineLoginError').textContent='Enter your email first.';return;}
+      const r=await client.auth.resetPasswordForEmail(email,{redirectTo:location.href});$('onlineLoginError').textContent=r.error?r.error.message:'Password reset email sent.';
+    };
+    if($('onlineSignOut'))$('onlineSignOut').onclick=async()=>{if(client)await client.auth.signOut();showLogin();};
+    $('cloudForceSync')?.addEventListener('click',()=>window.ZimportOnline.syncNow());
+  }
+  async function init(){
+    attachStaticHandlers();
+    if(!configured()){showLogin();if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Supabase is not configured.';return;}
+    if(typeof window.supabase==='undefined'||typeof window.supabase.createClient!=='function'){
+      console.error('Supabase library did not load (window.supabase is missing).');
+      showLogin();status('Cloud library failed to load','error');
+      if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='The cloud library failed to load. Check your internet connection (or whether something is blocking cdn.jsdelivr.net), then click Retry connection.';
+      addRetryButton();
+      return;
+    }
+    try{
+      client=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true}});
+    }catch(e){
+      console.error(e);
+      showLogin();status('Cloud connection failed to start','error');
+      if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Could not start the cloud connection: '+(e.message||e)+'. Click Retry connection or reload the page.';
+      addRetryButton();
+      return;
+    }
+    if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Use your assigned email and password.';
+    try{
+      const {data,error}=await client.auth.getSession();
+      if(error)throw error;
+      if(data.session)await afterLogin(data.session);else showLogin();
+      client.auth.onAuthStateChange((_e,s)=>{if(s&&!user)afterLogin(s);if(!s)showLogin();});
+    }catch(e){
+      console.error(e);
+      showLogin();status('Cloud connection error','error');
+      if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Could not reach the cloud service: '+(e.message||e)+'. Check your internet connection and click Retry connection.';
+      addRetryButton();
+    }
+  }
   async function uploadFile(path,file){if(!client||!user)throw new Error('Not signed in');const clean=`${cfg.organizationId}/${path}`.replace(/[^a-zA-Z0-9._\/-]/g,'_');const r=await client.storage.from(cfg.storageBucket).upload(clean,file,{upsert:true});if(r.error)throw r.error;await log('UPLOAD_FILE','storage',clean,{name:file.name,size:file.size,type:file.type});return clean;}
   async function deleteFile(path){const r=await client.storage.from(cfg.storageBucket).remove([path]);if(r.error)throw r.error;await log('DELETE_FILE','storage',path);}
   async function signedFileUrl(path,seconds=600){const r=await client.storage.from(cfg.storageBucket).createSignedUrl(path,seconds);if(r.error)throw r.error;return r.data.signedUrl;}
