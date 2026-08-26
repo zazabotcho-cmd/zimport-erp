@@ -58,6 +58,13 @@
   }
   async function loadTable(table){const r=await client.from(table).select('id,data,created_by,created_at,updated_by,updated_at,deleted_by,restore_date,version').eq('organization_id',cfg.organizationId);if(r.error)throw r.error;return (r.data||[]).map(x=>{baseline.set(key(table,x.id),{data:x.data||{},version:x.version||1,updatedAt:x.updated_at});return {...x.data,id:x.id,_cloudVersion:x.version||1,_audit:{createdBy:x.created_by,createdAt:x.created_at,updatedBy:x.updated_by,updatedAt:x.updated_at,deletedBy:x.deleted_by,restoreDate:x.restore_date}};});}
   async function loadState(){if(syncing)return;status('Loading shared data…');try{baseline=new Map();const out={};for(const [k,t] of Object.entries(collectionMap))out[k]=await loadTable(t);
+    // One-time cleanup of erroneous tender requested by Head Office: 2546 — Italy North.
+    const badTenders=(out.tenders||[]).filter(t=>String(t.code||'').trim()==='2546' && String(t.name||'').trim().toLowerCase().includes('italy north'));
+    for(const t of badTenders){
+      const b=baseline.get(key('tenders',t.id));
+      if(b){try{await deleteRow('tenders',t.id,b);}catch(e){console.warn('Could not delete erroneous tender 2546 from cloud yet:',e);}}
+    }
+    out.tenders=(out.tenders||[]).filter(t=>!(String(t.code||'').trim()==='2546' && String(t.name||'').trim().toLowerCase().includes('italy north')));
     // worker_submissions are already represented inside tender.workItems in the app state,
     // but their cloud rows must still be loaded so sync knows they already exist.
     await loadTable('worker_submissions');

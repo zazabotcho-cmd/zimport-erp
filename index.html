@@ -1588,7 +1588,7 @@ settings={usd:settings.usd??0.70,gbp:settings.gbp??0.54,eur:settings.eur??0.65,r
 const defaultAgencies=[{id:'agency-zimport',name:'Zimport Global Corporation',short:'142858',notes:'Primary agency'},{id:'agency-golden',name:'Golden Maple Marketing Inc.',short:'',notes:'Additional agency'}];
 const seedRecord={id:'seed-old-marani',productNeeds:'VINTAGES',tenderId:'1001',tenderName:'Emerging Europe Tender',tenderDate:'2026-07-30',agencyId:'agency-zimport',supplier:'OLD MARANI',brand:'GURJAANI',itemName:'OLD MARANI KINDZMARAULI',registered:'Yes',year:2024,award1:'87 WA',link1:'',award2:'',link2:'',award3:'',link3:'',extraAwards:[],productType:'Wine',productSubtype:'Wine',caseKg:18.9,currency:'USD',exchangeRate:1.42,supplierPrice:2.88,bottles:12,offeredQuoteCurrency:settings.defaultCurrency||'CAD',offeredQuote:88.80,erpManual:18.60,transportExpense:.75,potentialCases:715,sampleProvideDate:'',stage1Decision:'Accepted',sampleStatus:'Requested to Supplier',documentsToProvideStatus:'Not Ready',finalDecision:'Declined',finalOrderedQty:0,comments:'Tenderistvis om kindzmaraulis fasi dasvi 18.5 rom iyos daxlebze'};
 let state=JSON.parse(safeStorage.getItem(DATA_KEY)||safeStorage.getItem('zimportSubmissionProgramV4')||'null')||{agencies:defaultAgencies,records:[seedRecord],items:[],tenders:[],suppliers:[]};
-state.tenders=(state.tenders||[]).map(t=>({...t,workItems:(Array.isArray(t.workItems)?t.workItems:[]).map(w=>({...w,status:w.status==='Registered'?'Registered in LCBO NISS':(w.status==='Completed'?'In Progress':(w.status||'To Register'))}))}));
+state.tenders=(state.tenders||[]).filter(t=>!(String(t.code||'').trim()==='2546' && String(t.name||'').trim().toLowerCase().includes('italy north'))).map(t=>({...t,workItems:(Array.isArray(t.workItems)?t.workItems:[]).map(w=>({...w,status:w.status==='Registered'?'Registered in LCBO NISS':(w.status==='Completed'?'In Progress':(w.status||'To Register'))}))}));
 state.records=(state.records||[]).map(r=>{const specific=r.productSubtype&&r.productSubtype!=='Wine'?r.productSubtype:r.productType;let migratedFinal=r.finalDecision==='Approved'?'Winner':r.finalDecision;const finalDecision=r.registered==='No'?'Not Registered':(['In Progress','Winner','Declined','Not Registered'].includes(migratedFinal)?migratedFinal:'In Progress');return {...r,ntpStatus:r.ntpStatus||'Not Issued',ntpFileName:r.ntpFileName||'',poStatus:r.poStatus||'Not Issued',poNumber:r.poNumber||'',poFileName:r.poFileName||'',submissionNumber:r.submissionNumber||'',productNeeds:r.productNeeds||'VINTAGES',tenderId:r.tenderId||'',productType:(['Red Wine','White Wine','Rosé Wine','Rose Wine','Wine'].includes(specific)?'Wine':(specific||'Wine')),offeredQuoteCurrency:r.offeredQuoteCurrency||'CAD',stage1Decision:r.stage1Decision||(r.sampleRequested==='Yes'?'Sample Requested':(r.stage1==='Declined'?'Declined':'Accepted')),finalDecision};});
 if(!Array.isArray(state.agencies)||!state.agencies.length)state.agencies=defaultAgencies;if(!Array.isArray(state.suppliers))state.suppliers=[];
 if(!Array.isArray(state.records))state.records=[];
@@ -5159,7 +5159,30 @@ window.openItalyCandidateAttachment=i=>{const f=currentItalyCandidateAttachments
 function handleItalyCandidateAttachments(e){for(const file of [...e.target.files]){if(currentItalyCandidateAttachments.length>=10){alert('Maximum 10 attachments are allowed.');break}if(!['application/pdf','image/jpeg'].includes(file.type)&&!file.name.toLowerCase().match(/\.(pdf|jpe?g)$/)){alert(`${file.name}: only PDF, JPG and JPEG files are allowed.`);continue}if(file.size>5*1024*1024){alert(`${file.name}: maximum file size is 5 MB.`);continue}currentItalyCandidateAttachments.push({id:uid(),name:file.name,size:file.size,type:file.type,lastModified:file.lastModified,blob:file})}e.target.value='';renderItalyCandidateAttachments()}
 function calcItalyCandidateCaseVolume(){const v=num(document.getElementById('c_caseLengthCm')?.value)*num(document.getElementById('c_caseWidthCm')?.value)*num(document.getElementById('c_caseHeightCm')?.value);const out=document.getElementById('c_calculatedCaseVolume');if(out)out.value=v?v.toFixed(2):''}
 function syncItalyCandidateLcboItemVisibility(){const input=document.getElementById('c_lcboItemNumber'),label=input?.closest('label'),show=document.getElementById('c_previouslyPurchased')?.value==='Yes';if(label)label.classList.toggle('field-hidden',!show);if(input){input.disabled=!show;input.required=show;if(label){const first=label.childNodes[0];if(first&&first.nodeType===3)first.nodeValue=show?'LCBO Item Number *':'LCBO Item Number'}if(!show)input.value=''}}
-function populateItalyCandidateOpportunitySelect(selected=''){const o=document.getElementById('itCanOpp');if(o){o.innerHTML='<option value="">Select Tender</option>'+(state.tenders||[]).filter(t=>(t.sourcingRepresentatives||[]).includes('Italy')).map(t=>`<option value="${t.id}">${esc(t.code||'—')} — ${esc(t.name||'Unnamed Tender')}</option>`).join('');o.value=selected||''}}
+function populateItalyCandidateOpportunitySelect(selected=''){
+ const o=document.getElementById('itCanOpp');if(!o)return;
+ const supplier=currentCountrySupplier();
+ const supplierId=String(supplier?.id||currentCountrySupplierId||'').trim();
+ const country=String(currentSourcingCountry||supplier?.country||'').trim();
+ const normCountry=normalizeTenderCountryName(country);
+
+ // A Wine Candidate may only be assigned to a tender where THIS supplier was
+ // explicitly checked under Create a Tender → Suppliers to Notify.
+ const eligible=(state.tenders||[]).filter(t=>{
+   const keys=Array.isArray(t.notificationSupplierKeys)?t.notificationSupplierKeys:[];
+   return keys.some(raw=>{
+     const key=String(raw||'').trim();
+     const split=key.indexOf('::');
+     if(split<0)return key===supplierId; // legacy supplier-id-only records
+     const keyCountry=key.slice(0,split);
+     const keySupplierId=key.slice(split+2);
+     return keySupplierId===supplierId &&
+       (!normCountry || normalizeTenderCountryName(keyCountry)===normCountry);
+   });
+ });
+ o.innerHTML='<option value="">Select Tender</option>'+eligible.map(t=>`<option value="${t.id}">${esc(t.code||'—')} — ${esc(t.name||'Unnamed Tender')}</option>`).join('');
+ o.value=eligible.some(t=>String(t.id)===String(selected||''))?String(selected):'';
+}
 
 function syncItalyCandidateQuoteType(){
  const type=document.getElementById('itCanQuoteType')?.value||'',wrap=document.getElementById('itCanExCellarDeliveryWrap'),input=document.getElementById('itCanExCellarDelivery');
