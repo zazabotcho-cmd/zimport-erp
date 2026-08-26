@@ -477,6 +477,19 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 }
 </style>
 
+<script>
+window.WINGLOBAL_LOCAL_FILE_MODE = location.protocol === 'file:';
+if(window.WINGLOBAL_LOCAL_FILE_MODE){
+  document.documentElement.classList.add('winglobal-local-file-mode');
+}
+</script>
+<style>
+html.winglobal-local-file-mode #onlineLoginGate,
+html.winglobal-local-file-mode #onlineSyncBanner {
+  display:none !important;
+  pointer-events:none !important;
+}
+</style>
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -4137,7 +4150,7 @@ new MutationObserver(mutations=>mutations.forEach(m=>m.addedNodes.forEach(n=>{if
 
 
 function applyOnlinePermissions(){
- const role=window.ZIMPORT_CURRENT_ROLE||'readonly';
+ const role=window.WINGLOBAL_LOCAL_FILE_MODE?'admin':(window.ZIMPORT_CURRENT_ROLE||'readonly');
  const canEdit=['admin','manager','worker'].includes(role), canAdmin=role==='admin', canManage=['admin','manager'].includes(role);
  document.querySelectorAll('button.danger,#deleteRecord,#deleteTender,#deleteAgency,#deleteSupplier,#deleteItem,#clearBtn').forEach(el=>{if(el.classList.contains('recycle-permanent-delete'))return;el.disabled=!canManage;el.title=!canManage?'Your role cannot delete records.':''});
  document.querySelectorAll('.recycle-permanent-delete').forEach(el=>{el.disabled=!canAdmin;el.style.display=canAdmin?'':'none'});
