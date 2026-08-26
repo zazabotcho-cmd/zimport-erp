@@ -1887,15 +1887,17 @@ function renderWorkerList(){
   // Keep LCBO SUBMISSIONS LIST automatically synchronized with Head Office approvals.
   // This also backfills proposals that were approved before this program version.
   if(Array.isArray(state.countryCandidates)){
-    const beforeApprovedRows=(state.tenders||[]).reduce((sum,t)=>sum+((t.workItems||[]).filter(w=>w.sourceCandidateId).length),0);
+    // Existing approved rows may need more than insertion: repair their tender
+    // link, database item, agency, price, or status and persist every mutation.
+    const beforeApprovedState=JSON.stringify({tenders:state.tenders||[],items:state.items||[]});
     state.countryCandidates.forEach(candidate=>{
       if(normalizeHeadProposalStatus(candidate?.headOfficeActionStatus||candidate?.status)==='Approved for LCBO Submission'){
         ensureApprovedCandidateInLcboSubmissions(candidate);
       }
     });
-    const afterApprovedRows=(state.tenders||[]).reduce((sum,t)=>sum+((t.workItems||[]).filter(w=>w.sourceCandidateId).length),0);
+    const afterApprovedState=JSON.stringify({tenders:state.tenders||[],items:state.items||[]});
     // Persist any approved rows backfilled while opening this page so they remain actual LCBO Submission List items.
-    if(afterApprovedRows!==beforeApprovedRows){
+    if(afterApprovedState!==beforeApprovedState){
       safeStorage.setItem(DATA_KEY,JSON.stringify(state));
       if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
     }
@@ -6675,7 +6677,8 @@ function ensureApprovedCandidateInLcboSubmissions(candidate){
    t.workItems=t.workItems.filter(w=>w.sourceCandidateId!==candidate.id);
  });
 
- const existing=tender.workItems.find(w=>w.sourceCandidateId===candidate.id);
+  const existing=tender.workItems.find(w=>w.sourceCandidateId===candidate.id);
+  const existingBefore=existing?JSON.stringify({...existing,updatedAt:undefined}):'';
  const offeredPrice=(candidate.headOfferedLcboCasePrice!==''&&candidate.headOfferedLcboCasePrice!=null)
    ? num(candidate.headOfferedLcboCasePrice)
    : num(candidate.supplierPricePerCase);
@@ -6702,14 +6705,14 @@ function ensureApprovedCandidateInLcboSubmissions(candidate){
  workItem.tenderName=tender.name||'';
  workItem.candidateScore=candidate.score||'';
  workItem.candidateScoreSource=candidate.scoreSource||candidate.scoreSourceOther||'';
- workItem.updatedAt=new Date().toISOString();
-
- if(!existing)tender.workItems.push(workItem);
+  if(!existing)tender.workItems.push(workItem);
 
  // Approval must behave exactly like adding a new LCBO submission item manually:
  // create/link its Tender Item Database record and carry the registration details over.
- ensureApprovedCandidateTenderDatabaseItem(candidate,tender,workItem);
- return workItem;
+  ensureApprovedCandidateTenderDatabaseItem(candidate,tender,workItem);
+  const existingAfter=JSON.stringify({...workItem,updatedAt:undefined});
+  if(!existing||existingAfter!==existingBefore)workItem.updatedAt=new Date().toISOString();
+  return workItem;
 }
 window.ensureApprovedCandidateInLcboSubmissions=ensureApprovedCandidateInLcboSubmissions;
 
