@@ -1,56 +1,55 @@
-ZIMPORT — "STUCK AFTER LOADING" FIX (v2)
+ZIMPORT — FIX LOG (v3)
 
-WHAT WAS WRONG (two related bugs, both in online-adapter.js)
+NEW IN THIS VERSION: Head Office Action error
+--------------------------------------------
+On the "ALL PROPOSALS — Head Office Review" page, clicking "Update Head Office
+Action" showed:
+  "Head Office Action could not be updated. normalizeHeadProposalStatus is not defined."
 
+CAUSE: index.html is built from two big internal code blocks. A helper function
+called normalizeHeadProposalStatus was written inside the second block only, so
+the first block couldn't see it — like two rooms in a house where one room's
+light switch isn't wired to the other room's lights. The Worker submissions list
+(which the Update button also refreshes after saving) lives in that first block
+and calls this helper, so the save crashed partway through with that exact error.
+
+FIX: the helper is now also made available to the first block, the same way
+several other shared helpers already were. I reproduced your exact error message
+in an automated test against the original file, applied the fix, and reran the
+same test — the error is gone and the update completes normally (verified for
+both a plain status change and an "Approved for LCBO Submission" action).
+
+While tracking this down, I checked the whole file for this same kind of mistake
+(a helper written in one block but used from the other) and found two more spots
+with the identical problem, both around automatically syncing/showing the
+Financial Profit pages after a Transportation/Shipment status change. I fixed
+those the same way so they don't surface as a similar crash later.
+
+Only index.html changed in this update.
+
+CARRIED OVER FROM v2: "stuck after loading" fixes
+--------------------------------------------------
 1) If the cloud library (loaded from the internet) was slow, blocked, or failed to
-   load, the program hit a silent error and never finished setting up the Sign In,
-   Forgot Password, Sign Out, and Sync Now buttons. Clicking them did nothing.
+   load, Sign In / Forgot Password / Sign Out / Sync Now did nothing. They're now
+   wired up regardless, and a failed cloud library load shows a clear message with
+   a "Retry connection" button.
+2) Sign In, Forgot Password, and Sign Out now catch any connection failure
+   (network hiccup, blocked/unreachable project, etc.) and show a plain message
+   instead of silently doing nothing.
+Only online-adapter.js changed for these two.
 
-2) Even when the cloud library loaded fine, if the Sign In button's actual network
-   request to your Supabase project failed for any reason (a connection hiccup, a
-   firewall, DNS issues, or the project itself being unreachable/paused), that
-   failure was never caught. The click would silently do nothing — no error
-   message, no spinner, nothing — which looks exactly like the screen being
-   "stuck." I reproduced this exact scenario in an automated test and confirmed it
-   was the cause of a click producing zero visible feedback.
-
-WHAT WAS CHANGED
-Only online-adapter.js was changed:
-- Sign In, Forgot Password, Sign Out, and Sync Now are wired up immediately, no
-  matter what happens with the cloud library (bug 1).
-- If the cloud library fails to load, the login screen shows a clear message and a
-  "Retry connection" button instead of doing nothing.
-- Sign In, Forgot Password, and Sign Out now catch ANY failure — network problems,
-  a blocked connection, an unreachable project — and show a plain-English message
-  in red under the password field, instead of silently doing nothing (bug 2).
-
-Both scenarios were tested in an automated browser and confirmed fixed: the app
-now always shows a message when something goes wrong, and normal sign-in still
-works exactly as before when the connection is healthy.
-
-WHAT TO CHECK ON YOUR END
-Since clicking Sign In previously did "nothing," it's worth double-checking your
-Supabase project is actually live and reachable:
-1. Log into supabase.com and open your project. If it shows as "Paused" (common on
-   the free tier after a period of no activity), click to restore/resume it.
-2. Confirm the Project URL and anon/publishable key in online-config.js exactly
-   match what's shown in your Supabase project's Settings > API page.
-3. Re-open index.html (or your hosted site) and try Sign In again — with this fix,
-   if it still can't connect, you will now see the exact reason on screen instead
-   of a blank, unresponsive button.
-4. For real day-to-day use, host these files on an HTTPS site (Cloudflare Pages,
-   Netlify, etc.) as DEPLOYMENT_CHECKLIST.txt describes, rather than opening
-   index.html directly from your desktop — some browsers apply extra restrictions
-   to files opened this way.
+WHAT TO CHECK ON YOUR END (still applies if login is ever unresponsive)
+1. In supabase.com, confirm your project isn't "Paused" (common on the free tier
+   after inactivity) — resume it if so.
+2. Confirm the URL/key in online-config.js match Settings > API in your project.
+3. Prefer hosting these files on an HTTPS site (Cloudflare Pages, Netlify, etc.)
+   over opening index.html directly from your desktop for day-to-day use.
 
 WHAT YOU NEED TO DO
-Re-upload/replace every file in this ZIP where your program lives (or re-extract
-this ZIP over your desktop copy). Only online-adapter.js changed — your Supabase
-URL/keys in online-config.js were left exactly as they were.
+Replace every file where your program lives with the files in this ZIP (or
+re-extract over your existing folder). Your Supabase URL/keys were not touched.
 
-NOTE (not related to the stuck issue, no action needed)
-While testing, the browser flagged a handful of duplicate HTML element IDs in two
-of the Financial sections (e.g. ssFinAdDescription1-6, ssFinInvoiceNumber). This is
-a pre-existing, unrelated cosmetic issue in two similar financial sub-pages and did
-not cause the freeze — it wasn't touched in this fix. Mention it if you'd like it
-looked at separately.
+NOTE (unrelated, no action needed)
+Two Financial sub-pages share a handful of duplicate HTML field IDs
+(ssFinAdDescription1-6, ssFinInvoiceNumber, etc.) — cosmetic, pre-existing, not
+touched here. Mention it if you'd like it looked at separately.

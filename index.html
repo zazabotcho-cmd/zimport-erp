@@ -5587,6 +5587,7 @@ function normalizeHeadProposalStatus(v){
  if(HEAD_PROPOSAL_STATUSES.includes(s))return s;
  return s;
 }
+window.normalizeHeadProposalStatus=normalizeHeadProposalStatus;
 function headProposalTender(candidate){
  return (state.tenders||[]).find(x=>x.id===candidate.opportunityId)||null;
 }
@@ -6146,6 +6147,8 @@ function syncAutoFinancialProfitPagesFromTransportation(){
   save();
   if(typeof renderFinancialProfitPages==='function')renderFinancialProfitPages();
 }
+window.syncAutoFinancialProfitPagesFromTransportation=syncAutoFinancialProfitPagesFromTransportation;
+window.ensureFinancialProfitPageForTransportation=ensureFinancialProfitPageForTransportation;
 function financialImportEligiblePos(sh){
   const seen=new Set(),out=[];
   (sh?.poLinks||[]).forEach(link=>{
@@ -6414,6 +6417,7 @@ function renderFinancialProfitPages(){
   renderFinancialProfitTabs();
   (state.financialProfitPages||[]).forEach(renderSingleFinancialProfitPage);
 }
+window.renderFinancialProfitPages=renderFinancialProfitPages;
 window.renderProfitItemCalculator=()=>{
   const body=document.getElementById('profitItemRows'),kpis=document.getElementById('profitItemKpis');
   if(!body)return;
