@@ -1889,10 +1889,9 @@ function renderWorkerList(){
   if(Array.isArray(state.countryCandidates)){
     const beforeApprovedRows=(state.tenders||[]).reduce((sum,t)=>sum+((t.workItems||[]).filter(w=>w.sourceCandidateId).length),0);
     state.countryCandidates.forEach(candidate=>{
-      const approved=['Approved for LCBO Submission','Approved for LCBO'].includes(String(candidate?.headOfficeActionStatus||candidate?.status||'').trim());
-      if(!approved)return;
-      const alreadyExists=(state.tenders||[]).some(t=>(t.workItems||[]).some(w=>w.sourceCandidateId===candidate.id));
-      if(!alreadyExists)ensureApprovedCandidateInLcboSubmissions(candidate);
+      if(normalizeHeadProposalStatus(candidate?.headOfficeActionStatus||candidate?.status)==='Approved for LCBO Submission'){
+        ensureApprovedCandidateInLcboSubmissions(candidate);
+      }
     });
     const afterApprovedRows=(state.tenders||[]).reduce((sum,t)=>sum+((t.workItems||[]).filter(w=>w.sourceCandidateId).length),0);
     // Persist any approved rows backfilled while opening this page so they remain actual LCBO Submission List items.
@@ -6801,14 +6800,12 @@ function ensureApprovedCandidateInLcboSubmissions(candidate){
  workItem.candidateScore=candidate.score||'';
  workItem.candidateScoreSource=candidate.scoreSource||candidate.scoreSourceOther||'';
  workItem.status='Approved for LCBO Submission';
+ workItem.updatedAt=new Date().toISOString();
 
- if(!existing){
-   workItem.updatedAt=new Date().toISOString();
-   tender.workItems.push(workItem);
- }
+ if(!existing)tender.workItems.push(workItem);
 
- // Create/link the LCBO submission row, but do not save/sync from this helper.
- // It can run while the page is rendering, so saving here can create a sync loop.
+ // Approval must behave exactly like adding a new LCBO submission item manually:
+ // create/link its Tender Item Database record and carry the registration details over.
  ensureApprovedCandidateTenderDatabaseItem(candidate,tender,workItem);
  return workItem;
 }
