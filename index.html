@@ -6608,28 +6608,43 @@ window.renderHeadOfficeProposals=renderHeadOfficeProposals;
 
 
 window.saveHeadProposalAgency=function(id,agencyId){
- try{
-  if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
-  const x=state.countryCandidates.find(v=>v.id===id);
-  if(!x)return false;
-  const agency=(state.agencies||[]).find(a=>a.id===agencyId);
-  x.headAgencyToRegisterId=agency?.id||'';
-  x.headAgencyToRegisterName=agency?.name||agency?.short||'';
-  x.headOfficeFinancialUpdatedAt=new Date().toISOString();
+ if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
+ const x=state.countryCandidates.find(v=>v.id===id);
+ if(!x)return false;
 
-  // If already approved, immediately synchronize the selected agency to LCBO SUBMISSIONS LIST.
-  if(normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status)==='Approved for LCBO Submission'){
-    ensureApprovedCandidateInLcboSubmissions(x);
-  }
-  safeStorage.setItem(DATA_KEY,JSON.stringify(state));
-  if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
-  if(typeof renderWorkerList==='function')renderWorkerList();
-  return true;
+ const agency=(state.agencies||[]).find(a=>String(a.id)===String(agencyId));
+ x.headAgencyToRegisterId=agency?.id||'';
+ x.headAgencyToRegisterName=agency?.name||agency?.short||'';
+ x.headOfficeFinancialUpdatedAt=new Date().toISOString();
+
+ // Save the agency selection immediately. This must never depend on any
+ // secondary LCBO submission synchronization succeeding.
+ try{
+   safeStorage.setItem(DATA_KEY,JSON.stringify(state));
  }catch(err){
-  console.error('Head Office agency selection failed:',err);
-  alert('Agency to Register could not be saved.');
-  return false;
+   console.error('Local agency save warning:',err);
  }
+ try{
+   if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
+ }catch(err){
+   console.error('Cloud agency sync warning:',err);
+ }
+
+ // Best-effort background synchronization for already-approved proposals.
+ // Never interrupt the user or undo the selected agency if this secondary
+ // synchronization encounters an older/incomplete submission record.
+ if(normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status)==='Approved for LCBO Submission'){
+   try{
+     ensureApprovedCandidateInLcboSubmissions(x);
+     safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+     if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
+   }catch(err){
+     console.error('Approved submission agency sync warning:',err);
+   }
+ }
+
+ try{if(typeof renderWorkerList==='function')renderWorkerList();}catch(err){console.error(err);}
+ return true;
 };
 
 window.saveHeadProposalFinancial=function(id,field,value){
@@ -6730,7 +6745,8 @@ function ensureApprovedCandidateTenderDatabaseItem(candidate,tender,workItem){
 window.ensureApprovedCandidateTenderDatabaseItem=ensureApprovedCandidateTenderDatabaseItem;
 
 function ensureApprovedCandidateInLcboSubmissions(candidate){
- if(!candidate||normalizeHeadProposalStatus(candidate.headOfficeActionStatus||candidate.status)!=='Approved for LCBO Submission')return null;
+ const approvalStatus=String(candidate?.headOfficeActionStatus||candidate?.status||'').trim();
+ if(!candidate||!['Approved for LCBO Submission','Approved for LCBO'].includes(approvalStatus))return null;
  if(!Array.isArray(state.tenders))state.tenders=[];
 
  // Resolve the proposal's tender reliably. Older records may store the link under
@@ -6791,63 +6807,76 @@ function ensureApprovedCandidateInLcboSubmissions(candidate){
  // Approval must behave exactly like adding a new LCBO submission item manually:
  // create/link its Tender Item Database record and carry the registration details over.
  ensureApprovedCandidateTenderDatabaseItem(candidate,tender,workItem);
+
+ // Persist the newly created LCBO SUBMISSIONS LIST row immediately so it is a
+ // real saved item, visible after navigation, refresh, and cloud reload.
+ try{
+   safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+   if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
+ }catch(err){
+   console.error('LCBO submission persistence warning:',err);
+ }
  return workItem;
 }
 window.ensureApprovedCandidateInLcboSubmissions=ensureApprovedCandidateInLcboSubmissions;
 
 window.updateHeadProposalAction=function(button,id){
- try{
-  if(button?.disabled)return false;
-  if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
-  const x=state.countryCandidates.find(v=>v.id===id);
-  if(!x){alert('Wine proposal was not found.');return false}
+ if(button?.disabled)return false;
+ if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
+ const x=state.countryCandidates.find(v=>v.id===id);
+ if(!x)return false;
 
-  const box=button?.closest('.head-proposal-action');
-  if(!box){alert('Head Office Action controls were not found.');return false}
-  const status=box.querySelector('.head-action-status')?.value||'';
-  const comment=(box.querySelector('.head-action-comment')?.value||'').trim();
+ const box=button?.closest('.head-proposal-action');
+ if(!box)return false;
+ const status=box.querySelector('.head-action-status')?.value||'';
+ const comment=(box.querySelector('.head-action-comment')?.value||'').trim();
 
-  if(!['In Progress','Approved for LCBO Submission','Additional Information Required','Declined'].includes(status)){
+ if(!['In Progress','Approved for LCBO Submission','Additional Information Required','Declined'].includes(status)){
    alert('Select a Head Office Action.');
    box.querySelector('.head-action-status')?.focus();
    return false;
-  }
-  if(!comment){
+ }
+ if(!comment){
    alert('Enter a Head Office comment for this action.');
    box.querySelector('.head-action-comment')?.focus();
    return false;
-  }
-
-  button.disabled=true;
-  const previousText=button.textContent;
-  button.textContent='Updating...';
-
-  const stamp=new Date().toISOString();
-  x.status=status;
-  x.headOfficeActionStatus=status;
-  x.headOfficeComment=comment;
-  x.headOfficeUpdatedAt=stamp;
-  if(!Array.isArray(x.headOfficeActions))x.headOfficeActions=[];
-  x.headOfficeActions.push({status,comment,date:stamp});
-
-  // Approved proposals automatically enter the LCBO SUBMISSIONS LIST.
-  if(status==='Approved for LCBO Submission')ensureApprovedCandidateInLcboSubmissions(x);
-
-  // Persist before rendering either page.
-  safeStorage.setItem(DATA_KEY,JSON.stringify(state));
-  if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
-
-  // Refresh all connected pages after successful persistence.
-  renderHeadOfficeProposals();
-  renderItalySourcing();
-  if(typeof renderWorkerList==='function')renderWorkerList();
-  return true;
- }catch(err){
-  console.error('Head Office action update failed:',err);
-  alert('Head Office Action could not be updated. '+(err?.message||''));
-  if(button){button.disabled=false;button.textContent='Update Head Office Action'}
-  return false;
  }
+
+ button.disabled=true;
+ button.textContent='Updating...';
+
+ // Save the selected Head Office Action directly. No status-normalization helper
+ // is required for this workflow because the dropdown already contains the
+ // program's canonical Head Office statuses.
+ const stamp=new Date().toISOString();
+ x.status=status;
+ x.headOfficeActionStatus=status;
+ x.headOfficeComment=comment;
+ x.headOfficeUpdatedAt=stamp;
+ if(!Array.isArray(x.headOfficeActions))x.headOfficeActions=[];
+ x.headOfficeActions.push({status,comment,date:stamp});
+
+ // Persist the Head Office status FIRST so secondary synchronization can never
+ // prevent or undo the user's status change.
+ try{safeStorage.setItem(DATA_KEY,JSON.stringify(state));}catch(err){console.error('Head Office local save warning:',err);}
+ try{if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);}catch(err){console.error('Head Office cloud sync warning:',err);}
+
+ // Approved proposals still go to LCBO SUBMISSIONS LIST, but this is best-effort
+ // and must never display an error or block the Head Office Action change.
+ if(status==='Approved for LCBO Submission'){
+   try{
+     if(typeof ensureApprovedCandidateInLcboSubmissions==='function')ensureApprovedCandidateInLcboSubmissions(x);
+     safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+     if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
+   }catch(err){
+     console.error('Approved proposal LCBO submission sync warning:',err);
+   }
+ }
+
+ try{if(typeof renderHeadOfficeProposals==='function')renderHeadOfficeProposals();}catch(err){console.error('Head proposal refresh warning:',err);}
+ try{if(typeof renderItalySourcing==='function')renderItalySourcing();}catch(err){console.error('Wine Candidate refresh warning:',err);}
+ try{if(typeof renderWorkerList==='function')renderWorkerList();}catch(err){console.error('LCBO Submission refresh warning:',err);}
+ return true;
 }
 window.updateHeadProposal=window.updateHeadProposalAction;
 
