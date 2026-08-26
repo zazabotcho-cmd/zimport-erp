@@ -3744,25 +3744,43 @@ $('#closeShipmentInfo').onclick=$('#closeShipmentInfoBottom').onclick=closeShipm
 if($('#addPoSupplierBtn'))$('#addPoSupplierBtn').onclick=addPoSupplierChoice;if($('#addPoVendorBtn'))$('#addPoVendorBtn').onclick=addPoVendorChoice;if($('#poSupplierSelect'))$('#poSupplierSelect').onchange=syncPoOtherSupplier;
 $('#addPoLineBtn').onclick=()=>addPoLine();$('#poItemLines').addEventListener('input',calculatePoTotals);$('#poItemLines').addEventListener('click',e=>{if(e.target.classList.contains('po-remove-line')){e.target.closest('tr').remove();if(!$('#poItemLines').children.length)addPoLine();calculatePoTotals();}});$('#poFileInput').onchange=e=>{poPendingFile=e.target.files[0]||null;renderPoFileStatus(poPendingFile?.name||'');e.target.value='';};$('#openPoRecordFileBtn').onclick=()=>{if(poPendingFile){const url=URL.createObjectURL(poPendingFile);window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000)}else{const id=$('#poRecordId').value;if(id)openPoRecordFile(id)}};$('#removePoRecordFileBtn').onclick=removeCurrentPoRecordFile;$('#tenderCode').addEventListener('input',autofillTenderById);$('#tenderCode').addEventListener('change',autofillTenderById);$('#closeItemInfo').onclick=$('#closeItemInfoBottom').onclick=closeItemInfo;$('#copyAllItemInfo').onclick=copyAllItemInformation;$('#editItemFromInfo').onclick=()=>{const id=currentInfoItemId;closeItemInfo();activate('items');editItem(id)};$('#addTenderBtn').onclick=()=>openTender();$('#tenderProductNeeds').onchange=syncTenderOtherNeed;$('#workerTenderFilter').onchange=renderWorkerList;const workerSearchIds=['workerTenderIdSearch','workerTenderNameDateSearch','workerSupplierSearch','workerItemSearch','workerOfferedPriceSearch'];workerSearchIds.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderWorkerList});['workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.onchange=renderWorkerList});if($('#toggleWorkerSearch'))$('#toggleWorkerSearch').onclick=()=>{const panel=$('#workerSearchPanel');panel.classList.toggle('open');$('#toggleWorkerSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearWorkerSearch'))$('#clearWorkerSearch').onclick=()=>{[...workerSearchIds,'workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderWorkerList()};const workerAgency=$('#workerAgencySearch');if(workerAgency)workerAgency.innerHTML='<option value="">All agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');$('#closeWorkerItemModal').onclick=$('#cancelWorkerItem').onclick=closeWorkerItemEditor;$('#saveWorkerItem').onclick=saveWorkerListItem;$('#removeWorkerItem').onclick=removeWorkerItemFromEditor;$('#closeTender').onclick=$('#cancelTender').onclick=closeTender;const tenderSearchInputs=['tenderIdSearch','tenderNameSearch','tenderProductNeedsSearch','tenderPresubDateSearch','tenderTastingDateSearch'];tenderSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderTenders});if($('#tenderStatusSearch'))$('#tenderStatusSearch').onchange=renderTenders;if($('#toggleTenderSearch'))$('#toggleTenderSearch').onclick=()=>{const panel=$('#tenderSearchPanel');panel.classList.toggle('open');$('#toggleTenderSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearTenderSearch'))$('#clearTenderSearch').onclick=()=>{[...tenderSearchInputs,'tenderStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderTenders()};
 function tenderSupplierKey(country,id){return `${country}::${id}`;}
+function normalizeTenderCountryName(value){return String(value||'').trim().replace(/\s+/g,' ').toLowerCase();}
 function renderTenderSupplierChoices(selected=[]){
  const box=document.getElementById('tenderSupplierChoices');if(!box)return;
- const countries=[...document.querySelectorAll('.tender-representative:checked')].map(cb=>cb.value);
- const suppliers=(state.countryPortfolioSuppliers||[])
-   .filter(s=>countries.includes(s.country))
-   .sort((a,b)=>String(a.country||'').localeCompare(String(b.country||''))||String(a.name||'').localeCompare(String(b.name||'')));
+ const countries=[...document.querySelectorAll('.tender-representative:checked')].map(cb=>String(cb.value||'').trim()).filter(Boolean);
+ const selectedCountries=new Set(countries.map(normalizeTenderCountryName));
+ const portfolio=Array.isArray(state.countryPortfolioSuppliers)?state.countryPortfolioSuppliers:[];
+ const supplierInfo=Array.isArray(state.countryWineries)?state.countryWineries:[];
+ const rows=[];
+ const seen=new Set();
 
- // Every marked country immediately loads ALL suppliers from Country Sourcing → Suppliers.
- // Every displayed supplier is automatically marked under Suppliers to Notify, for both
- // new and existing tenders. The user may uncheck an individual supplier afterwards.
- box.innerHTML=suppliers.map(s=>{
-  const key=tenderSupplierKey(s.country,s.id);
-  const supplierInfo=(state.countryWineries||[]).filter(x=>x.country===s.country&&x.portfolioSupplierId===s.id);
-  const emails=[...new Set(supplierInfo.map(x=>String(x.email||'').trim()).filter(Boolean))];
-  const legalNames=[...new Set(supplierInfo.map(x=>String(x.supplierLegalFullName||x.name||'').trim()).filter(Boolean))];
-  const displayName=legalNames.length?legalNames.join(' / '):(s.name||'Supplier');
-  const checked=true;
-  return `<label class="checkbox-card"><input type="checkbox" class="tender-supplier-recipient" value="${esc(key)}" ${checked?'checked':''}><span><b>${esc(s.country)} — ${esc(displayName)}</b><br><small>${esc(emails.join(', ')||'No registered email')}</small></span></label>`;
- }).join('')||(countries.length?'<div class="note full">No suppliers are saved in Country Sourcing → Suppliers for the selected country.</div>':'<div class="note full">Select a country representative first.</div>');
+ // Read the suppliers from Country Sourcing → Suppliers. Match country names case-insensitively
+ // and also respect Supplier Information's Supplier Country field, so GEORGIA / Georgia etc. work.
+ portfolio.forEach(s=>{
+   const linked=supplierInfo.filter(x=>String(x.portfolioSupplierId||'')===String(s.id||''));
+   const possibleCountries=[s.country,...linked.map(x=>x.supplierCountry||x.country)].map(normalizeTenderCountryName).filter(Boolean);
+   if(!possibleCountries.some(c=>selectedCountries.has(c)))return;
+   const displayCountry=countries.find(c=>possibleCountries.includes(normalizeTenderCountryName(c)))||s.country||linked[0]?.supplierCountry||linked[0]?.country||'';
+   const legalNames=[...new Set(linked.map(x=>String(x.supplierLegalFullName||x.name||'').trim()).filter(Boolean))];
+   const emails=[...new Set(linked.map(x=>String(x.email||x.supplierEmail||'').trim()).filter(Boolean))];
+   const displayName=legalNames.length?legalNames.join(' / '):String(s.name||'Supplier').trim();
+   const key=tenderSupplierKey(s.country||displayCountry,s.id);
+   if(seen.has(key))return;seen.add(key);
+   rows.push({key,country:displayCountry,name:displayName,emails});
+ });
+
+ // Safety fallback: if a saved Supplier Information record exists but its portfolio supplier shell
+ // is missing, still show that supplier in the tender list instead of hiding it.
+ supplierInfo.forEach(x=>{
+   const candidateCountry=String(x.supplierCountry||x.country||'').trim();
+   if(!selectedCountries.has(normalizeTenderCountryName(candidateCountry)))return;
+   const pid=String(x.portfolioSupplierId||x.id||'').trim();if(!pid)return;
+   const key=tenderSupplierKey(x.country||candidateCountry,pid);if(seen.has(key))return;seen.add(key);
+   rows.push({key,country:countries.find(c=>normalizeTenderCountryName(c)===normalizeTenderCountryName(candidateCountry))||candidateCountry,name:String(x.supplierLegalFullName||x.name||'Supplier').trim(),emails:[String(x.email||x.supplierEmail||'').trim()].filter(Boolean)});
+ });
+
+ rows.sort((a,b)=>String(a.country||'').localeCompare(String(b.country||''))||String(a.name||'').localeCompare(String(b.name||'')));
+ box.innerHTML=rows.map(s=>`<label class="checkbox-card"><input type="checkbox" class="tender-supplier-recipient" value="${esc(s.key)}" checked><span><b>${esc(s.country)} — ${esc(s.name)}</b><br><small>${esc(s.emails.join(', ')||'No registered email')}</small></span></label>`).join('')||(countries.length?'<div class="note full">No suppliers are saved in Country Sourcing → Suppliers for the selected country.</div>':'<div class="note full">Select a country representative first.</div>');
 }
 window.renderTenderSupplierChoices=renderTenderSupplierChoices;
 
