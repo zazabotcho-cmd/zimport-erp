@@ -6811,57 +6811,68 @@ function ensureApprovedCandidateInLcboSubmissions(candidate){
 window.ensureApprovedCandidateInLcboSubmissions=ensureApprovedCandidateInLcboSubmissions;
 
 window.updateHeadProposalAction=function(button,id){
- try{
-  if(button?.disabled)return false;
-  if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
-  const x=state.countryCandidates.find(v=>v.id===id);
-  if(!x){alert('Wine proposal was not found.');return false}
+ if(button?.disabled)return false;
+ if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
+ const x=state.countryCandidates.find(v=>v.id===id);
+ if(!x){alert('Wine proposal was not found.');return false;}
 
-  const box=button?.closest('.head-proposal-action');
-  if(!box){alert('Head Office Action controls were not found.');return false}
-  const status=box.querySelector('.head-action-status')?.value||'';
-  const comment=(box.querySelector('.head-action-comment')?.value||'').trim();
+ const box=button?.closest('.head-proposal-action');
+ if(!box){alert('Head Office Action controls were not found.');return false;}
+ const status=String(box.querySelector('.head-action-status')?.value||'').trim();
+ const comment=String(box.querySelector('.head-action-comment')?.value||'').trim();
 
-  if(!['In Progress','Approved for LCBO Submission','Additional Information Required','Declined'].includes(status)){
+ const allowed=['In Progress','Approved for LCBO Submission','Additional Information Required','Declined'];
+ if(!allowed.includes(status)){
    alert('Select a Head Office Action.');
    box.querySelector('.head-action-status')?.focus();
    return false;
-  }
-  if(!comment){
+ }
+ if(!comment){
    alert('Enter a Head Office comment for this action.');
    box.querySelector('.head-action-comment')?.focus();
    return false;
-  }
+ }
 
-  button.disabled=true;
-  const previousText=button.textContent;
-  button.textContent='Updating...';
+ button.disabled=true;
+ const originalText=button.textContent;
+ button.textContent='Updating...';
 
-  const stamp=new Date().toISOString();
-  x.status=status;
-  x.headOfficeActionStatus=status;
-  x.headOfficeComment=comment;
-  x.headOfficeUpdatedAt=stamp;
-  if(!Array.isArray(x.headOfficeActions))x.headOfficeActions=[];
-  x.headOfficeActions.push({status,comment,date:stamp});
+ try{
+   const stamp=new Date().toISOString();
+   x.status=status;
+   x.headOfficeActionStatus=status;
+   x.headOfficeComment=comment;
+   x.headOfficeUpdatedAt=stamp;
+   if(!Array.isArray(x.headOfficeActions))x.headOfficeActions=[];
+   x.headOfficeActions.push({status,comment,date:stamp});
 
-  // Approved proposals automatically enter the LCBO SUBMISSIONS LIST.
-  if(status==='Approved for LCBO Submission')ensureApprovedCandidateInLcboSubmissions(x);
+   // Save the Head Office Action directly. No normalizeHeadProposalStatus helper
+   // is needed because the dropdown already uses the program's canonical statuses.
+   safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+   if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
 
-  // Persist before rendering either page.
-  safeStorage.setItem(DATA_KEY,JSON.stringify(state));
-  if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
+   // If approved, add/sync the Wine Candidate to LCBO SUBMISSIONS LIST.
+   if(status==='Approved for LCBO Submission'){
+     try{
+       if(typeof ensureApprovedCandidateInLcboSubmissions==='function'){
+         ensureApprovedCandidateInLcboSubmissions(x);
+         safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+         if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
+       }
+     }catch(syncErr){
+       console.error('LCBO submission sync warning:',syncErr);
+     }
+   }
 
-  // Refresh all connected pages after successful persistence.
-  renderHeadOfficeProposals();
-  renderItalySourcing();
-  if(typeof renderWorkerList==='function')renderWorkerList();
-  return true;
+   if(typeof renderHeadOfficeProposals==='function')renderHeadOfficeProposals();
+   if(typeof renderItalySourcing==='function')renderItalySourcing();
+   if(typeof renderWorkerList==='function')renderWorkerList();
+   return true;
  }catch(err){
-  console.error('Head Office action update failed:',err);
-  alert('Head Office Action could not be updated. '+(err?.message||''));
-  if(button){button.disabled=false;button.textContent='Update Head Office Action'}
-  return false;
+   console.error('Head Office action update failed:',err);
+   alert('Head Office Action could not be updated. '+(err?.message||''));
+   if(button){button.disabled=false;button.textContent=originalText||'Update Head Office Action';}
+   return false;
  }
 }
 window.updateHeadProposal=window.updateHeadProposalAction;
