@@ -801,7 +801,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </section>
 
 <section id="worker-list" class="panel">
-  <div class="box worker-list" id="worker-list"><div class="section-head"><div><h2>LCBO SUBMISSIONS LIST</h2><p class="note">All products approved by Head Office for LCBO Submission appear here automatically. Additional items can still be added manually when needed.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>In Progress</option><option>Approved for LCBO Submission</option><option>Additional Information Required</option><option>Declined</option><option>To Register</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Work Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Item</button></div></div>
+  <div class="box worker-list" id="worker-list"><div class="section-head"><div><h2>LCBO SUBMISSIONS LIST</h2><p class="note">All products approved by Head Office for LCBO Submission appear here automatically. Additional items can still be added manually when needed.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>To Register</option><option>In Progress</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Work Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Item</button></div></div>
 </section>
 
 <section id="tenders" class="panel">
@@ -1588,7 +1588,7 @@ settings={usd:settings.usd??0.70,gbp:settings.gbp??0.54,eur:settings.eur??0.65,r
 const defaultAgencies=[{id:'agency-zimport',name:'Zimport Global Corporation',short:'142858',notes:'Primary agency'},{id:'agency-golden',name:'Golden Maple Marketing Inc.',short:'',notes:'Additional agency'}];
 const seedRecord={id:'seed-old-marani',productNeeds:'VINTAGES',tenderId:'1001',tenderName:'Emerging Europe Tender',tenderDate:'2026-07-30',agencyId:'agency-zimport',supplier:'OLD MARANI',brand:'GURJAANI',itemName:'OLD MARANI KINDZMARAULI',registered:'Yes',year:2024,award1:'87 WA',link1:'',award2:'',link2:'',award3:'',link3:'',extraAwards:[],productType:'Wine',productSubtype:'Wine',caseKg:18.9,currency:'USD',exchangeRate:1.42,supplierPrice:2.88,bottles:12,offeredQuoteCurrency:settings.defaultCurrency||'CAD',offeredQuote:88.80,erpManual:18.60,transportExpense:.75,potentialCases:715,sampleProvideDate:'',stage1Decision:'Accepted',sampleStatus:'Requested to Supplier',documentsToProvideStatus:'Not Ready',finalDecision:'Declined',finalOrderedQty:0,comments:'Tenderistvis om kindzmaraulis fasi dasvi 18.5 rom iyos daxlebze'};
 let state=JSON.parse(safeStorage.getItem(DATA_KEY)||safeStorage.getItem('zimportSubmissionProgramV4')||'null')||{agencies:defaultAgencies,records:[seedRecord],items:[],tenders:[],suppliers:[]};
-state.tenders=(state.tenders||[]).filter(t=>!(String(t.code||'').trim()==='2546' && String(t.name||'').trim().toLowerCase().includes('italy north'))).map(t=>({...t,workItems:(Array.isArray(t.workItems)?t.workItems:[]).map(w=>({...w,status:w.status==='Registered'?'Registered in LCBO NISS':(w.status==='Completed'?'In Progress':(w.status||'To Register'))}))}));
+state.tenders=(state.tenders||[]).map(t=>({...t,workItems:(Array.isArray(t.workItems)?t.workItems:[]).map(w=>({...w,status:w.status==='Registered'?'Registered in LCBO NISS':(w.status==='Completed'?'In Progress':(w.status||'To Register'))}))}));
 state.records=(state.records||[]).map(r=>{const specific=r.productSubtype&&r.productSubtype!=='Wine'?r.productSubtype:r.productType;let migratedFinal=r.finalDecision==='Approved'?'Winner':r.finalDecision;const finalDecision=r.registered==='No'?'Not Registered':(['In Progress','Winner','Declined','Not Registered'].includes(migratedFinal)?migratedFinal:'In Progress');return {...r,ntpStatus:r.ntpStatus||'Not Issued',ntpFileName:r.ntpFileName||'',poStatus:r.poStatus||'Not Issued',poNumber:r.poNumber||'',poFileName:r.poFileName||'',submissionNumber:r.submissionNumber||'',productNeeds:r.productNeeds||'VINTAGES',tenderId:r.tenderId||'',productType:(['Red Wine','White Wine','Rosé Wine','Rose Wine','Wine'].includes(specific)?'Wine':(specific||'Wine')),offeredQuoteCurrency:r.offeredQuoteCurrency||'CAD',stage1Decision:r.stage1Decision||(r.sampleRequested==='Yes'?'Sample Requested':(r.stage1==='Declined'?'Declined':'Accepted')),finalDecision};});
 if(!Array.isArray(state.agencies)||!state.agencies.length)state.agencies=defaultAgencies;if(!Array.isArray(state.suppliers))state.suppliers=[];
 if(!Array.isArray(state.records))state.records=[];
@@ -1887,20 +1887,13 @@ function renderWorkerList(){
   // Keep LCBO SUBMISSIONS LIST automatically synchronized with Head Office approvals.
   // This also backfills proposals that were approved before this program version.
   if(Array.isArray(state.countryCandidates)){
-    const beforeApprovedRows=(state.tenders||[]).reduce((sum,t)=>sum+((t.workItems||[]).filter(w=>w.sourceCandidateId).length),0);
     state.countryCandidates.forEach(candidate=>{
       if(normalizeHeadProposalStatus(candidate?.headOfficeActionStatus||candidate?.status)==='Approved for LCBO Submission'){
         ensureApprovedCandidateInLcboSubmissions(candidate);
       }
     });
-    const afterApprovedRows=(state.tenders||[]).reduce((sum,t)=>sum+((t.workItems||[]).filter(w=>w.sourceCandidateId).length),0);
-    // Persist any approved rows backfilled while opening this page so they remain actual LCBO Submission List items.
-    if(afterApprovedRows!==beforeApprovedRows){
-      safeStorage.setItem(DATA_KEY,JSON.stringify(state));
-      if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
-    }
   }
-  if(!$('#workerRows'))return;const selected=$('#workerTenderFilter')?.value||'';const old=selected;$('#workerTenderFilter').innerHTML='<option value="">All tenders</option>'+state.tenders.map(t=>`<option value="${t.id}">${escapeHtml(t.code||'—')} — ${escapeHtml(t.name)}${t.status==='Closed'?' (Closed)':''}</option>`).join('');$('#workerTenderFilter').value=old;const qId=String($('#workerTenderIdSearch')?.value||'').trim().toLowerCase(),qNameDate=String($('#workerTenderNameDateSearch')?.value||'').trim().toLowerCase(),qSupplier=String($('#workerSupplierSearch')?.value||'').trim().toLowerCase(),qItem=String($('#workerItemSearch')?.value||'').trim().toLowerCase(),qPrice=String($('#workerOfferedPriceSearch')?.value||'').trim().toLowerCase(),qAgency=$('#workerAgencySearch')?.value||'',qStatus=$('#workerStatusSearch')?.value||'';const rows=[];state.tenders.filter(t=>(!selected||t.id===selected)).forEach(t=>(t.workItems||[]).forEach(w=>{const dbItem=findDatabaseItem(w);const displayName=(w.itemName||dbItem?.productDescription||'—')+(dbItem?.vintage?' '+dbItem.vintage:'');const supplier=dbItem?.supplier||dbItem?.supplierName||w.supplierName||'—';const sourceCandidate=w.sourceCandidateId?(state.countryCandidates||[]).find(c=>c.id===w.sourceCandidateId):null;const status=sourceCandidate?normalizeHeadProposalStatus(sourceCandidate.headOfficeActionStatus||sourceCandidate.status||w.status):(w.status==='Registered'?'Registered in LCBO NISS':(w.status||'To Register'));if(sourceCandidate&&w.status!==status)w.status=status;const offered=num(w.offeredPrice),agency=agencyName(w.agencyId)||'Not assigned';const tenderNameDate=[t.name,t.presubDate,t.tastingDate].filter(Boolean).join(' ');if(qId&&!String(t.code||'').toLowerCase().includes(qId))return;if(qNameDate&&!tenderNameDate.toLowerCase().includes(qNameDate))return;if(qSupplier&&!String(supplier).toLowerCase().includes(qSupplier))return;if(qItem&&!displayName.toLowerCase().includes(qItem))return;if(qPrice&&!`${offered.toFixed(2)} ${w.currency||'CAD'}`.toLowerCase().includes(qPrice))return;if(qAgency&&w.agencyId!==qAgency)return;if(qStatus&&status!==qStatus)return;const itemCell=dbItem?`<button type="button" class="item-info-link" onclick="openWorkerItemInfo('${t.id}','${w.id}')">${escapeHtml(displayName)}</button><br><small>Click to open database information</small>`:`<b>${escapeHtml(displayName)}</b><br><small style="color:#b3261e">No matching item found in database</small>`;const quote=num(dbItem?.quotePerCase),offerCurrency=w.currency||'CAD',quoteCurrency=dbItem?.quotationCurrency||'CAD',hasQuote=!!dbItem&&String(dbItem.quotePerCase??'').trim()!=='';const matches=hasQuote&&Math.abs(offered-quote)<0.005&&offerCurrency===quoteCurrency;const priceClass=hasQuote?(matches?'price-match':'price-mismatch'):'';const reference=hasQuote?`<span class="price-reference">Database Offered Quote: ${escapeHtml(quoteCurrency)} ${quote.toFixed(2)}</span>`:`<span class="price-reference">No database offered quote</span>`;const submissionInput=status==='Registered in LCBO NISS'?`<div class="submission-number-wrap"><small>Submission #</small><input type="text" value="${escapeHtml(w.submissionNumber||'')}" placeholder="1177144" onchange="updateWorkerSubmissionNumber('${t.id}','${w.id}',this.value)"></div>`:'';rows.push(`<tr><td><b>${escapeHtml(t.code||'—')}</b></td><td><b>${escapeHtml(t.name)}</b><br><small>${escapeHtml(t.presubDate?'Pre-Submission: '+t.presubDate:(t.tastingDate?'Tasting: '+t.tastingDate:''))}</small></td><td>${escapeHtml(supplier)}</td><td>${itemCell}</td><td><span class="${priceClass}">${escapeHtml(offerCurrency)} ${offered.toFixed(2)}</span>${reference}</td><td>${escapeHtml(agency)}</td><td>${escapeHtml(w.instructions||'—')}</td><td><select class="work-status ${status==='Registered in LCBO NISS'?'work-status-green':'work-status-yellow'}" ${(!sourceCandidate&&t.status==='Closed')?'disabled title="Tender is closed"':''} onchange="updateWorkStatus('${t.id}','${w.id}',this.value);applyWorkStatusColor(this)">${sourceCandidate?`<option ${status==='In Progress'?'selected':''}>In Progress</option><option ${status==='Approved for LCBO Submission'?'selected':''}>Approved for LCBO Submission</option><option ${status==='Additional Information Required'?'selected':''}>Additional Information Required</option><option ${status==='Declined'?'selected':''}>Declined</option>`:`<option ${status==='To Register'?'selected':''}>To Register</option><option ${status==='In Progress'?'selected':''}>In Progress</option><option ${status==='Registered in LCBO NISS'?'selected':''}>Registered in LCBO NISS</option><option ${status==='On Hold'?'selected':''}>On Hold</option>`}</select>${submissionInput}</td><td><button type="button" class="secondary small" onclick="addWorkerItemToTenderDatabase('${t.id}','${w.id}')">${w.itemId?'Open Tender Item Database':'Add To Tender Item Database'}</button> <button type="button" class="danger small" onclick="deleteWorkerItem('${t.id}','${w.id}')">Remove</button></td></tr>`)}));$('#workerRows').innerHTML=rows.join('')||'<tr><td colspan="9">No matching worker submission items.</td></tr>';}
+  if(!$('#workerRows'))return;const selected=$('#workerTenderFilter')?.value||'';const old=selected;$('#workerTenderFilter').innerHTML='<option value="">All active tenders</option>'+state.tenders.filter(t=>t.status==='Active').map(t=>`<option value="${t.id}">${escapeHtml(t.code||'—')} — ${escapeHtml(t.name)}</option>`).join('');$('#workerTenderFilter').value=old;const qId=String($('#workerTenderIdSearch')?.value||'').trim().toLowerCase(),qNameDate=String($('#workerTenderNameDateSearch')?.value||'').trim().toLowerCase(),qSupplier=String($('#workerSupplierSearch')?.value||'').trim().toLowerCase(),qItem=String($('#workerItemSearch')?.value||'').trim().toLowerCase(),qPrice=String($('#workerOfferedPriceSearch')?.value||'').trim().toLowerCase(),qAgency=$('#workerAgencySearch')?.value||'',qStatus=$('#workerStatusSearch')?.value||'';const rows=[];state.tenders.filter(t=>(!selected||t.id===selected)&&(!selected?t.status==='Active':true)).forEach(t=>(t.workItems||[]).forEach(w=>{const dbItem=findDatabaseItem(w);const displayName=(w.itemName||dbItem?.productDescription||'—')+(dbItem?.vintage?' '+dbItem.vintage:'');const supplier=dbItem?.supplier||dbItem?.supplierName||w.supplierName||'—';const status=w.status==='Registered'?'Registered in LCBO NISS':(w.status||'To Register');const offered=num(w.offeredPrice),agency=agencyName(w.agencyId)||'Not assigned';const tenderNameDate=[t.name,t.presubDate,t.tastingDate].filter(Boolean).join(' ');if(qId&&!String(t.code||'').toLowerCase().includes(qId))return;if(qNameDate&&!tenderNameDate.toLowerCase().includes(qNameDate))return;if(qSupplier&&!String(supplier).toLowerCase().includes(qSupplier))return;if(qItem&&!displayName.toLowerCase().includes(qItem))return;if(qPrice&&!`${offered.toFixed(2)} ${w.currency||'CAD'}`.toLowerCase().includes(qPrice))return;if(qAgency&&w.agencyId!==qAgency)return;if(qStatus&&status!==qStatus)return;const itemCell=dbItem?`<button type="button" class="item-info-link" onclick="openWorkerItemInfo('${t.id}','${w.id}')">${escapeHtml(displayName)}</button><br><small>Click to open database information</small>`:`<b>${escapeHtml(displayName)}</b><br><small style="color:#b3261e">No matching item found in database</small>`;const quote=num(dbItem?.quotePerCase),offerCurrency=w.currency||'CAD',quoteCurrency=dbItem?.quotationCurrency||'CAD',hasQuote=!!dbItem&&String(dbItem.quotePerCase??'').trim()!=='';const matches=hasQuote&&Math.abs(offered-quote)<0.005&&offerCurrency===quoteCurrency;const priceClass=hasQuote?(matches?'price-match':'price-mismatch'):'';const reference=hasQuote?`<span class="price-reference">Database Offered Quote: ${escapeHtml(quoteCurrency)} ${quote.toFixed(2)}</span>`:`<span class="price-reference">No database offered quote</span>`;const submissionInput=status==='Registered in LCBO NISS'?`<div class="submission-number-wrap"><small>Submission #</small><input type="text" value="${escapeHtml(w.submissionNumber||'')}" placeholder="1177144" onchange="updateWorkerSubmissionNumber('${t.id}','${w.id}',this.value)"></div>`:'';rows.push(`<tr><td><b>${escapeHtml(t.code||'—')}</b></td><td><b>${escapeHtml(t.name)}</b><br><small>${escapeHtml(t.presubDate?'Pre-Submission: '+t.presubDate:(t.tastingDate?'Tasting: '+t.tastingDate:''))}</small></td><td>${escapeHtml(supplier)}</td><td>${itemCell}</td><td><span class="${priceClass}">${escapeHtml(offerCurrency)} ${offered.toFixed(2)}</span>${reference}</td><td>${escapeHtml(agency)}</td><td>${escapeHtml(w.instructions||'—')}</td><td><select class="work-status ${status==='Registered in LCBO NISS'?'work-status-green':'work-status-yellow'}" ${t.status==='Closed'?'disabled title="Tender is closed"':''} onchange="updateWorkStatus('${t.id}','${w.id}',this.value);applyWorkStatusColor(this)"><option ${status==='To Register'?'selected':''}>To Register</option><option ${status==='In Progress'?'selected':''}>In Progress</option><option ${status==='Registered in LCBO NISS'?'selected':''}>Registered in LCBO NISS</option><option ${status==='On Hold'?'selected':''}>On Hold</option></select>${submissionInput}</td><td><button type="button" class="secondary small" onclick="addWorkerItemToTenderDatabase('${t.id}','${w.id}')">${w.itemId?'Open Tender Item Database':'Add To Tender Item Database'}</button> <button type="button" class="danger small" onclick="deleteWorkerItem('${t.id}','${w.id}')">Remove</button></td></tr>`)}));$('#workerRows').innerHTML=rows.join('')||'<tr><td colspan="9">No matching worker submission items.</td></tr>';}
 
 function addWorkerItemToTenderDatabase(tenderId,workId){
  try{
@@ -2016,37 +2009,7 @@ function closeWorkerItemEditor(){$('#workerItemModal').classList.add('hidden')}
 function saveWorkerListItem(){updateAutomaticTenderStatuses();const tenderId=$('#workerItemTender').value,itemId=$('#workerDatabaseItem').value;if(!tenderId||!itemId){alert('Choose a tender and an item from the Tender Item Database.');return}const target=state.tenders.find(x=>x.id===tenderId);if(!target)return;if(target.status==='Closed'){alert('This tender is closed. Items cannot be added or registered.');return;}const oldTenderId=$('#workerEditTenderId').value,workId=$('#workerEditWorkId').value||uid(),item=state.items.find(i=>i.id===itemId);if(oldTenderId&&oldTenderId!==tenderId){const old=state.tenders.find(x=>x.id===oldTenderId);if(old)old.workItems=(old.workItems||[]).filter(x=>x.id!==workId)}target.workItems=target.workItems||[];const existing=target.workItems.find(x=>x.id===workId);const w={id:workId,itemId,itemName:item?.productDescription||'',offeredPrice:num($('#workerOfferedPrice').value),currency:$('#workerCurrency').value,agencyId:$('#workerAgency').value,instructions:$('#workerInstructions').value.trim(),status:$('#workerStatus').value,submissionNumber:existing?.submissionNumber||''};const idx=target.workItems.findIndex(x=>x.id===workId);if(idx>=0)target.workItems[idx]=w;else target.workItems.push(w);save();closeWorkerItemEditor();}
 function removeWorkerItemFromEditor(){const tenderId=$('#workerEditTenderId').value,workId=$('#workerEditWorkId').value;if(tenderId&&workId){deleteWorkerItem(tenderId,workId);closeWorkerItemEditor();}}
 function updateWorkerSubmissionNumber(tenderId,itemId,value){const t=state.tenders.find(x=>x.id===tenderId),w=t?.workItems?.find(x=>x.id===itemId);if(!w)return;w.submissionNumber=value.trim();state.records.filter(r=>r.tenderRecordId===tenderId&&r.itemId===w.itemId&&(!w.agencyId||r.agencyId===w.agencyId)).forEach(r=>r.submissionNumber=w.submissionNumber);save();}
-function updateWorkStatus(tenderId,itemId,status){
- updateAutomaticTenderStatuses();
- const t=state.tenders.find(x=>x.id===tenderId),w=t?.workItems?.find(x=>x.id===itemId);
- if(!w)return;
- const candidate=w.sourceCandidateId?(state.countryCandidates||[]).find(c=>c.id===w.sourceCandidateId):null;
- if(candidate){
-   const allowed=['In Progress','Approved for LCBO Submission','Additional Information Required','Declined'];
-   if(!allowed.includes(status)){alert('Select a valid Head Office Action status.');renderWorkerList();return;}
-   const normalized=normalizeHeadProposalStatus(status);
-   w.status=normalized;
-   candidate.status=normalized;
-   candidate.headOfficeActionStatus=normalized;
-   candidate.headOfficeUpdatedAt=new Date().toISOString();
-   if(!Array.isArray(candidate.headOfficeActions))candidate.headOfficeActions=[];
-   candidate.headOfficeActions.push({status:normalized,comment:'Status updated from TENDERS → LCBO SUBMISSIONS LIST.',date:candidate.headOfficeUpdatedAt,source:'LCBO SUBMISSIONS LIST'});
-   save();
-   if(typeof renderHeadOfficeProposals==='function')renderHeadOfficeProposals();
-   if(typeof renderItalySourcing==='function')renderItalySourcing();
-   if(typeof renderWorkerList==='function')renderWorkerList();
-   return;
- }
- if(t.status==='Closed'){alert('This tender is closed. The item cannot be registered or updated.');renderWorkerList();return;}
- w.status=status;
- const isRegistered=status==='Registered in LCBO NISS';
- let matches=state.records.filter(r=>r.tenderRecordId===tenderId&&r.itemId===w.itemId&&(!w.agencyId||r.agencyId===w.agencyId));
- if(isRegistered&&!matches.length){
-   const i=findDatabaseItem(w),r=defaults();r.id=uid();r.tenderRecordId=t.id;r.tenderId=t.code||'';r.tenderName=t.name||'';r.tenderDate=t.presubDate||'';r.productNeeds=t.productNeeds||'VINTAGES';r.agencyId=w.agencyId||state.agencies[0]?.id||'';r.itemId=w.itemId||'';r.itemName=i?.productDescription||w.itemName||'';r.supplier=i?.supplierName||'';r.brand=i?.brandName||'';r.year=i?.vintage||new Date().getFullYear();r.productType=i?.productType||'Wine';r.caseKg=num(i?.caseWeightKg)||18.9;r.bottles=num(i?.sellingUnitsPerShippingCase||i?.unitsPerSellingPack)||12;r.offeredQuoteCurrency=w.currency||i?.quotationCurrency||'CAD';r.offeredQuote=num(w.offeredPrice);r.erpManual=num(i?.estimatedRetailPrice);r.registered='Yes';r.finalDecision='In Progress';r.submissionNumber=w.submissionNumber||'';state.records.push(r);matches=[r];
- }
- matches.forEach(r=>{r.registered=isRegistered?'Yes':'No';r.submissionNumber=w.submissionNumber||r.submissionNumber||'';if(!isRegistered)r.finalDecision='In Progress';});
- save();if(typeof renderItalySourcing==='function')renderItalySourcing();
-}
+function updateWorkStatus(tenderId,itemId,status){updateAutomaticTenderStatuses();const t=state.tenders.find(x=>x.id===tenderId),w=t?.workItems?.find(x=>x.id===itemId);if(!w)return;if(t.status==='Closed'){alert('This tender is closed. The item cannot be registered or updated.');renderWorkerList();return;}w.status=status;const isRegistered=status==='Registered in LCBO NISS';let matches=state.records.filter(r=>r.tenderRecordId===tenderId&&r.itemId===w.itemId&&(!w.agencyId||r.agencyId===w.agencyId));if(isRegistered&&!matches.length){const i=findDatabaseItem(w),r=defaults();r.id=uid();r.tenderRecordId=t.id;r.tenderId=t.code||'';r.tenderName=t.name||'';r.tenderDate=t.presubDate||'';r.productNeeds=t.productNeeds||'VINTAGES';r.agencyId=w.agencyId||state.agencies[0]?.id||'';r.itemId=w.itemId||'';r.itemName=i?.productDescription||w.itemName||'';r.supplier=i?.supplierName||'';r.brand=i?.brandName||'';r.year=i?.vintage||new Date().getFullYear();r.productType=i?.productType||'Wine';r.caseKg=num(i?.caseWeightKg)||18.9;r.bottles=num(i?.sellingUnitsPerShippingCase||i?.unitsPerSellingPack)||12;r.offeredQuoteCurrency=w.currency||i?.quotationCurrency||'CAD';r.offeredQuote=num(w.offeredPrice);r.erpManual=num(i?.estimatedRetailPrice);r.registered='Yes';r.finalDecision='In Progress';r.submissionNumber=w.submissionNumber||'';state.records.push(r);matches=[r];}matches.forEach(r=>{r.registered=isRegistered?'Yes':'No';r.submissionNumber=w.submissionNumber||r.submissionNumber||'';if(!isRegistered)r.finalDecision='In Progress';});save();if(typeof renderItalySourcing==='function')renderItalySourcing();}
 function deleteWorkerItem(tenderId,itemId){const t=state.tenders.find(x=>x.id===tenderId);if(!t)return;const w=t.workItems?.find(x=>x.id===itemId);if(!w)return;if(confirm(`Move ${w.itemName||'this item'} to the Recycle Bin?`)){moveToRecycleBin('workerItem','LCBO SUBMISSIONS LIST',w,{tenderId});t.workItems=t.workItems.filter(x=>x.id!==itemId);save();}}
 function syncTenderOtherNeed(){const other=$('#tenderProductNeeds').value==='Other';$('#tenderOtherNeedWrap').classList.toggle('hidden',!other);if(!other)$('#tenderOtherNeed').value='';}
 
@@ -2060,8 +2023,8 @@ function renderTenderRepresentativeChoices(selected=[]){
   if(!names.some(x=>x.toLowerCase()==='georgia'))names.push('Georgia');
   box.innerHTML=names.map(name=>`<label><input type="checkbox" class="tender-representative" value="${escapeHtml(name)}" style="width:auto;margin-right:8px" ${selected.includes(name)?'checked':''}>${escapeHtml(name)}</label>`).join('');
 }
-function openTender(id=''){const t=normalizeTender(state.tenders.find(x=>x.id===id)||{id:'',code:'',name:'',productNeeds:'',productNeedsOther:'',presubDate:'',tastingDate:'',status:'',notes:'',workItems:[],sourcingRepresentatives:[]});$('#tenderRecordId').value=t.id;$('#tenderCode').value=t.code||'';$('#tenderNameInput').value=t.name||'';$('#tenderProductNeeds').value=t.productNeeds||'';$('#tenderOtherNeed').value=t.productNeedsOther||'';syncTenderOtherNeed();$('#tenderPresubDate').value=t.presubDate||'';$('#tenderTastingDate').value=t.tastingDate||'';$('#tenderStatus').value=t.status||'';$('#tenderNotes').value=t.notes||'';const reps=Array.isArray(t.sourcingRepresentatives)?t.sourcingRepresentatives:[];renderTenderRepresentativeChoices(reps);$$('.tender-representative').forEach(cb=>{cb.checked=reps.includes(cb.value);cb.onchange=()=>{const current=$$('.tender-supplier-recipient').filter(x=>x.checked).map(x=>x.value);renderTenderSupplierChoices([...new Set([...(t.notificationSupplierKeys||[]),...current])])}});renderTenderSupplierChoices(t.notificationSupplierKeys||[]);if($('#tenderRepresentativeError'))$('#tenderRepresentativeError').style.display='none';const saveBtn=$('#saveTender');saveBtn.textContent='Announce Tender';saveBtn.style.background='';saveBtn.disabled=false;$('#tenderModalTitle').textContent=t.id?'Edit Tender':'Create a Tender';$('#deleteTender').style.visibility=t.id?'visible':'hidden';$('#tenderModal').classList.remove('hidden');}
-function autofillTenderById(){const code=$('#tenderCode').value.trim();if(!code)return;const t=normalizeTender(state.tenders.find(x=>String(x.code||'').trim()===code));if(!t)return;$('#tenderRecordId').value=t.id;$('#tenderNameInput').value=t.name||'';$('#tenderProductNeeds').value=t.productNeeds||'VINTAGES';$('#tenderOtherNeed').value=t.productNeedsOther||'';syncTenderOtherNeed();$('#tenderPresubDate').value=t.presubDate||'';$('#tenderTastingDate').value=t.tastingDate||'';$('#tenderStatus').value=t.status||'Active';$('#tenderNotes').value=t.notes||'';const reps=Array.isArray(t.sourcingRepresentatives)?t.sourcingRepresentatives:[];renderTenderRepresentativeChoices(reps);$$('.tender-representative').forEach(cb=>{cb.checked=reps.includes(cb.value);cb.onchange=()=>{const current=$$('.tender-supplier-recipient').filter(x=>x.checked).map(x=>x.value);renderTenderSupplierChoices([...new Set([...(t.notificationSupplierKeys||[]),...current])])}});renderTenderSupplierChoices(t.notificationSupplierKeys||[]);if($('#tenderRepresentativeError'))$('#tenderRepresentativeError').style.display='none';const saveBtn=$('#saveTender');saveBtn.textContent='Announce Tender';saveBtn.style.background='';saveBtn.disabled=false;$('#tenderModalTitle').textContent='Edit Tender';$('#deleteTender').style.visibility='visible';}
+function openTender(id=''){const t=normalizeTender(state.tenders.find(x=>x.id===id)||{id:'',code:'',name:'',productNeeds:'',productNeedsOther:'',presubDate:'',tastingDate:'',status:'',notes:'',workItems:[],sourcingRepresentatives:[]});$('#tenderRecordId').value=t.id;$('#tenderCode').value=t.code||'';$('#tenderNameInput').value=t.name||'';$('#tenderProductNeeds').value=t.productNeeds||'';$('#tenderOtherNeed').value=t.productNeedsOther||'';syncTenderOtherNeed();$('#tenderPresubDate').value=t.presubDate||'';$('#tenderTastingDate').value=t.tastingDate||'';$('#tenderStatus').value=t.status||'';$('#tenderNotes').value=t.notes||'';const reps=Array.isArray(t.sourcingRepresentatives)?t.sourcingRepresentatives:[];renderTenderRepresentativeChoices(reps);$$('.tender-representative').forEach(cb=>{cb.checked=reps.includes(cb.value);cb.onchange=()=>renderTenderSupplierChoices(t.notificationSupplierKeys||[])});renderTenderSupplierChoices(t.notificationSupplierKeys||[]);if($('#tenderRepresentativeError'))$('#tenderRepresentativeError').style.display='none';const saveBtn=$('#saveTender');saveBtn.textContent='Announce Tender';saveBtn.style.background='';saveBtn.disabled=false;$('#tenderModalTitle').textContent=t.id?'Edit Tender':'Create a Tender';$('#deleteTender').style.visibility=t.id?'visible':'hidden';$('#tenderModal').classList.remove('hidden');}
+function autofillTenderById(){const code=$('#tenderCode').value.trim();if(!code)return;const t=normalizeTender(state.tenders.find(x=>String(x.code||'').trim()===code));if(!t)return;$('#tenderRecordId').value=t.id;$('#tenderNameInput').value=t.name||'';$('#tenderProductNeeds').value=t.productNeeds||'VINTAGES';$('#tenderOtherNeed').value=t.productNeedsOther||'';syncTenderOtherNeed();$('#tenderPresubDate').value=t.presubDate||'';$('#tenderTastingDate').value=t.tastingDate||'';$('#tenderStatus').value=t.status||'Active';$('#tenderNotes').value=t.notes||'';const reps=Array.isArray(t.sourcingRepresentatives)?t.sourcingRepresentatives:[];renderTenderRepresentativeChoices(reps);$$('.tender-representative').forEach(cb=>{cb.checked=reps.includes(cb.value);cb.onchange=()=>renderTenderSupplierChoices(t.notificationSupplierKeys||[])});renderTenderSupplierChoices(t.notificationSupplierKeys||[]);if($('#tenderRepresentativeError'))$('#tenderRepresentativeError').style.display='none';const saveBtn=$('#saveTender');saveBtn.textContent='Announce Tender';saveBtn.style.background='';saveBtn.disabled=false;$('#tenderModalTitle').textContent='Edit Tender';$('#deleteTender').style.visibility='visible';}
 function editTender(id){openTender(id)}
 function closeTender(){$('#tenderModal').classList.add('hidden')}
 function copyText(v){const text=String(v??'—');if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(text).catch(()=>fallbackCopy(text));else fallbackCopy(text)}
@@ -3730,7 +3693,7 @@ window.editItem=editItem;
 
 window.deleteArchivedSubmission=deleteArchivedSubmission;window.updateSubmissionField=updateSubmissionField;window.removeSubmissionFromPage=removeSubmissionFromPage;window.editRecord=editRecord;window.editAgency=editAgency;window.editTender=editTender;window.updateWorkStatus=updateWorkStatus;window.deleteWorkerItem=deleteWorkerItem;window.addNewWorkerListItem=addNewWorkerListItem;window.editWorkerListItem=editWorkerListItem;
 buildFields();buildItemFields();syncTenderItemCategoriesFromItems();
-window.addEventListener('zimport-online-state-loaded',e=>{if(e.detail?.state){const localCountrySourcingCountries=Array.isArray(state.countrySourcingCountries)?state.countrySourcingCountries:[];const localCountryPortfolioSuppliers=Array.isArray(state.countryPortfolioSuppliers)?state.countryPortfolioSuppliers:[];state={...state,...e.detail.state};if(!Array.isArray(e.detail.state.countrySourcingCountries)||!e.detail.state.countrySourcingCountries.length)state.countrySourcingCountries=localCountrySourcingCountries.length?localCountrySourcingCountries:['Italy','Portugal','Spain','France'];if(!Array.isArray(e.detail.state.countryPortfolioSuppliers)||(!e.detail.state.countryPortfolioSuppliers.length&&localCountryPortfolioSuppliers.length))state.countryPortfolioSuppliers=localCountryPortfolioSuppliers;settings=e.detail.settings||settings;safeStorage.setItem(DATA_KEY,JSON.stringify(state));safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));renderAll();}});
+window.addEventListener('zimport-online-state-loaded',e=>{if(e.detail?.state){state=e.detail.state;settings=e.detail.settings||settings;safeStorage.setItem(DATA_KEY,JSON.stringify(state));safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));renderAll();}});
 window.addEventListener('zimport-online-role',e=>{window.ZIMPORT_CURRENT_ROLE=e.detail?.role||'readonly';applyOnlinePermissions?.();});
 if($('#closeGenericInvoiceDetails'))$('#closeGenericInvoiceDetails').onclick=closeGenericInvoiceDetails;
 if($('#closeGenericInvoiceDetailsBottom'))$('#closeGenericInvoiceDetailsBottom').onclick=closeGenericInvoiceDetails;
@@ -3744,43 +3707,15 @@ $('#closeShipmentInfo').onclick=$('#closeShipmentInfoBottom').onclick=closeShipm
 if($('#addPoSupplierBtn'))$('#addPoSupplierBtn').onclick=addPoSupplierChoice;if($('#addPoVendorBtn'))$('#addPoVendorBtn').onclick=addPoVendorChoice;if($('#poSupplierSelect'))$('#poSupplierSelect').onchange=syncPoOtherSupplier;
 $('#addPoLineBtn').onclick=()=>addPoLine();$('#poItemLines').addEventListener('input',calculatePoTotals);$('#poItemLines').addEventListener('click',e=>{if(e.target.classList.contains('po-remove-line')){e.target.closest('tr').remove();if(!$('#poItemLines').children.length)addPoLine();calculatePoTotals();}});$('#poFileInput').onchange=e=>{poPendingFile=e.target.files[0]||null;renderPoFileStatus(poPendingFile?.name||'');e.target.value='';};$('#openPoRecordFileBtn').onclick=()=>{if(poPendingFile){const url=URL.createObjectURL(poPendingFile);window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000)}else{const id=$('#poRecordId').value;if(id)openPoRecordFile(id)}};$('#removePoRecordFileBtn').onclick=removeCurrentPoRecordFile;$('#tenderCode').addEventListener('input',autofillTenderById);$('#tenderCode').addEventListener('change',autofillTenderById);$('#closeItemInfo').onclick=$('#closeItemInfoBottom').onclick=closeItemInfo;$('#copyAllItemInfo').onclick=copyAllItemInformation;$('#editItemFromInfo').onclick=()=>{const id=currentInfoItemId;closeItemInfo();activate('items');editItem(id)};$('#addTenderBtn').onclick=()=>openTender();$('#tenderProductNeeds').onchange=syncTenderOtherNeed;$('#workerTenderFilter').onchange=renderWorkerList;const workerSearchIds=['workerTenderIdSearch','workerTenderNameDateSearch','workerSupplierSearch','workerItemSearch','workerOfferedPriceSearch'];workerSearchIds.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderWorkerList});['workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.onchange=renderWorkerList});if($('#toggleWorkerSearch'))$('#toggleWorkerSearch').onclick=()=>{const panel=$('#workerSearchPanel');panel.classList.toggle('open');$('#toggleWorkerSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearWorkerSearch'))$('#clearWorkerSearch').onclick=()=>{[...workerSearchIds,'workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderWorkerList()};const workerAgency=$('#workerAgencySearch');if(workerAgency)workerAgency.innerHTML='<option value="">All agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');$('#closeWorkerItemModal').onclick=$('#cancelWorkerItem').onclick=closeWorkerItemEditor;$('#saveWorkerItem').onclick=saveWorkerListItem;$('#removeWorkerItem').onclick=removeWorkerItemFromEditor;$('#closeTender').onclick=$('#cancelTender').onclick=closeTender;const tenderSearchInputs=['tenderIdSearch','tenderNameSearch','tenderProductNeedsSearch','tenderPresubDateSearch','tenderTastingDateSearch'];tenderSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderTenders});if($('#tenderStatusSearch'))$('#tenderStatusSearch').onchange=renderTenders;if($('#toggleTenderSearch'))$('#toggleTenderSearch').onclick=()=>{const panel=$('#tenderSearchPanel');panel.classList.toggle('open');$('#toggleTenderSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearTenderSearch'))$('#clearTenderSearch').onclick=()=>{[...tenderSearchInputs,'tenderStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderTenders()};
 function tenderSupplierKey(country,id){return `${country}::${id}`;}
-function normalizeTenderCountryName(value){return String(value||'').trim().replace(/\s+/g,' ').toLowerCase();}
 function renderTenderSupplierChoices(selected=[]){
  const box=document.getElementById('tenderSupplierChoices');if(!box)return;
- const countries=[...document.querySelectorAll('.tender-representative:checked')].map(cb=>String(cb.value||'').trim()).filter(Boolean);
- const selectedCountries=new Set(countries.map(normalizeTenderCountryName));
- const portfolio=Array.isArray(state.countryPortfolioSuppliers)?state.countryPortfolioSuppliers:[];
- const supplierInfo=Array.isArray(state.countryWineries)?state.countryWineries:[];
- const rows=[];
- const seen=new Set();
-
- // Read the suppliers from Country Sourcing → Suppliers. Match country names case-insensitively
- // and also respect Supplier Information's Supplier Country field, so GEORGIA / Georgia etc. work.
- portfolio.forEach(s=>{
-   const linked=supplierInfo.filter(x=>String(x.portfolioSupplierId||'')===String(s.id||''));
-   const possibleCountries=[s.country,...linked.map(x=>x.supplierCountry||x.country)].map(normalizeTenderCountryName).filter(Boolean);
-   if(!possibleCountries.some(c=>selectedCountries.has(c)))return;
-   const displayCountry=countries.find(c=>possibleCountries.includes(normalizeTenderCountryName(c)))||s.country||linked[0]?.supplierCountry||linked[0]?.country||'';
-   const legalNames=[...new Set(linked.map(x=>String(x.supplierLegalFullName||x.name||'').trim()).filter(Boolean))];
-   const emails=[...new Set(linked.map(x=>String(x.email||x.supplierEmail||'').trim()).filter(Boolean))];
-   const displayName=legalNames.length?legalNames.join(' / '):String(s.name||'Supplier').trim();
-   const key=tenderSupplierKey(s.country||displayCountry,s.id);
-   if(seen.has(key))return;seen.add(key);
-   rows.push({key,country:displayCountry,name:displayName,emails});
- });
-
- // Safety fallback: if a saved Supplier Information record exists but its portfolio supplier shell
- // is missing, still show that supplier in the tender list instead of hiding it.
- supplierInfo.forEach(x=>{
-   const candidateCountry=String(x.supplierCountry||x.country||'').trim();
-   if(!selectedCountries.has(normalizeTenderCountryName(candidateCountry)))return;
-   const pid=String(x.portfolioSupplierId||x.id||'').trim();if(!pid)return;
-   const key=tenderSupplierKey(x.country||candidateCountry,pid);if(seen.has(key))return;seen.add(key);
-   rows.push({key,country:countries.find(c=>normalizeTenderCountryName(c)===normalizeTenderCountryName(candidateCountry))||candidateCountry,name:String(x.supplierLegalFullName||x.name||'Supplier').trim(),emails:[String(x.email||x.supplierEmail||'').trim()].filter(Boolean)});
- });
-
- rows.sort((a,b)=>String(a.country||'').localeCompare(String(b.country||''))||String(a.name||'').localeCompare(String(b.name||'')));
- box.innerHTML=rows.map(s=>`<label class="checkbox-card"><input type="checkbox" class="tender-supplier-recipient" value="${escapeHtml(s.key)}" checked><span><b>${escapeHtml(s.country)} — ${escapeHtml(s.name)}</b><br><small>${escapeHtml(s.emails.join(', ')||'No registered email')}</small></span></label>`).join('')||(countries.length?'<div class="note full">No suppliers are saved in Country Sourcing → Suppliers for the selected country.</div>':'<div class="note full">Select a country representative first.</div>');
+ const countries=[...document.querySelectorAll('.tender-representative:checked')].map(cb=>cb.value);
+ const suppliers=(state.countryPortfolioSuppliers||[]).filter(s=>countries.includes(s.country));
+ box.innerHTML=suppliers.map(s=>{
+  const key=tenderSupplierKey(s.country,s.id);
+  const emails=[...new Set((state.countryWineries||[]).filter(x=>x.country===s.country&&x.portfolioSupplierId===s.id).map(x=>String(x.email||'').trim()).filter(Boolean))];
+  return `<label class="checkbox-card"><input type="checkbox" class="tender-supplier-recipient" value="${esc(key)}" ${selected.includes(key)?'checked':''}><span><b>${esc(s.country)} — ${esc(s.name)}</b><br><small>${esc(emails.join(', ')||'No registered email')}</small></span></label>`;
+ }).join('')||'<div class="note full">Select a country representative first.</div>';
 }
 window.renderTenderSupplierChoices=renderTenderSupplierChoices;
 
@@ -5159,30 +5094,7 @@ window.openItalyCandidateAttachment=i=>{const f=currentItalyCandidateAttachments
 function handleItalyCandidateAttachments(e){for(const file of [...e.target.files]){if(currentItalyCandidateAttachments.length>=10){alert('Maximum 10 attachments are allowed.');break}if(!['application/pdf','image/jpeg'].includes(file.type)&&!file.name.toLowerCase().match(/\.(pdf|jpe?g)$/)){alert(`${file.name}: only PDF, JPG and JPEG files are allowed.`);continue}if(file.size>5*1024*1024){alert(`${file.name}: maximum file size is 5 MB.`);continue}currentItalyCandidateAttachments.push({id:uid(),name:file.name,size:file.size,type:file.type,lastModified:file.lastModified,blob:file})}e.target.value='';renderItalyCandidateAttachments()}
 function calcItalyCandidateCaseVolume(){const v=num(document.getElementById('c_caseLengthCm')?.value)*num(document.getElementById('c_caseWidthCm')?.value)*num(document.getElementById('c_caseHeightCm')?.value);const out=document.getElementById('c_calculatedCaseVolume');if(out)out.value=v?v.toFixed(2):''}
 function syncItalyCandidateLcboItemVisibility(){const input=document.getElementById('c_lcboItemNumber'),label=input?.closest('label'),show=document.getElementById('c_previouslyPurchased')?.value==='Yes';if(label)label.classList.toggle('field-hidden',!show);if(input){input.disabled=!show;input.required=show;if(label){const first=label.childNodes[0];if(first&&first.nodeType===3)first.nodeValue=show?'LCBO Item Number *':'LCBO Item Number'}if(!show)input.value=''}}
-function populateItalyCandidateOpportunitySelect(selected=''){
- const o=document.getElementById('itCanOpp');if(!o)return;
- const supplier=currentCountrySupplier();
- const supplierId=String(supplier?.id||currentCountrySupplierId||'').trim();
- const country=String(currentSourcingCountry||supplier?.country||'').trim();
- const normCountry=normalizeTenderCountryName(country);
-
- // A Wine Candidate may only be assigned to a tender where THIS supplier was
- // explicitly checked under Create a Tender → Suppliers to Notify.
- const eligible=(state.tenders||[]).filter(t=>{
-   const keys=Array.isArray(t.notificationSupplierKeys)?t.notificationSupplierKeys:[];
-   return keys.some(raw=>{
-     const key=String(raw||'').trim();
-     const split=key.indexOf('::');
-     if(split<0)return key===supplierId; // legacy supplier-id-only records
-     const keyCountry=key.slice(0,split);
-     const keySupplierId=key.slice(split+2);
-     return keySupplierId===supplierId &&
-       (!normCountry || normalizeTenderCountryName(keyCountry)===normCountry);
-   });
- });
- o.innerHTML='<option value="">Select Tender</option>'+eligible.map(t=>`<option value="${t.id}">${esc(t.code||'—')} — ${esc(t.name||'Unnamed Tender')}</option>`).join('');
- o.value=eligible.some(t=>String(t.id)===String(selected||''))?String(selected):'';
-}
+function populateItalyCandidateOpportunitySelect(selected=''){const o=document.getElementById('itCanOpp');if(o){o.innerHTML='<option value="">Select Tender</option>'+(state.tenders||[]).filter(t=>(t.sourcingRepresentatives||[]).includes('Italy')).map(t=>`<option value="${t.id}">${esc(t.code||'—')} — ${esc(t.name||'Unnamed Tender')}</option>`).join('');o.value=selected||''}}
 
 function syncItalyCandidateQuoteType(){
  const type=document.getElementById('itCanQuoteType')?.value||'',wrap=document.getElementById('itCanExCellarDeliveryWrap'),input=document.getElementById('itCanExCellarDelivery');
@@ -5505,17 +5417,7 @@ window.proposeItalyCandidateToHeadOffice=async function(button){
  }
 };
 
-function wineCandidateDeleteBlockedStatus(candidate){
- const status=normalizeHeadProposalStatus(candidate?.headOfficeActionStatus||candidate?.status);
- return ['In Progress','Approved for LCBO Submission','Additional Information Required'].includes(status)?status:'';
-}
-function showWineCandidateDeleteBlocked(candidate){
- const status=wineCandidateDeleteBlockedStatus(candidate);
- if(!status)return false;
- alert(`This wine candidate cannot be deleted because its Head Office Action status is: ${status}.`);
- return true;
-}
-window.deleteItalyCandidateFromModal=async()=>{const id=document.getElementById('itCanRecordId').value;if(!id)return closeItalyCandidateForm();const rec=(state.countryCandidates||[]).find(x=>x.id===id);if(showWineCandidateDeleteBlocked(rec))return;if(!confirm('Delete this wine candidate?'))return;try{await deleteItemAttachments(id)}catch(e){}if(window.ZimportOnline?.deleteFile){for(const p of (rec?.itemPhotos||[]).map(x=>x?.path).filter(Boolean)){try{await window.ZimportOnline.deleteFile(p)}catch(e){console.warn(e)}}}state.countryCandidates=state.countryCandidates.filter(x=>x.id!==id);save();closeItalyCandidateForm();renderItalySourcing()};
+window.deleteItalyCandidateFromModal=async()=>{const id=document.getElementById('itCanRecordId').value;if(!id)return closeItalyCandidateForm();if(!confirm('Delete this wine candidate?'))return;const rec=(state.countryCandidates||[]).find(x=>x.id===id);try{await deleteItemAttachments(id)}catch(e){}if(window.ZimportOnline?.deleteFile){for(const p of (rec?.itemPhotos||[]).map(x=>x?.path).filter(Boolean)){try{await window.ZimportOnline.deleteFile(p)}catch(e){console.warn(e)}}}state.countryCandidates=state.countryCandidates.filter(x=>x.id!==id);save();closeItalyCandidateForm();renderItalySourcing()};
 document.getElementById('italyCandidateDetailedForm')?.addEventListener('submit',e=>{e.preventDefault();proposeItalyCandidateToHeadOffice(document.getElementById('proposeItalyCandidateBtn'))});
 
 window.saveItalyBonus=()=>{state.countryBonuses.push({id:uid(),country:currentSourcingCountry,type:document.getElementById('itBonusType').value,amount:num(document.getElementById('itBonusAmount').value),currency:document.getElementById('itBonusCurrency').value,related:document.getElementById('itBonusRelated').value.trim(),status:document.getElementById('itBonusStatus').value,date:document.getElementById('itBonusDate').value,notes:document.getElementById('itBonusNotes').value.trim()});save();closeItalyBonusForm();renderItalySourcing()};
@@ -5524,9 +5426,7 @@ window.deleteItalySource=(kind,id)=>{
  type={opp:'countryOpportunity',win:'countryWinery',can:'countryCandidate',bonus:'countryBonus'}[kind],
  page={opp:'TENDER',win:'Supplier Information',can:'Wine Candidates',bonus:'Performance & Bonuses'}[kind],
  x=(state[key]||[]).find(v=>v.id===id);
- if(!x)return;
- if(kind==='can'&&showWineCandidateDeleteBlocked(x))return;
- if(!confirm('Move this record to the Portfolio Manager Recycling Bin?'))return;
+ if(!x||!confirm('Move this record to the Portfolio Manager Recycling Bin?'))return;
  moveToPortfolioManagerRecycleBin(type,page,x,{collection:key});
  state[key]=state[key].filter(v=>v.id!==id);
  save();renderItalySourcing();
@@ -6657,78 +6557,6 @@ window.saveHeadProposalFinancial=function(id,field,value){
 };
 
 
-
-function ensureApprovedCandidateTenderDatabaseItem(candidate,tender,workItem){
- if(!candidate||!tender||!workItem)return null;
- if(!Array.isArray(state.items))state.items=[];
-
- // Reuse an item already created from this Wine Candidate.
- let item=state.items.find(i=>i.sourceCandidateId===candidate.id)||null;
- if(!item&&workItem.itemId)item=state.items.find(i=>i.id===workItem.itemId)||null;
- if(!item){
-   const normalizedName=String(candidate.productDescription||candidate.name||workItem.itemName||'').trim().toLowerCase();
-   item=state.items.find(i=>{
-     const sameName=String(i.productDescription||'').trim().toLowerCase()===normalizedName;
-     const sameTender=String(i.sourceTenderId||'')===String(tender.id||'');
-     return normalizedName&&sameName&&sameTender;
-   })||null;
- }
-
- const offeredPrice=(candidate.headOfferedLcboCasePrice!==''&&candidate.headOfferedLcboCasePrice!=null)
-   ? num(candidate.headOfferedLcboCasePrice)
-   : num(candidate.supplierPricePerCase||workItem.offeredPrice);
- const offeredCurrency=(candidate.headOfferedLcboCasePrice!==''&&candidate.headOfferedLcboCasePrice!=null)
-   ? 'CAD'
-   : (candidate.supplierCurrency||candidate.currency||workItem.currency||'CAD');
-
- if(!item){
-   const source={...candidate};
-   [
-     'id','country','opportunityId','tenderRecordId','tenderId','status','headOfficeActionStatus','headOfficeComment',
-     'headOfficeActions','headOfficeUpdatedAt','headAgencyMargin','headErpCad','headPotentialWinnerQuantity',
-     'headOfferedLcboCasePrice','headAgencyToRegisterId','headAgencyToRegisterName','createdAt','updatedAt',
-     'itemPhotos','attachmentSaveWarning'
-   ].forEach(k=>delete source[k]);
-   item={
-     ...source,
-     id:uid(),
-     sourceCandidateId:candidate.id,
-     sourceTenderId:tender.id,
-     sourceLcboSubmissionWorkId:workItem.id,
-     productDescription:candidate.productDescription||candidate.name||workItem.itemName||'Untitled Item',
-     supplierName:candidate.supplierName||candidate.producerName||workItem.supplierName||'',
-     quotePerCase:offeredPrice,
-     quotationCurrency:offeredCurrency,
-     score:candidate.score||workItem.candidateScore||'',
-     scoreSource:candidate.scoreSource||candidate.scoreSourceOther||workItem.candidateScoreSource||'',
-     estimatedRetailPrice:candidate.headErpCad??candidate.localRetailPricePerBottle??'',
-     sellingUnitsPerShippingCase:candidate.bottlesPerCase??'',
-     productCategory:candidate.productCategory||'Wine',
-     addedFromHeadOfficeApproval:true,
-     addedFromHeadOfficeApprovalAt:new Date().toISOString()
-   };
-   state.items.push(item);
- }else{
-   item.sourceCandidateId=candidate.id;
-   item.sourceTenderId=tender.id;
-   item.sourceLcboSubmissionWorkId=workItem.id;
-   item.productDescription=candidate.productDescription||candidate.name||item.productDescription||workItem.itemName||'Untitled Item';
-   item.supplierName=candidate.supplierName||candidate.producerName||item.supplierName||workItem.supplierName||'';
-   item.quotePerCase=offeredPrice;
-   item.quotationCurrency=offeredCurrency;
-   if(candidate.score)item.score=candidate.score;
-   if(candidate.scoreSource||candidate.scoreSourceOther)item.scoreSource=candidate.scoreSource||candidate.scoreSourceOther;
- }
-
- workItem.itemId=item.id;
- workItem.itemName=item.productDescription;
- workItem.supplierName=item.supplierName||workItem.supplierName||'';
- workItem.offeredPrice=offeredPrice;
- workItem.currency=offeredCurrency;
- return item;
-}
-window.ensureApprovedCandidateTenderDatabaseItem=ensureApprovedCandidateTenderDatabaseItem;
-
 function ensureApprovedCandidateInLcboSubmissions(candidate){
  if(!candidate||normalizeHeadProposalStatus(candidate.headOfficeActionStatus||candidate.status)!=='Approved for LCBO Submission')return null;
  if(!Array.isArray(state.tenders))state.tenders=[];
@@ -6783,14 +6611,9 @@ function ensureApprovedCandidateInLcboSubmissions(candidate){
  workItem.tenderName=tender.name||'';
  workItem.candidateScore=candidate.score||'';
  workItem.candidateScoreSource=candidate.scoreSource||candidate.scoreSourceOther||'';
- workItem.status='Approved for LCBO Submission';
  workItem.updatedAt=new Date().toISOString();
 
  if(!existing)tender.workItems.push(workItem);
-
- // Approval must behave exactly like adding a new LCBO submission item manually:
- // create/link its Tender Item Database record and carry the registration details over.
- ensureApprovedCandidateTenderDatabaseItem(candidate,tender,workItem);
  return workItem;
 }
 window.ensureApprovedCandidateInLcboSubmissions=ensureApprovedCandidateInLcboSubmissions;
