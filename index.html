@@ -364,7 +364,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   margin:8px 0 12px;
   font-size:13px;
 }
-#inventory-profit-calculator .financial-parent-active{
+#financialProfitDynamicPages .financial-parent-active{
   font-weight:700;
 }
 </style>
@@ -962,66 +962,6 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <tbody id="officeInventoryRows"></tbody>
  </table></div>
 </div></section>
-<section id="inventory-profit-calculator" class="panel"><div class="box">
- <div class="invoice-page-row inventory-sticky-nav">
-   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
-   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
-   <button type="button" class="invoice-page-tab active financial-parent-active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
-  </div>
- <div class="invoice-page-row financial-regu-child-nav profit-child-nav">
-   <button type="button" class="invoice-page-tab active" onclick="activate('inventory-profit-calculator','heads-page')">Profit Calulator REGU/SEAS/OTHER</button>
-   <span class="financial-profit-dynamic-tabs"></span>
-   <button type="button" class="secondary invoice-page-tab" onclick="addFinancialProfitPage()">+ Profit Calulator REGU/SEAS/OTHER</button>
-  </div>
-  <div class="financial-child-path"><button type="button" class="invoice-page-tab active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button><span>›</span><strong>Profit Calulator REGU/SEAS/OTHER</strong></div>
- <div class="section-head">
-  <div>
-   <h2>Profit Calulator REGU/SEAS/OTHER</h2>
-   <p class="note">Automatically shows every REGU, SEAS and OTHER PO item as soon as it is added to a Transportation record. TENDER POs are excluded. Manual fields are saved per PO item.</p>
-  </div>
- </div>
- <div class="toolbar">
-  <input id="profitItemSearch" type="search" placeholder="Search item, PO or supplier" oninput="renderProfitItemCalculator()">
- </div>
- <div class="table-wrap profit-calculator-scroll"><table class="profit-calculator-table">
-  <thead>
-  <tr class="profit-grand-total-row">
-   <th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>
-   <th id="profitGrandCases" class="profit-grand-total">Grand Total Case Qtty<br><b>0.00</b></th>
-   <th></th>
-   <th id="profitGrandNet" class="profit-grand-total profit-green">Grand Total Net Profit<br><b>CAD 0.00</b></th>
-   <th id="profitGrandMoney" class="profit-grand-total profit-orange">Grand Total Money Needed<br><b>CAD 0.00</b></th>
-   <th></th><th></th><th></th><th></th><th></th>
-  </tr>
-  <tr>
-   <th>Item Description</th>
-   <th>PO #</th>
-   <th class="profit-manual-col">Supplier Bottle Price</th>
-   <th>Currency</th>
-   <th class="profit-manual-col">1 CAD to 1 Supplier Currency Exchange Rate</th>
-   <th>Supplier Price Converted into CAD</th>
-   <th>CAD Transportation Price / Btl</th>
-   <th>Bottles / Case</th>
-   <th>Proforma Price / Bottle</th>
-   <th>GST/HST/OTHER</th>
-   <th>Bottle Deposit</th>
-   <th>Price Currency Difference / Bottle</th>
-   <th class="profit-green">Agency Fee HST Included</th>
-   <th>RPIME Cost in CAD</th>
-   <th>Selling Price / Bottle</th>
-   <th>Total Case Qtty</th>
-   <th>Lab / Other Cost</th>
-   <th class="profit-green">Net Profit</th>
-   <th class="profit-orange">Total Money Needed</th>
-   <th>Approx Sales Month Qtty</th>
-   <th>Profit Approx Net / Month</th>
-   <th>Actually Was Sold in # Month</th>
-   <th class="profit-green">Actual Monthly Profit</th>
-   <th>Action</th>
-  </tr></thead>
-  <tbody id="profitItemRows"></tbody>
- </table></div>
-</div></section>
 <div id="financialProfitDynamicPages"></div>
 
 
@@ -1039,7 +979,6 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
    </div>
   </div>
   <div class="invoice-page-row financial-regu-child-nav">
-   <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page')">Profit Calulator REGU/SEAS/OTHER</button>
    <span id="financialProfitDynamicTabs"></span>
    <button type="button" class="secondary invoice-page-tab" onclick="addFinancialProfitPage()">+ Profit Calulator REGU/SEAS/OTHER</button>
   </div>
@@ -3525,13 +3464,10 @@ function activate(tab,preferredSection=''){
     }
   }
   const panel=$('#'+tab);if(panel)panel.classList.add('active');
-  if(preferredSection==='heads-page' && (['inventory-in-stock','inventory-in-stock-office','inventory-profit-calculator','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
+  if(preferredSection==='heads-page' && (['inventory-in-stock','inventory-in-stock-office','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
     $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav==='heads-page'));
     $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section==='heads-page'));
     const hubTab=$('.subnav[data-section-nav="heads-page"] .tab[data-tab="inventory-stock"]');if(hubTab)hubTab.classList.add('active');
-    if(tab==='inventory-profit-calculator'){
-      document.querySelectorAll('#inventory-profit-calculator .financial-parent-active').forEach(x=>x.classList.add('active'));
-    }
     if(typeof syncInventoryStockSubnav==='function')syncInventoryStockSubnav(tab);
   }
   if(preferredSection==='heads-page' && ['financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices'].includes(tab)){
@@ -6293,8 +6229,7 @@ function financialProfitPageHtml(p){
       <button type="button" class="invoice-page-tab active financial-parent-active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
     </div>
     <div class="invoice-page-row financial-regu-child-nav profit-child-nav">
-      <button type="button" class="invoice-page-tab" onclick="activate('inventory-profit-calculator','heads-page')">Profit Calulator REGU/SEAS/OTHER</button>
-      <span class="financial-profit-dynamic-tabs"></span>
+         <span class="financial-profit-dynamic-tabs"></span>
       <button type="button" class="secondary invoice-page-tab" onclick="addFinancialProfitPage()">+ Profit Calulator REGU/SEAS/OTHER</button>
     </div>
     <div class="financial-child-path"><button type="button" class="invoice-page-tab active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button><span>›</span><strong>${escapeHtml(p.name)}</strong></div>
@@ -6625,9 +6560,29 @@ window.saveHeadProposalFinancial=function(id,field,value){
 function ensureApprovedCandidateInLcboSubmissions(candidate){
  if(!candidate||normalizeHeadProposalStatus(candidate.headOfficeActionStatus||candidate.status)!=='Approved for LCBO Submission')return null;
  if(!Array.isArray(state.tenders))state.tenders=[];
- const tender=state.tenders.find(t=>t.id===candidate.opportunityId);
- if(!tender)return null;
+
+ // Resolve the proposal's tender reliably. Older records may store the link under
+ // opportunityId, tenderRecordId, tenderId, tender code, or tender name.
+ const candidateTenderRef=String(candidate.opportunityId||candidate.tenderRecordId||candidate.tenderId||'').trim();
+ const candidateTenderCode=String(candidate.tenderCode||candidate.tenderID||'').trim().toLowerCase();
+ const candidateTenderName=String(candidate.tenderName||'').trim().toLowerCase();
+ const tender=state.tenders.find(t=>
+   (candidateTenderRef&&String(t.id||'')===candidateTenderRef)||
+   (candidateTenderCode&&String(t.code||'').trim().toLowerCase()===candidateTenderCode)||
+   (candidateTenderName&&String(t.name||'').trim().toLowerCase()===candidateTenderName)
+ );
+ if(!tender){
+   console.warn('Approved Wine Candidate could not be moved to LCBO SUBMISSIONS LIST because its Tender was not found.',candidate);
+   return null;
+ }
  if(!Array.isArray(tender.workItems))tender.workItems=[];
+
+ // The approved proposal belongs in one LCBO SUBMISSIONS LIST only. Remove an
+ // older copy from any other tender before adding/updating it under this tender.
+ state.tenders.forEach(t=>{
+   if(t.id===tender.id||!Array.isArray(t.workItems))return;
+   t.workItems=t.workItems.filter(w=>w.sourceCandidateId!==candidate.id);
+ });
 
  const existing=tender.workItems.find(w=>w.sourceCandidateId===candidate.id);
  const offeredPrice=(candidate.headOfferedLcboCasePrice!==''&&candidate.headOfferedLcboCasePrice!=null)
@@ -6651,6 +6606,9 @@ function ensureApprovedCandidateInLcboSubmissions(candidate){
  workItem.agencyName=candidate.headAgencyToRegisterName||agencyName(workItem.agencyId)||'';
  workItem.headOfferedLcboCasePrice=candidate.headOfferedLcboCasePrice??'';
  workItem.candidateCountry=candidate.country||'';
+ workItem.tenderId=tender.id;
+ workItem.tenderCode=tender.code||'';
+ workItem.tenderName=tender.name||'';
  workItem.candidateScore=candidate.score||'';
  workItem.candidateScoreSource=candidate.scoreSource||candidate.scoreSourceOther||'';
  workItem.updatedAt=new Date().toISOString();
@@ -6770,7 +6728,9 @@ window.restorePortfolioManagerRecycle=id=>{
  const x=(state.portfolioManagerRecycleBin||[]).find(v=>v.id===id);if(!x)return;
  const r=JSON.parse(JSON.stringify(x.record));
  const map={countryWinery:'countryWineries',countryCandidate:'countryCandidates',countryBonus:'countryBonuses',portfolioManagerNote:'portfolioManagerNotes'};
- const key=x.restoreMeta?.collection||map[x.type];
+ // A deleted Wine Candidate must always be restored to the active Wine Candidates collection/page.
+ const isWineCandidate=x.type==='countryCandidate'||x.page==='Wine Candidates';
+ const key=isWineCandidate?'countryCandidates':(x.restoreMeta?.collection||map[x.type]);
  if(!key){alert('This record cannot be restored automatically.');return}
  if(!Array.isArray(state[key]))state[key]=[];
  if(!state[key].some(v=>v.id===r.id))state[key].push(r);
@@ -6778,7 +6738,9 @@ window.restorePortfolioManagerRecycle=id=>{
  save();
  renderPortfolioManagerRecycleBin();
  renderItalySourcing();
- 
+ if(isWineCandidate){
+   activate('country-candidates','country-sourcing-section');
+ }
 };
 window.permanentlyDeletePortfolioManagerRecycle=id=>{
  if(!(typeof isAdminUser==='function'&&isAdminUser())){alert('Administrator access only.');return}
