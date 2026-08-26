@@ -1,41 +1,56 @@
-ZIMPORT — "STUCK AFTER LOADING" FIX
+ZIMPORT — "STUCK AFTER LOADING" FIX (v2)
 
-WHAT WAS WRONG
-The page loads a cloud library from the internet (cdn.jsdelivr.net) before it can
-sign you in. If that library was slow, blocked, or failed to load for any reason
-(network hiccup, firewall, ad-blocker, temporary outage), the program hit a silent
-error and never finished setting up the Sign In button, Forgot Password button,
-Sign Out button, and Sync Now button. Nothing on the page was actually broken —
-those buttons simply never got "switched on," so clicking them did nothing and the
-screen looked permanently stuck, with no error message shown to you.
+WHAT WAS WRONG (two related bugs, both in online-adapter.js)
+
+1) If the cloud library (loaded from the internet) was slow, blocked, or failed to
+   load, the program hit a silent error and never finished setting up the Sign In,
+   Forgot Password, Sign Out, and Sync Now buttons. Clicking them did nothing.
+
+2) Even when the cloud library loaded fine, if the Sign In button's actual network
+   request to your Supabase project failed for any reason (a connection hiccup, a
+   firewall, DNS issues, or the project itself being unreachable/paused), that
+   failure was never caught. The click would silently do nothing — no error
+   message, no spinner, nothing — which looks exactly like the screen being
+   "stuck." I reproduced this exact scenario in an automated test and confirmed it
+   was the cause of a click producing zero visible feedback.
 
 WHAT WAS CHANGED
-Only one file was changed: online-adapter.js.
-- The Sign In, Forgot Password, Sign Out, and Sync Now buttons are now switched on
-  immediately, no matter what happens with the cloud library.
-- If the cloud library fails to load, or the connection can't start, the login
-  screen now shows a clear message explaining what happened and a "Retry
-  connection" button, instead of silently doing nothing.
-- Clicking Sign In while the cloud connection isn't ready now shows a message
-  telling you to check your internet connection and retry, instead of appearing
-  to do nothing.
+Only online-adapter.js was changed:
+- Sign In, Forgot Password, Sign Out, and Sync Now are wired up immediately, no
+  matter what happens with the cloud library (bug 1).
+- If the cloud library fails to load, the login screen shows a clear message and a
+  "Retry connection" button instead of doing nothing.
+- Sign In, Forgot Password, and Sign Out now catch ANY failure — network problems,
+  a blocked connection, an unreachable project — and show a plain-English message
+  in red under the password field, instead of silently doing nothing (bug 2).
 
-This was tested in an automated browser: with the cloud library blocked, the app
-now shows the explanatory message and a working Retry button; with the cloud
-library available, sign-in works exactly as before.
+Both scenarios were tested in an automated browser and confirmed fixed: the app
+now always shows a message when something goes wrong, and normal sign-in still
+works exactly as before when the connection is healthy.
+
+WHAT TO CHECK ON YOUR END
+Since clicking Sign In previously did "nothing," it's worth double-checking your
+Supabase project is actually live and reachable:
+1. Log into supabase.com and open your project. If it shows as "Paused" (common on
+   the free tier after a period of no activity), click to restore/resume it.
+2. Confirm the Project URL and anon/publishable key in online-config.js exactly
+   match what's shown in your Supabase project's Settings > API page.
+3. Re-open index.html (or your hosted site) and try Sign In again — with this fix,
+   if it still can't connect, you will now see the exact reason on screen instead
+   of a blank, unresponsive button.
+4. For real day-to-day use, host these files on an HTTPS site (Cloudflare Pages,
+   Netlify, etc.) as DEPLOYMENT_CHECKLIST.txt describes, rather than opening
+   index.html directly from your desktop — some browsers apply extra restrictions
+   to files opened this way.
 
 WHAT YOU NEED TO DO
-1. Re-upload every file in this ZIP to your web host (Cloudflare Pages, Netlify,
-   etc.), replacing the old files. The important one is online-adapter.js.
-2. Your Supabase project URL/keys in online-config.js were left exactly as they
-   were — no need to reconfigure anything.
-3. If the app ever shows "Cloud library failed to load" again, it means your
-   internet connection (or something blocking cdn.jsdelivr.net) is the cause —
-   click "Retry connection" or reload the page once your connection is back.
+Re-upload/replace every file in this ZIP where your program lives (or re-extract
+this ZIP over your desktop copy). Only online-adapter.js changed — your Supabase
+URL/keys in online-config.js were left exactly as they were.
 
 NOTE (not related to the stuck issue, no action needed)
 While testing, the browser flagged a handful of duplicate HTML element IDs in two
 of the Financial sections (e.g. ssFinAdDescription1-6, ssFinInvoiceNumber). This is
 a pre-existing, unrelated cosmetic issue in two similar financial sub-pages and did
-not cause the freeze — it wasn't touched in this fix so nothing already working was
-put at risk. Mention it if you'd like it looked at separately.
+not cause the freeze — it wasn't touched in this fix. Mention it if you'd like it
+looked at separately.

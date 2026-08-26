@@ -90,16 +90,33 @@
     $('onlineLoginForm')?.addEventListener('submit',async e=>{
       e.preventDefault();$('onlineLoginError').textContent='';
       if(!client){$('onlineLoginError').textContent='Cloud connection is not ready. Check your internet connection, then click Retry connection or reload the page.';return;}
-      const r=await client.auth.signInWithPassword({email:$('onlineEmail').value.trim(),password:$('onlinePassword').value});
-      if(r.error){$('onlineLoginError').textContent=r.error.message;return;}
-      await afterLogin(r.data.session);
+      const btn=e.target.querySelector('button[type=submit]');if(btn)btn.disabled=true;
+      try{
+        const r=await client.auth.signInWithPassword({email:$('onlineEmail').value.trim(),password:$('onlinePassword').value});
+        if(r.error){$('onlineLoginError').textContent=r.error.message;return;}
+        await afterLogin(r.data.session);
+      }catch(e){
+        console.error(e);
+        $('onlineLoginError').textContent='Could not reach the cloud service: '+(e.message||e)+'. Check your internet connection and try again.';
+      }finally{
+        if(btn)btn.disabled=false;
+      }
     });
     if($('onlineForgotPassword'))$('onlineForgotPassword').onclick=async()=>{
       if(!client){$('onlineLoginError').textContent='Cloud connection is not ready. Check your internet connection, then click Retry connection or reload the page.';return;}
       const email=$('onlineEmail').value.trim();if(!email){$('onlineLoginError').textContent='Enter your email first.';return;}
-      const r=await client.auth.resetPasswordForEmail(email,{redirectTo:location.href});$('onlineLoginError').textContent=r.error?r.error.message:'Password reset email sent.';
+      try{
+        const r=await client.auth.resetPasswordForEmail(email,{redirectTo:location.href});
+        $('onlineLoginError').textContent=r.error?r.error.message:'Password reset email sent.';
+      }catch(e){
+        console.error(e);
+        $('onlineLoginError').textContent='Could not reach the cloud service: '+(e.message||e)+'. Check your internet connection and try again.';
+      }
     };
-    if($('onlineSignOut'))$('onlineSignOut').onclick=async()=>{if(client)await client.auth.signOut();showLogin();};
+    if($('onlineSignOut'))$('onlineSignOut').onclick=async()=>{
+      try{if(client)await client.auth.signOut();}catch(e){console.error(e);}
+      showLogin();
+    };
     $('cloudForceSync')?.addEventListener('click',()=>window.ZimportOnline.syncNow());
   }
   async function init(){
