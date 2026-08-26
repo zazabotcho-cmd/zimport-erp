@@ -3780,7 +3780,7 @@ function renderTenderSupplierChoices(selected=[]){
  });
 
  rows.sort((a,b)=>String(a.country||'').localeCompare(String(b.country||''))||String(a.name||'').localeCompare(String(b.name||'')));
- box.innerHTML=rows.map(s=>`<label class="checkbox-card"><input type="checkbox" class="tender-supplier-recipient" value="${esc(s.key)}" checked><span><b>${esc(s.country)} — ${esc(s.name)}</b><br><small>${esc(s.emails.join(', ')||'No registered email')}</small></span></label>`).join('')||(countries.length?'<div class="note full">No suppliers are saved in Country Sourcing → Suppliers for the selected country.</div>':'<div class="note full">Select a country representative first.</div>');
+ box.innerHTML=rows.map(s=>`<label class="checkbox-card"><input type="checkbox" class="tender-supplier-recipient" value="${escapeHtml(s.key)}" checked><span><b>${escapeHtml(s.country)} — ${escapeHtml(s.name)}</b><br><small>${escapeHtml(s.emails.join(', ')||'No registered email')}</small></span></label>`).join('')||(countries.length?'<div class="note full">No suppliers are saved in Country Sourcing → Suppliers for the selected country.</div>':'<div class="note full">Select a country representative first.</div>');
 }
 window.renderTenderSupplierChoices=renderTenderSupplierChoices;
 
