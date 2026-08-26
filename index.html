@@ -6608,43 +6608,28 @@ window.renderHeadOfficeProposals=renderHeadOfficeProposals;
 
 
 window.saveHeadProposalAgency=function(id,agencyId){
- if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
- const x=state.countryCandidates.find(v=>v.id===id);
- if(!x)return false;
-
- const agency=(state.agencies||[]).find(a=>String(a.id)===String(agencyId));
- x.headAgencyToRegisterId=agency?.id||'';
- x.headAgencyToRegisterName=agency?.name||agency?.short||'';
- x.headOfficeFinancialUpdatedAt=new Date().toISOString();
-
- // Save the agency selection immediately. This must never depend on any
- // secondary LCBO submission synchronization succeeding.
  try{
-   safeStorage.setItem(DATA_KEY,JSON.stringify(state));
- }catch(err){
-   console.error('Local agency save warning:',err);
- }
- try{
-   if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
- }catch(err){
-   console.error('Cloud agency sync warning:',err);
- }
+  if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
+  const x=state.countryCandidates.find(v=>v.id===id);
+  if(!x)return false;
+  const agency=(state.agencies||[]).find(a=>a.id===agencyId);
+  x.headAgencyToRegisterId=agency?.id||'';
+  x.headAgencyToRegisterName=agency?.name||agency?.short||'';
+  x.headOfficeFinancialUpdatedAt=new Date().toISOString();
 
- // Best-effort background synchronization for already-approved proposals.
- // Never interrupt the user or undo the selected agency if this secondary
- // synchronization encounters an older/incomplete submission record.
- if(normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status)==='Approved for LCBO Submission'){
-   try{
-     ensureApprovedCandidateInLcboSubmissions(x);
-     safeStorage.setItem(DATA_KEY,JSON.stringify(state));
-     if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
-   }catch(err){
-     console.error('Approved submission agency sync warning:',err);
-   }
+  // If already approved, immediately synchronize the selected agency to LCBO SUBMISSIONS LIST.
+  if(normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status)==='Approved for LCBO Submission'){
+    ensureApprovedCandidateInLcboSubmissions(x);
+  }
+  safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+  if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
+  if(typeof renderWorkerList==='function')renderWorkerList();
+  return true;
+ }catch(err){
+  console.error('Head Office agency selection failed:',err);
+  alert('Agency to Register could not be saved.');
+  return false;
  }
-
- try{if(typeof renderWorkerList==='function')renderWorkerList();}catch(err){console.error(err);}
- return true;
 };
 
 window.saveHeadProposalFinancial=function(id,field,value){
