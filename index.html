@@ -3751,18 +3751,16 @@ function renderTenderSupplierChoices(selected=[]){
    .filter(s=>countries.includes(s.country))
    .sort((a,b)=>String(a.country||'').localeCompare(String(b.country||''))||String(a.name||'').localeCompare(String(b.name||'')));
 
- // When a country is newly marked, every supplier from Country Sourcing → Suppliers
- // for that country is shown and selected automatically. Existing saved tender selections
- // are preserved when editing a tender.
- const editingTenderId=String(document.getElementById('tenderRecordId')?.value||'');
- const isNewTender=!editingTenderId;
+ // Every marked country immediately loads ALL suppliers from Country Sourcing → Suppliers.
+ // Every displayed supplier is automatically marked under Suppliers to Notify, for both
+ // new and existing tenders. The user may uncheck an individual supplier afterwards.
  box.innerHTML=suppliers.map(s=>{
   const key=tenderSupplierKey(s.country,s.id);
   const supplierInfo=(state.countryWineries||[]).filter(x=>x.country===s.country&&x.portfolioSupplierId===s.id);
   const emails=[...new Set(supplierInfo.map(x=>String(x.email||'').trim()).filter(Boolean))];
   const legalNames=[...new Set(supplierInfo.map(x=>String(x.supplierLegalFullName||x.name||'').trim()).filter(Boolean))];
   const displayName=legalNames.length?legalNames.join(' / '):(s.name||'Supplier');
-  const checked=selected.includes(key)||isNewTender;
+  const checked=true;
   return `<label class="checkbox-card"><input type="checkbox" class="tender-supplier-recipient" value="${esc(key)}" ${checked?'checked':''}><span><b>${esc(s.country)} — ${esc(displayName)}</b><br><small>${esc(emails.join(', ')||'No registered email')}</small></span></label>`;
  }).join('')||(countries.length?'<div class="note full">No suppliers are saved in Country Sourcing → Suppliers for the selected country.</div>':'<div class="note full">Select a country representative first.</div>');
 }
