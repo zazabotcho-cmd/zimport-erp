@@ -5159,30 +5159,7 @@ window.openItalyCandidateAttachment=i=>{const f=currentItalyCandidateAttachments
 function handleItalyCandidateAttachments(e){for(const file of [...e.target.files]){if(currentItalyCandidateAttachments.length>=10){alert('Maximum 10 attachments are allowed.');break}if(!['application/pdf','image/jpeg'].includes(file.type)&&!file.name.toLowerCase().match(/\.(pdf|jpe?g)$/)){alert(`${file.name}: only PDF, JPG and JPEG files are allowed.`);continue}if(file.size>5*1024*1024){alert(`${file.name}: maximum file size is 5 MB.`);continue}currentItalyCandidateAttachments.push({id:uid(),name:file.name,size:file.size,type:file.type,lastModified:file.lastModified,blob:file})}e.target.value='';renderItalyCandidateAttachments()}
 function calcItalyCandidateCaseVolume(){const v=num(document.getElementById('c_caseLengthCm')?.value)*num(document.getElementById('c_caseWidthCm')?.value)*num(document.getElementById('c_caseHeightCm')?.value);const out=document.getElementById('c_calculatedCaseVolume');if(out)out.value=v?v.toFixed(2):''}
 function syncItalyCandidateLcboItemVisibility(){const input=document.getElementById('c_lcboItemNumber'),label=input?.closest('label'),show=document.getElementById('c_previouslyPurchased')?.value==='Yes';if(label)label.classList.toggle('field-hidden',!show);if(input){input.disabled=!show;input.required=show;if(label){const first=label.childNodes[0];if(first&&first.nodeType===3)first.nodeValue=show?'LCBO Item Number *':'LCBO Item Number'}if(!show)input.value=''}}
-function populateItalyCandidateOpportunitySelect(selected=''){
- const o=document.getElementById('itCanOpp');if(!o)return;
- const supplier=currentCountrySupplier();
- const supplierId=String(supplier?.id||currentCountrySupplierId||'').trim();
- const country=String(currentSourcingCountry||supplier?.country||'').trim();
- const normCountry=normalizeTenderCountryName(country);
-
- // A Wine Candidate may only be assigned to a tender where THIS supplier was
- // explicitly checked under Create a Tender → Suppliers to Notify.
- const eligible=(state.tenders||[]).filter(t=>{
-   const keys=Array.isArray(t.notificationSupplierKeys)?t.notificationSupplierKeys:[];
-   return keys.some(raw=>{
-     const key=String(raw||'').trim();
-     const split=key.indexOf('::');
-     if(split<0)return key===supplierId; // legacy supplier-id-only records
-     const keyCountry=key.slice(0,split);
-     const keySupplierId=key.slice(split+2);
-     return keySupplierId===supplierId &&
-       (!normCountry || normalizeTenderCountryName(keyCountry)===normCountry);
-   });
- });
- o.innerHTML='<option value="">Select Tender</option>'+eligible.map(t=>`<option value="${t.id}">${esc(t.code||'—')} — ${esc(t.name||'Unnamed Tender')}</option>`).join('');
- o.value=eligible.some(t=>String(t.id)===String(selected||''))?String(selected):'';
-}
+function populateItalyCandidateOpportunitySelect(selected=''){const o=document.getElementById('itCanOpp');if(o){o.innerHTML='<option value="">Select Tender</option>'+(state.tenders||[]).filter(t=>(t.sourcingRepresentatives||[]).includes('Italy')).map(t=>`<option value="${t.id}">${esc(t.code||'—')} — ${esc(t.name||'Unnamed Tender')}</option>`).join('');o.value=selected||''}}
 
 function syncItalyCandidateQuoteType(){
  const type=document.getElementById('itCanQuoteType')?.value||'',wrap=document.getElementById('itCanExCellarDeliveryWrap'),input=document.getElementById('itCanExCellarDelivery');
