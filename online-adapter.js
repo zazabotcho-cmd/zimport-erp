@@ -1,6 +1,6 @@
 (function(){
   const cfg=window.ZIMPORT_ONLINE_CONFIG||{};
-  const configured=()=>!window.WINGLOBAL_LOCAL_FILE_MODE&&/^https:\/\/.+\.supabase\.co$/i.test(cfg.supabaseUrl||'')&&!String(cfg.supabaseAnonKey||'').includes('PASTE_');
+  const configured=()=>/^https:\/\/.+\.supabase\.co$/i.test(cfg.supabaseUrl||'')&&!String(cfg.supabaseAnonKey||'').includes('PASTE_');
   let client=null,user=null,profile=null,syncTimer=null,syncing=false,dirty=false,realtimeTimer=null;
   let latestState=null,latestSettings=null,baseline=new Map();
   const $=id=>document.getElementById(id);
@@ -46,7 +46,7 @@
   }
   async function updateRow(table,row,base){const nextVersion=(base?.version||1)+1;const q=await client.from(table).update({data:cleanData(row),updated_by:user.id,version:nextVersion}).eq('organization_id',cfg.organizationId).eq('id',String(row.id)).eq('version',base.version).select('version,updated_at');if(q.error)throw q.error;if(!q.data?.length){const e=new Error('CONFLICT');e.code='CONFLICT';e.table=table;e.id=row.id;throw e;}baseline.set(key(table,row.id),{data:cleanData(row),version:q.data[0].version,updatedAt:q.data[0].updated_at});await log('UPDATE',table,row.id,{fromVersion:base.version,toVersion:nextVersion});}
   async function deleteRow(table,id,base){const q=await client.from(table).delete().eq('organization_id',cfg.organizationId).eq('id',String(id)).eq('version',base.version).select('id');if(q.error)throw q.error;if(!q.data?.length){const e=new Error('CONFLICT');e.code='CONFLICT';e.table=table;e.id=id;throw e;}baseline.delete(key(table,id));await log('DELETE',table,id,{version:base.version});}
-  async function syncState(state,settings){if(window.WINGLOBAL_LOCAL_FILE_MODE||!configured()||!user||syncing)return;if(profile?.role==='readonly'){status('Read-only account','error');return;}syncing=true;dirty=false;status('Saving changes…');try{
+  async function syncState(state,settings){if(!configured()||!user||syncing)return;if(profile?.role==='readonly'){status('Read-only account','error');return;}syncing=true;dirty=false;status('Saving changes…');try{
     const flat=flatten(state,settings);
     for(const table of Object.keys(flat)){
       const rows=flat[table],current=new Map(rows.map(r=>[String(r.id),r]));
@@ -73,21 +73,7 @@
   function subscribeRealtime(){const ch=client.channel('zimport-shared-changes');allTables.forEach(t=>ch.on('postgres_changes',{event:'*',schema:'public',table:t,filter:`organization_id=eq.${cfg.organizationId}`},payload=>{if(payload.new?.updated_by===user?.id||payload.old?.updated_by===user?.id)return;scheduleRealtimeReload();}));ch.subscribe();}
   async function getProfile(){const r=await client.from('profiles').select('*').eq('id',user.id).maybeSingle();if(r.error)throw r.error;profile=r.data||{role:'readonly',full_name:user.email};window.ZIMPORT_CURRENT_ROLE=profile.role||'readonly';window.dispatchEvent(new CustomEvent('zimport-online-role',{detail:{role:window.ZIMPORT_CURRENT_ROLE}}));if($('onlineUserLabel'))$('onlineUserLabel').textContent=`${profile.full_name||user.email} · ${window.ZIMPORT_CURRENT_ROLE}`;}
   async function afterLogin(session){user=session?.user||null;if(!user)return showLogin();await getProfile();$('onlineLoginGate')?.classList.add('hidden');if($('onlineSignOut'))$('onlineSignOut').style.display='';await loadState();subscribeRealtime();}
-  function showLogin(){
-  if(window.WINGLOBAL_LOCAL_FILE_MODE){
-    user={id:'local-file-user',email:'local@winglobal'};
-    profile={role:'admin',full_name:'Local File Mode'};
-    window.ZIMPORT_CURRENT_ROLE='admin';
-    $('onlineLoginGate')?.classList.add('hidden');
-    if($('onlineLoginGate'))$('onlineLoginGate').style.display='none';
-    if($('onlineSignOut'))$('onlineSignOut').style.display='none';
-    if($('onlineUserLabel'))$('onlineUserLabel').textContent='Local File Mode';
-    status('Local mode','connected');
-    window.dispatchEvent(new CustomEvent('zimport-online-role',{detail:{role:'admin'}}));
-    return;
-  }
-  user=null;profile=null;$('onlineLoginGate')?.classList.remove('hidden');if($('onlineSignOut'))$('onlineSignOut').style.display='none';if($('onlineUserLabel'))$('onlineUserLabel').textContent='';status(configured()?'Sign in required':'Supabase not configured');
-}
+  function showLogin(){user=null;profile=null;$('onlineLoginGate')?.classList.remove('hidden');if($('onlineSignOut'))$('onlineSignOut').style.display='none';if($('onlineUserLabel'))$('onlineUserLabel').textContent='';status(configured()?'Sign in required':'Supabase not configured');}
   async function init(){if(!configured()){showLogin();if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Supabase is not configured.';return;}client=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true}});if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Use your assigned email and password.';$('onlineLoginForm')?.addEventListener('submit',async e=>{e.preventDefault();$('onlineLoginError').textContent='';const r=await client.auth.signInWithPassword({email:$('onlineEmail').value.trim(),password:$('onlinePassword').value});if(r.error){$('onlineLoginError').textContent=r.error.message;return;}await afterLogin(r.data.session);});if($('onlineForgotPassword'))$('onlineForgotPassword').onclick=async()=>{const email=$('onlineEmail').value.trim();if(!email){$('onlineLoginError').textContent='Enter your email first.';return;}const r=await client.auth.resetPasswordForEmail(email,{redirectTo:location.href});$('onlineLoginError').textContent=r.error?r.error.message:'Password reset email sent.';};if($('onlineSignOut'))$('onlineSignOut').onclick=async()=>{await client.auth.signOut();showLogin();};$('cloudForceSync')?.addEventListener('click',()=>window.ZimportOnline.syncNow());const {data}=await client.auth.getSession();if(data.session)await afterLogin(data.session);else showLogin();client.auth.onAuthStateChange((_e,s)=>{if(s&&!user)afterLogin(s);if(!s)showLogin();});}
   async function uploadFile(path,file){if(!client||!user)throw new Error('Not signed in');const clean=`${cfg.organizationId}/${path}`.replace(/[^a-zA-Z0-9._\/-]/g,'_');const r=await client.storage.from(cfg.storageBucket).upload(clean,file,{upsert:true});if(r.error)throw r.error;await log('UPLOAD_FILE','storage',clean,{name:file.name,size:file.size,type:file.type});return clean;}
   async function deleteFile(path){const r=await client.storage.from(cfg.storageBucket).remove([path]);if(r.error)throw r.error;await log('DELETE_FILE','storage',path);}
