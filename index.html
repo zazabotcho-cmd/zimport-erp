@@ -477,6 +477,51 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 }
 </style>
 
+
+<style id="submittedStageYellowStyle">
+#submissions select.decision-yellow{background:#fff3bf!important;color:#6b5200!important;border-color:#e0a800!important;font-weight:700}
+</style>
+
+<style id="submittedReminderCommentStyle">
+#submissions .submitted-comment-box{min-width:220px}
+#submissions .submitted-comment-box textarea{width:100%;min-width:210px;box-sizing:border-box}
+#submissions .submitted-comment-box .file-actions{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
+</style>
+
+<style id="allSubmittedTenderColumnFix">
+#submissions .active-submissions-table{
+  table-layout:auto;
+  width:100%;
+}
+#submissions .active-submissions-table th:nth-child(2),
+#submissions .active-submissions-table td:nth-child(2){
+  min-width:145px;
+  width:145px;
+}
+#submissions .active-submissions-table td:nth-child(2) input[type="date"]{
+  width:135px;
+  max-width:135px;
+  box-sizing:border-box;
+}
+#submissions .active-submissions-table th:nth-child(3),
+#submissions .active-submissions-table td:nth-child(3){
+  min-width:190px;
+}
+#submissions .active-submissions-table td:nth-child(3){
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+</style>
+
+
+<style id="poVendorProducerStyle">
+.po-vendor-producer-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(220px,1fr);gap:18px;align-items:start}
+.po-vendor-producer-row>div{min-width:0}
+@media(max-width:800px){.po-vendor-producer-row{grid-template-columns:1fr}}
+.vendor-producer-display{line-height:1.35}
+.vendor-producer-display small{display:block;margin-top:3px}
+</style>
+
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -501,7 +546,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <button class="main-section-btn" data-section="tender-niss">TENDERS</button>
   <button class="main-section-btn" data-section="speciality-services">SPECIALITY SERVICES / PRIVATE ORDERS</button>
   <button class="main-section-btn" data-section="transportations">TRANSPORTATIONS</button>
-  <button class="main-section-btn" data-section="po-section">PO'S #</button>
+  <button class="main-section-btn" data-section="po-section">ALL PO'S & PROFORMAS</button>
   <button class="main-section-btn" data-section="country-sourcing">COUNTRY SOURCING</button>
   <button class="main-section-btn" data-section="internal-mail-section">INTERNAL MAIL <span id="mainInternalMailBadge" class="internal-mail-badge" style="display:none">0</span></button>
 <button class="main-section-btn" data-section="recycle-section">RECYCLING BIN</button>
@@ -521,20 +566,21 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <button class="tab" data-tab="items">Tender Item Database</button>
   <button class="tab" data-tab="submissions">All Submitted Items</button>
   <button class="tab" data-tab="tender-winners">TENDER WINNERS</button>
-  <button class="tab" data-tab="archived-tenders">Archived Tenders</button>
-  <button class="tab" data-tab="po-page" data-po-title="TENDER PO'S #">TENDER PO'S #</button>
+  
+  <button class="tab" data-tab="po-page" data-po-title="TENDER PO's">TENDER PO's</button>
+<button class="tab" data-tab="archived-tenders">Archived Tenders</button>
 </nav>
 <nav class="subnav" data-section-nav="speciality-services">
   <button class="tab" data-tab="calculator">Suppliers</button>
   <button class="tab" data-tab="supplier-items-page">Items</button>
-  <button class="tab" data-tab="po-page" data-po-title="PRIVATE ORDER PO'S #">PRIVATE ORDER PO'S #</button>
+  <button class="tab" data-tab="po-page" data-po-title="Private Order PO's">Private Order PO's</button>
 </nav>
 <nav class="subnav" data-section-nav="transportations">
   <button class="tab" data-tab="transportation">Transportation</button>
   <button class="tab" data-tab="archived-transportation">Archived Transportation</button>
 </nav>
 <nav class="subnav" data-section-nav="po-section">
-  <button class="tab" data-tab="po-page" data-po-title="PO'S #">PO'S #</button>
+  <button class="tab" data-tab="po-page" data-po-title="ALL PO'S & PROFORMAS">ALL PO'S & PROFORMAS</button>
   <button class="tab" data-tab="proformas">Proformas</button>
   <button class="tab" data-tab="archived-pos">ARCHIVED PO'S</button>
 </nav>
@@ -643,7 +689,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <th>Phone</th><th>Fax</th><th>Email</th><th>Payment Terms</th><th>Ontario / LCBO Agent?</th><th>Exports Other Provinces?</th><th>Producer Size</th><th>Classified as</th><th>Action</th>
   </tr></thead><tbody id="italyWineryRows"></tbody></table></div>
 </div></section>
-<section id="country-candidates" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — Wine Candidates</h2><p class="note">Wine Candidate uses the same detailed product profile as Add Tender Item, with country-sourcing fields added for the representative.</p></div><button type="button" onclick="openItalyCandidateForm()">+ Propose Wine</button></div><div class="toolbar"><input id="supplierWineCandidatesSearch" type="search" placeholder="Search Wine Candidates" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Wine</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Head Office ACTION STATUS</th><th>Work Status</th><th>Action</th></tr></thead><tbody id="italyCandidateRows"></tbody></table></div></div></section>
+<section id="country-candidates" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — Wine Candidates</h2><p class="note">Wine Candidate uses the same detailed product profile as Add Tender Item, with country-sourcing fields added for the representative.</p></div><button type="button" onclick="openItalyCandidateForm()">+ Propose Wine</button></div><div class="toolbar"><input id="supplierWineCandidatesSearch" type="search" placeholder="Search Wine Candidates" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Wine</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Head Office ACTION STATUS</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="italyCandidateRows"></tbody></table></div></div></section>
 <section id="country-archived-candidates" class="panel"><div class="box">
   <div class="section-head"><div><h2 id="archivedCountryCandidatesTitle">Italy — Archived Wine Candidates</h2><p class="note">Archived wine candidates for the selected country. Update information and propose again, or delete to the Portfolio Manager Recycling Bin.</p></div></div><div class="toolbar"><input id="supplierArchivedCandidatesSearch" type="search" placeholder="Search Archived Wine Candidates" oninput="renderArchivedCountryCandidates()"></div>
   <div class="table-wrap"><table>
@@ -689,9 +735,9 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
       <select id="headProposalStatusFilter" onchange="renderHeadOfficeProposals()">
         <option value="">All Statuses</option>
         <option>Action Required</option>
-        <option>In Progress</option>
+        <option value="In Progress">Submitted</option>
         <option>Approved for LCBO Submission</option>
-        <option>Additional Information Requested</option>
+        <option value="Additional Information Required">Additional Information Requested</option>
         <option>Declined</option>
       </select>
     </div>
@@ -751,13 +797,13 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <label>Supplier Name<input id="submittedSupplierSearch" type="search" placeholder="Type supplier name"></label>
     <label>Agency Name<select id="submittedAgencySearch"><option value="">All registered agencies</option></select></label>
     <label>Product<select id="submittedProductSearch"><option value="">All products</option></select></label>
-    <label>1st Stage Decision<select id="submittedStageSearch"><option value="">All 1st stage decisions</option><option>In Progress</option><option>Accepted</option><option>Sample Requested</option><option>Declined</option></select></label>
+    <label>1st Stage Decision<select id="submittedStageSearch"><option value="">All 1st stage decisions</option><option value="In Progress">Submitted</option><option>Accepted</option><option>Sample Requested</option><option>Declined</option></select></label>
     <label>Sample Provide Date<input id="submittedSampleDateSearch" type="date"></label>
-    <label>Sample / Document Status<select id="submittedSampleStatusSearch"><option value="">All sample/document statuses</option><option>Waiting 1st Stage Decision</option><option>Requested to the Supplier</option><option>On the Way</option><option>Ready to Deliver</option><option>Delivered to Consolidation</option></select></label>
+    <label>Sample and Documents Status<select id="submittedSampleStatusSearch"><option value="">All sample/document statuses</option><option>Waiting 1st Stage Decision</option><option>Requested to the Supplier</option><option>On the Way</option><option value="Ready to Deliver">Documents and Sample Ready to Deliver</option><option value="Delivered to Consolidation">Delivered to LCBO Office</option></select></label>
     <label>Final Decision<select id="submittedFinalSearch"><option value="">All final decisions</option><option>In Progress</option><option>Winner</option><option>Declined</option></select></label>
     <div class="search-actions"><button type="button" id="clearSubmittedSearch" class="secondary">Clear Search</button></div>
   </div>
-  <div class="table-wrap"><table class="active-submissions-table"><thead><tr><th>Tender ID</th><th>Pre-Submission Date</th><th>Tender Name</th><th>Agency</th><th>Supplier</th><th>Brand / Item</th><th>Registered in LCBO NISS</th><th>Product / Submission #</th><th>1st Stage Decision</th><th>Sample Provide Date</th><th>Sample / Document Status</th><th>Final Decision</th></tr></thead><tbody id="submissionRows"></tbody></table></div>
+  <div class="table-wrap"><table class="active-submissions-table"><thead><tr><th>Tender ID</th><th>Pre-Submission Date</th><th>Tender Name</th><th>Agency</th><th>Supplier</th><th>Brand / Item</th><th>Registered in LCBO NISS</th><th>Product / Submission #</th><th>1st Stage Decision</th><th>Sample Provide Date</th><th>Sample and Documents Status</th><th>Write Comment</th><th>Final Decision</th></tr></thead><tbody id="submissionRows"></tbody></table></div>
 </section>
 
 
@@ -794,14 +840,14 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <label>Product Name<input id="winnerProductSearch" type="search" placeholder="Type product name"></label>
     <label>NTP Status<select id="winnerNtpStatusSearch"><option value="">All NTP statuses</option><option>Issued</option><option>Not Issued</option></select></label>
     <label>Shipment Status<select id="winnerPoStatusSearch"><option value="">All PO statuses</option><option>Issued</option><option>Not Issued</option></select></label>
-    <label>PO Transportation Shipment Status<select id="winnerTransportStatusSearch"><option value="">All shipment statuses</option><option>Not Contacted</option><option>Scheduled & Confirmed</option><option>On the Way</option><option>Arrived in Canada</option><option>Delivered to Consolidation</option><option>Not Assigned to Shipment</option><option>No PO Number</option><option>PO Not Found</option></select></label>
+    <label>PO Transportation Shipment Status<select id="winnerTransportStatusSearch"><option value="">All shipment statuses</option><option>Not Contacted</option><option>Scheduled & Confirmed</option><option>On the Way</option><option>Arrived in Canada</option><option value="Delivered to Consolidation">Delivered to LCBO Office</option><option>Not Assigned to Shipment</option><option>No PO Number</option><option>PO Not Found</option></select></label>
     <button type="button" class="secondary" id="clearWinnerSubmissionSearch">Clear Search</button>
   </div>
-  <div class="table-wrap"><table class="completed-submissions-table winner-table"><thead><tr><th>Tender ID</th><th>Pre-Submission Date</th><th>Tender Name</th><th>Agency</th><th>Supplier</th><th>Brand / Item</th><th>Product / Submission #</th><th>Final Case Order Quantity</th><th>Comments</th><th>NTP Status</th><th>STORE RELEASE DATE</th><th>Shipment Status</th><th>PO Transportation Shipment Status</th><th>Tracking Number (Imported Ref #)</th><th>Tracking Link (Paste / Copy)</th><th>Action</th></tr></thead><tbody id="winnerSubmissionRows"></tbody></table></div>
+  <div class="table-wrap"><table class="completed-submissions-table winner-table"><thead><tr><th>Tender ID</th><th>Pre-Submission Date</th><th>Tender Name</th><th>Agency</th><th>Supplier</th><th>Brand / Item</th><th>Product / Submission #</th><th>Final Case Order Quantity</th><th>Comments</th><th>NTP Status</th><th>STORE RELEASE DATE</th><th>PO # STATUS</th><th>PO Transportation Shipment Status</th><th>Tracking Number (Imported Ref #)</th><th>Tracking Link (Paste / Copy)</th><th>Action</th></tr></thead><tbody id="winnerSubmissionRows"></tbody></table></div>
 </section>
 
 <section id="worker-list" class="panel">
-  <div class="box worker-list" id="worker-list"><div class="section-head"><div><h2>LCBO SUBMISSIONS LIST</h2><p class="note">All products approved by Head Office for LCBO Submission appear here automatically. Additional items can still be added manually when needed.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>Submitted</option><option>Approved for LCBO Submission</option><option>Additional Information Requested</option><option>Declined</option><option>To Register</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Work Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Item</button></div></div>
+  <div class="box worker-list" id="worker-list"><div class="section-head"><div><h2>LCBO SUBMISSIONS LIST</h2><p class="note">All products approved by Head Office for LCBO Submission appear here automatically. Additional items can still be added manually when needed.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>Submitted</option><option>Approved for LCBO Submission</option><option value="Additional Information Required">Additional Information Requested</option><option>Declined</option><option>To Register</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Item</button></div></div>
 </section>
 
 <section id="tenders" class="panel">
@@ -826,7 +872,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <label>LCBO Item #<input id="itemLcboNumberSearch" type="search" placeholder="Type LCBO item #"></label>
     <label>LCBO Supplier #<input id="itemSupplierNumberSearch" type="search" placeholder="Type LCBO supplier #"></label>
     <label>Brand or Supplier Name<input id="itemBrandSearch" type="search" placeholder="Type brand or supplier name"></label>
-    <label>Product<input id="itemProductSearch" type="search" placeholder="Type product"></label>
+    <label>Item Description<input id="itemProductSearch" type="search" placeholder="Type item description"></label>
     <label>Vintage<input id="itemVintageSearch" type="search" placeholder="Type vintage"></label>
     <label>Country<input id="itemCountrySearch" type="search" placeholder="Type producing country"></label>
     <label>Region<input id="itemRegionSearch" type="search" placeholder="Type producing region"></label>
@@ -834,7 +880,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <label>Awards<input id="itemAwardsSearch" type="search" placeholder="Type award or medal"></label>
     <div class="page-search-actions"><button type="button" class="secondary" id="clearItemSearch">Clear Search</button></div>
   </div>
-  <div class="table-wrap"><table class="items-table"><thead><tr><th>LCBO Item #</th><th>LCBO Supplier #</th><th>Brand</th><th>Product</th><th>Vintage</th><th>Country</th><th>Region</th><th>Score</th><th>Awards / Medals</th><th>Score Source</th><th>Offered Quote per case</th><th>Estimated Retail Price *</th><th>Selling Units Per Shipping Case *</th><th>Action</th></tr></thead><tbody id="itemRows"></tbody></table></div>
+  <div class="table-wrap"><table class="items-table"><thead><tr><th>LCBO Item #</th><th>LCBO Supplier #</th><th>Brand</th><th>Item Description</th><th>Vintage</th><th>Country</th><th>Region</th><th>Score</th><th>Awards / Medals</th><th>Score Source</th><th>Offered Quote per case</th><th>Estimated Retail Price *</th><th>Selling Units Per Shipping Case *</th><th>Action</th></tr></thead><tbody id="itemRows"></tbody></table></div>
 </section>
 <section id="agencies" class="panel"><div class="box"><div class="section-head"><h2>Agency Management</h2><button id="addAgencyBtn">+ Add Agency</button></div><div id="agencyList"></div></div></section>
 <section id="calculator" class="panel"><div class="box"><div class="section-head"><div><h2>Suppliers</h2><p class="note">Add suppliers, open a supplier to view or copy its information, and manage multiple items for each supplier.</p></div><button id="addSupplierBtn">+ Add Supplier</button></div><button type="button" class="secondary page-search-toggle" id="toggleSupplierSearch">Search</button><div class="page-search-panel" id="supplierSearchPanel"><label>Search Suppliers<input id="supplierPageSearch" type="search" placeholder="Supplier name, number, country, currency or agency"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearSupplierPageSearch">Clear Search</button></div></div><div id="supplierList"></div></div></section>
@@ -851,8 +897,8 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <div class="table-wrap"><table><thead><tr><th>Shipment</th><th>PO'S</th><th>Transport Company</th><th>Pallets</th><th>Shipment Status</th><th>Actions</th></tr></thead><tbody id="archivedShipmentRows"></tbody></table></div>
 </div></section>
 
-<section id="po-page" class="panel"><div class="box"><div class="section-head"><div><h2 id="poPageTitle">PO'S #</h2><p class="note">Create and manage active purchase-order records. POs with status LCBO PAYED automatically move to Archived PO'S.</p></div><button id="addPoBtn" type="button">+ Create New PO</button></div>
-<button type="button" class="secondary page-search-toggle" id="togglePoSearch">Search</button><div class="page-search-panel" id="poSearchPanel"><label>PO #<input id="poNumberSearch" type="search" placeholder="Type PO number"></label><label>PO Program<input id="poProgramSearch" type="search" placeholder="TENDER, REGU, SEAS or OTHER"></label><label>Vendor<input id="poSupplierSearch" type="search" placeholder="Type vendor name"></label><label>Item Description<input id="poItemSearch" type="search" placeholder="Type item description"></label><label>Shipment Status<select id="poStatusSearch"><option value="">All statuses</option><option>Not Contacted</option><option>Scheduled &amp; Confirmed</option><option>On the Way</option><option>Delivered to Consolidation</option><option>Arrived in Canada</option><option>CLEARED OUT FROM THE WAREHOUSE</option><option>LCBO PAYED</option></select></label><div class="page-search-actions"><button type="button" class="secondary" id="clearPoSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th>PO #</th><th>PO Program</th><th>Vendor</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>Shipment Status</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="poRows"></tbody></table></div></div></section>
+<section id="po-page" class="panel"><div class="box"><div class="section-head"><div><h2 id="poPageTitle">ALL PO'S & PROFORMAS</h2><p class="note">Create and manage active purchase-order records. POs with status LCBO PAYED automatically move to Archived PO'S.</p></div><button id="addPoBtn" type="button">+ Create New PO</button></div>
+<button type="button" class="secondary page-search-toggle" id="togglePoSearch">Search</button><div class="page-search-panel" id="poSearchPanel"><label>PO #<input id="poNumberSearch" type="search" placeholder="Type PO number"></label><label>PO Program<input id="poProgramSearch" type="search" placeholder="TENDER, REGU, SEAS or OTHER"></label><label>Vendor/Producer<input id="poSupplierSearch" type="search" placeholder="Type vendor/producer name"></label><label>Item Description<input id="poItemSearch" type="search" placeholder="Type item description"></label><label>Shipment Status<select id="poStatusSearch"><option value="">All statuses</option><option>Not Contacted</option><option>Scheduled &amp; Confirmed</option><option>On the Way</option><option>Delivered to Consolidation</option><option>Arrived in Canada</option><option>CLEARED OUT FROM THE WAREHOUSE</option><option>LCBO PAYED</option></select></label><div class="page-search-actions"><button type="button" class="secondary" id="clearPoSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th>PO #</th><th>PO Program</th><th>Vendor/Producer</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>Shipment Status</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="poRows"></tbody></table></div></div></section>
 
 <section id="proformas" class="panel"><div class="box">
   <div class="section-head">
@@ -874,7 +920,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <div class="table-wrap"><table>
     <thead><tr>
       <th style="width:44px"><input id="selectAllPoPrint" type="checkbox" title="Mark all available POs"></th>
-      <th>PO #</th><th>PO Program</th><th>Vendor</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>Shipment Status</th>
+      <th>PO #</th><th>PO Program</th><th>Vendor/Producer</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>Shipment Status</th>
     </tr></thead>
     <tbody id="proformaPoRows"></tbody>
   </table></div>
@@ -887,7 +933,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <tbody id="savedProformaRows"></tbody>
   </table></div>
 </div></section>
-<section id="archived-pos" class="panel"><div class="box"><div class="section-head"><div><h2>ARCHIVED PO'S</h2><p class="note">POs move here automatically when PO Status is LCBO PAYED.</p></div></div><button type="button" class="secondary page-search-toggle" id="toggleArchivedPoSearch">Search</button><div class="page-search-panel" id="archivedPoSearchPanel"><label>PO #<input id="archivedPoNumberSearch" type="search" placeholder="Type PO number"></label><label>Vendor<input id="archivedPoSupplierSearch" type="search" placeholder="Type vendor name"></label><label>Item Description<input id="archivedPoItemSearch" type="search" placeholder="Type item description"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearArchivedPoSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th>PO #</th><th>PO Program</th><th>Vendor</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>Shipment Status</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="archivedPoRows"></tbody></table></div></div></section>
+<section id="archived-pos" class="panel"><div class="box"><div class="section-head"><div><h2>ARCHIVED PO'S</h2><p class="note">POs move here automatically when PO Status is LCBO PAYED.</p></div></div><button type="button" class="secondary page-search-toggle" id="toggleArchivedPoSearch">Search</button><div class="page-search-panel" id="archivedPoSearchPanel"><label>PO #<input id="archivedPoNumberSearch" type="search" placeholder="Type PO number"></label><label>Vendor/Producer<input id="archivedPoSupplierSearch" type="search" placeholder="Type vendor/producer name"></label><label>Item Description<input id="archivedPoItemSearch" type="search" placeholder="Type item description"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearArchivedPoSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th>PO #</th><th>PO Program</th><th>Vendor/Producer</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>Shipment Status</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="archivedPoRows"></tbody></table></div></div></section>
 
 <div id="inventoryStockOutModal" class="modal hidden"><div class="modal-card" style="max-width:580px">
   <div class="modal-head">
@@ -937,12 +983,12 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   </div>
  </div>
  <div class="toolbar">
-  <input id="headInventorySearch" type="search" placeholder="Search PO, program, vendor, item, product or shipment" oninput="renderHeadInventory()">
+  <input id="headInventorySearch" type="search" placeholder="Search PO, program, vendor/producer, item, product or shipment" oninput="renderHeadInventory()">
  </div>
  <div class="cards" id="headInventoryKpis"></div>
  <div class="table-wrap"><table>
   <thead><tr>
-   <th>PO #</th><th>PO Program</th><th>Vendor / Supplier</th><th>LCBO Item #</th><th>Product Name</th>
+   <th>PO #</th><th>PO Program</th><th>Vendor/Producer</th><th>LCBO Item #</th><th>Product Name</th>
    <th>Total PO Quoted Value</th><th>Cases in Stock</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Arrived Date</th><th>Status</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
@@ -958,7 +1004,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
  <div class="toolbar"><input id="officeInventorySearch" type="search" placeholder="Search PO, supplier, item or product" oninput="renderOfficeInventory()"></div>
  <div class="cards" id="officeInventoryKpis"></div>
  <div class="table-wrap"><table>
-  <thead><tr><th>PO #</th><th>PO Program</th><th>Vendor / Supplier</th><th>LCBO Item #</th><th>Product Name</th><th>Cases in Office</th><th>Bottles / Case</th><th>Total Bottles</th><th>Moved Date</th><th>Actions</th></tr></thead>
+  <thead><tr><th>PO #</th><th>PO Program</th><th>Vendor/Producer</th><th>LCBO Item #</th><th>Product Name</th><th>Cases in Office</th><th>Bottles / Case</th><th>Total Bottles</th><th>Moved Date</th><th>Actions</th></tr></thead>
   <tbody id="officeInventoryRows"></tbody>
  </table></div>
 </div></section>
@@ -1464,11 +1510,34 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </section>
 </main>
 <div id="shipmentInfoModal" class="modal hidden"><div class="modal-card item-info-page"><div class="modal-head"><div><h2 id="shipmentInfoTitle">Shipment Information</h2><p>Complete shipment information with copy options.</p></div><button id="closeShipmentInfo" class="icon">×</button></div><div class="info-toolbar"><button id="copyAllShipmentInfo" type="button" class="secondary">Copy All Shipment Information</button></div><div id="shipmentInfoContent"></div><div class="modal-actions"><span></span><button id="closeShipmentInfoBottom" type="button">Close</button></div></div></div>
+
+<div id="workerAdditionalInfoModal" class="modal hidden">
+  <div class="modal-card" style="max-width:560px">
+    <div class="modal-head">
+      <div>
+        <h2>Additional Information Requested</h2>
+        <p class="note">Enter the additional information that is being requested before this status can be applied.</p>
+      </div>
+      <button type="button" class="icon" onclick="cancelWorkerAdditionalInfo()">×</button>
+    </div>
+    <input type="hidden" id="workerAdditionalInfoTenderId">
+    <input type="hidden" id="workerAdditionalInfoItemId">
+    <label>Additional Information Requested *
+      <textarea id="workerAdditionalInfoText" rows="6" placeholder="Enter what additional information is requested"></textarea>
+    </label>
+    <div class="modal-actions">
+      <span></span>
+      <button type="button" class="secondary" onclick="cancelWorkerAdditionalInfo()">Cancel</button>
+      <button type="button" onclick="saveWorkerAdditionalInfo()">Save & Apply Status</button>
+    </div>
+  </div>
+</div>
+
 <div id="submissionModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="modalTitle">Submission Record</h2><p>Choose the product need, enter the tender ID, tender name and tender pre-submission date.</p></div><button id="closeModal" class="icon">×</button></div><form id="submissionForm"><input type="hidden" id="recordId"><div class="form-grid three" id="recordFields"></div><div class="calculation-strip"><div><span>Supplier Price CAD / Bottle</span><b id="liveSupplierCad">$0.00</b></div><div><span>Agency Fee CAD / Bottle</span><b id="liveAgencyFee">$0.00</b></div><div><span>Net Profit / Bottle</span><b id="liveNetBottle">$0.00</b></div><div><span>Potential Bottles</span><b id="liveBottles">0</b></div><div><span>Net Profit Total</span><b id="liveProfit">$0.00</b></div><div><span>Estimated ERP</span><b id="liveErp">$0.00</b></div></div><div class="modal-actions"><button type="button" id="deleteRecord" class="danger">Delete</button><span></span><button type="button" id="cancelModal" class="secondary">Cancel</button><button type="submit">Save Submission</button></div></form></div></div>
 
-<div id="shipmentModal" class="modal hidden"><div class="modal-card po-modal-card"><div class="modal-head"><div><h2 id="shipmentModalTitle">Create Shipment</h2><p>Create the shipment and assign POs from both Tender PO's # and Private Order PO's #.</p></div><button id="closeShipmentModal" class="icon">×</button></div><input type="hidden" id="shipmentRecordId">
+<div id="shipmentModal" class="modal hidden"><div class="modal-card po-modal-card"><div class="modal-head"><div><h2 id="shipmentModalTitle">Create Shipment</h2><p>Create the shipment and assign POs from both TENDER PO's and Private Order PO's.</p></div><button id="closeShipmentModal" class="icon">×</button></div><input type="hidden" id="shipmentRecordId">
 <div class="form-grid three"><label>Shipment Name *<input id="shipmentNameInput" placeholder="Example: Germany Consolidation Shipment"></label></div>
-<fieldset class="item-group"><legend>Add POs from Tender and Private Order PO's #</legend><div class="po-supplier-add"><label style="flex:1">PO<select id="shipmentPoSelect"></select><div id="shipmentPoUsageWarning" class="note" style="color:var(--red);margin-top:6px"></div></label><label style="flex:0 0 105px">Ref #<input id="shipmentRefInput" maxlength="30" placeholder="Ref #"></label><button id="addShipmentPoBtn" type="button" title="Add PO">+</button></div><div class="shipment-po-wrap"><table class="shipment-po-table"><thead><tr><th>PO #</th><th>Ref #</th><th>Suppliers</th><th>Bottles</th><th></th></tr></thead><tbody id="shipmentPoRows"></tbody></table></div></fieldset>
+<fieldset class="item-group"><legend>Add POs from Tender and Private Order PO's</legend><div class="po-supplier-add"><label style="flex:1">PO<select id="shipmentPoSelect"></select><div id="shipmentPoUsageWarning" class="note" style="color:var(--red);margin-top:6px"></div></label><label style="flex:0 0 105px">Ref #<input id="shipmentRefInput" maxlength="30" placeholder="Ref #"></label><button id="addShipmentPoBtn" type="button" title="Add PO">+</button></div><div class="shipment-po-wrap"><table class="shipment-po-table"><thead><tr><th>PO #</th><th>Ref #</th><th>Suppliers</th><th>Bottles</th><th></th></tr></thead><tbody id="shipmentPoRows"></tbody></table></div></fieldset>
 <div class="form-grid three"><label>Pallet Quantity<input id="shipmentPalletQtyInput" type="number" min="0" step="1" inputmode="numeric" placeholder="Number of pallets"></label></div>
 <div class="form-grid"><label class="full">Transport Company Name<input id="shipmentCompanyInput" placeholder="Type transport company name"></label></div>
 <div class="shipment-compact-grid"><label>Phone Number<input id="shipmentPhoneInput" placeholder="Phone number"></label><label>Email 1<input id="shipmentEmail1Input" type="email" placeholder="Email address"></label><label>Email 2<input id="shipmentEmail2Input" type="email" placeholder="Email address"></label></div><div class="shipment-address-row"><label>From<input id="shipmentFromInput" placeholder="Country, city and address"></label><label>To<input id="shipmentToInput" placeholder="Country, city and address"></label></div><div class="full"><b>Attached Invoice and Files</b><div class="shipment-file-grid">
@@ -1517,7 +1586,26 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 <label>PO Program *<select id="poProgramInput"><option value="REGU">REGU</option><option value="SEAS">SEAS</option><option value="TENDER">TENDER</option><option value="OTHER">OTHER</option></select></label>
 <label>PO Date<input id="poDateInput" type="date"></label>
 <label id="poProgramOtherWrap" class="hidden">Other PO Program<input id="poProgramOtherInput" maxlength="30" placeholder="Type program"></label>
-<div class="full"><label>Vendors</label><p class="note">Select vendors from suppliers already registered in the program. You can add more than one vendor.</p><div class="po-supplier-add"><select id="poVendorSelect" style="flex:1"></select><button id="addPoVendorBtn" type="button" title="Add vendor">+</button></div><div id="poVendorChoices" class="po-supplier-choices"></div></div>
+<div class="full po-vendor-producer-row">
+  <div>
+    <label>Vendor/Producer</label>
+    <p class="note">Select the vendor from suppliers already registered in the program. You can add more than one vendor.</p>
+    <div class="po-supplier-add"><select id="poVendorSelect" style="flex:1"></select><button id="addPoVendorBtn" type="button" title="Add vendor/producer">+</button></div>
+    <div id="poVendorChoices" class="po-supplier-choices"></div>
+  </div>
+  <div>
+    <label>Same Producer?</label>
+    <select id="poSameProducerSelect">
+      <option value="Yes">Yes</option>
+      <option value="No">No</option>
+    </select>
+    <div id="poProducerWrap" class="hidden" style="margin-top:10px">
+      <label>Producer</label>
+      <p class="note">Select the producer from registered suppliers.</p>
+      <select id="poProducerSelect"></select>
+    </div>
+  </div>
+</div>
 </div>
 <fieldset class="item-group"><legend>PO Items</legend><p class="note">Scroll horizontally inside the item table to view every field.</p><div class="table-wrap"><table class="po-lines-table"><thead><tr><th>Item No. *</th><th>Total Quantity *</th><th>Product Name *</th><th>Unit Size (ml.) (if applicable)</th><th>Units per Case *</th><th>Bottle Quantity</th><th>Quoted Price per Case *</th><th></th></tr></thead><tbody id="poItemLines"></tbody></table></div><button id="addPoLineBtn" type="button" class="secondary">+ Add Item Line</button></fieldset>
 <div class="po-total"><label>Total PO Quoted Value *<input id="poGrandTotalInput" type="number" min="0" step="0.01" value="0.00" readonly title="Calculated automatically from Total Quantity × Quoted Price per Case"></label></div><label class="full">Notes<textarea id="poNotesInput" rows="5"></textarea></label>
@@ -1525,7 +1613,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 <div id="itemSelectModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2>Select Item from Tender Item Database</h2><p>Search by item description, LCBO item number, supplier, producer, vintage, or product type.</p></div><button id="closeItemSelect" class="icon">×</button></div><div class="toolbar"><input id="itemSelectSearch" placeholder="Search item description, LCBO item number, supplier or producer"><select id="itemSelectType"><option value="">All product types</option></select><button id="goToItems" type="button" class="secondary">+ Add New Item</button></div><div class="table-wrap"><table><thead><tr><th>Item Description</th><th>Brand</th><th>Vintage</th><th>Supplier</th><th>Producer</th><th>LCBO Item #</th><th>Product Type</th><th>Action</th></tr></thead><tbody id="itemSelectRows"></tbody></table></div><div class="modal-actions"><span></span><span></span><button id="cancelItemSelect" type="button" class="secondary">Cancel</button></div></div></div>
 <div id="itemModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="itemModalTitle">Add Tender Item</h2><p>Create the permanent LCBO product profile. Fields marked * are required for LCBO submissions.</p></div><button id="closeItemModal" class="icon">×</button></div><form id="itemForm"><input type="hidden" id="itemRecordId"><div id="itemFields" class="item-form"></div><div class="modal-actions"><button type="button" id="deleteItem" class="danger">Delete</button><span></span><button type="button" id="cancelItem" class="secondary">Cancel</button><button type="submit">Save Item</button></div></form></div></div>
 <div id="italyCandidateModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="italyCandidateModalTitle">Add Wine Candidate — Italy</h2><p>Product information follows Add Tender Item, with dedicated Country Representative Sourcing Information and item photos.</p></div><button type="button" class="icon" onclick="closeItalyCandidateForm()">×</button></div><form id="italyCandidateDetailedForm"><input type="hidden" id="itCanRecordId"><div id="candidateApprovedLockNote" class="candidate-approved-lock-note">Approved for LCBO Submission — protected submission information is locked and cannot be edited.</div><div id="italyCandidateFields" class="item-form"></div><div class="modal-actions"><button type="button" id="deleteItalyCandidateBtn" class="danger" onclick="deleteItalyCandidateFromModal()">Delete</button><span></span><button type="button" class="secondary" onclick="closeItalyCandidateForm()">Cancel</button><button type="button" id="proposeItalyCandidateBtn" onclick="proposeItalyCandidateToHeadOffice(this)">Propose to Head Office</button></div></form></div></div>
-<div id="itemInfoModal" class="modal hidden"><div class="modal-card item-info-page"><div class="modal-head"><div><h2 id="itemInfoTitle">Item Information</h2><p>Database information prepared for easy copying into the registration system.</p></div><button id="closeItemInfo" class="icon">×</button></div><div class="info-toolbar"><button type="button" id="copyAllItemInfo" class="secondary">Copy All Information</button><button type="button" id="editItemFromInfo">OPEN IN TENDER ITEM DATABASE</button></div><div id="itemInfoContent"></div><div class="modal-actions"><span></span><button type="button" id="closeItemInfoBottom" class="secondary">Close</button></div></div></div>
+<div id="itemInfoModal" class="modal hidden"><div class="modal-card item-info-page"><div class="modal-head"><div><h2 id="itemInfoTitle">Item Information</h2><p>Database information prepared for easy copying into the registration system.</p></div><button id="closeItemInfo" class="icon">×</button></div><div class="info-toolbar"><button type="button" id="copyAllItemInfo" class="secondary">Copy All Information</button><button type="button" id="editItemFromInfo">EDIT ITEM</button></div><div id="itemInfoContent"></div><div class="modal-actions"><span></span><button type="button" id="closeItemInfoBottom" class="secondary">Close</button></div></div></div>
 
 <div id="workerItemModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="workerItemModalTitle">Add Item to Worker Registration List</h2><p>Select an item from the Tender Item Database and assign registration details.</p></div><button id="closeWorkerItemModal" class="icon">×</button></div><input type="hidden" id="workerEditTenderId"><input type="hidden" id="workerEditWorkId"><div class="form-grid"><label>Tender *<select id="workerItemTender"></select></label><label class="full">Select item from Tender Item Database *<select id="workerDatabaseItem"></select></label><label>Offered Price<input id="workerOfferedPrice" type="number" step="0.01"></label><label>Currency<select id="workerCurrency"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></label><label>Agency / Where to Register<select id="workerAgency"></select></label><label>Work Status<select id="workerStatus"><option>To Register</option><option>Submitted</option><option>Registered in LCBO NISS</option><option>On Hold</option></select></label><label class="full">Instructions<textarea id="workerInstructions"></textarea></label></div><div class="modal-actions"><button type="button" id="removeWorkerItem" class="danger">Remove Item</button><span></span><button type="button" id="cancelWorkerItem" class="secondary">Cancel</button><button type="button" id="saveWorkerItem">Add Item</button></div></div></div>
 <div id="tenderModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="tenderModalTitle">Create a Tender</h2><p>All fields marked * are mandatory. Mark the Country Portfolio &amp; Sourcing Representatives who should receive this tender, then click Announce Tender.</p></div><button id="closeTender" class="icon">×</button></div><input type="hidden" id="tenderRecordId"><div class="form-grid"><label>Tender ID *<input id="tenderCode" type="number" step="1" placeholder="Enter tender ID" required></label><label>Tender Name *<input id="tenderNameInput" placeholder="Example: Emerging Europe 2026" required></label><label>Product Needs *<select id="tenderProductNeeds" required><option value="">Select</option><option>BEER</option><option>DEST COLLECTION</option><option>DUTY FREE</option><option>ECOMMERCE</option><option>ONE-ONE-ONE</option><option>READY TO DRINK</option><option>SPIRITS</option><option>VINTAGES</option><option>VINTAGES ADHOC</option><option>VINTAGES DIRECT</option><option>WINES</option><option>Other</option></select></label><label id="tenderOtherNeedWrap" class="hidden">Other Product Need *<input id="tenderOtherNeed" placeholder="Type product need name"></label><label>Pre-Submission Date *<input id="tenderPresubDate" type="date" required></label><label>Tasting Date *<input id="tenderTastingDate" type="date" required></label><label>Status *<select id="tenderStatus" required><option value="">Select</option><option>Active</option><option>Closed</option></select></label><label class="full">Notes *<textarea id="tenderNotes" required></textarea></label><fieldset class="item-group full"><legend>Country Portfolio &amp; Sourcing Representatives *</legend><p class="note">Mark every country representative who should receive this tender announcement.</p><div class="form-grid three" id="tenderRepresentativeChoices"></div><div id="tenderRepresentativeError" class="note" style="color:var(--red);display:none;margin-top:8px">Select at least one Country Portfolio &amp; Sourcing Representative.</div></fieldset><fieldset class="item-group full"><legend>Suppliers to Notify *</legend><p class="note">Mark the supplier(s) that must receive this active tender. Their registered Supplier Information email address will receive <b>Action Required — Active Tender Is Announced!</b></p><div class="form-grid three" id="tenderSupplierChoices"></div><div id="tenderSupplierError" class="note" style="color:var(--red);display:none;margin-top:8px">Select at least one supplier to notify.</div></fieldset></div><div class="modal-actions"><button type="button" id="deleteTender" class="danger">Delete</button><span></span><button type="button" id="cancelTender" class="secondary">Cancel</button><button type="button" id="saveTender" onclick="saveTenderRecord()">Announce Tender</button></div></div></div>
@@ -1701,7 +1789,21 @@ function syncFinalDecisionRegistration(){const reg=$('#f_registered'),fd=$('#f_f
 function editRecord(id='',selectedItemId=''){buildFields();const r=state.records.find(x=>x.id===id)||defaults();if(!id&&selectedItemId)r.itemId=selectedItemId;$('#recordId').value=r.id;fields.forEach(([k])=>{const el=$('#f_'+k);if(el)el.value=(k==='tenderName'?(r.tenderRecordId||''):(r[k]??''))});if(!id&&selectedItemId)applyItemToSubmission(selectedItemId);syncFinalDecisionRegistration();$('#modalTitle').textContent=r.id?'Edit Submission':'Add Submission';$('#deleteRecord').style.visibility=r.id?'visible':'hidden';$('#submissionModal').classList.remove('hidden');liveCalc()}
 function closeModal(){$('#submissionModal').classList.add('hidden')}
 function selectOptions(options,current){return options.map(o=>`<option value="${escapeHtml(o)}" ${o===current?'selected':''}>${escapeHtml(o)}</option>`).join('')}
+function selectLabeledOptions(options,current){return options.map(o=>`<option value="${escapeHtml(o.value)}" ${o.value===current?'selected':''}>${escapeHtml(o.label)}</option>`).join('')}
 function updateSubmissionField(id,field,value){const r=state.records.find(x=>x.id===id);if(!r)return;r[field]=field==='finalOrderedQty'?num(value):value;if(field==='stage1Decision'){if(value==='In Progress')r.finalDecision='In Progress';if(value==='Declined')r.finalDecision='Declined';}if(field==='finalDecision'&&r.stage1Decision==='Declined'&&value==='Winner')r.finalDecision='Declined';if(field==='ntpStatus'&&value!=='Issued'){r.ntpFileName='';deleteNtpAttachment(id);}if(field==='poStatus'&&value!=='Issued'){r.poNumber='';r.poFileName='';deletePoAttachment(id);}save()}
+
+function saveSubmittedReminderComment(id){
+  const r=state.records.find(x=>x.id===id);if(!r)return;
+  const el=document.getElementById('submittedComment_'+id);
+  r.submittedReminderComment=String(el?.value||'').trim();
+  save();
+}
+function deleteSubmittedReminderComment(id){
+  const r=state.records.find(x=>x.id===id);if(!r)return;
+  r.submittedReminderComment='';
+  const el=document.getElementById('submittedComment_'+id);if(el)el.value='';
+  save();
+}
 function removeSubmissionFromPage(id){const r=state.records.find(x=>x.id===id);if(!r||!confirm('Move this submission to the Recycling Bin?'))return;moveToRecycleBin('record','All Submitted Items',r);deleteNtpAttachment(id);deletePoAttachment(id);state.records=state.records.filter(v=>v.id!==id);state.tenders.forEach(t=>(t.workItems||[]).forEach(w=>{if(w.submissionId===id){w.submissionId='';w.status='Submitted'}}));save()}
 function currentTenderForRecord(r){return state.tenders.find(t=>t.id===r.tenderRecordId)||state.tenders.find(t=>String(t.code||'').trim()===String(r.tenderId||'').trim())||null}
 function decisionClass(value){const v=String(value||'').toLowerCase().replaceAll(' ','-');return 'decision-select decision-'+v;}
@@ -1727,7 +1829,7 @@ function renderSubmissionTable(targetId='submissionRows',mode='active',useFilter
   const submittedTenderName=useFilters?String($('#submittedTenderNameSearch')?.value||'').trim().toLowerCase():'',submittedTenderNumber=useFilters?String($('#submittedTenderNumberSearch')?.value||'').trim().toLowerCase():'',submittedPreDate=useFilters?String($('#submittedPreDateSearch')?.value||'').trim():'',submittedItem=useFilters?String($('#submittedItemSearch')?.value||'').trim().toLowerCase():'',submittedSupplier=useFilters?String($('#submittedSupplierSearch')?.value||'').trim().toLowerCase():'',submittedAgency=useFilters?String($('#submittedAgencySearch')?.value||'').trim():'',submittedProduct=useFilters?String($('#submittedProductSearch')?.value||'').trim():'',submittedStage=useFilters?String($('#submittedStageSearch')?.value||'').trim():'',submittedSampleDate=useFilters?String($('#submittedSampleDateSearch')?.value||'').trim():'',submittedSampleStatus=useFilters?String($('#submittedSampleStatusSearch')?.value||'').trim():'',submittedFinal=useFilters?String($('#submittedFinalSearch')?.value||'').trim():'';
   const winnerSupplier=mode==='winner'?String($('#winnerSupplierSearch')?.value||'').trim().toLowerCase():'',winnerTenderNumber=mode==='winner'?String($('#winnerTenderNumberSearch')?.value||'').trim().toLowerCase():'',winnerTenderName=mode==='winner'?String($('#winnerTenderNameSearch')?.value||'').trim().toLowerCase():'',winnerAgency=mode==='winner'?String($('#winnerAgencySearch')?.value||'').trim().toLowerCase():'',winnerItem=mode==='winner'?String($('#winnerItemSearch')?.value||'').trim().toLowerCase():'',winnerProduct=mode==='winner'?String($('#winnerProductSearch')?.value||'').trim().toLowerCase():'',winnerNtpStatus=mode==='winner'?String($('#winnerNtpStatusSearch')?.value||'').trim():'',winnerPoStatus=mode==='winner'?String($('#winnerPoStatusSearch')?.value||'').trim():'',winnerTransportStatus=mode==='winner'?String($('#winnerTransportStatusSearch')?.value||'').trim():'';
   const archivedTender=mode==='archived'?($('#archivedTenderSearch')?.value||'').trim().toLowerCase():'',archivedYear=mode==='archived'?($('#archivedYearSearch')?.value||'').trim().toLowerCase():'',archivedItem=mode==='archived'?($('#archivedItemSearch')?.value||'').trim().toLowerCase():'',archivedAgency=mode==='archived'?($('#archivedAgencySearch')?.value||''):'',archivedProduct=mode==='archived'?($('#archivedProductSearch')?.value||''):'',archivedStage=mode==='archived'?($('#archivedStageSearch')?.value||''):'',archivedFinal=mode==='archived'?($('#archivedFinalSearch')?.value||''):'',archivedCurrency=mode==='archived'?($('#archivedCurrencySearch')?.value||''):'',archivedQuoteFrom=mode==='archived'?num($('#archivedQuoteFrom')?.value):0,archivedQuoteToRaw=mode==='archived'?($('#archivedQuoteTo')?.value||''):'',archivedQuoteTo=archivedQuoteToRaw===''?Infinity:num(archivedQuoteToRaw),archivedErpFrom=mode==='archived'?num($('#archivedErpFrom')?.value):0,archivedErpToRaw=mode==='archived'?($('#archivedErpTo')?.value||''):'',archivedErpTo=archivedErpToRaw===''?Infinity:num(archivedErpToRaw);
-  const stageOpts=['In Progress','Accepted','Sample Requested','Declined'],sampleDocOpts=['Requested to the Supplier','On the Way','Ready to Deliver','Delivered to Consolidation'],finalOpts=['In Progress','Winner','Declined'],ntpOpts=['Not Issued','Issued'],poOpts=['Not Issued','Issued'];
+  const stageOpts=['In Progress','Accepted','Sample Requested','Declined'],stageDisplayOpts=stageOpts.map(v=>({value:v,label:v==='In Progress'?'Submitted':v})),sampleDocOpts=['Requested to the Supplier','On the Way','Ready to Deliver','Delivered to Consolidation'],sampleDocDisplayOpts=sampleDocOpts.map(v=>({value:v,label:v==='Ready to Deliver'?'Documents and Sample Ready to Deliver':v==='Delivered to Consolidation'?'Delivered to LCBO Office':v})),finalOpts=['In Progress','Winner','Declined'],ntpOpts=['Not Issued','Issued'],poOpts=['Not Issued','Issued'];
   const rows=state.records.filter(r=>r.registered==='Yes').filter(r=>{
     const archived=(r.stage1Decision==='Declined'||r.finalDecision==='Declined'||r.completedPO===true);const winner=(!archived&&r.finalDecision==='Winner');
     if(mode==='archived'&&!archived)return false;if(mode==='winner'&&!winner)return false;if(mode==='active'&&(archived||winner))return false;
@@ -1777,9 +1879,9 @@ function renderSubmissionTable(targetId='submissionRows',mode='active',useFilter
       const transport=winnerTransportationInfo(r);const ref=transport.ref||'—';
       return `<tr data-record-id="${r.id}">${base}${productSubmissionCell(r)}<td><div class="qty-input"><input type="number" min="0" step="1" value="${num(r.finalOrderedQty)||''}" placeholder="800" onchange="updateSubmissionField('${r.id}','finalOrderedQty',this.value)"><span>cases</span></div></td><td><textarea rows="2" placeholder="Type comments" onchange="updateSubmissionField('${r.id}','comments',this.value)">${escapeHtml(r.comments||'')}</textarea></td><td><select onchange="updateSubmissionField('${r.id}','ntpStatus',this.value)">${selectOptions(ntpOpts,r.ntpStatus||'Not Issued')}</select>${(r.ntpStatus||'Not Issued')==='Issued'?`<div class="ntp-file"><input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" onchange="saveNtpAttachment('${r.id}',this.files[0])">${r.ntpFileName?`<div class="file-actions"><button type="button" class="small secondary" onclick="openNtpAttachment('${r.id}')">Open ${escapeHtml(r.ntpFileName)}</button><button type="button" class="small danger" onclick="removeNtpFile('${r.id}')">Remove File</button></div>`:'<small>Attach NTP file</small>'}</div>`:''}</td><td><input type="date" value="${escapeHtml(r.storeReleaseDate||'')}" onchange="updateSubmissionField('${r.id}','storeReleaseDate',this.value)"></td><td><select onchange="updateSubmissionField('${r.id}','poStatus',this.value)">${selectOptions(poOpts,r.poStatus||'Not Issued')}</select>${(r.poStatus||'Not Issued')==='Issued'?`<input type="text" value="${escapeHtml(r.poNumber||'')}" placeholder="Type PO number" onchange="updateSubmissionField('${r.id}','poNumber',this.value)"><div class="po-file"><input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" onchange="savePoAttachment('${r.id}',this.files[0])">${r.poFileName?`<div class="file-actions"><button type="button" class="small secondary" onclick="openPoAttachment('${r.id}')">Open ${escapeHtml(r.poFileName)}</button><button type="button" class="small danger" onclick="removePoFile('${r.id}')">Remove File</button></div>`:'<small>Attach PO file</small>'}</div>`:''}</td><td>${shipmentStatusBadge(transport.status)}</td><td><div class="tracking-number"><b>${escapeHtml(ref)}</b>${transport.ref?`<button type="button" class="secondary small" onclick='copyText(${JSON.stringify(transport.ref)})'>Copy</button>`:''}</div></td><td><input type="url" value="${escapeHtml(r.trackingLink||'')}" placeholder="Paste tracking link here" onchange="updateSubmissionField('${r.id}','trackingLink',this.value)">${r.trackingLink?`<div class="file-actions"><a class="button-link small" href="${escapeHtml(r.trackingLink)}" target="_blank" rel="noopener">Open Link</a><button type="button" class="secondary small" onclick='copyText(${JSON.stringify(r.trackingLink)})'>Copy Link</button></div>`:''}</td><td><div class="action-buttons"><button class="small success" onclick="completeWinnerPO('${r.id}')">Complete the PO</button><button type="button" class="secondary small" onclick="moveBackToAllSubmitted('${r.id}')">Move Back to All Submitted Items</button></div></td></tr>`;
     }
-    return `<tr data-record-id="${r.id}">${base}<td><span class="badge Yes">Yes</span></td>${productSubmissionCell(r)}<td><select class="${decisionClass(stage)}" onchange="updateSubmissionField('${r.id}','stage1Decision',this.value);applyDecisionColor(this)">${selectOptions(stageOpts,stage)}</select></td><td><input type="date" value="${escapeHtml(r.sampleProvideDate||'')}" onchange="updateSubmissionField('${r.id}','sampleProvideDate',this.value)"></td><td><select class="sample-doc-status ${(r.sampleDocumentStatus||'Requested to the Supplier')==='Delivered to Consolidation'?'sample-doc-green':'sample-doc-yellow'}" onchange="updateSubmissionField('${r.id}','sampleDocumentStatus',this.value);this.classList.toggle('sample-doc-green',this.value==='Delivered to Consolidation');this.classList.toggle('sample-doc-yellow',this.value!=='Delivered to Consolidation')">${selectOptions(sampleDocOpts,r.sampleDocumentStatus||'Requested to the Supplier')}</select></td><td><select class="${decisionClass(forced)}" onchange="updateSubmissionField('${r.id}','finalDecision',this.value);applyDecisionColor(this)" ${finalDisabled?'disabled title="Final Decision is controlled by the 1st Stage Decision"':''}>${selectOptions(finalOpts,forced)}</select></td></tr>`
+    return `<tr data-record-id="${r.id}">${base}<td><span class="badge Yes">Yes</span></td>${productSubmissionCell(r)}<td><select class="${stage==='In Progress'?'decision-yellow':decisionClass(stage)}" onchange="updateSubmissionField('${r.id}','stage1Decision',this.value);applyDecisionColor(this)">${selectLabeledOptions(stageDisplayOpts,stage)}</select></td><td><input type="date" value="${escapeHtml(r.sampleProvideDate||'')}" onchange="updateSubmissionField('${r.id}','sampleProvideDate',this.value)"></td><td><select class="sample-doc-status ${(r.sampleDocumentStatus||'Requested to the Supplier')==='Delivered to Consolidation'?'sample-doc-green':'sample-doc-yellow'}" onchange="updateSubmissionField('${r.id}','sampleDocumentStatus',this.value);this.classList.toggle('sample-doc-green',this.value==='Delivered to Consolidation');this.classList.toggle('sample-doc-yellow',this.value!=='Delivered to Consolidation')">${selectLabeledOptions(sampleDocDisplayOpts,r.sampleDocumentStatus||'Requested to the Supplier')}</select></td><td><div class="submitted-comment-box"><textarea id="submittedComment_${r.id}" rows="3" placeholder="Write a reminder or comment...">${escapeHtml(r.submittedReminderComment||'')}</textarea><div class="file-actions"><button type="button" class="small" onclick="saveSubmittedReminderComment('${r.id}')">Save Comment</button><button type="button" class="small danger" onclick="deleteSubmittedReminderComment('${r.id}')">Delete Comment</button></div></div></td><td><select class="${decisionClass(forced)}" onchange="updateSubmissionField('${r.id}','finalDecision',this.value);applyDecisionColor(this)" ${finalDisabled?'disabled title="Final Decision is controlled by the 1st Stage Decision"':''}>${selectOptions(finalOpts,forced)}</select></td></tr>`
   }).join('');
-  const cols=mode==='archived'?17:mode==='winner'?16:12;$('#'+targetId).innerHTML=rows||`<tr><td colspan="${cols}">${mode==='archived'?'No archived submissions match the search.':mode==='winner'?'No tender winner submissions.':'No active submissions registered in LCBO NISS.'}</td></tr>`
+  const cols=mode==='archived'?17:mode==='winner'?16:13;$('#'+targetId).innerHTML=rows||`<tr><td colspan="${cols}">${mode==='archived'?'No archived submissions match the search.':mode==='winner'?'No tender winner submissions.':'No active submissions registered in LCBO NISS.'}</td></tr>`
 }
 function renderTable(){const productEl=$('#submittedProductSearch');if(productEl){const current=productEl.value;const products=[...new Set(state.records.map(r=>r.productType||r.productNeeds).filter(Boolean))].sort();productEl.innerHTML='<option value="">All products</option>'+products.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');productEl.value=current;}renderSubmissionTable('submissionRows','active',true);renderSubmissionTable('archivedSubmissionRows','archived',false);renderSubmissionTable('winnerSubmissionRows','winner',false);}
 function awardLink(link,label='Open Link'){return link?`<a href="${escapeHtml(link)}" target="_blank" rel="noopener">${escapeHtml(label)}</a>`:'<span class="muted">—</span>'}
@@ -1900,7 +2002,7 @@ function renderWorkerList(){
       if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
     }
   }
-  if(!$('#workerRows'))return;const selected=$('#workerTenderFilter')?.value||'';const old=selected;$('#workerTenderFilter').innerHTML='<option value="">All tenders</option>'+state.tenders.map(t=>`<option value="${t.id}">${escapeHtml(t.code||'—')} — ${escapeHtml(t.name)}${t.status==='Closed'?' (Closed)':''}</option>`).join('');$('#workerTenderFilter').value=old;const qId=String($('#workerTenderIdSearch')?.value||'').trim().toLowerCase(),qNameDate=String($('#workerTenderNameDateSearch')?.value||'').trim().toLowerCase(),qSupplier=String($('#workerSupplierSearch')?.value||'').trim().toLowerCase(),qItem=String($('#workerItemSearch')?.value||'').trim().toLowerCase(),qPrice=String($('#workerOfferedPriceSearch')?.value||'').trim().toLowerCase(),qAgency=$('#workerAgencySearch')?.value||'',qStatus=$('#workerStatusSearch')?.value||'';const rows=[];state.tenders.filter(t=>(!selected||t.id===selected)).forEach(t=>(t.workItems||[]).forEach(w=>{const dbItem=findDatabaseItem(w);const displayName=(w.itemName||dbItem?.productDescription||'—')+(dbItem?.vintage?' '+dbItem.vintage:'');const supplier=dbItem?.supplier||dbItem?.supplierName||w.supplierName||'—';const sourceCandidate=w.sourceCandidateId?(state.countryCandidates||[]).find(c=>c.id===w.sourceCandidateId):null;const status=sourceCandidate?normalizeHeadProposalStatus(sourceCandidate.headOfficeActionStatus||sourceCandidate.status||w.status):(w.status==='Registered'?'Registered in LCBO NISS':(w.status||'To Register'));if(sourceCandidate&&w.status!==status)w.status=status;const offered=num(w.offeredPrice),agency=agencyName(w.agencyId)||'Not assigned';const tenderNameDate=[t.name,t.presubDate,t.tastingDate].filter(Boolean).join(' ');if(qId&&!String(t.code||'').toLowerCase().includes(qId))return;if(qNameDate&&!tenderNameDate.toLowerCase().includes(qNameDate))return;if(qSupplier&&!String(supplier).toLowerCase().includes(qSupplier))return;if(qItem&&!displayName.toLowerCase().includes(qItem))return;if(qPrice&&!`${offered.toFixed(2)} ${w.currency||'CAD'}`.toLowerCase().includes(qPrice))return;if(qAgency&&w.agencyId!==qAgency)return;if(qStatus&&status!==qStatus)return;const itemCell=dbItem?`<button type="button" class="item-info-link" onclick="openWorkerItemInfo('${t.id}','${w.id}')">${escapeHtml(displayName)}</button><br><small>Click to open database information</small>`:`<b>${escapeHtml(displayName)}</b><br><small style="color:#b3261e">No matching item found in database</small>`;const quote=num(dbItem?.quotePerCase),offerCurrency=w.currency||'CAD',quoteCurrency=dbItem?.quotationCurrency||'CAD',hasQuote=!!dbItem&&String(dbItem.quotePerCase??'').trim()!=='';const matches=hasQuote&&Math.abs(offered-quote)<0.005&&offerCurrency===quoteCurrency;const priceClass=hasQuote?(matches?'price-match':'price-mismatch'):'';const reference=hasQuote?`<span class="price-reference">Database Offered Quote: ${escapeHtml(quoteCurrency)} ${quote.toFixed(2)}</span>`:`<span class="price-reference">No database offered quote</span>`;const submissionInput=status==='Registered in LCBO NISS'?`<div class="submission-number-wrap"><small>Submission #</small><input type="text" value="${escapeHtml(w.submissionNumber||'')}" placeholder="1177144" onchange="updateWorkerSubmissionNumber('${t.id}','${w.id}',this.value)"></div>`:'';rows.push(`<tr><td><b>${escapeHtml(t.code||'—')}</b></td><td><b>${escapeHtml(t.name)}</b><br><small>${escapeHtml(t.presubDate?'Pre-Submission: '+t.presubDate:(t.tastingDate?'Tasting: '+t.tastingDate:''))}</small></td><td>${escapeHtml(supplier)}</td><td>${itemCell}</td><td><span class="${priceClass}">${escapeHtml(offerCurrency)} ${offered.toFixed(2)}</span>${reference}</td><td>${escapeHtml(agency)}</td><td>${escapeHtml(w.instructions||'—')}</td><td><select class="work-status ${['Submitted','In Progress','Registered in LCBO NISS'].includes(status)?'work-status-green':'work-status-yellow'}" ${(!sourceCandidate&&t.status==='Closed')?'disabled title="Tender is closed"':''} onchange="updateWorkStatus('${t.id}','${w.id}',this.value);applyWorkStatusColor(this)">${sourceCandidate?`<option value="In Progress" ${status==='In Progress'?'selected':''}>Submitted</option><option ${status==='Approved for LCBO Submission'?'selected':''}>Approved for LCBO Submission</option><option ${status==='Additional Information Requested'?'selected':''}>Additional Information Requested</option><option ${status==='Declined'?'selected':''}>Declined</option>`:`<option ${status==='To Register'?'selected':''}>To Register</option><option ${status==='Submitted'?'selected':''}>Submitted</option><option ${status==='Registered in LCBO NISS'?'selected':''}>Registered in LCBO NISS</option><option ${status==='On Hold'?'selected':''}>On Hold</option>`}</select>${submissionInput}</td><td><button type="button" class="secondary small" onclick="addWorkerItemToTenderDatabase('${t.id}','${w.id}')">${w.itemId?'Open Tender Item Database':'Add To Tender Item Database'}</button> <button type="button" class="danger small" onclick="deleteWorkerItem('${t.id}','${w.id}')">Remove</button></td></tr>`)}));$('#workerRows').innerHTML=rows.join('')||'<tr><td colspan="9">No matching worker submission items.</td></tr>';}
+  if(!$('#workerRows'))return;const selected=$('#workerTenderFilter')?.value||'';const old=selected;$('#workerTenderFilter').innerHTML='<option value="">All tenders</option>'+state.tenders.map(t=>`<option value="${t.id}">${escapeHtml(t.code||'—')} — ${escapeHtml(t.name)}${t.status==='Closed'?' (Closed)':''}</option>`).join('');$('#workerTenderFilter').value=old;const qId=String($('#workerTenderIdSearch')?.value||'').trim().toLowerCase(),qNameDate=String($('#workerTenderNameDateSearch')?.value||'').trim().toLowerCase(),qSupplier=String($('#workerSupplierSearch')?.value||'').trim().toLowerCase(),qItem=String($('#workerItemSearch')?.value||'').trim().toLowerCase(),qPrice=String($('#workerOfferedPriceSearch')?.value||'').trim().toLowerCase(),qAgency=$('#workerAgencySearch')?.value||'',qStatus=$('#workerStatusSearch')?.value||'';const rows=[];state.tenders.filter(t=>(!selected||t.id===selected)).forEach(t=>(t.workItems||[]).forEach(w=>{const dbItem=findDatabaseItem(w);const displayName=(w.itemName||dbItem?.productDescription||'—')+(dbItem?.vintage?' '+dbItem.vintage:'');const supplier=dbItem?.supplier||dbItem?.supplierName||w.supplierName||'—';const sourceCandidate=w.sourceCandidateId?(state.countryCandidates||[]).find(c=>c.id===w.sourceCandidateId):null;const status=sourceCandidate?normalizeHeadProposalStatus(sourceCandidate.headOfficeActionStatus||sourceCandidate.status||w.status):(w.status==='Registered'?'Registered in LCBO NISS':(w.status||'To Register'));if(sourceCandidate&&w.status!==status)w.status=status;const offered=num(w.offeredPrice),agency=agencyName(w.agencyId)||'Not assigned';const tenderNameDate=[t.name,t.presubDate,t.tastingDate].filter(Boolean).join(' ');if(qId&&!String(t.code||'').toLowerCase().includes(qId))return;if(qNameDate&&!tenderNameDate.toLowerCase().includes(qNameDate))return;if(qSupplier&&!String(supplier).toLowerCase().includes(qSupplier))return;if(qItem&&!displayName.toLowerCase().includes(qItem))return;if(qPrice&&!`${offered.toFixed(2)} ${w.currency||'CAD'}`.toLowerCase().includes(qPrice))return;if(qAgency&&w.agencyId!==qAgency)return;if(qStatus&&status!==qStatus)return;const itemCell=dbItem?`<button type="button" class="item-info-link" onclick="openWorkerItemInfo('${t.id}','${w.id}')">${escapeHtml(displayName)}</button><br><small>Click to open database information</small>`:`<b>${escapeHtml(displayName)}</b><br><small style="color:#b3261e">No matching item found in database</small>`;const quote=num(dbItem?.quotePerCase),offerCurrency=w.currency||'CAD',quoteCurrency=dbItem?.quotationCurrency||'CAD',hasQuote=!!dbItem&&String(dbItem.quotePerCase??'').trim()!=='';const matches=hasQuote&&Math.abs(offered-quote)<0.005&&offerCurrency===quoteCurrency;const priceClass=hasQuote?(matches?'price-match':'price-mismatch'):'';const reference=hasQuote?`<span class="price-reference">Database Offered Quote: ${escapeHtml(quoteCurrency)} ${quote.toFixed(2)}</span>`:`<span class="price-reference">No database offered quote</span>`;const submissionInput=status==='Registered in LCBO NISS'?`<div class="submission-number-wrap"><small>Submission #</small><input type="text" value="${escapeHtml(w.submissionNumber||'')}" placeholder="1177144" onchange="updateWorkerSubmissionNumber('${t.id}','${w.id}',this.value)"></div>`:'';rows.push(`<tr><td><b>${escapeHtml(t.code||'—')}</b></td><td><b>${escapeHtml(t.name)}</b><br><small>${escapeHtml(t.presubDate?'Pre-Submission: '+t.presubDate:(t.tastingDate?'Tasting: '+t.tastingDate:''))}</small></td><td>${escapeHtml(supplier)}</td><td>${itemCell}</td><td><span class="${priceClass}">${escapeHtml(offerCurrency)} ${offered.toFixed(2)}</span>${reference}</td><td>${escapeHtml(agency)}</td><td>${escapeHtml(w.instructions||'—')}</td><td><select class="work-status ${['Submitted','In Progress','Registered in LCBO NISS'].includes(status)?'work-status-green':'work-status-yellow'}" ${(!sourceCandidate&&t.status==='Closed')?'disabled title="Tender is closed"':''} onchange="updateWorkStatus('${t.id}','${w.id}',this.value);applyWorkStatusColor(this)">${sourceCandidate?`<option value="In Progress" ${status==='In Progress'?'selected':''}>Submitted</option><option ${status==='Approved for LCBO Submission'?'selected':''}>Approved for LCBO Submission</option><option value="Additional Information Required" ${status==='Additional Information Required'?'selected':''}>Additional Information Requested</option><option ${status==='Tender Winner'?'selected':''}>Tender Winner</option><option ${status==='Declined'?'selected':''}>Declined</option>`:`<option ${status==='To Register'?'selected':''}>To Register</option><option ${status==='Submitted'?'selected':''}>Submitted</option><option ${status==='Registered in LCBO NISS'?'selected':''}>Registered in LCBO NISS</option><option ${status==='On Hold'?'selected':''}>On Hold</option>`}</select>${status==='Additional Information Required'&&sourceCandidate?.additionalInformationRequested?`<div class="head-comment-box" style="margin-top:6px">${escapeHtml(sourceCandidate.additionalInformationRequested)}</div>`:''}${submissionInput}</td><td><button type="button" class="secondary small" onclick="addWorkerItemToTenderDatabase('${t.id}','${w.id}')">${w.itemId?'Open Tender Item Database':'Add To Tender Item Database'}</button> <button type="button" class="danger small" onclick="deleteWorkerItem('${t.id}','${w.id}')">Remove</button></td></tr>`)}));$('#workerRows').innerHTML=rows.join('')||'<tr><td colspan="9">No matching worker submission items.</td></tr>';}
 
 function addWorkerItemToTenderDatabase(tenderId,workId){
  try{
@@ -2016,14 +2118,90 @@ function closeWorkerItemEditor(){$('#workerItemModal').classList.add('hidden')}
 function saveWorkerListItem(){updateAutomaticTenderStatuses();const tenderId=$('#workerItemTender').value,itemId=$('#workerDatabaseItem').value;if(!tenderId||!itemId){alert('Choose a tender and an item from the Tender Item Database.');return}const target=state.tenders.find(x=>x.id===tenderId);if(!target)return;if(target.status==='Closed'){alert('This tender is closed. Items cannot be added or registered.');return;}const oldTenderId=$('#workerEditTenderId').value,workId=$('#workerEditWorkId').value||uid(),item=state.items.find(i=>i.id===itemId);if(oldTenderId&&oldTenderId!==tenderId){const old=state.tenders.find(x=>x.id===oldTenderId);if(old)old.workItems=(old.workItems||[]).filter(x=>x.id!==workId)}target.workItems=target.workItems||[];const existing=target.workItems.find(x=>x.id===workId);const w={id:workId,itemId,itemName:item?.productDescription||'',offeredPrice:num($('#workerOfferedPrice').value),currency:$('#workerCurrency').value,agencyId:$('#workerAgency').value,instructions:$('#workerInstructions').value.trim(),status:$('#workerStatus').value,submissionNumber:existing?.submissionNumber||''};const idx=target.workItems.findIndex(x=>x.id===workId);if(idx>=0)target.workItems[idx]=w;else target.workItems.push(w);save();if(['Submitted','Registered in LCBO NISS'].includes(w.status))updateWorkStatus(tenderId,workId,w.status);closeWorkerItemEditor();}
 function removeWorkerItemFromEditor(){const tenderId=$('#workerEditTenderId').value,workId=$('#workerEditWorkId').value;if(tenderId&&workId){deleteWorkerItem(tenderId,workId);closeWorkerItemEditor();}}
 function updateWorkerSubmissionNumber(tenderId,itemId,value){const t=state.tenders.find(x=>x.id===tenderId),w=t?.workItems?.find(x=>x.id===itemId);if(!w)return;w.submissionNumber=value.trim();state.records.filter(r=>r.tenderRecordId===tenderId&&r.itemId===w.itemId&&(!w.agencyId||r.agencyId===w.agencyId)).forEach(r=>r.submissionNumber=w.submissionNumber);save();}
+
+let pendingWorkerAdditionalInfoPreviousStatus='';
+
+function openWorkerAdditionalInfo(tenderId,itemId,previousStatus){
+  const modal=document.getElementById('workerAdditionalInfoModal');
+  const t=state.tenders.find(x=>x.id===tenderId);
+  const w=t?.workItems?.find(x=>x.id===itemId);
+  const candidate=w?.sourceCandidateId?(state.countryCandidates||[]).find(c=>c.id===w.sourceCandidateId):null;
+  if(!modal||!w||!candidate)return false;
+
+  pendingWorkerAdditionalInfoPreviousStatus=previousStatus||w.status||'In Progress';
+  document.getElementById('workerAdditionalInfoTenderId').value=tenderId;
+  document.getElementById('workerAdditionalInfoItemId').value=itemId;
+  document.getElementById('workerAdditionalInfoText').value=candidate.additionalInformationRequested||'';
+  modal.classList.remove('hidden');
+  setTimeout(()=>document.getElementById('workerAdditionalInfoText')?.focus(),0);
+  return true;
+}
+
+function cancelWorkerAdditionalInfo(){
+  const modal=document.getElementById('workerAdditionalInfoModal');
+  if(modal)modal.classList.add('hidden');
+  pendingWorkerAdditionalInfoPreviousStatus='';
+  if(typeof renderWorkerList==='function')renderWorkerList();
+}
+
+function saveWorkerAdditionalInfo(){
+  const tenderId=document.getElementById('workerAdditionalInfoTenderId')?.value||'';
+  const itemId=document.getElementById('workerAdditionalInfoItemId')?.value||'';
+  const info=String(document.getElementById('workerAdditionalInfoText')?.value||'').trim();
+
+  if(!info){
+    alert('Please enter the additional information requested before applying this status.');
+    document.getElementById('workerAdditionalInfoText')?.focus();
+    return;
+  }
+
+  const t=state.tenders.find(x=>x.id===tenderId);
+  const w=t?.workItems?.find(x=>x.id===itemId);
+  const candidate=w?.sourceCandidateId?(state.countryCandidates||[]).find(c=>c.id===w.sourceCandidateId):null;
+  if(!w||!candidate)return;
+
+  const normalized='Additional Information Required'; // keep existing internal status compatibility
+  const now=new Date().toISOString();
+
+  candidate.additionalInformationRequested=info;
+  candidate.headOfficeComment=info;
+  w.status=normalized;
+  candidate.status=normalized;
+  candidate.headOfficeActionStatus=normalized;
+  candidate.headOfficeUpdatedAt=now;
+  if(!Array.isArray(candidate.headOfficeActions))candidate.headOfficeActions=[];
+  candidate.headOfficeActions.push({
+    status:normalized,
+    comment:info,
+    date:now,
+    source:'LCBO SUBMISSIONS LIST'
+  });
+
+  save();
+
+  document.getElementById('workerAdditionalInfoModal')?.classList.add('hidden');
+  pendingWorkerAdditionalInfoPreviousStatus='';
+
+  if(typeof renderHeadOfficeProposals==='function')renderHeadOfficeProposals();
+  if(typeof renderItalySourcing==='function')renderItalySourcing();
+  if(typeof renderWorkerList==='function')renderWorkerList();
+}
+window.openWorkerAdditionalInfo=openWorkerAdditionalInfo;
+window.cancelWorkerAdditionalInfo=cancelWorkerAdditionalInfo;
+window.saveWorkerAdditionalInfo=saveWorkerAdditionalInfo;
+
 function updateWorkStatus(tenderId,itemId,status){
  updateAutomaticTenderStatuses();
  const t=state.tenders.find(x=>x.id===tenderId),w=t?.workItems?.find(x=>x.id===itemId);
  if(!w)return;
  const candidate=w.sourceCandidateId?(state.countryCandidates||[]).find(c=>c.id===w.sourceCandidateId):null;
  if(candidate){
-   const allowed=['In Progress','Approved for LCBO Submission','Additional Information Requested','Declined'];
+   const allowed=['In Progress','Approved for LCBO Submission','Additional Information Required','Tender Winner','Declined'];
    if(!allowed.includes(status)){alert('Select a valid Head Office Action status.');renderWorkerList();return;}
+   if(status==='Additional Information Required'){
+     openWorkerAdditionalInfo(tenderId,itemId,w.status||candidate.headOfficeActionStatus||candidate.status||'In Progress');
+     return;
+   }
    const normalized=normalizeHeadProposalStatus(status);
    w.status=normalized;
    candidate.status=normalized;
@@ -2031,10 +2209,116 @@ function updateWorkStatus(tenderId,itemId,status){
    candidate.headOfficeUpdatedAt=new Date().toISOString();
    if(!Array.isArray(candidate.headOfficeActions))candidate.headOfficeActions=[];
    candidate.headOfficeActions.push({status:normalized,comment:'Status updated from TENDERS → LCBO SUBMISSIONS LIST.',date:candidate.headOfficeUpdatedAt,source:'LCBO SUBMISSIONS LIST'});
+
+   // Visible "Submitted" status uses the existing internal value "In Progress".
+   // When selected, automatically create/show this item in All Submitted Items.
+   if(status==='In Progress'){
+     let matches=state.records.filter(r =>
+       r.tenderRecordId===tenderId &&
+       (
+         (w.itemId && r.itemId===w.itemId) ||
+         (w.sourceCandidateId && r.sourceCandidateId===w.sourceCandidateId)
+       )
+     );
+
+     if(!matches.length){
+       const i=findDatabaseItem(w);
+       const r=defaults();
+       r.id=uid();
+       r.tenderRecordId=t.id;
+       r.tenderId=t.code||'';
+       r.tenderName=t.name||'';
+       r.tenderDate=t.presubDate||'';
+       r.productNeeds=t.productNeeds||'VINTAGES';
+       r.agencyId=w.agencyId||candidate.agencyId||state.agencies[0]?.id||'';
+       r.itemId=w.itemId||candidate.itemId||'';
+       r.sourceCandidateId=w.sourceCandidateId||candidate.id||'';
+       r.itemName=i?.productDescription||w.itemName||candidate.productName||candidate.productDescription||'';
+       r.supplier=i?.supplierName||candidate.supplierName||candidate.supplier||'';
+       r.brand=i?.brandName||candidate.brandName||candidate.brand||'';
+       r.year=i?.vintage||candidate.vintage||new Date().getFullYear();
+       r.productType=i?.productType||candidate.productType||candidate.category||'Wine';
+       r.caseKg=num(i?.caseWeightKg)||18.9;
+       r.bottles=num(i?.sellingUnitsPerShippingCase||i?.unitsPerSellingPack||candidate.bottlesPerCase)||12;
+       r.offeredQuoteCurrency=w.currency||candidate.currency||i?.quotationCurrency||'CAD';
+       r.offeredQuote=num(w.offeredPrice||candidate.supplierPricePerOfferedCase||candidate.offeredPrice);
+       r.erpManual=num(i?.estimatedRetailPrice||candidate.erp||candidate.estimatedRetailPrice);
+       r.registered='Yes';
+       r.finalDecision='In Progress';
+       r.submissionNumber=w.submissionNumber||candidate.submissionNumber||'';
+       state.records.push(r);
+     } else {
+       matches.forEach(r=>{
+         r.registered='Yes';
+         r.finalDecision='In Progress';
+         r.submissionNumber=w.submissionNumber||candidate.submissionNumber||r.submissionNumber||'';
+       });
+     }
+   }
+
+   if(status==='Tender Winner'){
+     let matches=state.records.filter(r =>
+       r.tenderRecordId===tenderId &&
+       (
+         (w.itemId && r.itemId===w.itemId) ||
+         (w.sourceCandidateId && r.sourceCandidateId===w.sourceCandidateId)
+       )
+     );
+
+     if(!matches.length){
+       const i=findDatabaseItem(w);
+       const r=defaults();
+       r.id=uid();
+       r.tenderRecordId=t.id;
+       r.tenderId=t.code||'';
+       r.tenderName=t.name||'';
+       r.tenderDate=t.presubDate||'';
+       r.productNeeds=t.productNeeds||'VINTAGES';
+       r.agencyId=w.agencyId||candidate.agencyId||state.agencies[0]?.id||'';
+       r.itemId=w.itemId||candidate.itemId||'';
+       r.sourceCandidateId=w.sourceCandidateId||candidate.id||'';
+       r.itemName=i?.productDescription||w.itemName||candidate.productName||candidate.productDescription||'';
+       r.supplier=i?.supplierName||candidate.supplierName||candidate.supplier||'';
+       r.brand=i?.brandName||candidate.brandName||candidate.brand||'';
+       r.year=i?.vintage||candidate.vintage||new Date().getFullYear();
+       r.productType=i?.productType||candidate.productType||candidate.category||'Wine';
+       r.caseKg=num(i?.caseWeightKg)||18.9;
+       r.bottles=num(i?.sellingUnitsPerShippingCase||i?.unitsPerSellingPack||candidate.bottlesPerCase)||12;
+       r.offeredQuoteCurrency=w.currency||candidate.currency||i?.quotationCurrency||'CAD';
+       r.offeredQuote=num(w.offeredPrice||candidate.supplierPricePerOfferedCase||candidate.offeredPrice);
+       r.erpManual=num(i?.estimatedRetailPrice||candidate.erp||candidate.estimatedRetailPrice);
+       r.registered='Yes';
+       r.finalDecision='Winner';
+       r.submissionNumber=w.submissionNumber||candidate.submissionNumber||'';
+       state.records.push(r);
+       matches=[r];
+     } else {
+       matches.forEach(r=>{
+         r.registered='Yes';
+         r.finalDecision='Winner';
+         r.submissionNumber=w.submissionNumber||candidate.submissionNumber||r.submissionNumber||'';
+       });
+     }
+
+     if(!Array.isArray(state.winners)) state.winners=[];
+     matches.forEach(r=>{
+       const exists=state.winners.find(x => x.sourceRecordId===r.id || x.id===r.id);
+       if(!exists){
+         state.winners.push({...r, sourceRecordId:r.id, winnerAt:new Date().toISOString()});
+       } else {
+         Object.assign(exists, r, {sourceRecordId:r.id});
+       }
+     });
+   }
+
    save();
    if(typeof renderHeadOfficeProposals==='function')renderHeadOfficeProposals();
    if(typeof renderItalySourcing==='function')renderItalySourcing();
    if(typeof renderWorkerList==='function')renderWorkerList();
+   if(typeof renderSubmittedItems==='function')renderSubmittedItems();
+   if(typeof renderAllSubmittedItems==='function')renderAllSubmittedItems();
+   if(typeof renderWinners==='function')renderWinners();
+   if(typeof renderTenderWinners==='function')renderTenderWinners();
    return;
  }
  if(t.status==='Closed'){alert('This tender is closed. The item cannot be registered or updated.');renderWorkerList();return;}
@@ -2237,7 +2521,7 @@ function transportationPoSearchText(sh){
 }
 function renderShipments(){if(!$('#shipmentRows'))return;const shipmentQuery=$('#transportationPageSearch')?.value||'';const rows=(state.shipments||[]).filter(sh=>{const poText=transportationPoSearchText(sh);return pageSearchMatches(sh,shipmentQuery,poText)}).map(sh=>{const t=shipmentTotals(sh),payment=sh.paymentStatus==='Other'?(sh.paymentOther||'Other'):(sh.paymentStatus||'Not Paid'),warehouse=`<div><b>REF # and Pallet Labels Requested:</b> ${yesNoBadge(sh.refPalletStatus||'No')}</div><div><b>Export Files Sent:</b> ${yesNoBadge(sh.exportFilesStatus||'No')}</div>`,converter=`1 CAD = ${t.exchangeRate.toFixed(4)} ${escapeHtml(sh.currency||'CAD')}`;return `<tr><td><button type="button" class="shipment-name-link" onclick="openShipmentInfo('${sh.id}')">${escapeHtml(sh.name||'—')}</button></td><td>${escapeHtml(sh.company||'—')}</td><td>${(sh.poLinks||[]).map(transportationPoDisplay).join('')||'—'}</td><td>${t.totalBottles.toLocaleString()}</td><td>${num(sh.palletQty).toLocaleString()}</td><td>${escapeHtml((sh.currency||'CAD')+' '+t.cost.toFixed(2))}</td><td>${escapeHtml((sh.currency||'CAD')+' '+t.costPerBottle.toFixed(4))}</td><td><span class="transport-converter"><span>${converter}</span></span></td><td><b>CAD ${t.costPerBottleCad.toFixed(4)}</b></td><td>${shipmentStatusSelect(sh)}<br><small>${escapeHtml(sh.statusDate||'—')}</small></td><td>${escapeHtml(formatTransportationDate(sh.pickupDate)||'—')}</td><td><b>${escapeHtml(formatTransportationDate(sh.deliveryDate)||'—')}</b><br><small>${escapeHtml(shipmentDeliveryLabel(sh.status))}</small></td><td>${warehouse}</td><td>${escapeHtml(payment)}</td><td><div class="shipment-actions"><button type="button" class="secondary small" onclick="openShipmentEditor('${sh.id}')">Edit</button><button type="button" class="danger small" onclick="deleteShipment('${sh.id}')">Delete</button></div></td></tr>`}).join('');$('#shipmentRows').innerHTML=rows||'<tr><td colspan="15">No shipments have been created.</td></tr>'}
 function shipmentInfoField(label,value){const text=value===undefined||value===null||value===''?'—':String(value);return `<div class="info-field"><button type="button" class="copy-field" onclick='copyText(${JSON.stringify(text)})'>Copy</button><span>${escapeHtml(label)}</span><b>${escapeHtml(text)}</b></div>`}
-function openShipmentInfo(id){const sh=(state.shipments||[]).find(x=>x.id===id);if(!sh)return;const totals=shipmentTotals(sh),payment=sh.paymentStatus==='Other'?(sh.paymentOther||'Other'):(sh.paymentStatus||'Not Paid');const poRows=(sh.poLinks||[]).map(link=>{const po=(state.purchaseOrders||[]).find(x=>x.id===link.poId),poNo=po?.number||'—',suppliers=(po?.supplierNames||[]).join(', ')||'—',bottles=poBottleCount(po).toLocaleString(),ref=link.ref||'—';return `<tr><td><b>${escapeHtml(poNo)}</b><button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(poNo)})'>Copy</button></td><td>${escapeHtml(ref)}<button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(ref)})'>Copy</button></td><td>${escapeHtml(suppliers)}<button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(suppliers)})'>Copy</button></td><td>${escapeHtml(bottles)}<button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(bottles)})'>Copy</button></td></tr>`}).join('')||'<tr><td colspan="4">No POs added.</td></tr>';const files=[1,2,3,4,5,6].map(n=>sh['attachment'+n]).filter(Boolean);$('#shipmentInfoTitle').textContent=sh.name||'Shipment Information';$('#shipmentInfoContent').innerHTML=`<div class="info-section"><h3>Purchase Orders</h3><div class="table-wrap"><table class="shipment-detail-po-table"><thead><tr><th>PO #</th><th>Ref #</th><th>Suppliers</th><th>Bottles</th></tr></thead><tbody>${poRows}</tbody></table></div></div><div class="info-section"><h3>Transport Information</h3><div class="info-grid">${shipmentInfoField('Transport Company Name',sh.company)}${shipmentInfoField('Phone Number',sh.phone)}${shipmentInfoField('Email 1',sh.email1)}${shipmentInfoField('Email 2',sh.email2)}${shipmentInfoField('From',sh.from)}${shipmentInfoField('To',sh.to)}</div></div><div class="info-section"><h3>Shipment Information</h3><div class="info-grid">${shipmentInfoField('Shipment Status',sh.status||'Not Contacted')}${shipmentInfoField('Approximate Pickup Date',formatTransportationDate(sh.pickupDate)||'—')}${shipmentInfoField(shipmentDeliveryLabel(sh.status),formatTransportationDate(sh.deliveryDate)||'—')}${shipmentInfoField('REF # and Pallet Labels Requested',sh.refPalletStatus||'No')}${shipmentInfoField('Export Files Sent',sh.exportFilesStatus||'No')}${shipmentInfoField('Total Bottles',totals.totalBottles.toLocaleString())}${shipmentInfoField('Pallet Quantity',num(sh.palletQty).toLocaleString())}${shipmentInfoField('Cost of Shipment',(sh.currency||'CAD')+' '+totals.cost.toFixed(2))}${shipmentInfoField('Cost / Bottle',(sh.currency||'CAD')+' '+totals.costPerBottle.toFixed(4))}${shipmentInfoField('CAD to '+(sh.currency||'CAD')+' Converter','1 CAD = '+totals.exchangeRate.toFixed(4)+' '+(sh.currency||'CAD'))}${shipmentInfoField('Bottle Cost in CAD','CAD '+totals.costPerBottleCad.toFixed(4))}${shipmentInfoField('Transport LCBO PAYMENT STATUS',payment)}${shipmentInfoField('Notes',sh.notes)}</div></div><div class="info-section"><h3>Attached Files</h3><div class="info-grid">${files.length?files.map((f,i)=>`<div class="info-field"><span>File ${i+1}</span><b>${escapeHtml(f.name||'Attached file')}</b><div class="inline-actions"><button type="button" class="secondary small" onclick="openStoredShipmentInfoFile('${sh.id}',${i})">Open</button><button type="button" class="secondary small" onclick='copyText(${JSON.stringify(f.name||'Attached file')})'>Copy Name</button></div></div>`).join(''):'<div class="info-empty">No files attached.</div>'}</div></div>`;$('#copyAllShipmentInfo').onclick=()=>copyShipmentInfoAll(sh);$('#shipmentInfoModal').classList.remove('hidden')}
+function openShipmentInfo(id){const sh=(state.shipments||[]).find(x=>x.id===id);if(!sh)return;const totals=shipmentTotals(sh),payment=sh.paymentStatus==='Other'?(sh.paymentOther||'Other'):(sh.paymentStatus||'Not Paid');const poRows=(sh.poLinks||[]).map(link=>{const po=(state.purchaseOrders||[]).find(x=>x.id===link.poId),poNo=po?.number||'—',suppliers=po?poVendorProducerPlain(po):'—',bottles=poBottleCount(po).toLocaleString(),ref=link.ref||'—';return `<tr><td><b>${escapeHtml(poNo)}</b><button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(poNo)})'>Copy</button></td><td>${escapeHtml(ref)}<button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(ref)})'>Copy</button></td><td>${escapeHtml(suppliers)}<button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(suppliers)})'>Copy</button></td><td>${escapeHtml(bottles)}<button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(bottles)})'>Copy</button></td></tr>`}).join('')||'<tr><td colspan="4">No POs added.</td></tr>';const files=[1,2,3,4,5,6].map(n=>sh['attachment'+n]).filter(Boolean);$('#shipmentInfoTitle').textContent=sh.name||'Shipment Information';$('#shipmentInfoContent').innerHTML=`<div class="info-section"><h3>Purchase Orders</h3><div class="table-wrap"><table class="shipment-detail-po-table"><thead><tr><th>PO #</th><th>Ref #</th><th>Suppliers</th><th>Bottles</th></tr></thead><tbody>${poRows}</tbody></table></div></div><div class="info-section"><h3>Transport Information</h3><div class="info-grid">${shipmentInfoField('Transport Company Name',sh.company)}${shipmentInfoField('Phone Number',sh.phone)}${shipmentInfoField('Email 1',sh.email1)}${shipmentInfoField('Email 2',sh.email2)}${shipmentInfoField('From',sh.from)}${shipmentInfoField('To',sh.to)}</div></div><div class="info-section"><h3>Shipment Information</h3><div class="info-grid">${shipmentInfoField('Shipment Status',sh.status||'Not Contacted')}${shipmentInfoField('Approximate Pickup Date',formatTransportationDate(sh.pickupDate)||'—')}${shipmentInfoField(shipmentDeliveryLabel(sh.status),formatTransportationDate(sh.deliveryDate)||'—')}${shipmentInfoField('REF # and Pallet Labels Requested',sh.refPalletStatus||'No')}${shipmentInfoField('Export Files Sent',sh.exportFilesStatus||'No')}${shipmentInfoField('Total Bottles',totals.totalBottles.toLocaleString())}${shipmentInfoField('Pallet Quantity',num(sh.palletQty).toLocaleString())}${shipmentInfoField('Cost of Shipment',(sh.currency||'CAD')+' '+totals.cost.toFixed(2))}${shipmentInfoField('Cost / Bottle',(sh.currency||'CAD')+' '+totals.costPerBottle.toFixed(4))}${shipmentInfoField('CAD to '+(sh.currency||'CAD')+' Converter','1 CAD = '+totals.exchangeRate.toFixed(4)+' '+(sh.currency||'CAD'))}${shipmentInfoField('Bottle Cost in CAD','CAD '+totals.costPerBottleCad.toFixed(4))}${shipmentInfoField('Transport LCBO PAYMENT STATUS',payment)}${shipmentInfoField('Notes',sh.notes)}</div></div><div class="info-section"><h3>Attached Files</h3><div class="info-grid">${files.length?files.map((f,i)=>`<div class="info-field"><span>File ${i+1}</span><b>${escapeHtml(f.name||'Attached file')}</b><div class="inline-actions"><button type="button" class="secondary small" onclick="openStoredShipmentInfoFile('${sh.id}',${i})">Open</button><button type="button" class="secondary small" onclick='copyText(${JSON.stringify(f.name||'Attached file')})'>Copy Name</button></div></div>`).join(''):'<div class="info-empty">No files attached.</div>'}</div></div>`;$('#copyAllShipmentInfo').onclick=()=>copyShipmentInfoAll(sh);$('#shipmentInfoModal').classList.remove('hidden')}
 function copyShipmentInfoAll(sh){const totals=shipmentTotals(sh),payment=sh.paymentStatus==='Other'?(sh.paymentOther||'Other'):(sh.paymentStatus||'Not Paid');const poText=(sh.poLinks||[]).map(link=>{const po=(state.purchaseOrders||[]).find(x=>x.id===link.poId);return `PO #: ${po?.number||'—'} | Ref #: ${link.ref||'—'} | Suppliers: ${(po?.supplierNames||[]).join(', ')||'—'} | Bottles: ${poBottleCount(po)}`}).join('\n');copyText(`Shipment: ${sh.name||'—'}\n${poText}\nTransport Company Name: ${sh.company||'—'}\nPhone Number: ${sh.phone||'—'}\nEmail 1: ${sh.email1||'—'}\nEmail 2: ${sh.email2||'—'}\nFrom: ${sh.from||'—'}\nTo: ${sh.to||'—'}\nShipment Status: ${sh.status||'Not Contacted'}\nApproximate Pickup Date: ${formatTransportationDate(sh.pickupDate)||'—'}\n${shipmentDeliveryLabel(sh.status)}: ${formatTransportationDate(sh.deliveryDate)||'—'}\nREF # and Pallet Labels Requested: ${sh.refPalletStatus||'No'}\nExport Files Sent: ${sh.exportFilesStatus||'No'}\nTotal Bottles: ${totals.totalBottles}\nPallet Quantity: ${num(sh.palletQty)}\nCost of Shipment: ${(sh.currency||'CAD')} ${totals.cost.toFixed(2)}\nCost / Bottle: ${(sh.currency||'CAD')} ${totals.costPerBottle.toFixed(4)}\nCAD to ${sh.currency||'CAD'} Converter: 1 CAD = ${totals.exchangeRate.toFixed(4)} ${sh.currency||'CAD'}\nBottle Cost in CAD: CAD ${totals.costPerBottleCad.toFixed(4)}\nTransport LCBO PAYMENT STATUS: ${payment}\nNotes: ${sh.notes||'—'}`)}
 function closeShipmentInfo(){const m=$('#shipmentInfoModal');if(m)m.classList.add('hidden')}
 function openStoredShipmentInfoFile(shipmentId,fileIndex){const sh=(state.shipments||[]).find(x=>x.id===shipmentId),files=[1,2,3,4,5,6].map(n=>sh?.['attachment'+n]).filter(Boolean),f=files[fileIndex];if(!f?.data){alert('No file is attached.');return}const win=window.open(f.data,'_blank');if(!win){const a=document.createElement('a');a.href=f.data;a.download=f.name||'shipment-file';document.body.appendChild(a);a.click();a.remove()}}
@@ -2256,7 +2540,7 @@ function renderShipmentPoSelector(){
    }).join('');
  renderShipmentPoRows();
 }
-function renderShipmentPoRows(){const body=$('#shipmentPoRows');if(!body)return;body.innerHTML=shipmentSelectedPos.map(link=>{const po=(state.purchaseOrders||[]).find(x=>x.id===link.poId),poNo=po?.number||'—',suppliers=(po?.supplierNames||[]).join(', ')||'—',bottles=poBottleCount(po).toLocaleString();return `<tr><td><b>${escapeHtml(poNo)}</b><button type="button" class="secondary copy-mini" onclick="copyText('${escapeHtml(poNo).replace(/'/g,"\\'")}')">Copy</button></td><td><div style="display:flex;align-items:center;gap:4px"><input value="${escapeHtml(link.ref||'')}" oninput="updateShipmentRef('${link.poId}',this.value)" placeholder="Ref #"><button type="button" class="secondary copy-mini" onclick="copyShipmentRef('${link.poId}')">Copy</button></div></td><td>${escapeHtml(suppliers)}</td><td>${bottles}</td><td><button type="button" class="danger small" onclick="removeShipmentPo('${link.poId}')">Remove</button></td></tr>`}).join('')||'<tr><td colspan="5">No POs added.</td></tr>';updateShipmentCalculations()}
+function renderShipmentPoRows(){const body=$('#shipmentPoRows');if(!body)return;body.innerHTML=shipmentSelectedPos.map(link=>{const po=(state.purchaseOrders||[]).find(x=>x.id===link.poId),poNo=po?.number||'—',suppliers=po?poVendorProducerPlain(po):'—',bottles=poBottleCount(po).toLocaleString();return `<tr><td><b>${escapeHtml(poNo)}</b><button type="button" class="secondary copy-mini" onclick="copyText('${escapeHtml(poNo).replace(/'/g,"\\'")}')">Copy</button></td><td><div style="display:flex;align-items:center;gap:4px"><input value="${escapeHtml(link.ref||'')}" oninput="updateShipmentRef('${link.poId}',this.value)" placeholder="Ref #"><button type="button" class="secondary copy-mini" onclick="copyShipmentRef('${link.poId}')">Copy</button></div></td><td>${escapeHtml(suppliers)}</td><td>${bottles}</td><td><button type="button" class="danger small" onclick="removeShipmentPo('${link.poId}')">Remove</button></td></tr>`}).join('')||'<tr><td colspan="5">No POs added.</td></tr>';updateShipmentCalculations()}
 function updateShipmentCalculations(resetRate=false){const totalBottles=shipmentSelectedPos.reduce((sum,link)=>sum+poBottleCount((state.purchaseOrders||[]).find(x=>x.id===link.poId)),0),cost=num($('#shipmentCostInput')?.value),currency=$('#shipmentCurrencyInput')?.value||'CAD',rateInput=$('#shipmentExchangeRateInput');if(resetRate&&rateInput)rateInput.value=currency==='CAD'?'1':'';const exchangeRate=currency==='CAD'?1:num(rateInput?.value),cadRate=currency==='CAD'?1:(exchangeRate>0?1/exchangeRate:0),costPerBottle=totalBottles?cost/totalBottles:0,costPerBottleCad=costPerBottle*cadRate;$('#shipmentTotalBottles').textContent=totalBottles.toLocaleString();$('#shipmentCostDisplay').textContent=currency+' '+cost.toFixed(2);$('#shipmentCostPerBottle').textContent=currency+' '+costPerBottle.toFixed(4);if(rateInput){rateInput.disabled=currency==='CAD';if(currency==='CAD')rateInput.value='1'}$('#shipmentConverterCurrency').textContent=currency;$('#shipmentConverterLabel').textContent='Transportation CAD Converter — Enter Manually';$('#shipmentCostPerBottleCad').textContent='CAD '+costPerBottleCad.toFixed(4)}
 function shipmentPoUsageInfo(poId){
  const currentShipmentId=$('#shipmentRecordId')?.value||'';
@@ -2439,7 +2723,7 @@ function poStatusSelect(po){
 function poDisplayRow(po,archived=false){
   const calculated=(po.lines||[]).reduce((a,x)=>a+(num(x.totalQuantity)*num(x.quotedPricePerCase)),0);
   const statusCell=archived?poStatusBadge(po.poStatus||''):poStatusSelect(po);
-  return `<tr><td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(poProgramLabel(po))}</td><td>${escapeHtml((po.vendors||[]).join(', ')||po.vendor||((po.supplierNames||[]).join(', '))||'—')}</td><td>${escapeHtml(poItemDescriptions(po)||'—')}</td><td><b>${escapeHtml(poCaseQuantityWithBottlesPerCase(po))}</b></td><td>${poBottleQuantity(po).toLocaleString()}</td><td>${statusCell}</td><td>${escapeHtml((po.currency||'')+' '+poMoney(calculated))}</td><td>${po.fileName?`<button type="button" class="secondary small" onclick="openPoRecordFile('${po.id}')">${escapeHtml(po.fileName)}</button>`:'—'}</td><td><button type="button" class="secondary small" onclick="openPoEditor('${po.id}')">Edit</button> <button type="button" class="danger small" onclick="deletePoRecord('${po.id}')">Delete</button></td></tr>`;
+  return `<tr><td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(poProgramLabel(po))}</td><td>${poVendorProducerHtml(po)}</td><td>${escapeHtml(poItemDescriptions(po)||'—')}</td><td><b>${escapeHtml(poCaseQuantityWithBottlesPerCase(po))}</b></td><td>${poBottleQuantity(po).toLocaleString()}</td><td>${statusCell}</td><td>${escapeHtml((po.currency||'')+' '+poMoney(calculated))}</td><td>${po.fileName?`<button type="button" class="secondary small" onclick="openPoRecordFile('${po.id}')">${escapeHtml(po.fileName)}</button>`:'—'}</td><td><button type="button" class="secondary small" onclick="openPoEditor('${po.id}')">Edit</button> <button type="button" class="danger small" onclick="deletePoRecord('${po.id}')">Delete</button></td></tr>`;
 }
 function updatePoStatusFromRow(id,status){
   const po=(state.purchaseOrders||[]).find(x=>x.id===id);if(!po)return;
@@ -2539,7 +2823,7 @@ function renderProformaPoRows(){
       <td><input type="checkbox" class="po-print-checkbox" value="${po.id}" ${inActive?'disabled':''} title="${escapeHtml(inActive?'Already added to selected pallet':(otherPalletNumbers.length?'This PO is already on another pallet but can be added again to split the order.':'Mark this PO to add to the selected pallet'))}"></td>
       <td><b>${escapeHtml(po.number||'—')}</b>${reason?`<br><small>${escapeHtml(reason)}</small>`:''}</td>
       <td>${escapeHtml(poProgramLabel(po))}</td>
-      <td>${escapeHtml((po.vendors||[]).join(', ')||po.vendor||((po.supplierNames||[]).join(', '))||'—')}</td>
+      <td>${poVendorProducerHtml(po)}</td>
       <td>${escapeHtml(poItemDescriptions(po)||'—')}</td>
       <td>${escapeHtml(poCaseQuantityWithBottlesPerCase(po))}</td>
       <td>${poBottleQuantity(po).toLocaleString()}</td>
@@ -2595,7 +2879,6 @@ function poPrintItemRow(po,line){
   return {cases,poNumber:po.number||'',lcbo,desc,vintage,alc,bottles,size,bpc,casePrice,bottlePrice};
 }
 function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets,allowSave=false){
-  const logoUrl=new URL('zimport-global-logo.jpg',window.location.href).href;
   const warning='Important !PO numbers may differ only by the last digit.';
   const rows=[];
   selectedPos.forEach(po=>(po.lines||[]).forEach(line=>rows.push(poPrintItemRow(po,line))));
@@ -2640,7 +2923,7 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets,allowS
     .print-actions{text-align:right;margin-bottom:3px}
     body>div:not(.print-actions),body>table{width:94%;margin-left:3.5%;margin-right:2.5%}
     .sheet-head{position:relative;min-height:1.12in;margin-bottom:3px;padding:0 .9in}
-    .logo{position:absolute;top:0;right:0;width:.78in;height:.78in;object-fit:contain}
+    .brand-text{position:absolute;top:8px;right:0;font-size:14px;font-weight:700;letter-spacing:.2px;text-align:right;max-width:2.6in}
     .order-name{font-size:12px;font-weight:700;margin-top:1px;text-align:center}
     .pallets{font-size:12px;font-weight:700;margin-top:3px;text-align:center}
     .warning{font-size:11.5px;font-weight:800;margin:4px 0}
@@ -2676,7 +2959,7 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets,allowS
       <div class="order-name">Order Name: ${escapeHtml(orderName||'')}</div>
       <div class="pallets">Total Pallet Quantity: ${escapeHtml(String(totalPallets||0))}</div>
       <div class="pallet-summary"><b>PO's must be loaded on each pallets as following</b><br>${(pallets||[]).map((p,i)=>`<div><b>Pallet ${i+1}:</b> ${escapeHtml(((p.poNumbers||poPrintPalletPoNumbers(p))||[]).join(', ')||'No PO assigned')}</div>`).join('')}</div>
-      <img class="logo" src="${logoUrl}" alt="Zimport Global">
+      <div class="brand-text">Global Wine Agency &amp; Distribution</div>
     </div>
     <div class="warning">${warning}</div>
     <div class="top-pallet-warning"><b>Important !</b> Pallet labels will be provided once the order is ready for pickup. Please inform us at least 10 working days in advance.</div>
@@ -2686,51 +2969,7 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets,allowS
     <tfoot><tr><td class="total-cases">Total Cases: ${totalCases.toLocaleString()}</td><td colspan="3"></td><td class="total-bottles">Total Bottles: ${totalBottles.toLocaleString()}</td><td colspan="4"></td></tr></tfoot></table>
     <div class="bottom-warning">${warning}</div>
     <div class="instructions">${instructions}</div>
-  
-<script id="wgAdditionalInfoRequestedSafe">
-document.addEventListener('change', function(e) {
-  var el = e.target;
-  if (!el || el.tagName !== 'SELECT') return;
-
-  var selectedText = '';
-  try {
-    selectedText = el.options[el.selectedIndex] ? el.options[el.selectedIndex].text.trim() : '';
-  } catch (_) {}
-
-  if (selectedText !== 'Additional Information Requested') return;
-  if (el.dataset.aiRequestOk === '1') {
-    delete el.dataset.aiRequestOk;
-    return;
-  }
-
-  var previous = el.dataset.previousValue || '';
-  var info = window.prompt('Additional Information Requested\n\nEnter the information that is being requested:');
-
-  if (!info || !info.trim()) {
-    if (previous) el.value = previous;
-    return;
-  }
-
-  el.dataset.additionalInformationRequested = info.trim();
-  el.dataset.aiRequestOk = '1';
-
-  // Trigger existing save logic only after information was entered.
-  el.dispatchEvent(new Event('change', { bubbles: true }));
-}, true);
-
-document.addEventListener('focusin', function(e) {
-  var el = e.target;
-  if (!el || el.tagName !== 'SELECT') return;
-  try {
-    var hasTarget = Array.from(el.options || []).some(function(o) {
-      return (o.text || '').trim() === 'Additional Information Requested';
-    });
-    if (hasTarget) el.dataset.previousValue = el.value;
-  } catch (_) {}
-});
-</script>
-
-</body></html>`;
+  </body></html>`;
 }
 
 let currentGeneratedProforma=null;
@@ -2851,7 +3090,7 @@ function renderPurchaseOrders(){
   const visiblePos=purchaseOrdersForCurrentSection();
   const q=id=>($('#'+id)?.value||'').trim().toLowerCase(),poNumber=q('poNumberSearch'),poProgram=q('poProgramSearch'),poSupplier=q('poSupplierSearch'),poItem=q('poItemSearch'),poStatus=$('#poStatusSearch')?.value||'';
   const filteredPos=visiblePos.filter(po=>{
-    const supplierText=String((po.vendors||[]).join(' ')||po.vendor||((po.supplierNames||[]).join(' '))||'').toLowerCase(),itemText=poItemDescriptions(po).toLowerCase();
+    const supplierText=poVendorProducerPlain(po).toLowerCase(),itemText=poItemDescriptions(po).toLowerCase();
     return(!poNumber||String(po.number||'').toLowerCase().includes(poNumber))&&(!poProgram||poProgramLabel(po).toLowerCase().includes(poProgram))&&(!poSupplier||supplierText.includes(poSupplier))&&(!poItem||itemText.includes(poItem))&&(!poStatus||splitPoAggregateStatus(po)===poStatus||(po.poStatus||'')===poStatus)
   });
   const rows=filteredPos.map(po=>poDisplayRow(po,false)).join('');
@@ -2863,7 +3102,7 @@ function renderArchivedPurchaseOrders(){
   if(!$('#archivedPoRows'))return;
   const q=id=>($('#'+id)?.value||'').trim().toLowerCase(),poNumber=q('archivedPoNumberSearch'),poSupplier=q('archivedPoSupplierSearch'),poItem=q('archivedPoItemSearch');
   const rows=archivedPurchaseOrders().filter(po=>{
-    const supplierText=String((po.vendors||[]).join(' ')||po.vendor||((po.supplierNames||[]).join(' '))||'').toLowerCase(),itemText=poItemDescriptions(po).toLowerCase();
+    const supplierText=poVendorProducerPlain(po).toLowerCase(),itemText=poItemDescriptions(po).toLowerCase();
     return(!poNumber||String(po.number||'').toLowerCase().includes(poNumber))&&(!poSupplier||supplierText.includes(poSupplier))&&(!poItem||itemText.includes(poItem))
   }).map(po=>poDisplayRow(po,true)).join('');
   $('#archivedPoRows').innerHTML=rows||'<tr><td colspan="10">No archived POs.</td></tr>';
@@ -2890,8 +3129,54 @@ function renderPoVendorChoices(selectedNames=poVendorNames,selectedIds=poVendorS
   wrap.innerHTML=poVendorSupplierIds.map((id,i)=>{
     const s=(state.suppliers||[]).find(v=>v.id===id);
     return `<span class="po-supplier-choice"><b>${escapeHtml(s?.name||'Unnamed supplier')}</b>${s?.lcboNumber?`<small>${escapeHtml(s.lcboNumber)}</small>`:''}<button type="button" class="danger small" onclick="removePoVendorChoice(${i})">×</button></span>`;
-  }).join('')||'<span class="note">No vendors selected.</span>';
+  }).join('')||'<span class="note">No vendor/producer selected.</span>';
 }
+
+function poSupplierNameById(id){
+  return (state.suppliers||[]).find(s=>s.id===id)?.name||'';
+}
+function poProducerIsSame(po={}){
+  return po.producerSameVendor!==false && po.sameProducer!=='No';
+}
+function poVendorNames(po={}){
+  return (po.vendors||po.supplierNames||(po.vendor?[po.vendor]:[])).map(x=>String(x||'').trim()).filter(Boolean);
+}
+function poProducerNames(po={}){
+  if(poProducerIsSame(po))return poVendorNames(po);
+  const names=(po.producerNames||[]).map(x=>String(x||'').trim()).filter(Boolean);
+  if(names.length)return names;
+  return (po.producerSupplierIds||[]).map(poSupplierNameById).filter(Boolean);
+}
+function poVendorProducerPlain(po={}){
+  const vendors=poVendorNames(po);
+  const producers=poProducerNames(po);
+  const vendorText=vendors.join(', ')||'—';
+  const producerText=producers.join(', ')||vendorText;
+  const same=vendorText.toLowerCase()===producerText.toLowerCase();
+  return same?vendorText:`Vendor: ${vendorText} / Producer: ${producerText}`;
+}
+function poVendorProducerHtml(po={}){
+  const vendors=poVendorNames(po);
+  const producers=poProducerNames(po);
+  const vendorText=vendors.join(', ')||'—';
+  const producerText=producers.join(', ')||vendorText;
+  const same=vendorText.toLowerCase()===producerText.toLowerCase();
+  return same
+    ? `<div class="vendor-producer-display">${escapeHtml(vendorText)}</div>`
+    : `<div class="vendor-producer-display"><b>Vendor:</b> ${escapeHtml(vendorText)}<small><b>Producer:</b> ${escapeHtml(producerText)}</small></div>`;
+}
+function syncPoProducerControls(){
+  const same=$('#poSameProducerSelect')?.value!=='No';
+  const wrap=$('#poProducerWrap');
+  if(wrap)wrap.classList.toggle('hidden',same);
+  const select=$('#poProducerSelect');
+  if(select){
+    const current=select.value;
+    select.innerHTML='<option value="">Select registered producer</option>'+(state.suppliers||[]).map(s=>`<option value="${s.id}">${escapeHtml(s.name||'Unnamed supplier')}${s.lcboNumber?' — '+escapeHtml(s.lcboNumber):''}</option>`).join('');
+    if(current&&(state.suppliers||[]).some(s=>s.id===current))select.value=current;
+  }
+}
+
 function addPoVendorChoice(){
   const select=$('#poVendorSelect');if(!select)return;
   const id=select.value;if(!id){alert('Select a registered supplier.');select.focus();return}
@@ -2924,7 +3209,7 @@ function renderPoFileStatus(name=''){$('#poFileStatus').textContent=name?`Attach
 async function openPoEditor(id=''){
   if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
   const po=(state.purchaseOrders||[]).find(x=>x.id===id)||null;
-  $('#poRecordId').value=po?.id||'';$('#poModalTitle').textContent=po?'Edit PO':'Create New PO';$('#poNumberInput').value=po?.number||'';$('#poProgramInput').value=po?.program||'REGU';$('#poDateInput').value=po?.poDate||'';$('#poProgramOtherInput').value=po?.programOther||'';syncPoProgramOther();renderPoVendorChoices(po?.vendors||po?.supplierNames||(po?.vendor?[po.vendor]:[]),po?.vendorSupplierIds||po?.supplierIds||[]);$('#poItemLines').innerHTML='';const totalInput=$('#poGrandTotalInput');totalInput.value='0.00';(po?.lines?.length?po.lines:[{}]).forEach(addPoLine);calculatePoTotals();$('#poNotesInput').value=po?.notes||'';poPendingFile=null;renderPoFileStatus(po?.fileName||'');$('#deletePoBtn').style.visibility=po?'visible':'hidden';$('#poModal').classList.remove('hidden');
+  $('#poRecordId').value=po?.id||'';$('#poModalTitle').textContent=po?'Edit PO':'Create New PO';$('#poNumberInput').value=po?.number||'';$('#poProgramInput').value=po?.program||'REGU';$('#poDateInput').value=po?.poDate||'';$('#poProgramOtherInput').value=po?.programOther||'';syncPoProgramOther();renderPoVendorChoices(po?.vendors||po?.supplierNames||(po?.vendor?[po.vendor]:[]),po?.vendorSupplierIds||po?.supplierIds||[]);$('#poSameProducerSelect').value=(po&&po.producerSameVendor===false)||po?.sameProducer==='No'?'No':'Yes';syncPoProducerControls();if($('#poSameProducerSelect').value==='No')$('#poProducerSelect').value=(po?.producerSupplierIds||[])[0]||'';$('#poItemLines').innerHTML='';const totalInput=$('#poGrandTotalInput');totalInput.value='0.00';(po?.lines?.length?po.lines:[{}]).forEach(addPoLine);calculatePoTotals();$('#poNotesInput').value=po?.notes||'';poPendingFile=null;renderPoFileStatus(po?.fileName||'');$('#deletePoBtn').style.visibility=po?'visible':'hidden';$('#poModal').classList.remove('hidden');
 }
 function closePoEditor(){$('#poModal').classList.add('hidden');poPendingFile=null}
 function readPoLines(){return $$('#poItemLines tr').map(tr=>{const totalQuantity=tr.querySelector('.po-total-qty').value===''?'':num(tr.querySelector('.po-total-qty').value),unitsPerCase=tr.querySelector('.po-units-case').value===''?'':num(tr.querySelector('.po-units-case').value),quotedPricePerCase=tr.querySelector('.po-price-case').value===''?'':num(tr.querySelector('.po-price-case').value),bottleQuantity=(totalQuantity===''||unitsPerCase==='')?'':num(totalQuantity)*num(unitsPerCase);return {id:tr.dataset.poLine,itemNo:tr.querySelector('.po-item-no').value.trim(),totalQuantity,yearProductName:tr.querySelector('.po-name').value.trim(),unitSizeMl:tr.querySelector('.po-unit-size').value===''?'':num(tr.querySelector('.po-unit-size').value),unitsPerCase,bottleQuantity,quotedPricePerCase,lineTotal:num(totalQuantity)*num(quotedPricePerCase)}}).filter(x=>x.itemNo||x.yearProductName||x.quotedPricePerCase)}
@@ -3153,14 +3438,14 @@ function ensureReguSeasOtherInvoiceForPo(po){
 async function savePoRecord(){
   if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
   const number=$('#poNumberInput').value.trim();if(!number){alert('Enter the PO number.');return}if(number.length>25){alert('PO number cannot exceed 25 characters.');return}
-  const id=$('#poRecordId').value||uid();const vendorSupplierIds=[...new Set(poVendorSupplierIds)];const vendors=vendorSupplierIds.map(sid=>(state.suppliers||[]).find(s=>s.id===sid)?.name||'').filter(Boolean);if(!vendors.length){alert('Select at least one vendor from the registered suppliers list.');$('#poVendorSelect')?.focus();return}const rawRows=$$('#poItemLines tr');if(!rawRows.length){alert('Add at least one PO item line.');return}for(const tr of rawRows){const required=[['.po-item-no','Item No.'],['.po-total-qty','Total Quantity'],['.po-name','Product Name'],['.po-units-case','Units per Case'],['.po-price-case','Quoted Price per Case']];for(const [sel,label] of required){if(tr.querySelector(sel).value.trim()===''){alert(label+' is required for every PO item.');tr.querySelector(sel).focus();return}}}const lines=readPoLines();const totalPoQuotedValue=lines.reduce((sum,line)=>sum+(num(line.totalQuantity)*num(line.quotedPricePerCase)),0);$('#poGrandTotalInput').value=poMoney(totalPoQuotedValue);const old=(state.purchaseOrders||[]).find(x=>x.id===id);const po={id,number,program:$('#poProgramInput').value,programOther:$('#poProgramInput').value==='OTHER'?$('#poProgramOtherInput').value.trim():'',poDate:$('#poDateInput').value,poStatus:old?.poStatus||'',vendors,vendor:vendors.join(', '),vendorSupplierIds,supplierIds:[...vendorSupplierIds],otherSupplierNames:[],supplierNames:[...vendors],lines,totalPoQuotedValue:num(totalPoQuotedValue),notes:$('#poNotesInput').value.trim(),fileName:poPendingFile?.name||old?.fileName||''};
-  if(po.program==='OTHER'&&!po.programOther){alert('Type the Other PO Program.');return}try{if(poPendingFile)await savePoRecordFile(id,poPendingFile);const i=state.purchaseOrders.findIndex(x=>x.id===id);if(i>=0)state.purchaseOrders[i]=po;else state.purchaseOrders.push(po);ensureInvoiceForPo(po);syncTenderInvoiceStatusFromPo(po);syncRsoInvoiceStatusFromPo(po);save();if(typeof renderHeadInventory==='function')renderHeadInventory();closePoEditor();if(po.poStatus==='LCBO PAYED'){activate('archived-pos','po-section');renderArchivedPurchaseOrders();}else if(po.program==='TENDER')openPoPage('tender-niss',"TENDER PO'S #");else openPoPage('speciality-services',"PRIVATE ORDER PO'S #");}catch(err){console.error(err);alert('The PO or its attached file could not be saved.')}
+  const id=$('#poRecordId').value||uid();const vendorSupplierIds=[...new Set(poVendorSupplierIds)];const vendors=vendorSupplierIds.map(sid=>(state.suppliers||[]).find(s=>s.id===sid)?.name||'').filter(Boolean);if(!vendors.length){alert('Select at least one vendor/producer from the registered suppliers list.');$('#poVendorSelect')?.focus();return}const producerSameVendor=$('#poSameProducerSelect')?.value!=='No';const producerSupplierIds=producerSameVendor?[...vendorSupplierIds]:[$('#poProducerSelect')?.value||''].filter(Boolean);if(!producerSameVendor&&!producerSupplierIds.length){alert('Select the producer from the registered suppliers list.');$('#poProducerSelect')?.focus();return}const producerNames=producerSameVendor?[...vendors]:producerSupplierIds.map(sid=>(state.suppliers||[]).find(s=>s.id===sid)?.name||'').filter(Boolean);const rawRows=$$('#poItemLines tr');if(!rawRows.length){alert('Add at least one PO item line.');return}for(const tr of rawRows){const required=[['.po-item-no','Item No.'],['.po-total-qty','Total Quantity'],['.po-name','Product Name'],['.po-units-case','Units per Case'],['.po-price-case','Quoted Price per Case']];for(const [sel,label] of required){if(tr.querySelector(sel).value.trim()===''){alert(label+' is required for every PO item.');tr.querySelector(sel).focus();return}}}const lines=readPoLines();const totalPoQuotedValue=lines.reduce((sum,line)=>sum+(num(line.totalQuantity)*num(line.quotedPricePerCase)),0);$('#poGrandTotalInput').value=poMoney(totalPoQuotedValue);const old=(state.purchaseOrders||[]).find(x=>x.id===id);const po={id,number,program:$('#poProgramInput').value,programOther:$('#poProgramInput').value==='OTHER'?$('#poProgramOtherInput').value.trim():'',poDate:$('#poDateInput').value,poStatus:old?.poStatus||'',vendors,vendor:vendors.join(', '),vendorSupplierIds,supplierIds:[...vendorSupplierIds],otherSupplierNames:[],supplierNames:[...vendors],producerSameVendor,sameProducer:producerSameVendor?'Yes':'No',producerSupplierIds,producerNames,producer:producerNames.join(', '),lines,totalPoQuotedValue:num(totalPoQuotedValue),notes:$('#poNotesInput').value.trim(),fileName:poPendingFile?.name||old?.fileName||''};
+  if(po.program==='OTHER'&&!po.programOther){alert('Type the Other PO Program.');return}try{if(poPendingFile)await savePoRecordFile(id,poPendingFile);const i=state.purchaseOrders.findIndex(x=>x.id===id);if(i>=0)state.purchaseOrders[i]=po;else state.purchaseOrders.push(po);ensureInvoiceForPo(po);syncTenderInvoiceStatusFromPo(po);syncRsoInvoiceStatusFromPo(po);save();if(typeof renderHeadInventory==='function')renderHeadInventory();closePoEditor();if(po.poStatus==='LCBO PAYED'){activate('archived-pos','po-section');renderArchivedPurchaseOrders();}else if(po.program==='TENDER')openPoPage('tender-niss',"TENDER PO's");else openPoPage('speciality-services',"Private Order PO's");}catch(err){console.error(err);alert('The PO or its attached file could not be saved.')}
 }
 async function removeCurrentPoRecordFile(){const id=$('#poRecordId').value;if(id)await deletePoRecordFile(id);poPendingFile=null;const po=(state.purchaseOrders||[]).find(x=>x.id===id);if(po){po.fileName='';save()}renderPoFileStatus('')}
 async function deletePoRecord(id){
  const x=state.purchaseOrders.find(v=>v.id===id);if(!x||!confirm('Move this PO to the Recycling Bin?'))return;
  snapshotInventoryPoBeforeDeletion(x);
- moveToRecycleBin('purchaseOrder',"PO'S #",x);
+ moveToRecycleBin('purchaseOrder',"ALL PO'S & PROFORMAS",x);
  await deletePoRecordFile(id);
  state.purchaseOrders=state.purchaseOrders.filter(v=>v.id!==id);
  // IMPORTANT: keep existing PO links inside Transportation even after the PO record is deleted.
@@ -3599,7 +3884,7 @@ function activate(tab,preferredSection=''){
   }
 }
 let currentPoContext='main';
-function openPoPage(section='po-section',title="PO'S #"){
+function openPoPage(section='po-section',title="ALL PO'S & PROFORMAS"){
   currentPoContext=section;
   $$('.tab,.panel').forEach(x=>x.classList.remove('active'));
   $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
@@ -3616,13 +3901,13 @@ function activateMainSection(section){
     alert('Administrator access only.');
     section='tender-niss';
   }
-  if(section==='po-section'){openPoPage('po-section',"PO'S #");return;}
+  if(section==='po-section'){openPoPage('po-section',"ALL PO'S & PROFORMAS");return;}
   $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
   $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav===section));
   const tabs=[...document.querySelectorAll(`.subnav[data-section-nav="${section}"] .tab[data-tab]`)];
   const first=tabs.find(el=>el.style.display!=='none' && el.dataset.tab && !(!isAdminUser() && isAdminOnlyTab(el.dataset.tab)));
   if(first){
-    if(first.dataset.tab==='po-page')openPoPage(section,first.dataset.poTitle||"PO'S #");
+    if(first.dataset.tab==='po-page')openPoPage(section,first.dataset.poTitle||"ALL PO'S & PROFORMAS");
     else activate(first.dataset.tab,section);
   }
 }
@@ -3821,12 +4106,12 @@ if($('#closeGenericInvoiceDetails'))$('#closeGenericInvoiceDetails').onclick=clo
 if($('#closeGenericInvoiceDetailsBottom'))$('#closeGenericInvoiceDetailsBottom').onclick=closeGenericInvoiceDetails;
 if($('#copyAllGenericInvoiceDetails'))$('#copyAllGenericInvoiceDetails').onclick=copyAllGenericInvoiceDetails;
 safeStartupRender();
-$$('.tab').forEach(b=>b.onclick=()=>{const section=b.closest('.subnav')?.dataset.sectionNav||'';if(b.dataset.tab==='po-page')openPoPage(section,b.dataset.poTitle||"PO'S #");else activate(b.dataset.tab,section)});$$('.main-section-btn').forEach(b=>b.onclick=()=>activateMainSection(b.dataset.section));$('#closeItemSelect').onclick=$('#cancelItemSelect').onclick=closeItemSelector;$('#itemSelectSearch').oninput=renderItemSelector;$('#itemSelectType').onchange=renderItemSelector;$('#goToItems').onclick=()=>{closeItemSelector();activate('items');editItem();};$('#closeModal').onclick=$('#cancelModal').onclick=closeModal;$('#recordFields').addEventListener('input',e=>{if(e.target.id==='f_currency'){const c=e.target.value;$('#f_exchangeRate').value=currencyToCadRate(c)}if(e.target.id==='f_itemId')applyItemToSubmission(e.target.value);if(e.target.id==='f_tenderName')applyTenderToSubmission(e.target.value);if(e.target.id==='f_registered'&&e.target.value==='No'){$('#f_finalDecision').value='Not Registered';$('#f_finalDecision').disabled=true}else if(e.target.id==='f_registered'&&e.target.value==='Yes'){$('#f_finalDecision').disabled=false;if($('#f_finalDecision').value==='Not Registered')$('#f_finalDecision').value='In Progress'}liveCalc()});const submittedSearchIds=['submittedTenderNameSearch','submittedTenderNumberSearch','submittedPreDateSearch','submittedItemSearch','submittedSupplierSearch','submittedAgencySearch','submittedProductSearch','submittedStageSearch','submittedSampleDateSearch','submittedSampleStatusSearch','submittedFinalSearch'];submittedSearchIds.forEach(id=>{const el=$('#'+id);if(el){el.oninput=renderTable;el.onchange=renderTable}});const submittedToggle=$('#toggleSubmittedSearch'),submittedPanel=$('#submittedSearchPanel');if(submittedToggle&&submittedPanel)submittedToggle.onclick=()=>{const hidden=submittedPanel.classList.toggle('hidden');submittedToggle.textContent=hidden?'Search':'Hide Search'};if($('#clearSubmittedSearch'))$('#clearSubmittedSearch').onclick=()=>{submittedSearchIds.forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderTable()};const submittedAgency=$('#submittedAgencySearch');if(submittedAgency){submittedAgency.innerHTML='<option value="">All registered agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('')}const submittedProduct=$('#submittedProductSearch');if(submittedProduct){const products=[...new Set(state.records.map(r=>r.productType).filter(Boolean))].sort();submittedProduct.innerHTML='<option value="">All products</option>'+products.map(v=>`<option>${escapeHtml(v)}</option>`).join('')}const archivedToggle=$('#toggleArchivedSearch'),archivedPanel=$('#archivedSearchPanel');if(archivedToggle&&archivedPanel)archivedToggle.onclick=()=>{const hidden=archivedPanel.classList.toggle('hidden');archivedToggle.textContent=hidden?'Search':'Hide Search'};
+$$('.tab').forEach(b=>b.onclick=()=>{const section=b.closest('.subnav')?.dataset.sectionNav||'';if(b.dataset.tab==='po-page')openPoPage(section,b.dataset.poTitle||"ALL PO'S & PROFORMAS");else activate(b.dataset.tab,section)});$$('.main-section-btn').forEach(b=>b.onclick=()=>activateMainSection(b.dataset.section));$('#closeItemSelect').onclick=$('#cancelItemSelect').onclick=closeItemSelector;$('#itemSelectSearch').oninput=renderItemSelector;$('#itemSelectType').onchange=renderItemSelector;$('#goToItems').onclick=()=>{closeItemSelector();activate('items');editItem();};$('#closeModal').onclick=$('#cancelModal').onclick=closeModal;$('#recordFields').addEventListener('input',e=>{if(e.target.id==='f_currency'){const c=e.target.value;$('#f_exchangeRate').value=currencyToCadRate(c)}if(e.target.id==='f_itemId')applyItemToSubmission(e.target.value);if(e.target.id==='f_tenderName')applyTenderToSubmission(e.target.value);if(e.target.id==='f_registered'&&e.target.value==='No'){$('#f_finalDecision').value='Not Registered';$('#f_finalDecision').disabled=true}else if(e.target.id==='f_registered'&&e.target.value==='Yes'){$('#f_finalDecision').disabled=false;if($('#f_finalDecision').value==='Not Registered')$('#f_finalDecision').value='In Progress'}liveCalc()});const submittedSearchIds=['submittedTenderNameSearch','submittedTenderNumberSearch','submittedPreDateSearch','submittedItemSearch','submittedSupplierSearch','submittedAgencySearch','submittedProductSearch','submittedStageSearch','submittedSampleDateSearch','submittedSampleStatusSearch','submittedFinalSearch'];submittedSearchIds.forEach(id=>{const el=$('#'+id);if(el){el.oninput=renderTable;el.onchange=renderTable}});const submittedToggle=$('#toggleSubmittedSearch'),submittedPanel=$('#submittedSearchPanel');if(submittedToggle&&submittedPanel)submittedToggle.onclick=()=>{const hidden=submittedPanel.classList.toggle('hidden');submittedToggle.textContent=hidden?'Search':'Hide Search'};if($('#clearSubmittedSearch'))$('#clearSubmittedSearch').onclick=()=>{submittedSearchIds.forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderTable()};const submittedAgency=$('#submittedAgencySearch');if(submittedAgency){submittedAgency.innerHTML='<option value="">All registered agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('')}const submittedProduct=$('#submittedProductSearch');if(submittedProduct){const products=[...new Set(state.records.map(r=>r.productType).filter(Boolean))].sort();submittedProduct.innerHTML='<option value="">All products</option>'+products.map(v=>`<option>${escapeHtml(v)}</option>`).join('')}const archivedToggle=$('#toggleArchivedSearch'),archivedPanel=$('#archivedSearchPanel');if(archivedToggle&&archivedPanel)archivedToggle.onclick=()=>{const hidden=archivedPanel.classList.toggle('hidden');archivedToggle.textContent=hidden?'Search':'Hide Search'};
 $('#submissionForm').onsubmit=e=>{e.preventDefault();const r=formRecord();if(r.registered==='No')r.finalDecision='Not Registered';if(r.caseKg>18.9){alert('Case KG cannot exceed 18.9 KG.');return}r.id=r.id||uid();const i=state.records.findIndex(x=>x.id===r.id);if(i>=0)state.records[i]=r;else state.records.push(r);const t=state.tenders.find(x=>x.id===r.tenderRecordId),w=t?.workItems?.find(x=>x.itemId===r.itemId&&(!x.agencyId||x.agencyId===r.agencyId));if(w&&r.registered==='Yes')w.status='Registered in LCBO NISS';else if(w&&w.status==='Registered in LCBO NISS'&&r.registered!=='Yes')w.status='Submitted';save();closeModal()};
 $('#deleteRecord').onclick=()=>{const id=$('#recordId').value,r=state.records.find(x=>x.id===id);if(r&&confirm('Move this submission to the Recycling Bin?')){moveToRecycleBin('record','All Submitted Items',r);deleteNtpAttachment(id);deletePoAttachment(id);state.records=state.records.filter(x=>x.id!==id);save();closeModal()}};
 $('#addPoBtn').onclick=()=>openPoEditor();$('#closePoModal').onclick=$('#cancelPoBtn').onclick=closePoEditor;$('#savePoBtn').onclick=savePoRecord;$('#deletePoBtn').onclick=deletePoFromEditor;$('#poProgramInput').onchange=syncPoProgramOther;
 $('#closeShipmentInfo').onclick=$('#closeShipmentInfoBottom').onclick=closeShipmentInfo;$('#addShipmentBtn').onclick=()=>openShipmentEditor();$('#closeShipmentModal').onclick=$('#cancelShipmentBtn').onclick=closeShipmentEditor;$('#saveShipmentBtn').onclick=saveShipment;$('#deleteShipmentBtn').onclick=()=>deleteShipment($('#shipmentRecordId').value);$('#addShipmentPoBtn').onclick=addShipmentPo;$('#shipmentCostInput').oninput=updateShipmentCalculations;$('#shipmentCurrencyInput').onchange=()=>updateShipmentCalculations(true);$('#shipmentExchangeRateInput').oninput=()=>updateShipmentCalculations(false);$('#shipmentPaymentStatusInput').onchange=syncShipmentPaymentOther;$('#shipmentStatusInput').onchange=syncShipmentStatusFields;$('#shipmentRefPalletStatusInput').onchange=syncShipmentYesNoColors;$('#shipmentExportFilesStatusInput').onchange=syncShipmentYesNoColors;const archivedFilterIds=['archivedTenderSearch','archivedYearSearch','archivedItemSearch','archivedAgencySearch','archivedProductSearch','archivedStageSearch','archivedFinalSearch','archivedQuoteFrom','archivedQuoteTo','archivedCurrencySearch','archivedErpFrom','archivedErpTo'];archivedFilterIds.forEach(id=>{const el=$('#'+id);if(el){el.oninput=()=>renderSubmissionTable('archivedSubmissionRows','archived',false);el.onchange=()=>renderSubmissionTable('archivedSubmissionRows','archived',false)}});const archivedAgency=$('#archivedAgencySearch');if(archivedAgency){archivedAgency.innerHTML='<option value="">All agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('')}const archivedProduct=$('#archivedProductSearch');if(archivedProduct){const products=[...new Set(state.records.map(r=>r.productType).filter(Boolean))].sort();archivedProduct.innerHTML='<option value="">All products</option>'+products.map(v=>`<option>${escapeHtml(v)}</option>`).join('')}const clearArchived=$('#clearArchivedSearch');if(clearArchived)clearArchived.onclick=()=>{archivedFilterIds.forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderSubmissionTable('archivedSubmissionRows','archived',false)};[1,2,3,4,5,6].forEach(n=>{$('#shipmentFile'+n).onchange=e=>{readShipmentFile(e.target.files[0],n-1);e.target.value=''};$('#openShipmentFile'+n).onclick=()=>openShipmentFile(n-1);$('#removeShipmentFile'+n).onclick=()=>removeShipmentFile(n-1)});
-if($('#addPoSupplierBtn'))$('#addPoSupplierBtn').onclick=addPoSupplierChoice;if($('#addPoVendorBtn'))$('#addPoVendorBtn').onclick=addPoVendorChoice;if($('#poSupplierSelect'))$('#poSupplierSelect').onchange=syncPoOtherSupplier;
+if($('#addPoSupplierBtn'))$('#addPoSupplierBtn').onclick=addPoSupplierChoice;if($('#addPoVendorBtn'))$('#addPoVendorBtn').onclick=addPoVendorChoice;if($('#poSupplierSelect'))$('#poSupplierSelect').onchange=syncPoOtherSupplier;if($('#poSameProducerSelect'))$('#poSameProducerSelect').onchange=syncPoProducerControls;
 $('#addPoLineBtn').onclick=()=>addPoLine();$('#poItemLines').addEventListener('input',calculatePoTotals);$('#poItemLines').addEventListener('click',e=>{if(e.target.classList.contains('po-remove-line')){e.target.closest('tr').remove();if(!$('#poItemLines').children.length)addPoLine();calculatePoTotals();}});$('#poFileInput').onchange=e=>{poPendingFile=e.target.files[0]||null;renderPoFileStatus(poPendingFile?.name||'');e.target.value='';};$('#openPoRecordFileBtn').onclick=()=>{if(poPendingFile){const url=URL.createObjectURL(poPendingFile);window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000)}else{const id=$('#poRecordId').value;if(id)openPoRecordFile(id)}};$('#removePoRecordFileBtn').onclick=removeCurrentPoRecordFile;$('#tenderCode').addEventListener('input',autofillTenderById);$('#tenderCode').addEventListener('change',autofillTenderById);$('#closeItemInfo').onclick=$('#closeItemInfoBottom').onclick=closeItemInfo;$('#copyAllItemInfo').onclick=copyAllItemInformation;$('#editItemFromInfo').onclick=()=>{const id=currentInfoItemId;closeItemInfo();activate('items');editItem(id)};$('#addTenderBtn').onclick=()=>openTender();$('#tenderProductNeeds').onchange=syncTenderOtherNeed;$('#workerTenderFilter').onchange=renderWorkerList;const workerSearchIds=['workerTenderIdSearch','workerTenderNameDateSearch','workerSupplierSearch','workerItemSearch','workerOfferedPriceSearch'];workerSearchIds.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderWorkerList});['workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.onchange=renderWorkerList});if($('#toggleWorkerSearch'))$('#toggleWorkerSearch').onclick=()=>{const panel=$('#workerSearchPanel');panel.classList.toggle('open');$('#toggleWorkerSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearWorkerSearch'))$('#clearWorkerSearch').onclick=()=>{[...workerSearchIds,'workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderWorkerList()};const workerAgency=$('#workerAgencySearch');if(workerAgency)workerAgency.innerHTML='<option value="">All agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');$('#closeWorkerItemModal').onclick=$('#cancelWorkerItem').onclick=closeWorkerItemEditor;$('#saveWorkerItem').onclick=saveWorkerListItem;$('#removeWorkerItem').onclick=removeWorkerItemFromEditor;$('#closeTender').onclick=$('#cancelTender').onclick=closeTender;const tenderSearchInputs=['tenderIdSearch','tenderNameSearch','tenderProductNeedsSearch','tenderPresubDateSearch','tenderTastingDateSearch'];tenderSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderTenders});if($('#tenderStatusSearch'))$('#tenderStatusSearch').onchange=renderTenders;if($('#toggleTenderSearch'))$('#toggleTenderSearch').onclick=()=>{const panel=$('#tenderSearchPanel');panel.classList.toggle('open');$('#toggleTenderSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearTenderSearch'))$('#clearTenderSearch').onclick=()=>{[...tenderSearchInputs,'tenderStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderTenders()};
 function tenderSupplierKey(country,id){return `${country}::${id}`;}
 function normalizeTenderCountryName(value){return String(value||'').trim().replace(/\s+/g,' ').toLowerCase();}
@@ -4061,7 +4346,7 @@ $('#saveSettings').onclick=()=>{settings={usd:num($('#setUsd').value),gbp:num($(
 $('#saveProgramSettings').onclick=()=>$('#saveSettings').click();
 $('#exportBtn').onclick=()=>download('zimport-program-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({settings,...state},null,2),'application/json');$('#importFile').onchange=e=>{const file=e.target.files[0];if(!file)return;const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);settings=d.settings||settings;state={agencies:d.agencies||defaultAgencies,records:d.records||[],items:d.items||[],tenders:d.tenders||[],suppliers:d.suppliers||[],purchaseOrders:d.purchaseOrders||[],shipments:d.shipments||[],financialInvoices:d.financialInvoices||[],supplierPaymentInvoices:d.supplierPaymentInvoices||[],supplierPaymentInvoices2:d.supplierPaymentInvoices2||[],otherInvoices:d.otherInvoices||[]};safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));save();alert('Backup imported.')}catch{alert('Invalid backup file.')}};fr.readAsText(file)};
 $('#csvBtn').onclick=()=>{const keys=['tenderName','tenderDate','agency','supplier','brand','itemName','registered','year','award1','link1','award2','link2','award3','link3','additionalAwards','productType','caseKg','currency','exchangeRate','supplierPrice','supplierCad','agencyFee','bottles','offeredQuoteCurrency','offeredQuote','offeredQuoteCad','erp','transportExpense','netProfit','potentialCases','potentialBottles','totalProfit','sampleProvideDate','sampleStatus','documentsToProvideStatus','sampleDocumentStatus','stage1Decision','finalDecision','finalOrderedQty','comments','ntpStatus','ntpFileName','poStatus','poNumber','poFileName','submissionNumber','poFileName','submissionNumber'];const rows=[keys,...state.records.map(x=>{const d=derive(x);const o={...d,agency:agencyName(x.agencyId),erp:num(x.erpManual)||d.estimatedErp,additionalAwards:(x.extraAwards||[]).map(a=>[a.award,a.link].filter(Boolean).join(' - ')).join(' | ')};return keys.map(k=>String(o[k]??'').replaceAll('"','""'))})];download('zimport-submissions.csv',rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n'),'text/csv')};
-$('#clearBtn').onclick=()=>{if(confirm('Move all program records to the Recycling Bin?')){const groups=[['agency','Agencies','agencies'],['record','Submissions','records'],['item','Tender Item Database','items'],['tender','Tenders','tenders'],['supplier','Suppliers','suppliers'],['purchaseOrder',"PO'S #",'purchaseOrders'],['shipment','Transportation','shipments'],['financialInvoice','LCBO to Agent Tender Invoices','financialInvoices'],['supplierPaymentInvoice','Paying to Suppliers Invoices','supplierPaymentInvoices'],['supplierPaymentInvoice2','Suppliers to Agent Fee Payment','supplierPaymentInvoices2'],['otherInvoice','SEAS/REGU/OTHER TO AGENT INVOICES','otherInvoices'],['otherNewInvoice','OTHER MIXED INVOICES','otherNewInvoices'],['archivedInvoice','Archived Invoices','archivedInvoices'],['archivedShipment','Archived Transportation','archivedShipments'],['archivedPo',"ARCHIVED PO'S",'manuallyArchivedPurchaseOrders'],['countryWinery','Winery Database','countryWineries'],['countryCandidate','Wine Candidates','countryCandidates'],['countryBonus','Performance & Bonuses','countryBonuses']];groups.forEach(([type,page,key])=>(state[key]||[]).forEach(r=>moveToRecycleBin(type,page,r,{collection:key})));groups.forEach(([, ,key])=>state[key]=[]);save()}};
+$('#clearBtn').onclick=()=>{if(confirm('Move all program records to the Recycling Bin?')){const groups=[['agency','Agencies','agencies'],['record','Submissions','records'],['item','Tender Item Database','items'],['tender','Tenders','tenders'],['supplier','Suppliers','suppliers'],['purchaseOrder',"ALL PO'S & PROFORMAS",'purchaseOrders'],['shipment','Transportation','shipments'],['financialInvoice','LCBO to Agent Tender Invoices','financialInvoices'],['supplierPaymentInvoice','Paying to Suppliers Invoices','supplierPaymentInvoices'],['supplierPaymentInvoice2','Suppliers to Agent Fee Payment','supplierPaymentInvoices2'],['otherInvoice','SEAS/REGU/OTHER TO AGENT INVOICES','otherInvoices'],['otherNewInvoice','OTHER MIXED INVOICES','otherNewInvoices'],['archivedInvoice','Archived Invoices','archivedInvoices'],['archivedShipment','Archived Transportation','archivedShipments'],['archivedPo',"ARCHIVED PO'S",'manuallyArchivedPurchaseOrders'],['countryWinery','Winery Database','countryWineries'],['countryCandidate','Wine Candidates','countryCandidates'],['countryBonus','Performance & Bonuses','countryBonuses']];groups.forEach(([type,page,key])=>(state[key]||[]).forEach(r=>moveToRecycleBin(type,page,r,{collection:key})));groups.forEach(([, ,key])=>state[key]=[]);save()}};
 
 
 const shipmentPoSelectEl=$('#shipmentPoSelect');
@@ -5592,7 +5877,7 @@ window.proposeItalyCandidateToHeadOffice=async function(button){
 
 function wineCandidateDeleteBlockedStatus(candidate){
  const status=normalizeHeadProposalStatus(candidate?.headOfficeActionStatus||candidate?.status);
- return ['In Progress','Approved for LCBO Submission','Additional Information Requested'].includes(status)?status:'';
+ return ['In Progress','Approved for LCBO Submission','Additional Information Required'].includes(status)?status:'';
 }
 function showWineCandidateDeleteBlocked(candidate){
  const status=wineCandidateDeleteBlockedStatus(candidate);
@@ -5662,12 +5947,12 @@ function deleteHeadBonus(id){
 }
 window.openHeadBonusForm=openHeadBonusForm;
 window.deleteHeadBonus=deleteHeadBonus;
-const HEAD_PROPOSAL_STATUSES=['Action Required','In Progress','Approved for LCBO Submission','Additional Information Requested','Declined'];
+const HEAD_PROPOSAL_STATUSES=['Action Required','In Progress','Approved for LCBO Submission','Additional Information Required','Declined'];
 function normalizeHeadProposalStatus(v){
  const s=String(v||'').trim();
  if(!s||s==='Proposed to Head Office'||s==='More Information Required')return 'Action Required';
  if(s==='Approved for LCBO Submission'||s==='Approved for LCBO')return 'Approved for LCBO Submission';
- if(s==='Additional Information Requested')return 'Additional Information Requested';
+ if(s==='Additional Information Requested')return 'Additional Information Required';
  if(s==='Declined by Head Office')return 'Declined';
  if(HEAD_PROPOSAL_STATUSES.includes(s))return s;
  return s;
@@ -6690,7 +6975,7 @@ function renderHeadOfficeProposals(){
  }).join('')||'<tr><td colspan="16">No wine proposals match the selected filters.</td></tr>';
  const k=document.getElementById('headProposalKpis');if(k){
    const count=s=>all.filter(x=>normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status)===s).length;
-   k.innerHTML=[['Action Required',count('Action Required')],['In Progress',count('In Progress')],['Approved',count('Approved for LCBO Submission')],['Additional Info',count('Additional Information Requested')],['Declined',count('Declined')]].map(([a,b])=>`<div class="card"><span>${a}</span><strong>${b}</strong></div>`).join('');
+   k.innerHTML=[['Action Required',count('Action Required')],['In Progress',count('In Progress')],['Approved',count('Approved for LCBO Submission')],['Additional Info',count('Additional Information Required')],['Declined',count('Declined')]].map(([a,b])=>`<div class="card"><span>${a}</span><strong>${b}</strong></div>`).join('');
  }
 }
 window.renderHeadOfficeProposals=renderHeadOfficeProposals;
@@ -6910,7 +7195,7 @@ window.updateHeadProposalAction=function(button,id){
  const status=String(box.querySelector('.head-action-status')?.value||'').trim();
  const comment=String(box.querySelector('.head-action-comment')?.value||'').trim();
 
- const allowed=['In Progress','Approved for LCBO Submission','Additional Information Requested','Declined'];
+ const allowed=['In Progress','Approved for LCBO Submission','Additional Information Required','Declined'];
  if(!allowed.includes(status)){
    alert('Select a Head Office Action.');
    box.querySelector('.head-action-status')?.focus();
@@ -6935,23 +7220,34 @@ window.updateHeadProposalAction=function(button,id){
    if(!Array.isArray(x.headOfficeActions))x.headOfficeActions=[];
    x.headOfficeActions.push({status,comment,date:stamp});
 
-   // Save the Head Office Action directly. No normalizeHeadProposalStatus helper
-   // is needed because the dropdown already uses the program's canonical statuses.
-   safeStorage.setItem(DATA_KEY,JSON.stringify(state));
-   if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
-
-   // If approved, add/sync the Wine Candidate to LCBO SUBMISSIONS LIST.
+   // If approved, add/sync the Wine Candidate to LCBO SUBMISSIONS LIST first.
    if(status==='Approved for LCBO Submission'){
      try{
        if(typeof ensureApprovedCandidateInLcboSubmissions==='function'){
          ensureApprovedCandidateInLcboSubmissions(x);
-         safeStorage.setItem(DATA_KEY,JSON.stringify(state));
-         if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
        }
      }catch(syncErr){
        console.error('LCBO submission sync warning:',syncErr);
      }
    }
+
+   // Head Office Comment must appear as Instructions in LCBO SUBMISSIONS LIST.
+   // Update the matching submission row whenever it already exists or was just created above.
+   try{
+     const tender=(state.tenders||[]).find(t=>t.id===x.opportunityId);
+     const workItem=tender?.workItems?.find(w=>w.sourceCandidateId===x.id);
+     if(workItem){
+       workItem.instructions=comment;
+       workItem.headOfficeComment=comment;
+       workItem.updatedAt=stamp;
+     }
+   }catch(instructionErr){
+     console.error('LCBO submission instruction sync warning:',instructionErr);
+   }
+
+   // Save Head Office Action and synchronized Instructions together.
+   safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+   if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
 
    if(typeof renderHeadOfficeProposals==='function')renderHeadOfficeProposals();
    if(typeof renderItalySourcing==='function')renderItalySourcing();
@@ -7248,7 +7544,7 @@ const q=(document.getElementById('italyWinerySearch')?.value||'').toLowerCase();
 <td>${esc(x.phone||'—')}</td><td>${esc(x.fax||'—')}</td><td>${esc(x.email||'—')}</td><td>${esc(x.paymentTerms||'—')}</td><td>${esc(x.ontario||'—')}</td><td>${esc(x.exportsOtherProvinces||'—')}</td>
 <td>${esc(x.producerSize||'—')}</td><td style="max-width:260px;white-space:normal">${esc(x.classifiedAs||'—')}</td>
 <td><button class="secondary small" onclick="openItalyWineryForm('${x.id}')">Edit</button> <button class="danger small" onclick="deleteItalySource('win','${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="16">No supplier information added yet.</td></tr>';
-const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document.getElementById('supplierWineCandidatesSearch')?.value||'').trim().toLowerCase();cr.innerHTML=can.filter(x=>!cq||JSON.stringify(x).toLowerCase().includes(cq)).map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—',workStatus=candidateLcboSubmissionWorkStatus(x);return `<tr><td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(status)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td><span class="badge ${workStatus==='Registered in LCBO NISS'?'work-status-green':workStatus==='—'?'':'work-status-yellow'}">${esc(workStatus)}</span></td><td><button class="small" onclick="openItalyCandidateForm('${x.id}')">Edit</button> <button type="button" class="secondary small" onclick="archiveCountryCandidate('${x.id}')">Move to Archived Wine Candidates</button> <button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="9">No wine candidates match the search.</td></tr>';}
+const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document.getElementById('supplierWineCandidatesSearch')?.value||'').trim().toLowerCase();cr.innerHTML=can.filter(x=>!cq||JSON.stringify(x).toLowerCase().includes(cq)).map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=status==='Additional Information Required'?(x.additionalInformationRequested||x.headOfficeActions?.at(-1)?.comment||x.headOfficeComment||'—'):(x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—'),displayStatus=status==='Additional Information Required'?'Additional Information Requested':status,workStatus=candidateLcboSubmissionWorkStatus(x);return `<tr><td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(displayStatus)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td><span class="badge ${workStatus==='Registered in LCBO NISS'?'work-status-green':workStatus==='—'?'':'work-status-yellow'}">${esc(workStatus)}</span></td><td><button class="small" onclick="openItalyCandidateForm('${x.id}')">Edit</button> <button type="button" class="secondary small" onclick="archiveCountryCandidate('${x.id}')">Move to Archived Wine Candidates</button> <button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="9">No wine candidates match the search.</td></tr>';}
 const br=document.getElementById('italyBonusRows');if(br)br.innerHTML=bon.map(x=>`<tr><td>${esc(x.date||'—')}</td><td>${esc(x.type)}</td><td>${esc(x.related||'—')}</td><td><b>${esc(x.currency)} ${num(x.amount).toFixed(2)}</b></td><td><span class="badge">${esc(x.status)}</span></td><td>${esc(x.notes||'—')}</td></tr>`).join('')||'<tr><td colspan="6">No bonus records yet.</td></tr>';const pk=document.getElementById('italyPerformanceKpis');if(pk){const paid=bon.filter(x=>x.status==='Paid').reduce((a,x)=>a+num(x.amount),0),pending=bon.filter(x=>x.status!=='Paid').reduce((a,x)=>a+num(x.amount),0);pk.innerHTML=[['Candidates Proposed',can.length],['Approved',approved],['Winners',winners],['Win Rate',can.length?((winners/can.length)*100).toFixed(1)+'%':'0%'],['Bonus Records',bon.length],['Pending Bonus Value*',pending.toFixed(2)]].map(x=>`<div class="card"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('')}
 renderHeadOfficeProposals();populateItalySelects()};
 if(document.getElementById('headAddBonusBtn'))document.getElementById('headAddBonusBtn').onclick=()=>openHeadBonusForm();
@@ -7278,50 +7574,6 @@ document.addEventListener('DOMContentLoaded',renderHeadBonuses);
 document.addEventListener('DOMContentLoaded',renderItalySourcing);setTimeout(renderItalySourcing,0);
 })();
 </script>
-
-<script id="wgAdditionalInfoRequestedSafe">
-document.addEventListener('change', function(e) {
-  var el = e.target;
-  if (!el || el.tagName !== 'SELECT') return;
-
-  var selectedText = '';
-  try {
-    selectedText = el.options[el.selectedIndex] ? el.options[el.selectedIndex].text.trim() : '';
-  } catch (_) {}
-
-  if (selectedText !== 'Additional Information Requested') return;
-  if (el.dataset.aiRequestOk === '1') {
-    delete el.dataset.aiRequestOk;
-    return;
-  }
-
-  var previous = el.dataset.previousValue || '';
-  var info = window.prompt('Additional Information Requested\n\nEnter the information that is being requested:');
-
-  if (!info || !info.trim()) {
-    if (previous) el.value = previous;
-    return;
-  }
-
-  el.dataset.additionalInformationRequested = info.trim();
-  el.dataset.aiRequestOk = '1';
-
-  // Trigger existing save logic only after information was entered.
-  el.dispatchEvent(new Event('change', { bubbles: true }));
-}, true);
-
-document.addEventListener('focusin', function(e) {
-  var el = e.target;
-  if (!el || el.tagName !== 'SELECT') return;
-  try {
-    var hasTarget = Array.from(el.options || []).some(function(o) {
-      return (o.text || '').trim() === 'Additional Information Requested';
-    });
-    if (hasTarget) el.dataset.previousValue = el.value;
-  } catch (_) {}
-});
-</script>
-
 </body></html>
 
 <script>document.addEventListener('DOMContentLoaded',()=>{if(typeof renderOfficeInventory==='function')renderOfficeInventory();});</script>
