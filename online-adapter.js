@@ -2,6 +2,7 @@
   const cfg=window.ZIMPORT_ONLINE_CONFIG||{};
   const configured=()=>/^https:\/\/.+\.supabase\.co$/i.test(cfg.supabaseUrl||'')&&!String(cfg.supabaseAnonKey||'').includes('PASTE_');
   let client=null,user=null,profile=null,syncTimer=null,syncing=false,dirty=false,realtimeTimer=null;
+  let loginInFlight=null,realtimeChannel=null,loadedUserId=null;
   let latestState=null,latestSettings=null,baseline=new Map();
   const $=id=>document.getElementById(id);
   const collectionMap={agencies:'agencies',suppliers:'suppliers',items:'items',tenders:'tenders',purchaseOrders:'purchase_orders',shipments:'shipments'};
@@ -70,10 +71,46 @@
     await loadTable('worker_submissions');
     const [a,w,ar,inv,rec,set]=await Promise.all([loadTable('submitted_items'),loadTable('winners'),loadTable('archived_tenders'),loadTable('supplier_invoices'),loadTable('recycle_bin'),loadTable('settings')]);out.records=[...a,...w,...ar];out.recycleBin=rec;out.financialInvoices=inv.filter(x=>x.invoice_group==='financialInvoices');out.supplierPaymentInvoices=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices');out.supplierPaymentInvoices2=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices2');out.otherInvoices=inv.filter(x=>x.invoice_group==='otherInvoices');const s=set.find(x=>x.id==='main')||{};out.recycleRetentionDays=s.recycleRetentionDays||90;if(Array.isArray(s.countrySourcingCountries))out.countrySourcingCountries=s.countrySourcingCountries;if(Array.isArray(s.countryPortfolioSuppliers))out.countryPortfolioSuppliers=s.countryPortfolioSuppliers;window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:out,settings:s.settings||{}}}));status('Cloud connected','connected');}catch(e){console.error(e);status('Load error: '+(e.message||''),'error');}}
   function scheduleRealtimeReload(){if(syncing||dirty)return;clearTimeout(realtimeTimer);realtimeTimer=setTimeout(loadState,700);}
-  function subscribeRealtime(){const ch=client.channel('zimport-shared-changes');allTables.forEach(t=>ch.on('postgres_changes',{event:'*',schema:'public',table:t,filter:`organization_id=eq.${cfg.organizationId}`},payload=>{if(payload.new?.updated_by===user?.id||payload.old?.updated_by===user?.id)return;scheduleRealtimeReload();}));ch.subscribe();}
+  function subscribeRealtime(){
+    if(realtimeChannel){try{client.removeChannel(realtimeChannel);}catch(e){console.warn('Could not remove old realtime channel:',e);}}
+    const ch=client.channel('zimport-shared-changes');
+    allTables.forEach(t=>ch.on('postgres_changes',{event:'*',schema:'public',table:t,filter:`organization_id=eq.${cfg.organizationId}`},payload=>{if(payload.new?.updated_by===user?.id||payload.old?.updated_by===user?.id)return;scheduleRealtimeReload();}));
+    realtimeChannel=ch;ch.subscribe();
+  }
   async function getProfile(){const r=await client.from('profiles').select('*').eq('id',user.id).maybeSingle();if(r.error)throw r.error;profile=r.data||{role:'readonly',full_name:user.email};window.ZIMPORT_CURRENT_ROLE=profile.role||'readonly';window.dispatchEvent(new CustomEvent('zimport-online-role',{detail:{role:window.ZIMPORT_CURRENT_ROLE}}));if($('onlineUserLabel'))$('onlineUserLabel').textContent=`${profile.full_name||user.email} · ${window.ZIMPORT_CURRENT_ROLE}`;}
-  async function afterLogin(session){user=session?.user||null;if(!user)return showLogin();await getProfile();$('onlineLoginGate')?.classList.add('hidden');if($('onlineSignOut'))$('onlineSignOut').style.display='';await loadState();subscribeRealtime();}
-  function showLogin(){user=null;profile=null;$('onlineLoginGate')?.classList.remove('hidden');if($('onlineSignOut'))$('onlineSignOut').style.display='none';if($('onlineUserLabel'))$('onlineUserLabel').textContent='';status(configured()?'Sign in required':'Supabase not configured');}
+  async function afterLogin(session){
+    const nextUser=session?.user||null;
+    if(!nextUser)return showLogin();
+    // Supabase can emit several auth events for the same valid session
+    // (INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED). Do not reload the
+    // entire application for each event; one full load per signed-in user
+    // is enough. Realtime keeps later data changes synchronized.
+    if(loadedUserId===nextUser.id){user=nextUser;return;}
+    if(loginInFlight)return loginInFlight;
+    loginInFlight=(async()=>{
+      user=nextUser;
+      await getProfile();
+      $('onlineLoginGate')?.classList.add('hidden');
+      if($('onlineSignOut'))$('onlineSignOut').style.display='';
+      await loadState();
+      loadedUserId=nextUser.id;
+      subscribeRealtime();
+    })();
+    try{return await loginInFlight;}finally{loginInFlight=null;}
+  }
+  function showLogin(){user=null;profile=null;loadedUserId=null;$('onlineLoginGate')?.classList.remove('hidden');if($('onlineSignOut'))$('onlineSignOut').style.display='none';if($('onlineUserLabel'))$('onlineUserLabel').textContent='';status(configured()?'Sign in required':'Supabase not configured');}
+  function clearStaleLocalAuthSession(){
+    try{
+      const host=new URL(cfg.supabaseUrl).hostname;
+      const ref=host.split('.')[0];
+      if(ref)localStorage.removeItem(`sb-${ref}-auth-token`);
+    }catch(e){console.warn('Could not clear stale local auth session:',e);}
+  }
+  function isInvalidRefreshTokenError(e){
+    const m=String(e?.message||e||'').toLowerCase();
+    const c=String(e?.code||'').toLowerCase();
+    return c==='refresh_token_not_found'||m.includes('invalid refresh token')||m.includes('refresh token not found');
+  }
   function addRetryButton(){
     if($('onlineRetryConnection'))return;
     const anchor=$('onlineSetupMessage');if(!anchor)return;
@@ -143,12 +180,26 @@
       const {data,error}=await client.auth.getSession();
       if(error)throw error;
       if(data.session)await afterLogin(data.session);else showLogin();
-      client.auth.onAuthStateChange((_e,s)=>{if(s&&!user)afterLogin(s);if(!s)showLogin();});
+      client.auth.onAuthStateChange((event,s)=>{
+        if(event==='SIGNED_OUT'||!s){showLogin();return;}
+        // A token refresh is normal and must not trigger a full database reload.
+        if(event==='TOKEN_REFRESHED'){user=s.user||user;return;}
+        // Run outside the auth callback so auth-state notifications cannot
+        // block other Supabase work, and afterLogin de-duplicates same-user events.
+        setTimeout(()=>afterLogin(s).catch(err=>{console.error(err);showLogin();}),0);
+      });
     }catch(e){
       console.error(e);
-      showLogin();status('Cloud connection error','error');
-      if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Could not reach the cloud service: '+(e.message||e)+'. Check your internet connection and click Retry connection.';
-      addRetryButton();
+      if(isInvalidRefreshTokenError(e)){
+        clearStaleLocalAuthSession();
+        showLogin();
+        status('Session expired — please sign in again','error');
+        if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Your saved login session expired. It was cleared safely. Please sign in again.';
+      }else{
+        showLogin();status('Cloud connection error','error');
+        if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Could not reach the cloud service: '+(e.message||e)+'. Check your internet connection and click Retry connection.';
+        addRetryButton();
+      }
     }
   }
   async function uploadFile(path,file){if(!client||!user)throw new Error('Not signed in');const clean=`${cfg.organizationId}/${path}`.replace(/[^a-zA-Z0-9._\/-]/g,'_');const r=await client.storage.from(cfg.storageBucket).upload(clean,file,{upsert:true});if(r.error)throw r.error;await log('UPLOAD_FILE','storage',clean,{name:file.name,size:file.size,type:file.type});return clean;}
