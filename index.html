@@ -689,7 +689,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <th>Phone</th><th>Fax</th><th>Email</th><th>Payment Terms</th><th>Ontario / LCBO Agent?</th><th>Exports Other Provinces?</th><th>Producer Size</th><th>Classified as</th><th>Action</th>
   </tr></thead><tbody id="italyWineryRows"></tbody></table></div>
 </div></section>
-<section id="country-candidates" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — Wine Candidates</h2><p class="note">Wine Candidate uses the same detailed product profile as Add Tender Item, with country-sourcing fields added for the representative.</p></div><button type="button" onclick="openItalyCandidateForm()">+ Propose Wine</button></div><div class="toolbar"><input id="supplierWineCandidatesSearch" type="search" placeholder="Search Wine Candidates" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Wine</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Head Office ACTION STATUS</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="italyCandidateRows"></tbody></table></div></div></section>
+<section id="country-candidates" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — Wine Candidates</h2><p class="note">Wine Candidate uses the same detailed product profile as Add Tender Item, with country-sourcing fields added for the representative.</p></div><button type="button" onclick="openItalyCandidateForm()">+ Propose Wine</button></div><div class="toolbar"><input id="supplierWineCandidatesSearch" type="search" placeholder="Search Wine Candidates" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Wine</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="italyCandidateRows"></tbody></table></div></div></section>
 <section id="country-archived-candidates" class="panel"><div class="box">
   <div class="section-head"><div><h2 id="archivedCountryCandidatesTitle">Italy — Archived Wine Candidates</h2><p class="note">Archived wine candidates for the selected country. Update information and propose again, or delete to the Portfolio Manager Recycling Bin.</p></div></div><div class="toolbar"><input id="supplierArchivedCandidatesSearch" type="search" placeholder="Search Archived Wine Candidates" oninput="renderArchivedCountryCandidates()"></div>
   <div class="table-wrap"><table>
@@ -738,7 +738,9 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
         <option value="In Progress">PROPOSED TO HEAD OFFICE</option>
         <option>Approved for LCBO Submission</option>
         <option value="Additional Information Required">Additional Information Requested</option>
-        <option>Declined</option>
+        <option value="Declined">DECLINED BY HEAD OFFICE</option>
+        <option value="Declined on Tenders First Stage">DECLINED ON TENDERS FIRST STAGE</option>
+        <option value="Declined on Tenders Final Decision">DECLINED ON TENDERS FINAL DECISION</option>
       </select>
     </div>
     <div class="table-wrap">
@@ -747,7 +749,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
           <th>Country</th><th>Wine Candidate</th><th>Tender</th><th>Product Needs</th><th>Supplier</th>
           <th>Score</th><th>Score Source</th><th>Supplier Quote</th><th class="profit-manual-col">Supplier Currency</th>
           <th>Agency to Register</th><th>Agency Margin</th><th>ERP CAD</th><th>Potential Winner Quantity</th>
-          <th>Offered to LCBO Case Price</th><th>Head Office Action ACTION STATUS</th><th>History</th>
+          <th>Offered to LCBO Case Price</th><th>Submission Status</th><th>History</th>
         </tr></thead>
         <tbody id="headProposalRows"></tbody>
       </table>
@@ -5952,7 +5954,7 @@ function deleteHeadBonus(id){
 }
 window.openHeadBonusForm=openHeadBonusForm;
 window.deleteHeadBonus=deleteHeadBonus;
-const HEAD_PROPOSAL_STATUSES=['Action Required','In Progress','Approved for LCBO Submission','Additional Information Required','Declined'];
+const HEAD_PROPOSAL_STATUSES=['Action Required','In Progress','Approved for LCBO Submission','Additional Information Required','Declined','Declined on Tenders First Stage','Declined on Tenders Final Decision'];
 function normalizeHeadProposalStatus(v){
  const s=String(v||'').trim();
  if(!s||s==='Proposed to Head Office'||s==='More Information Required')return 'Action Required';
@@ -6970,7 +6972,7 @@ function renderHeadOfficeProposals(){
     <td><input class="head-financial-input" type="number" step="1" min="0" value="${esc(x.headPotentialWinnerQuantity??'')}" placeholder="Qty" onchange="saveHeadProposalFinancial('${x.id}','headPotentialWinnerQuantity',this.value)"></td>
     <td><input class="head-financial-input" type="number" step="0.01" min="0" value="${esc(x.headOfferedLcboCasePrice??'')}" placeholder="Case Price" onchange="saveHeadProposalFinancial('${x.id}','headOfferedLcboCasePrice',this.value)"></td>
     <td><div class="head-proposal-action" data-head-proposal-id="${esc(x.id)}">
-      <select class="head-action-status"><option value="">Select ACTION STATUS</option>${HEAD_PROPOSAL_STATUSES.filter(s=>s!=='Action Required').map(s=>`<option value="${esc(s)}" ${status===s?'selected':''}>${esc(s==='In Progress'?'PROPOSED TO HEAD OFFICE':s)}</option>`).join('')}</select>
+      <select class="head-action-status">${HEAD_PROPOSAL_STATUSES.filter(s=>s!=='Action Required').map(s=>`<option value="${esc(s)}" ${status===s?'selected':''}>${esc(s==='In Progress'?'PROPOSED TO HEAD OFFICE':s==='Declined'?'DECLINED BY HEAD OFFICE':s==='Declined on Tenders First Stage'?'DECLINED ON TENDERS FIRST STAGE':s==='Declined on Tenders Final Decision'?'DECLINED ON TENDERS FINAL DECISION':s)}</option>`).join('')}</select>
       <textarea class="head-action-comment" placeholder="Head Office comment for this action"></textarea>
       <button type="button" class="head-action-update-btn" onclick="updateHeadProposalAction(this,'${x.id}')">Update Head Office Action</button>
       <small class="head-action-result" aria-live="polite"></small>
@@ -6980,7 +6982,7 @@ function renderHeadOfficeProposals(){
  }).join('')||'<tr><td colspan="16">No wine proposals match the selected filters.</td></tr>';
  const k=document.getElementById('headProposalKpis');if(k){
    const count=s=>all.filter(x=>normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status)===s).length;
-   k.innerHTML=[['Action Required',count('Action Required')],['PROPOSED TO HEAD OFFICE',count('In Progress')],['Approved',count('Approved for LCBO Submission')],['Additional Info',count('Additional Information Required')],['Declined',count('Declined')]].map(([a,b])=>`<div class="card"><span>${a}</span><strong>${b}</strong></div>`).join('');
+   k.innerHTML=[['Action Required',count('Action Required')],['PROPOSED TO HEAD OFFICE',count('In Progress')],['Approved',count('Approved for LCBO Submission')],['Additional Info',count('Additional Information Required')],['DECLINED BY HEAD OFFICE',count('Declined')],['DECLINED ON TENDERS FIRST STAGE',count('Declined on Tenders First Stage')],['DECLINED ON TENDERS FINAL DECISION',count('Declined on Tenders Final Decision')]].map(([a,b])=>`<div class="card"><span>${a}</span><strong>${b}</strong></div>`).join('');
  }
 }
 window.renderHeadOfficeProposals=renderHeadOfficeProposals;
@@ -7200,7 +7202,7 @@ window.updateHeadProposalAction=function(button,id){
  const status=String(box.querySelector('.head-action-status')?.value||'').trim();
  const comment=String(box.querySelector('.head-action-comment')?.value||'').trim();
 
- const allowed=['In Progress','Approved for LCBO Submission','Additional Information Required','Declined'];
+ const allowed=['In Progress','Approved for LCBO Submission','Additional Information Required','Declined','Declined on Tenders First Stage','Declined on Tenders Final Decision'];
  if(!allowed.includes(status)){
    alert('Select a Head Office Action.');
    box.querySelector('.head-action-status')?.focus();
@@ -7549,7 +7551,7 @@ const q=(document.getElementById('italyWinerySearch')?.value||'').toLowerCase();
 <td>${esc(x.phone||'—')}</td><td>${esc(x.fax||'—')}</td><td>${esc(x.email||'—')}</td><td>${esc(x.paymentTerms||'—')}</td><td>${esc(x.ontario||'—')}</td><td>${esc(x.exportsOtherProvinces||'—')}</td>
 <td>${esc(x.producerSize||'—')}</td><td style="max-width:260px;white-space:normal">${esc(x.classifiedAs||'—')}</td>
 <td><button class="secondary small" onclick="openItalyWineryForm('${x.id}')">Edit</button> <button class="danger small" onclick="deleteItalySource('win','${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="16">No supplier information added yet.</td></tr>';
-const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document.getElementById('supplierWineCandidatesSearch')?.value||'').trim().toLowerCase();cr.innerHTML=can.filter(x=>!cq||JSON.stringify(x).toLowerCase().includes(cq)).map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=status==='Additional Information Required'?(x.additionalInformationRequested||x.headOfficeActions?.at(-1)?.comment||x.headOfficeComment||'—'):(x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—'),displayStatus=status==='In Progress'?'PROPOSED TO HEAD OFFICE':(status==='Additional Information Required'?'Additional Information Requested':status),workStatus=candidateLcboSubmissionWorkStatus(x);return `<tr><td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(displayStatus)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td><span class="badge ${workStatus==='Registered in LCBO NISS'?'work-status-green':workStatus==='—'?'':'work-status-yellow'}">${esc(workStatus)}</span></td><td><button class="small" onclick="openItalyCandidateForm('${x.id}')">Edit</button> <button type="button" class="secondary small" onclick="archiveCountryCandidate('${x.id}')">Move to Archived Wine Candidates</button> <button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="9">No wine candidates match the search.</td></tr>';}
+const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document.getElementById('supplierWineCandidatesSearch')?.value||'').trim().toLowerCase();cr.innerHTML=can.filter(x=>!cq||JSON.stringify(x).toLowerCase().includes(cq)).map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=status==='Additional Information Required'?(x.additionalInformationRequested||x.headOfficeActions?.at(-1)?.comment||x.headOfficeComment||'—'):(x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—'),displayStatus=status==='In Progress'?'PROPOSED TO HEAD OFFICE':status==='Additional Information Required'?'Additional Information Requested':status==='Declined'?'DECLINED BY HEAD OFFICE':status==='Declined on Tenders First Stage'?'DECLINED ON TENDERS FIRST STAGE':status==='Declined on Tenders Final Decision'?'DECLINED ON TENDERS FINAL DECISION':status,workStatus=candidateLcboSubmissionWorkStatus(x);return `<tr><td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(displayStatus)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td><button class="small" onclick="openItalyCandidateForm('${x.id}')">Edit</button> <button type="button" class="secondary small" onclick="archiveCountryCandidate('${x.id}')">Move to Archived Wine Candidates</button> <button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="8">No wine candidates match the search.</td></tr>';}
 const br=document.getElementById('italyBonusRows');if(br)br.innerHTML=bon.map(x=>`<tr><td>${esc(x.date||'—')}</td><td>${esc(x.type)}</td><td>${esc(x.related||'—')}</td><td><b>${esc(x.currency)} ${num(x.amount).toFixed(2)}</b></td><td><span class="badge">${esc(x.status)}</span></td><td>${esc(x.notes||'—')}</td></tr>`).join('')||'<tr><td colspan="6">No bonus records yet.</td></tr>';const pk=document.getElementById('italyPerformanceKpis');if(pk){const paid=bon.filter(x=>x.status==='Paid').reduce((a,x)=>a+num(x.amount),0),pending=bon.filter(x=>x.status!=='Paid').reduce((a,x)=>a+num(x.amount),0);pk.innerHTML=[['Candidates Proposed',can.length],['Approved',approved],['Winners',winners],['Win Rate',can.length?((winners/can.length)*100).toFixed(1)+'%':'0%'],['Bonus Records',bon.length],['Pending Bonus Value*',pending.toFixed(2)]].map(x=>`<div class="card"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('')}
 renderHeadOfficeProposals();populateItalySelects()};
 if(document.getElementById('headAddBonusBtn'))document.getElementById('headAddBonusBtn').onclick=()=>openHeadBonusForm();
