@@ -691,7 +691,7 @@ select.global-status-control{
   white-space:nowrap;
 }
 .global-status-success{background:#d9f2df !important;color:#166534 !important;border-color:#7fc48d !important}
-.global-status-warning{background:#fff3cd !important;color:#7a5a00 !important;border-color:#e5c968 !important}
+.global-status-warning{background:#fff9dc !important;color:#665a22 !important;border-color:#eadf9a !important}
 .global-status-danger{background:#fde2e2 !important;color:#991b1b !important;border-color:#e7a3a3 !important}
 .global-status-info{background:#e3f0ff !important;color:#145ca8 !important;border-color:#9fc4ea !important}
 .global-status-neutral{background:#eef2f6 !important;color:#475569 !important;border-color:#cbd5e1 !important}
@@ -700,14 +700,14 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 /* === EXACT GLOBAL WORKFLOW STATUS COLORS === */
 /* These classes intentionally override the general status palette. */
 .global-status-not-contacted{
-  background:#ffe600 !important;
-  color:#3f3600 !important;
-  border-color:#d9bd00 !important;
+  background:#fff6bf !important;
+  color:#66591f !important;
+  border-color:#e5d77f !important;
 }
 .global-status-scheduled-confirmed{
-  background:#e3f0ff !important;
-  color:#145ca8 !important;
-  border-color:#9fc4ea !important;
+  background:#fff9dc !important;
+  color:#665a22 !important;
+  border-color:#eadf9a !important;
 }
 .global-status-on-the-way{
   background:#cfe4ff !important;
@@ -734,6 +734,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   color:#166534 !important;
   border-color:#7fc48d !important;
 }
+
 </style>
 
 </head>
@@ -10057,6 +10058,13 @@ setTimeout(applyGlobalStatusStandard,0);
 
 
 /* === SHIPMENT STATUS COLORS EVERYWHERE === */
+function isShipmentStatusPlaceholder(value){
+ return String(value??'').trim().toUpperCase()==='SHIPMENT STATUS';
+}
+function applyShipmentStatusPlaceholderTone(el){
+ el.classList.remove('global-shipment-status-light-yellow');
+}
+
 function isKnownShipmentStatusValue(value){
  const s=String(value??'').trim().toUpperCase();
  return [
@@ -10080,17 +10088,27 @@ function applyShipmentStatusColorEverywhere(){
  // even when the select ID/class/header does not contain the word "status".
  document.querySelectorAll('select').forEach(select=>{
    const current=select.value||select.options?.[select.selectedIndex]?.textContent||'';
-   if(!isKnownShipmentStatusValue(current))return;
+   const selectedText=select.options?.[select.selectedIndex]?.textContent||'';
+   if(!isKnownShipmentStatusValue(current)&&!isShipmentStatusPlaceholder(current)&&!isShipmentStatusPlaceholder(selectedText))return;
 
    select.classList.add('global-status-control');
-   applyGlobalStatusTone(select,current);
+   if(isShipmentStatusPlaceholder(current)||isShipmentStatusPlaceholder(selectedText))applyShipmentStatusPlaceholderTone(select);
+   else{
+     select.classList.remove('global-shipment-status-light-yellow');
+     applyGlobalStatusTone(select,current);
+   }
 
    if(select.dataset.shipmentColorBound!=='1'){
      select.dataset.shipmentColorBound='1';
      select.addEventListener('change',()=>{
        const value=select.value||select.options?.[select.selectedIndex]?.textContent||'';
-       if(isKnownShipmentStatusValue(value)){
+       const selectedText=select.options?.[select.selectedIndex]?.textContent||'';
+       if(isShipmentStatusPlaceholder(value)||isShipmentStatusPlaceholder(selectedText)){
          select.classList.add('global-status-control');
+         applyShipmentStatusPlaceholderTone(select);
+       }else if(isKnownShipmentStatusValue(value)){
+         select.classList.add('global-status-control');
+         select.classList.remove('global-shipment-status-light-yellow');
          applyGlobalStatusTone(select,value);
        }
      });
@@ -10124,6 +10142,16 @@ function applyShipmentStatusColorEverywhere(){
    el.textContent=globalStatusDisplayText(raw);
    el.classList.add('global-status-badge');
    applyGlobalStatusTone(el,raw);
+ });
+
+ // 4) The literal Shipment Status label/placeholder is light yellow everywhere.
+ document.querySelectorAll('td,span,div,strong,b,label').forEach(el=>{
+   if(el.matches('label')&&el.querySelector('select,input,textarea'))return;
+   if(el.children.length)return;
+   const raw=String(el.textContent||'').replace(/\s+/g,' ').trim();
+   if(!isShipmentStatusPlaceholder(raw))return;
+   el.classList.add('global-status-badge');
+   applyShipmentStatusPlaceholderTone(el);
  });
 }
 window.applyShipmentStatusColorEverywhere=applyShipmentStatusColorEverywhere;
