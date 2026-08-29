@@ -1864,7 +1864,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 <div class="modal-actions"><button id="deletePoBtn" type="button" class="danger">Delete PO</button><span></span><button id="cancelPoBtn" type="button" class="secondary">Cancel</button><button id="savePoBtn" type="button">Save PO</button></div></div></div></div>
 <div id="itemSelectModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2>Select Item from Tender Item Database</h2><p>Search by item description, LCBO item number, supplier, producer, vintage, or product type.</p></div><button id="closeItemSelect" class="icon">×</button></div><div class="toolbar"><input id="itemSelectSearch" placeholder="Search item description, LCBO item number, supplier or producer"><select id="itemSelectType"><option value="">All product types</option></select><button id="goToItems" type="button" class="secondary">+ Add New Item</button></div><div class="table-wrap"><table><thead><tr><th>Item Description</th><th>Brand</th><th>Vintage</th><th>Supplier</th><th>Producer</th><th>LCBO Item #</th><th>Product Type</th><th>Action</th></tr></thead><tbody id="itemSelectRows"></tbody></table></div><div class="modal-actions"><span></span><span></span><button id="cancelItemSelect" type="button" class="secondary">Cancel</button></div></div></div>
 <div id="itemModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="itemModalTitle">Add Tender Item</h2><p>Create the permanent LCBO product profile. Fields marked * are required for LCBO submissions.</p></div><button id="closeItemModal" class="icon">×</button></div><form id="itemForm"><input type="hidden" id="itemRecordId"><div id="itemFields" class="item-form"></div><div class="modal-actions"><button type="button" id="deleteItem" class="danger">Delete</button><span></span><button type="button" id="cancelItem" class="secondary">Cancel</button><button type="submit">Save Item</button></div></form></div></div>
-<div id="italyCandidateModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="italyCandidateModalTitle">Add Wine Candidate — Italy</h2><p>Product information follows Add Tender Item, with dedicated Country Representative Sourcing Information and item photos.</p></div><button type="button" class="icon" onclick="closeItalyCandidateForm()">×</button></div><form id="italyCandidateDetailedForm"><input type="hidden" id="itCanRecordId"><div id="candidateApprovedLockNote" class="candidate-approved-lock-note">Approved for LCBO Submission — protected submission information is locked and cannot be edited.</div><div id="italyCandidateFields" class="item-form"></div><div class="modal-actions"><button type="button" id="deleteItalyCandidateBtn" class="danger" onclick="deleteItalyCandidateFromModal()">Delete</button><span></span><button type="button" class="secondary" onclick="closeItalyCandidateForm()">Cancel</button><button type="button" id="proposeItalyCandidateBtn" onclick="proposeItalyCandidateToHeadOffice(this)">Propose to Head Office</button></div></form></div></div>
+<div id="italyCandidateModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="italyCandidateModalTitle">Add Propose Item — Italy</h2><p>Product information follows Add Tender Item, with dedicated Country Representative Sourcing Information and item photos.</p></div><button type="button" class="icon" onclick="closeItalyCandidateForm()">×</button></div><form id="italyCandidateDetailedForm"><input type="hidden" id="itCanRecordId"><div id="candidateApprovedLockNote" class="candidate-approved-lock-note">Approved for LCBO Submission — protected submission information is locked and cannot be edited.</div><div id="italyCandidateFields" class="item-form"></div><div class="modal-actions"><button type="button" id="deleteItalyCandidateBtn" class="danger" onclick="deleteItalyCandidateFromModal()">Delete</button><span></span><button type="button" class="secondary" onclick="closeItalyCandidateForm()">Cancel</button><button type="button" id="proposeItalyCandidateBtn" onclick="proposeItalyCandidateToHeadOffice(this)">Propose to Head Office</button></div></form></div></div>
 <div id="itemInfoModal" class="modal hidden"><div class="modal-card item-info-page"><div class="modal-head"><div><h2 id="itemInfoTitle">Item Information</h2><p>Database information prepared for easy copying into the registration system.</p></div><button id="closeItemInfo" class="icon">×</button></div><div class="info-toolbar"><button type="button" id="copyAllItemInfo" class="secondary">Copy All Information</button><button type="button" id="editItemFromInfo">EDIT ITEM</button></div><div id="itemInfoContent"></div><div class="modal-actions"><span></span><button type="button" id="closeItemInfoBottom" class="secondary">Close</button></div></div></div>
 
 <div id="workerItemModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="workerItemModalTitle">ADD ITEM INTO LCBO SUBMISSIONS LIST</h2><p>Select an item from the Tender Item Database and assign registration details.</p></div><button id="closeWorkerItemModal" class="icon">×</button></div><input type="hidden" id="workerEditTenderId"><input type="hidden" id="workerEditWorkId"><div class="form-grid"><label>Tender *<select id="workerItemTender"></select></label><label class="full">Select item from Tender Item Database *<select id="workerDatabaseItem"></select></label><label>Offered Price<input id="workerOfferedPrice" type="number" step="0.01"></label><label>Currency<select id="workerCurrency"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></label><label>Agency / Where to Register<select id="workerAgency"></select></label><label>Work Status<select id="workerStatus"><option>To Register</option><option>Submitted</option><option>Registered in LCBO NISS</option><option>On Hold</option></select></label><label class="full">Instructions<textarea id="workerInstructions"></textarea></label></div><div class="modal-actions"><button type="button" id="removeWorkerItem" class="danger">Remove Item</button><span></span><button type="button" id="cancelWorkerItem" class="secondary">Cancel</button><button type="button" id="saveWorkerItem">Add Item</button></div></div></div>
@@ -5922,6 +5922,20 @@ function italyCandidateGroupsHtml(){
  }).join('');
  const sourcing=`<fieldset class="item-group"><legend>Country Representative Sourcing Information</legend><div class="form-grid three">
   <label>Tender Name<select id="itCanOpp"></select></label>
+  <div id="approvedMyItemRetrieveSection" class="full" style="border:1px solid var(--line);border-radius:10px;padding:12px">
+    <div style="font-weight:700;margin-bottom:8px">Retrieve Item Details from My Item</div>
+    <div class="form-grid three">
+      <label class="full">Approved My Item
+        <select id="approvedMyItemRetrieveSelect">
+          <option value="">Select Approved Item</option>
+        </select>
+      </label>
+      <div class="full">
+        <button type="button" id="retrieveApprovedMyItemBtn" class="secondary">Retrieve Item Details</button>
+        <small id="approvedMyItemRetrieveNote" class="note" style="margin-left:8px">Only items with status Approved Item are listed.</small>
+      </div>
+    </div>
+  </div>
   <div class="italy-product-photo-wrap">
     <label>Product Description<input id="c_productDescription" type="text"></label>
     <div><label>Item Photos — 3 Images</label><div id="italyCandidatePhotoSlots" class="italy-photo-slots"></div></div>
@@ -6254,6 +6268,127 @@ window.openCreateMyItemForm=async()=>{
  return true;
 };
 
+
+function approvedMyItemsForProposal(){
+ return (state.archivedCountryCandidates||[])
+  .filter(x=>String(x?.itemApprovalStatus||'').trim()==='Approved Item')
+  .filter(x=>!x.country||String(x.country)===String(currentSourcingCountry))
+  .filter(x=>typeof recordMatchesCurrentSupplier!=='function'||recordMatchesCurrentSupplier(x))
+  .sort((a,b)=>String(a.productDescription||a.name||'').localeCompare(String(b.productDescription||b.name||'')));
+}
+function populateApprovedMyItemRetrieveList(showSection=true){
+ const section=document.getElementById('approvedMyItemRetrieveSection');
+ const select=document.getElementById('approvedMyItemRetrieveSelect');
+ const btn=document.getElementById('retrieveApprovedMyItemBtn');
+ const note=document.getElementById('approvedMyItemRetrieveNote');
+ if(section)section.style.display=showSection?'':'none';
+ if(!showSection||!select)return;
+
+ const items=approvedMyItemsForProposal();
+ select.innerHTML='<option value="">Select Approved Item</option>'+items.map(x=>{
+   const name=x.productDescription||x.name||'Untitled Item';
+   const supplier=x.supplierName||x.producerName||'';
+   const extra=supplier?' — '+supplier:'';
+   return `<option value="${esc(x.id)}">${esc(name+extra)}</option>`;
+ }).join('');
+
+ if(btn)btn.disabled=!items.length;
+ if(note)note.textContent=items.length
+   ?`Only Approved Item records from My Items are listed. ${items.length} item${items.length===1?'':'s'} available.`
+   :'No Approved Item records are available in My Items for this supplier.';
+}
+async function retrieveApprovedMyItemDetails(){
+ const select=document.getElementById('approvedMyItemRetrieveSelect');
+ const id=select?.value||'';
+ if(!id){alert('Select an approved item from My Items first.');return false}
+ const x=(state.archivedCountryCandidates||[]).find(v=>String(v.id)===String(id)&&String(v.itemApprovalStatus||'').trim()==='Approved Item');
+ if(!x){alert('The selected Approved Item could not be found.');populateApprovedMyItemRetrieveList(true);return false}
+
+ const tenderValue=document.getElementById('itCanOpp')?.value||'';
+ const recordId=document.getElementById('itCanRecordId')?.value||'';
+
+ const defaults=itemDefaults();
+ const normalized={...defaults,...x,productDescription:x.productDescription||x.name||'',vintage:x.vintage||'',grapeVarietal1:x.grapeVarietal1||x.grape||'',score:x.score||'',supplierName:x.supplierName||'',producerName:x.producerName||''};
+
+ itemGroups.filter(g=>g.title!=='Pricing Information').forEach(g=>{
+   g.fields.filter(f=>f[0]!=='producerSameAsSupplier').forEach(([k,,t])=>{
+     if(['calculated','websites','attachments'].includes(t))return;
+     const el=document.getElementById('c_'+k);
+     if(el)el.value=k==='productCategory'?normalizeProductCategory(normalized[k]??'Wine'):(normalized[k]??'');
+   });
+ });
+
+ const set=(id,value)=>{const el=document.getElementById(id);if(el)el.value=value??''};
+ set('c_supplierRegion',x.supplierRegion||x.supplierRegionCountry||'');
+ set('c_supplierCountry',x.supplierCountry||'');
+ set('c_producerSize',x.producerSize||'');
+ set('itCanPrice',x.supplierPricePerCase??x.price??'');
+ set('itCanBottlesPerCase',x.bottlesPerCase??'');
+ set('itCanCurrency',x.supplierCurrency||'');
+ set('itCanQuoteType',x.supplierQuoteType==='FCA'?'CONSOLIDATION WAREHOUSE':(x.supplierQuoteType||''));
+ set('itCanPromotionalSupportPercent',x.promotionalSupportPercent??x.promotionalSupport??'');
+ set('itCanExCellarDelivery',x.exCellarDeliveryPerCase??'');
+ set('itCanRetail',x.localRetailPricePerBottle??x.localRetail??'');
+ set('itCanExclusive',['Yes','No'].includes(x.ontarioExclusivity)?x.ontarioExclusivity:'');
+ set('itCanOntarioExportDetails',x.ontarioExportDetails||'');
+ set('itCanGiftBox',x.giftBoxYesNo||'');
+ set('itCanGiftBoxDescription',x.giftBoxDescription||'');
+ set('itCanProtectedAppellation',x.protectedAppellation||'');
+ set('itCanAppellationName',x.appellationName||'');
+ set('itCanAppellationDescription',x.appellationDescription||'');
+ set('itCanUniqueOtherDescription',x.uniqueOtherDescription||'');
+ set('itCanOutstandingLocation',x.outstandingLocation||'');
+ if(document.getElementById('itCanWhy'))set('itCanWhy',x.why||'');
+ set('itCanIntel',x.intelligence||'');
+ set('c_sweetnessSugar',x.sweetnessSugar||'');
+ set('c_supplierOntarioAgent',x.supplierOntarioAgent||'');
+ set('c_supplierOntarioAgentDetails',x.supplierOntarioAgentDetails||'');
+ set('c_supplierOtherProvinceExporter',x.supplierOtherProvinceExporter||'');
+ set('c_supplierOtherProvinceExporterDetails',x.supplierOtherProvinceExporterDetails||'');
+
+ if(x.retrievedSupplierInfoId){
+   populateWineCandidateSupplierInfoSelect(x.retrievedSupplierInfoId);
+ }
+
+ currentItalyCandidatePhotos=[...(x.itemPhotos||[])].map(v=>v?JSON.parse(JSON.stringify(v)):null).slice(0,3);
+ while(currentItalyCandidatePhotos.length<3)currentItalyCandidatePhotos.push(null);
+ removedItalyCandidatePhotoPaths=[];
+ renderItalyCandidatePhotoSlots();
+
+ const webBox=document.getElementById('italyCandidateWebsiteRows');
+ if(webBox)webBox.innerHTML='';
+ (x.websites||[]).forEach(addItalyCandidateWebsiteRow);
+
+ try{
+   currentItalyCandidateAttachments=await loadItemAttachments(x.id);
+ }catch(e){
+   console.error('Approved My Item attachments could not be retrieved:',e);
+   currentItalyCandidateAttachments=[];
+ }
+ renderItalyCandidateAttachments();
+
+ calcItalyCandidateBottlePrice();
+ calcItalyCandidatePromotionalSupport();
+ syncItalyCandidateQuoteType();
+ syncItalyCandidateGiftBox();
+ syncItalyCandidateOntarioExport();
+ syncItalyCandidateProtectedAppellation();
+ syncItalyCandidateSupplierOntarioAgent();
+ syncItalyCandidateSupplierOtherProvince();
+ calcItalyCandidateCaseVolume();
+ syncItalyCandidateLcboItemVisibility();
+
+ if(document.getElementById('itCanOpp'))document.getElementById('itCanOpp').value=tenderValue;
+ if(document.getElementById('itCanRecordId'))document.getElementById('itCanRecordId').value=recordId;
+
+ const note=document.getElementById('approvedMyItemRetrieveNote');
+ if(note)note.textContent=`Retrieved: ${x.productDescription||x.name||'Approved Item'}`;
+ return true;
+}
+window.approvedMyItemsForProposal=approvedMyItemsForProposal;
+window.populateApprovedMyItemRetrieveList=populateApprovedMyItemRetrieveList;
+window.retrieveApprovedMyItemDetails=retrieveApprovedMyItemDetails;
+
 window.openItalyCandidateForm=async(id='')=>{
  const openingMyItem=italyCandidateSaveMode==='my-item';
  const editingMyItem=openingMyItem&&!!id;
@@ -6273,6 +6408,10 @@ window.openItalyCandidateForm=async(id='')=>{
   };
  document.getElementById('itCanRecordId').value=x.id||'';
  populateItalyCandidateOpportunitySelect(x.opportunityId||'');
+ const showApprovedMyItemRetrieve=!openingMyItem&&!x.id;
+ populateApprovedMyItemRetrieveList(showApprovedMyItemRetrieve);
+ const retrieveApprovedBtn=document.getElementById('retrieveApprovedMyItemBtn');
+ if(retrieveApprovedBtn)retrieveApprovedBtn.onclick=retrieveApprovedMyItemDetails;
  const defaults=itemDefaults();
  const normalized={...defaults,...x,productDescription:x.productDescription||x.name||'',vintage:x.vintage||'',grapeVarietal1:x.grapeVarietal1||x.grape||'',score:x.score||'',supplierName:x.supplierName||'',producerName:x.producerName||''};
  itemGroups.filter(g=>g.title!=='Pricing Information').forEach(g=>g.fields.filter(f=>f[0]!=='producerSameAsSupplier').forEach(([k,,t])=>{if(['calculated','websites','attachments'].includes(t))return;const el=document.getElementById('c_'+k);if(el)el.value=k==='productCategory'?normalizeProductCategory(normalized[k]??'Wine'):(normalized[k]??'')}));
@@ -6291,7 +6430,7 @@ window.openItalyCandidateForm=async(id='')=>{
    proposeBtn.style.background='';
    proposeBtn.textContent=openingMyItem?(editingMyItem?'Save Item Information':'Submit Item Information'):(x.id?(approvedLocked?'Save Case and Pallet Information':'Update Proposal to Head Office'):'Propose to Head Office');
  }
- document.getElementById('italyCandidateModalTitle').textContent=openingMyItem?(editingMyItem?`Edit My Item — ${currentSourcingCountry}`:`Create My Item — ${currentSourcingCountry}`):(x.id?'Edit Wine Candidate — Italy':'Add Wine Candidate — Italy');
+ document.getElementById('italyCandidateModalTitle').textContent=openingMyItem?(editingMyItem?`Edit My Item — ${currentSourcingCountry}`:`Create My Item — ${currentSourcingCountry}`):(x.id?'Edit Proposal — Italy':'Add Propose Item — Italy');
  document.getElementById('deleteItalyCandidateBtn').style.visibility=openingMyItem?'hidden':(x.id?'visible':'hidden');
  show('italyCandidateModal');
 };
