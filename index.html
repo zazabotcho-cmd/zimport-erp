@@ -649,6 +649,53 @@ label[data-retrieved-locked="1"] textarea{
     color:#166534 !important;
     border-color:#7fc48d !important;
   }
+
+/* Global clickable supplier/item name visual language */
+.global-name-clickable{
+  background:none !important;
+  border:0 !important;
+  color:#145ca8 !important;
+  padding:0 !important;
+  margin:0 !important;
+  font:inherit !important;
+  font-weight:700 !important;
+  text-decoration:underline !important;
+  cursor:pointer !important;
+  text-align:left !important;
+}
+.global-name-clickable:hover{
+  color:#0b4f91 !important;
+  opacity:.9;
+}
+.global-value-copy{
+  flex:0 0 auto;
+  padding:4px 8px !important;
+  font-size:11px !important;
+}
+
+/* === GLOBAL STATUS DESIGN / COLOR STANDARD === */
+.global-status-control,
+select.global-status-control{
+  font-weight:700 !important;
+  border-width:1px !important;
+  border-radius:7px !important;
+  min-height:32px;
+}
+.global-status-badge{
+  display:inline-block;
+  padding:5px 9px;
+  border:1px solid #cbd5e1;
+  border-radius:999px;
+  font-weight:700;
+  line-height:1.15;
+  white-space:nowrap;
+}
+.global-status-success{background:#d9f2df !important;color:#166534 !important;border-color:#7fc48d !important}
+.global-status-warning{background:#fff3cd !important;color:#7a5a00 !important;border-color:#e5c968 !important}
+.global-status-danger{background:#fde2e2 !important;color:#991b1b !important;border-color:#e7a3a3 !important}
+.global-status-info{background:#e3f0ff !important;color:#145ca8 !important;border-color:#9fc4ea !important}
+.global-status-neutral{background:#eef2f6 !important;color:#475569 !important;border-color:#cbd5e1 !important}
+select.global-status-control option{font-weight:600;background:#fff;color:#1f2937}
 </style>
 
 </head>
@@ -5347,6 +5394,286 @@ function restoreArchivedInvoice(id){
   });
   setTimeout(()=>{renderArchivedShipments();renderManualArchivedPos();addArchiveActions()},0);
 })();
+
+
+/* === GLOBAL SUPPLIER / ITEM CLICKABLE NAME + VALUE-ONLY COPY === */
+let currentGlobalNameDetailEntries=[];
+
+function globalDetailHumanizeKey(key){
+ const special={
+   productDescription:'Product Description',
+   supplierLegalFullName:'Supplier Legal Full Name',
+   supplierName:'Supplier Name',
+   producerName:'Producer Name',
+   supplierPricePerCase:'Supplier Price Per Offered Case',
+   bottlesPerCase:'Bottles Per Case',
+   supplierCurrency:'Currency',
+   supplierQuoteType:'Quote Type',
+   sellingUnitSizeMl:'Selling Unit Size (ml.)',
+   previouslyPurchased:'Has the product ever been previously purchased by the LCBO?',
+   score:'Offered Vintage Score Only',
+   scoreSource:'Score Source — ★ indicates LCBO preferred source',
+   scoreSourceOther:'Other Score Source'
+ };
+ if(special[key])return special[key];
+ return String(key||'')
+   .replace(/([a-z0-9])([A-Z])/g,'$1 $2')
+   .replace(/[_-]+/g,' ')
+   .replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+function globalDetailDisplayValue(value){
+ if(value===null||value===undefined||value==='')return '';
+ if(Array.isArray(value)){
+   if(!value.length)return '';
+   return value.map(v=>typeof v==='object'?JSON.stringify(v,null,2):String(v)).join('\n');
+ }
+ if(typeof value==='object')return JSON.stringify(value,null,2);
+ return String(value);
+}
+
+function globalDetailEntries(record){
+ if(!record||typeof record!=='object')return [];
+ const hidden=new Set([
+   'headOfficeActions','attachments','itemPhotos','blob','data',
+   'myItem','tenderSupplierItemOnly'
+ ]);
+ const preferred=[
+   'productDescription','name','brandName','productCategory',
+   'supplierLegalFullName','supplierName','producerName',
+   'country','producingCountry','producingRegion','region',
+   'vintage','grapeVarietal1','grapeVarietal2','grapeVarietal3',
+   'supplierPricePerCase','bottlesPerCase','supplierCurrency',
+   'supplierBottlePrice','supplierQuoteType','localRetailPricePerBottle',
+   'sellingUnitSizeMl','unitsPerSellingPack','containerType',
+   'percentAlcohol','sweetnessSugar','score','scoreSource','scoreSourceOther',
+   'awards','pressCoverage','previouslyPurchased','lcboSupplierNumber',
+   'phone','phoneNumber','email','emailAddress','paymentTerms',
+   'address1','address2','city','postalCode',
+   'itemApprovalStatus','supplierApprovalStatus'
+ ];
+ const seen=new Set(), rows=[];
+ const add=key=>{
+   if(seen.has(key)||hidden.has(key)||!(key in record))return;
+   const value=globalDetailDisplayValue(record[key]);
+   seen.add(key);
+   if(value)rows.push([globalDetailHumanizeKey(key),value]);
+ };
+ preferred.forEach(add);
+ Object.keys(record).sort().forEach(add);
+ return rows;
+}
+
+async function globalCopyValue(value){
+ const text=String(value??'');
+ if(!text)return false;
+ try{
+   if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(text);
+   else{
+     const ta=document.createElement('textarea');
+     ta.value=text;
+     ta.style.position='fixed';
+     ta.style.opacity='0';
+     document.body.appendChild(ta);
+     ta.select();
+     document.execCommand('copy');
+     ta.remove();
+   }
+   const msg=document.getElementById('globalNameCopyMessage');
+   if(msg){
+     msg.textContent='Value copied';
+     setTimeout(()=>{if(msg.textContent==='Value copied')msg.textContent=''},1200);
+   }
+   return true;
+ }catch(err){
+   console.error('Copy failed',err);
+   alert('Could not copy this value.');
+   return false;
+ }
+}
+window.globalCopyValue=globalCopyValue;
+
+window.copyGlobalDetailValue=index=>{
+ const row=currentGlobalNameDetailEntries[Number(index)];
+ if(!row)return false;
+ // Important: copy ONLY the filled value, never the field/question label.
+ return globalCopyValue(row[1]);
+};
+
+window.copyAllGlobalDetailValues=()=>{
+ const values=currentGlobalNameDetailEntries
+   .map(row=>String(row[1]??'').trim())
+   .filter(Boolean)
+   .join('\n');
+ return globalCopyValue(values);
+};
+
+function openGlobalNameDetail(record,title,type){
+ if(!record)return false;
+ currentGlobalNameDetailEntries=globalDetailEntries(record);
+ const titleEl=document.getElementById('globalNameDetailTitle');
+ const sub=document.getElementById('globalNameDetailSubtitle');
+ const grid=document.getElementById('globalNameDetailGrid');
+ const msg=document.getElementById('globalNameCopyMessage');
+ if(titleEl)titleEl.textContent=title||'Information';
+ if(sub)sub.textContent=`${type||'Record'} information — Copy copies only the filled value, not the field name.`;
+ if(msg)msg.textContent='';
+ if(grid){
+   grid.innerHTML=currentGlobalNameDetailEntries.map(([label,value],i)=>`
+     <div class="head-detail-field ${String(value).length>100||String(value).includes('\n')?'full':''}">
+       <div class="head-detail-label">${esc(label)}</div>
+       <div class="head-detail-value">${esc(value)}</div>
+       <button type="button" class="secondary global-value-copy" onclick="copyGlobalDetailValue(${i})">Copy</button>
+     </div>
+   `).join('')||'<div class="note">No filled information is available.</div>';
+ }
+ show('globalNameDetailModal',true);
+ return true;
+}
+window.openGlobalNameDetail=openGlobalNameDetail;
+
+window.closeGlobalNameDetail=()=>{
+ currentGlobalNameDetailEntries=[];
+ show('globalNameDetailModal',false);
+};
+
+function normalizeGlobalNameText(text){
+ return String(text||'')
+   .replace(/\s+/g,' ')
+   .replace(/\s*[·•]\s*.*/,'')
+   .trim()
+   .toLowerCase();
+}
+
+function globalSupplierRecords(){
+ const out=[];
+ const add=list=>Array.isArray(list)&&list.forEach(x=>x&&typeof x==='object'&&out.push(x));
+ add(state.countryWineries);
+ add(state.archivedCountryCandidates);
+ add(state.countryCandidates);
+ add(state.suppliers);
+ return out;
+}
+
+function globalItemRecords(){
+ const out=[];
+ const add=list=>Array.isArray(list)&&list.forEach(x=>x&&typeof x==='object'&&out.push(x));
+ add(state.archivedCountryCandidates);
+ add(state.countryCandidates);
+ add(state.items);
+ add(state.submissions);
+ return out;
+}
+
+function findGlobalSupplierByName(name){
+ const n=normalizeGlobalNameText(name);
+ if(!n)return null;
+ return globalSupplierRecords().find(x=>{
+   const candidates=[
+     x.supplierLegalFullName,x.supplierName,x.producerName,x.wineryName,
+     x.name
+   ].map(normalizeGlobalNameText).filter(Boolean);
+   return candidates.includes(n);
+ })||null;
+}
+
+function findGlobalItemByName(name){
+ const n=normalizeGlobalNameText(name);
+ if(!n)return null;
+ return globalItemRecords().find(x=>{
+   const candidates=[
+     x.productDescription,x.productName,x.itemName,x.wineName,
+     x.brandName,x.name
+   ].map(normalizeGlobalNameText).filter(Boolean);
+   return candidates.includes(n);
+ })||null;
+}
+
+function isGlobalSupplierNameHeader(text){
+ const h=String(text||'').trim().toLowerCase().replace(/\s+/g,' ');
+ return [
+   'supplier','supplier / producer','supplier/producer','supplier name',
+   'supplier / producer name','producer','producer name','winery','winery name'
+ ].includes(h);
+}
+
+function isGlobalItemNameHeader(text){
+ const h=String(text||'').trim().toLowerCase().replace(/\s+/g,' ');
+ return [
+   'item','item name','wine','wine name','wine candidate',
+   'product','product name','product description'
+ ].includes(h);
+}
+
+function makeGlobalNameButton(cell,type){
+ if(!cell||cell.dataset.globalNameProcessed==='1')return;
+ cell.dataset.globalNameProcessed='1';
+
+ // Keep existing intentional clickable controls exactly as they are.
+ if(cell.querySelector('button,a,input,select,textarea'))return;
+
+ const raw=String(cell.textContent||'').replace(/\s+/g,' ').trim();
+ if(!raw||raw==='—'||raw==='-')return;
+
+ const record=type==='supplier'?findGlobalSupplierByName(raw):findGlobalItemByName(raw);
+ if(!record)return;
+
+ cell.textContent='';
+ const btn=document.createElement('button');
+ btn.type='button';
+ btn.className='global-name-clickable';
+ btn.textContent=raw;
+ btn.title=`Open ${type} information`;
+ btn.addEventListener('click',ev=>{
+   ev.preventDefault();
+   ev.stopPropagation();
+   const current=type==='supplier'?findGlobalSupplierByName(raw):findGlobalItemByName(raw);
+   openGlobalNameDetail(current||record,raw,type==='supplier'?'Supplier':'Item');
+ });
+ cell.appendChild(btn);
+}
+
+function applyGlobalClickableNames(){
+ document.querySelectorAll('table').forEach(table=>{
+   const headers=[...table.querySelectorAll('thead th')];
+   if(!headers.length)return;
+   headers.forEach((th,index)=>{
+     const header=String(th.textContent||'').trim();
+     const type=isGlobalSupplierNameHeader(header)?'supplier':(isGlobalItemNameHeader(header)?'item':'');
+     if(!type)return;
+     table.querySelectorAll('tbody tr').forEach(tr=>{
+       const cell=tr.children[index];
+       if(cell)makeGlobalNameButton(cell,type);
+     });
+   });
+ });
+}
+window.applyGlobalClickableNames=applyGlobalClickableNames;
+
+// Run after normal view refreshes/renders.
+const _globalOriginalRefreshProgramViews=window.refreshProgramViews;
+if(typeof _globalOriginalRefreshProgramViews==='function'){
+ window.refreshProgramViews=function(){
+   const result=_globalOriginalRefreshProgramViews.apply(this,arguments);
+   setTimeout(applyGlobalClickableNames,0);
+   return result;
+ };
+}
+
+// Also catch tables rendered outside the main refresh function.
+let globalClickableMutationQueued=false;
+const globalClickableObserver=new MutationObserver(()=>{
+ if(globalClickableMutationQueued)return;
+ globalClickableMutationQueued=true;
+ setTimeout(()=>{
+   globalClickableMutationQueued=false;
+   applyGlobalClickableNames();
+ },0);
+});
+if(document.body)globalClickableObserver.observe(document.body,{childList:true,subtree:true});
+setTimeout(applyGlobalClickableNames,0);
+/* === END GLOBAL SUPPLIER / ITEM CLICKABLE NAME + VALUE-ONLY COPY === */
+
 </script>
 <script>
 (function(){
@@ -8054,7 +8381,10 @@ function renderHeadProposalDetail(obj,type,title,subtitle){
    return `<div class=\"head-detail-field ${full?'full':''}\"><div class=\"head-detail-field-label\">${esc(label)}</div><div class=\"head-detail-field-row\"><div class=\"head-detail-field-value\">${esc(value)}</div><button type=\"button\" class=\"secondary head-detail-copy\" onclick=\"copyHeadProposalField(${i})\">Copy</button></div></div>`;
  }).join('');
  modal.dataset.detailValues=JSON.stringify(entries.map(([key,val])=>({label:headDetailHumanizeKey(key),value:headDetailValue(val)})));
- headProposalDetailCopyText=copyLines.join('\
+ headProposalDetailCopyText=entries
+   .map(([,val])=>headDetailValue(val))
+   .filter(value=>value&&value!=='—')
+   .join('\
 ');
  document.getElementById('headProposalCopyAllBtn').textContent=type==='candidate'?'Copy All Wine Candidate Information':'Copy All Tender Information';
  document.getElementById('headProposalCopyMessage').textContent='';
@@ -9050,14 +9380,15 @@ window.copyTenderSupplierItemField=index=>{
  if(!x)return false;
  const entry=tenderSupplierItemDetailEntries(x)[Number(index)];
  if(!entry)return false;
- return copyTenderSupplierItemText(`${tenderSupplierItemHumanizeKey(entry[0])}: ${tenderSupplierItemDisplayValue(entry[1])}`);
+ return copyTenderSupplierItemText(tenderSupplierItemDisplayValue(entry[1])==='—'?'':tenderSupplierItemDisplayValue(entry[1]));
 };
 
 window.copyAllTenderSupplierItemDetail=()=>{
  const x=(state.archivedCountryCandidates||[]).find(v=>String(v.id)===String(currentTenderSupplierItemDetailId));
  if(!x)return false;
  const text=tenderSupplierItemDetailEntries(x)
-   .map(([key,value])=>`${tenderSupplierItemHumanizeKey(key)}: ${tenderSupplierItemDisplayValue(value)}`)
+   .map(([,value])=>tenderSupplierItemDisplayValue(value))
+   .filter(value=>value&&value!=='—')
    .join('\n');
  return copyTenderSupplierItemText(text);
 };
@@ -9121,12 +9452,12 @@ window.openTenderSupplierItemSupplierFallback=id=>{
    grid.innerHTML=entries.map(([label,value])=>`<div class="head-detail-field">
      <div class="head-detail-label">${esc(label)}</div>
      <div class="head-detail-value">${esc(String(value??'').trim()||'—')}</div>
-     <button type="button" class="secondary small" onclick="copyTenderSupplierItemText(${JSON.stringify(label+': '+(String(value??'').trim()||'—'))})">Copy</button>
+     <button type="button" class="secondary small" onclick="copyTenderSupplierItemText(${JSON.stringify(String(value??'').trim())})">Copy</button>
    </div>`).join('');
  }
  const copyAllBtn=document.querySelector('#tenderSupplierDetailModal .head-detail-toolbar button');
  if(copyAllBtn){
-   const allText=entries.map(([label,value])=>`${label}: ${String(value??'').trim()||'—'}`).join('\n');
+   const allText=entries.map(([,value])=>String(value??'').trim()).filter(Boolean).join('\n');
    copyAllBtn.onclick=()=>copyTenderSupplierItemText(allText);
  }
  show('tenderSupplierDetailModal',true);
@@ -9312,14 +9643,15 @@ window.copyTenderSupplierField=index=>{
  if(!x)return false;
  const entry=tenderSupplierDetailEntries(x)[Number(index)];
  if(!entry)return false;
- return copyTenderSupplierText(`${entry[0]}: ${String(entry[1]??'').trim()||'—'}`);
+ return copyTenderSupplierText(String(entry[1]??'').trim());
 };
 
 window.copyAllTenderSupplierDetail=()=>{
  const x=(state.countryWineries||[]).find(v=>String(v.id)===String(currentTenderSupplierDetailId));
  if(!x)return false;
  const text=tenderSupplierDetailEntries(x)
-   .map(([label,value])=>`${label}: ${String(value??'').trim()||'—'}`)
+   .map(([,value])=>String(value??'').trim())
+   .filter(Boolean)
    .join('\n');
  return copyTenderSupplierText(text);
 };
@@ -9447,7 +9779,215 @@ document.addEventListener('DOMContentLoaded',renderCountrySupplierControls);
 document.addEventListener('DOMContentLoaded',renderHeadBonuses);
 document.addEventListener('DOMContentLoaded',renderItalySourcing);setTimeout(renderItalySourcing,0);
 })();
+
+
+/* === GLOBAL STATUS TEXT / COLOR STANDARD === */
+function globalStatusDisplayText(value){
+ const raw=String(value??'').trim();
+ if(!raw)return '';
+
+ const exact={
+   'PROPOSED TO HEAD OFFICE':'Proposed to Head Office',
+   'UPDATED PROPOSAL TO HEAD OFFICE':'Updated Proposal to Head Office',
+   'DECLINED BY HEAD OFFICE':'Declined by Head Office',
+   'DECLINED ON TENDERS FIRST STAGE':'Declined on Tenders First Stage',
+   'DECLINED ON TENDERS FINAL DECISION':'Declined on Tenders Final Decision',
+   'APPROVED FOR LCBO SUBMISSION':'Approved for LCBO Submission',
+   'ADDITIONAL INFORMATION REQUIRED':'Additional Information Required',
+   'ADDITIONAL INFORMATION REQUESTED':'Additional Information Requested',
+   'MORE INFORMATION REQUESTED':'More Information Requested',
+   'ACTION REQUIRED':'Action Required',
+   'ITEM SUBMITTED':'Item Submitted',
+   'APPROVED ITEM':'Approved Item',
+   'SUBMITTED SUPPLIER':'Submitted Supplier',
+   'APPROVED SUPPLIER':'Approved Supplier',
+   'TENDER WINNER':'Tender Winner',
+   'IN PROGRESS':'In Progress',
+   'ON HOLD':'On Hold',
+   'TO REGISTER':'To Register',
+   'REGISTERED IN LCBO NISS':'Registered in LCBO NISS',
+   'NOT CONTACTED':'Not Contacted',
+   'SCHEDULED & CONFIRMED':'Scheduled & Confirmed',
+   'ON THE WAY':'On the Way',
+   'DELIVERED TO CONSOLIDATION':'Delivered to Consolidation',
+   'NOT PAID':'Not Paid',
+   'PARTIALLY PAID':'Partially Paid',
+   'FULLY PAID':'Fully Paid',
+   'CLEARED OUT':'Cleared Out',
+   'ACTIVE':'Active',
+   'CLOSED':'Closed',
+   'DECLINED':'Declined',
+   'APPROVED':'Approved',
+   'SUBMITTED':'Submitted',
+   'REGISTERED':'Registered',
+   'ARCHIVED':'Archived',
+   'PENDING':'Pending',
+   'COMPLETED':'Completed',
+   'CANCELLED':'Cancelled',
+   'CANCELED':'Canceled'
+ };
+ const upper=raw.toUpperCase();
+ if(exact[upper])return exact[upper];
+
+ const acronyms=new Set(['LCBO','NISS','NTP','PO','DV','ASN','ERP','CAD','USD','GBP','EUR','FCA','FOB','QA']);
+ const lowerWords=new Set(['to','for','in','on','of','by','and','the','with','from','at']);
+ return raw.toLowerCase().split(/\s+/).map((word,index)=>{
+   const clean=word.replace(/[^a-z0-9&/-]/gi,'');
+   const up=clean.toUpperCase();
+   if(acronyms.has(up))return word.replace(clean,up);
+   if(index>0&&lowerWords.has(clean))return word;
+   return word.charAt(0).toUpperCase()+word.slice(1);
+ }).join(' ');
+}
+window.globalStatusDisplayText=globalStatusDisplayText;
+
+function globalStatusTone(value){
+ const s=String(value??'').trim().toLowerCase();
+ if(!s)return 'neutral';
+ if(/declin|reject|fail|cancel|not paid|error|non-compliant|blocked/.test(s))return 'danger';
+ if(/approved|winner|fully paid|completed|cleared out|delivered|registered|success|accepted/.test(s))return 'success';
+ if(/action required|information required|information requested|more information|submitted|pending|on hold|partially paid|waiting|scheduled|in progress/.test(s))return 'warning';
+ if(/proposed|updated proposal|to register|on the way|processing|active/.test(s))return 'info';
+ return 'neutral';
+}
+window.globalStatusTone=globalStatusTone;
+
+function clearGlobalStatusTone(el){
+ ['success','warning','danger','info','neutral'].forEach(t=>el.classList.remove('global-status-'+t));
+}
+function applyGlobalStatusTone(el,value){
+ clearGlobalStatusTone(el);
+ el.classList.add('global-status-'+globalStatusTone(value));
+}
+
+function selectIsStatusControl(select){
+ if(!select)return false;
+ const key=`${select.id||''} ${select.className||''} ${select.name||''}`.toLowerCase();
+ if(key.includes('status'))return true;
+
+ const label=select.closest('label');
+ if(label&&String(label.textContent||'').toLowerCase().includes('status'))return true;
+
+ const td=select.closest('td');
+ if(td){
+   const tr=td.parentElement;
+   const table=td.closest('table');
+   const index=tr?[...tr.children].indexOf(td):-1;
+   const th=index>=0?table?.querySelectorAll('thead th')?.[index]:null;
+   if(String(th?.textContent||'').toLowerCase().includes('status'))return true;
+ }
+ return false;
+}
+
+function styleGlobalStatusSelect(select){
+ if(!selectIsStatusControl(select))return;
+ select.classList.add('global-status-control');
+
+ [...select.options].forEach(opt=>{
+   const current=String(opt.textContent||'').trim();
+   if(current)opt.textContent=globalStatusDisplayText(current);
+ });
+
+ applyGlobalStatusTone(select,select.value||select.options[select.selectedIndex]?.textContent||'');
+
+ if(select.dataset.globalStatusBound!=='1'){
+   select.dataset.globalStatusBound='1';
+   select.addEventListener('change',()=>{
+     applyGlobalStatusTone(select,select.value||select.options[select.selectedIndex]?.textContent||'');
+     const chosen=select.options[select.selectedIndex];
+     if(chosen)chosen.textContent=globalStatusDisplayText(chosen.textContent);
+   });
+ }
+}
+
+function styleGlobalPlainStatusCells(){
+ document.querySelectorAll('table').forEach(table=>{
+   const headers=[...table.querySelectorAll('thead th')];
+   headers.forEach((th,index)=>{
+     if(!String(th.textContent||'').toLowerCase().includes('status'))return;
+     table.querySelectorAll('tbody tr').forEach(tr=>{
+       const td=tr.children[index];
+       if(!td||td.dataset.globalStatusCell==='1')return;
+       if(td.querySelector('select,input,textarea,button,a'))return;
+
+       const raw=String(td.textContent||'').replace(/\s+/g,' ').trim();
+       if(!raw||raw==='—'||raw==='-')return;
+
+       td.dataset.globalStatusCell='1';
+       td.textContent='';
+       const span=document.createElement('span');
+       span.className='global-status-badge';
+       span.textContent=globalStatusDisplayText(raw);
+       applyGlobalStatusTone(span,raw);
+       td.appendChild(span);
+     });
+   });
+ });
+}
+
+function normalizeGlobalStatusButtonsAndBadges(){
+ document.querySelectorAll('[class*="status"], .status-badge, .badge').forEach(el=>{
+   if(el.matches('select,input,textarea'))return;
+   if(el.children.length)return;
+   const raw=String(el.textContent||'').replace(/\s+/g,' ').trim();
+   if(!raw||raw.length>80)return;
+   if(!/(status|submitted|approved|declined|pending|winner|progress|registered|closed|active|hold|information|required|paid|delivered|scheduled|way|cleared|completed|cancel)/i.test(raw))return;
+
+   el.textContent=globalStatusDisplayText(raw);
+   if(el.classList.contains('badge')||String(el.className).toLowerCase().includes('status')){
+     el.classList.add('global-status-badge');
+     applyGlobalStatusTone(el,raw);
+   }
+ });
+}
+
+function applyGlobalStatusStandard(){
+ document.querySelectorAll('select').forEach(styleGlobalStatusSelect);
+ styleGlobalPlainStatusCells();
+ normalizeGlobalStatusButtonsAndBadges();
+}
+window.applyGlobalStatusStandard=applyGlobalStatusStandard;
+
+const _statusOriginalRefreshProgramViews=window.refreshProgramViews;
+if(typeof _statusOriginalRefreshProgramViews==='function'){
+ window.refreshProgramViews=function(){
+   const result=_statusOriginalRefreshProgramViews.apply(this,arguments);
+   setTimeout(applyGlobalStatusStandard,0);
+   return result;
+ };
+}
+
+let globalStatusMutationQueued=false;
+const globalStatusObserver=new MutationObserver(()=>{
+ if(globalStatusMutationQueued)return;
+ globalStatusMutationQueued=true;
+ setTimeout(()=>{
+   globalStatusMutationQueued=false;
+   applyGlobalStatusStandard();
+ },0);
+});
+if(document.body)globalStatusObserver.observe(document.body,{childList:true,subtree:true});
+setTimeout(applyGlobalStatusStandard,0);
+/* === END GLOBAL STATUS TEXT / COLOR STANDARD === */
+
 </script>
+
+<div id="globalNameDetailModal" class="modal hidden"><div class="modal-card head-detail-modal-card">
+  <div class="modal-head">
+    <div>
+      <h2 id="globalNameDetailTitle">Information</h2>
+      <p id="globalNameDetailSubtitle" class="note">Click Copy beside any filled field to copy only the value.</p>
+    </div>
+    <button type="button" class="icon" onclick="closeGlobalNameDetail()">×</button>
+  </div>
+  <div class="head-detail-toolbar">
+    <button type="button" onclick="copyAllGlobalDetailValues()">Copy All Filled Values</button>
+    <span id="globalNameCopyMessage" class="note"></span>
+  </div>
+  <div id="globalNameDetailGrid" class="head-detail-grid"></div>
+  <div class="modal-actions"><span></span><button type="button" class="secondary" onclick="closeGlobalNameDetail()">Close</button></div>
+</div></div>
+
 </body></html>
 
 <script>document.addEventListener('DOMContentLoaded',()=>{if(typeof renderOfficeInventory==='function')renderOfficeInventory();});</script>
