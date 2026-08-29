@@ -597,6 +597,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </nav>
 <nav class="subnav" data-section-nav="tender-niss">
   <button class="tab" data-tab="tenders">Tenders</button>
+  <button class="tab" data-tab="tender-suppliers">Tender Suppliers</button>
   <button class="tab" data-tab="worker-list">LCBO SUBMISSIONS LIST</button>
   <button class="tab" data-tab="items">Tender Item Database</button>
   <button class="tab" data-tab="submissions">All Submitted Items</button>
@@ -946,6 +947,14 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 
 <section id="worker-list" class="panel">
   <div class="box worker-list" id="worker-list"><div class="section-head"><div><h2>LCBO SUBMISSIONS LIST</h2><p class="note">All products approved by Head Office for LCBO Submission appear here automatically. Additional items can still be added manually when needed.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>Submitted</option><option>Updated Proposal to Head Office</option><option>Approved for LCBO Submission</option><option value="Additional Information Required">Additional Information Requested</option><option>Declined</option><option>To Register</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Item</button></div></div>
+</section>
+
+<section id="tender-suppliers" class="panel">
+  <div class="box">
+    <div class="section-head">
+      <div><h2>Tender Suppliers</h2></div>
+    </div>
+  </div>
 </section>
 
 <section id="tenders" class="panel">
@@ -1872,7 +1881,54 @@ function updateAutomaticTenderStatuses(){
   });
 }
 state.tenders=(state.tenders||[]).map(normalizeTender);state.tenders.forEach(t=>(t.workItems||[]).forEach(w=>{if(!w.sourceCandidateId&&w.status==='In Progress')w.status='Submitted';}));updateAutomaticTenderStatuses();
-function save(){updateAutomaticTenderStatuses();safeStorage.setItem(DATA_KEY,JSON.stringify(state));renderAll();if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings)}
+let programRefreshScheduled=false;
+function safeRefreshCall(fn){
+ try{if(typeof fn==='function')fn()}catch(err){console.error('View refresh failed:',err)}
+}
+function refreshProgramViews(){
+ // Core program pages.
+ safeRefreshCall(renderAll);
+
+ // Country Sourcing / Supplier workspace pages that are not fully covered by renderAll.
+ safeRefreshCall(window.renderSourcingCountryControls);
+ safeRefreshCall(window.renderCountrySupplierControls);
+ safeRefreshCall(window.renderItalySourcing);
+ safeRefreshCall(window.renderSupplierContactPersons);
+
+ // Head Office / LCBO / tender workflow views that may share the same changed records.
+ safeRefreshCall(window.renderHeadOfficeProposals);
+ safeRefreshCall(window.renderWorkerList);
+ safeRefreshCall(window.renderSubmittedItems);
+ safeRefreshCall(window.renderAllSubmittedItems);
+
+ // Internal mail / status indicators.
+ safeRefreshCall(window.renderMainInternalMail);
+ safeRefreshCall(window.renderSupplierInternalMail);
+ safeRefreshCall(window.updateInternalMailBadges);
+}
+function scheduleProgramRefresh(){
+ if(programRefreshScheduled)return;
+ programRefreshScheduled=true;
+ const run=()=>{
+   programRefreshScheduled=false;
+   refreshProgramViews();
+ };
+ if(typeof requestAnimationFrame==='function')requestAnimationFrame(run);
+ else setTimeout(run,0);
+}
+function save(){
+ updateAutomaticTenderStatuses();
+ safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+
+ // Refresh synchronously so Add/Edit/Delete/Save changes appear immediately.
+ refreshProgramViews();
+
+ // Run one settled refresh on the next frame to catch DOM/state dependencies
+ // without stacking repeated refresh requests from the same action.
+ scheduleProgramRefresh();
+
+ if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
+}
 function buildFields(){
  const agencyOptions=()=>state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
  const tenderOptions=()=>'<option value="">Select Tender Name</option>'+state.tenders.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}${t.code?' — ID '+escapeHtml(t.code):''}</option>`).join('');
@@ -3975,7 +4031,35 @@ function safeStartupRender(){
   };
   setTimeout(next,0);
 }
-function renderAll(){syncTenderItemCategoriesFromItems();renderDashboard();renderAgencies();renderSuppliers();renderTenders();populateWinnerAgencySearch();renderTable();renderItems();renderSupplierAllItems();renderPurchaseOrders();renderArchivedPurchaseOrders();renderShipments();renderFinancial();renderSupplierPaymentInvoices();renderSupplierPayment2Invoices();renderOtherInvoices();renderRecycleBin();renderHeadsRecycleBin();renderSavedProformas();if(typeof window.renderHeadBonuses==='function')window.renderHeadBonuses();if(typeof window.renderSourcingCountryControls==='function')window.renderSourcingCountryControls();renderSettings();if(typeof renderHeadInventory==='function')renderHeadInventory();if(typeof renderProfitItemCalculator==='function')renderProfitItemCalculator();if(typeof renderTransportProfitPages==='function')if(typeof renderManualProfitPages==='function')applySharedCurrencyOptions()}
+function renderAll(){
+ syncTenderItemCategoriesFromItems();
+ renderDashboard();
+ renderAgencies();
+ renderSuppliers();
+ renderTenders();
+ populateWinnerAgencySearch();
+ renderTable();
+ renderItems();
+ renderSupplierAllItems();
+ renderPurchaseOrders();
+ renderArchivedPurchaseOrders();
+ renderShipments();
+ renderFinancial();
+ renderSupplierPaymentInvoices();
+ renderSupplierPayment2Invoices();
+ renderOtherInvoices();
+ renderRecycleBin();
+ renderHeadsRecycleBin();
+ renderSavedProformas();
+ if(typeof window.renderHeadBonuses==='function')window.renderHeadBonuses();
+ if(typeof window.renderSourcingCountryControls==='function')window.renderSourcingCountryControls();
+ renderSettings();
+ if(typeof renderHeadInventory==='function')renderHeadInventory();
+ if(typeof renderProfitItemCalculator==='function')renderProfitItemCalculator();
+ if(typeof renderTransportProfitPages==='function')renderTransportProfitPages();
+ if(typeof renderManualProfitPages==='function')renderManualProfitPages();
+ if(typeof applySharedCurrencyOptions==='function')applySharedCurrencyOptions();
+}
 function openAgency(id=''){const a=state.agencies.find(x=>x.id===id)||{id:'',name:'',short:'',contactName:'',address1:'',address2:'',cityProvincePostal:'',phone:'',email:'',notes:''};$('#agencyId').value=a.id||'';$('#agencyName').value=a.name||'';$('#agencyShort').value=a.short||'';$('#agencyContactName').value=a.contactName||'';$('#agencyAddress1').value=a.address1||'';$('#agencyAddress2').value=a.address2||'';$('#agencyCityProvincePostal').value=a.cityProvincePostal||'';$('#agencyPhone').value=a.phone||'';$('#agencyEmail').value=a.email||'';$('#agencyNotes').value=a.notes||'';$('#agencyModalTitle').textContent=a.id?'Edit Agency':'Add Agency';$('#deleteAgency').style.visibility=a.id?'visible':'hidden';$('#agencyModal').classList.remove('hidden')}
 function editAgency(id){openAgency(id)}
 function closeAgency(){$('#agencyModal').classList.add('hidden')}
