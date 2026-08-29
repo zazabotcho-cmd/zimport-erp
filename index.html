@@ -5922,18 +5922,16 @@ function italyCandidateGroupsHtml(){
  }).join('');
  const sourcing=`<fieldset class="item-group"><legend>Country Representative Sourcing Information</legend><div class="form-grid three">
   <label>Tender Name<select id="itCanOpp"></select></label>
-  <div id="approvedMyItemRetrieveSection" class="full" style="border:1px solid var(--line);border-radius:10px;padding:12px">
-    <div style="font-weight:700;margin-bottom:8px">Retrieve Item Details from My Item</div>
-    <div class="form-grid three">
-      <label class="full">Approved My Item
-        <select id="approvedMyItemRetrieveSelect">
-          <option value="">Select Approved Item</option>
-        </select>
-      </label>
-      <div class="full">
-        <button type="button" id="retrieveApprovedMyItemBtn" class="secondary">Retrieve Item Details</button>
-        <small id="approvedMyItemRetrieveNote" class="note" style="margin-left:8px">Only items with status Approved Item are listed.</small>
-      </div>
+  <div id="approvedMyItemRetrieveSection" class="full" style="border:1px solid var(--line);border-radius:8px;padding:8px 10px">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span title="Retrieve Item Details from My Item" style="font-size:16px">↙</span>
+      <strong style="font-size:13px">Retrieve Item Details from My Item <span style="color:red">*</span></strong>
+      <select id="approvedMyItemRetrieveSelect" required style="min-width:220px;max-width:420px;flex:1">
+        <option value="">Select Approved Item</option>
+      </select>
+      <button type="button" id="retrieveApprovedMyItemBtn" class="secondary small" title="Retrieve Item Details">Retrieve</button>
+      <button type="button" id="removeRetrievedApprovedMyItemBtn" class="danger small" style="display:none;padding:2px 8px;font-size:16px;line-height:1.2" title="Delete retrieved item details">×</button>
+      <small id="approvedMyItemRetrieveNote" class="note">Only Approved Items are listed.</small>
     </div>
   </div>
   <div class="italy-product-photo-wrap">
@@ -6297,6 +6295,181 @@ function populateApprovedMyItemRetrieveList(showSection=true){
    ?`Only Approved Item records from My Items are listed. ${items.length} item${items.length===1?'':'s'} available.`
    :'No Approved Item records are available in My Items for this supplier.';
 }
+
+function applyRetrievedApprovedMyItemView(){
+ const form=document.getElementById('italyCandidateFields');
+ if(!form)return;
+
+ const fieldsets=[...form.querySelectorAll('fieldset.item-group')];
+ const byLegend=title=>fieldsets.find(fs=>String(fs.querySelector('legend')?.textContent||'').trim()===title);
+
+ // Hide every main section first.
+ fieldsets.forEach(fs=>fs.style.display='none');
+
+ // Country Representative section stays visible for Tender Name,
+ // retrieve/remove control, and the selected locked commercial fields.
+ const sourcing=byLegend('Country Representative Sourcing Information');
+ if(sourcing){
+   sourcing.style.display='';
+
+   // Hide everything inside sourcing, then selectively reveal required items.
+   [...sourcing.querySelectorAll('label')].forEach(label=>label.style.display='none');
+
+   const showControl=id=>{
+     const el=document.getElementById(id);
+     const label=el?.closest('label');
+     if(label)label.style.display='';
+     return el;
+   };
+
+   // Tender Name remains visible and editable.
+   showControl('itCanOpp');
+
+   // Retrieve control remains visible so the user can remove the retrieved item with ×.
+   const retrieveSection=document.getElementById('approvedMyItemRetrieveSection');
+   if(retrieveSection)retrieveSection.style.display='';
+
+   // Product Description only; hide its photo sibling.
+   const desc=showControl('c_productDescription');
+   const photoWrap=desc?.closest('.italy-product-photo-wrap');
+   if(photoWrap){
+     photoWrap.style.display='';
+     [...photoWrap.children].forEach(child=>child.style.display='none');
+     const descLabel=desc.closest('label');
+     if(descLabel)descLabel.style.display='';
+   }
+
+   // Supplier price and bottles per case only from the price row.
+   const price=showControl('itCanPrice');
+   const bottles=showControl('itCanBottlesPerCase');
+   const priceRow=price?.closest('.italy-source-price-row');
+   if(priceRow){
+     priceRow.style.display='';
+     [...priceRow.children].forEach(child=>child.style.display='none');
+     if(price?.closest('label'))price.closest('label').style.display='';
+     if(bottles?.closest('label'))bottles.closest('label').style.display='';
+   }
+
+   showControl('itCanQuoteType');
+   showControl('itCanGiftBox');
+   showControl('itCanProtectedAppellation');
+
+   // Hide conditional detail fields even when their source selector is Yes/Other.
+   [
+     'itCanExCellarDeliveryWrap',
+     'itCanGiftBoxDescriptionWrap',
+     'itCanAppellationNameWrap',
+     'itCanAppellationDescriptionWrap',
+     'itCanUniqueOtherDescriptionWrap',
+     'itCanOntarioExportDetailsWrap'
+   ].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none'});
+ }
+
+ // Identification: only Product Category.
+ const identification=byLegend('Identification');
+ if(identification){
+   identification.style.display='';
+   [...identification.querySelectorAll('label')].forEach(label=>label.style.display='none');
+   const category=document.getElementById('c_productCategory');
+   if(category?.closest('label'))category.closest('label').style.display='';
+   const purchaseRow=identification.querySelector('.purchase-row');
+   if(purchaseRow)purchaseRow.style.display='none';
+ }
+
+ // Supplier Information: show the complete retrieved supplier-information section,
+ // but hide its separate supplier-retrieve controls because retrieved data is locked.
+ const supplierInfo=byLegend('Supplier Information');
+ if(supplierInfo){
+   supplierInfo.style.display='';
+   const supplierRetrieveControls=supplierInfo.querySelector('.inline-actions');
+   if(supplierRetrieveControls)supplierRetrieveControls.style.display='none';
+ }
+
+ // Origin and Product Details: only Producing Country and Producing Region.
+ const origin=byLegend('Origin and Product Details');
+ if(origin){
+   origin.style.display='';
+   [...origin.querySelectorAll('label')].forEach(label=>label.style.display='none');
+   ['c_producingCountry','c_producingRegion'].forEach(id=>{
+     const el=document.getElementById(id);
+     if(el?.closest('label'))el.closest('label').style.display='';
+   });
+ }
+
+ // Selling Unit Information: show the complete section.
+ const selling=byLegend('Selling Unit Information');
+ if(selling)selling.style.display='';
+
+ // Lock all requested retrieved fields.
+ const lockIds=[
+   'c_productDescription',
+   'itCanPrice',
+   'itCanBottlesPerCase',
+   'itCanQuoteType',
+   'itCanGiftBox',
+   'itCanProtectedAppellation',
+   'c_productCategory',
+   'c_lcboSupplierNumber',
+   'c_supplierName',
+   'c_supplierAddress1',
+   'c_supplierAddress2',
+   'c_supplierCity',
+   'c_supplierRegion',
+   'c_supplierCountry',
+   'c_supplierPostalCode',
+   'c_phoneNumber',
+   'c_faxNumber',
+   'c_emailAddress',
+   'c_paymentTerms',
+   'c_producerSize',
+   'c_supplierOntarioAgent',
+   'c_supplierOntarioAgentDetails',
+   'c_supplierOtherProvinceExporter',
+   'c_supplierOtherProvinceExporterDetails',
+   'c_producingCountry',
+   'c_producingRegion',
+   'c_sellingUnitSizeMl',
+   'c_unitsPerSellingPack',
+   'c_containerType',
+   'c_containerWeightG',
+   'c_packageMaterial',
+   'c_packageWeightG',
+   'c_stopperType',
+   'c_stopperWeightG'
+ ];
+
+ lockIds.forEach(id=>{
+   const el=document.getElementById(id);
+   if(!el)return;
+   el.title='Retrieved from Approved My Item — this information cannot be changed here.';
+   el.style.cursor='not-allowed';
+   el.style.opacity='.72';
+   el.setAttribute('aria-readonly','true');
+   if(el.tagName==='SELECT'){
+     el.disabled=true;
+   }else{
+     el.readOnly=true;
+   }
+ });
+
+ // Do not allow the hidden supplier detail condition controls to reopen fields.
+ syncItalyCandidateQuoteType();
+ syncItalyCandidateGiftBox();
+ syncItalyCandidateProtectedAppellation();
+ syncItalyCandidateSupplierOntarioAgent();
+ syncItalyCandidateSupplierOtherProvince();
+ [
+   'itCanExCellarDeliveryWrap',
+   'itCanGiftBoxDescriptionWrap',
+   'itCanAppellationNameWrap',
+   'itCanAppellationDescriptionWrap',
+   'itCanUniqueOtherDescriptionWrap',
+   'c_supplierOntarioAgentDetailsWrap',
+   'c_supplierOtherProvinceExporterDetailsWrap'
+ ].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none'});
+}
+window.applyRetrievedApprovedMyItemView=applyRetrievedApprovedMyItemView;
+
 async function retrieveApprovedMyItemDetails(){
  const select=document.getElementById('approvedMyItemRetrieveSelect');
  const id=select?.value||'';
@@ -6382,9 +6555,39 @@ async function retrieveApprovedMyItemDetails(){
  if(document.getElementById('itCanRecordId'))document.getElementById('itCanRecordId').value=recordId;
 
  const note=document.getElementById('approvedMyItemRetrieveNote');
+ select.dataset.retrievedApprovedMyItemId=String(x.id);
+ const removeBtn=document.getElementById('removeRetrievedApprovedMyItemBtn');
+ if(removeBtn)removeBtn.style.display='';
  if(note)note.textContent=`Retrieved: ${x.productDescription||x.name||'Approved Item'}`;
+ applyRetrievedApprovedMyItemView();
  return true;
 }
+
+async function removeRetrievedApprovedMyItemDetails(){
+ const select=document.getElementById('approvedMyItemRetrieveSelect');
+ if(!select?.dataset?.retrievedApprovedMyItemId)return false;
+ if(!confirm('Delete the retrieved item details from this proposal form?'))return false;
+
+ const tenderValue=document.getElementById('itCanOpp')?.value||'';
+ const recordId=document.getElementById('itCanRecordId')?.value||'';
+
+ // Rebuild a clean new-proposal form, then restore the selected Tender Name.
+ await openItalyCandidateForm(recordId);
+ const tender=document.getElementById('itCanOpp');
+ if(tender)tender.value=tenderValue;
+
+ const freshSelect=document.getElementById('approvedMyItemRetrieveSelect');
+ if(freshSelect){
+   freshSelect.value='';
+   freshSelect.dataset.retrievedApprovedMyItemId='';
+ }
+ const removeBtn=document.getElementById('removeRetrievedApprovedMyItemBtn');
+ if(removeBtn)removeBtn.style.display='none';
+ const note=document.getElementById('approvedMyItemRetrieveNote');
+ if(note)note.textContent='Select an Approved Item and click Retrieve.';
+ return true;
+}
+window.removeRetrievedApprovedMyItemDetails=removeRetrievedApprovedMyItemDetails;
 window.approvedMyItemsForProposal=approvedMyItemsForProposal;
 window.populateApprovedMyItemRetrieveList=populateApprovedMyItemRetrieveList;
 window.retrieveApprovedMyItemDetails=retrieveApprovedMyItemDetails;
@@ -6412,6 +6615,15 @@ window.openItalyCandidateForm=async(id='')=>{
  populateApprovedMyItemRetrieveList(showApprovedMyItemRetrieve);
  const retrieveApprovedBtn=document.getElementById('retrieveApprovedMyItemBtn');
  if(retrieveApprovedBtn)retrieveApprovedBtn.onclick=retrieveApprovedMyItemDetails;
+ const removeRetrievedBtn=document.getElementById('removeRetrievedApprovedMyItemBtn');
+ if(removeRetrievedBtn)removeRetrievedBtn.onclick=removeRetrievedApprovedMyItemDetails;
+ const approvedMyItemSelect=document.getElementById('approvedMyItemRetrieveSelect');
+ if(approvedMyItemSelect)approvedMyItemSelect.onchange=()=>{
+   approvedMyItemSelect.dataset.retrievedApprovedMyItemId='';
+   if(removeRetrievedBtn)removeRetrievedBtn.style.display='none';
+   const note=document.getElementById('approvedMyItemRetrieveNote');
+   if(note)note.textContent='Select an Approved Item and click Retrieve.';
+ };
  const defaults=itemDefaults();
  const normalized={...defaults,...x,productDescription:x.productDescription||x.name||'',vintage:x.vintage||'',grapeVarietal1:x.grapeVarietal1||x.grape||'',score:x.score||'',supplierName:x.supplierName||'',producerName:x.producerName||''};
  itemGroups.filter(g=>g.title!=='Pricing Information').forEach(g=>g.fields.filter(f=>f[0]!=='producerSameAsSupplier').forEach(([k,,t])=>{if(['calculated','websites','attachments'].includes(t))return;const el=document.getElementById('c_'+k);if(el)el.value=k==='productCategory'?normalizeProductCategory(normalized[k]??'Wine'):(normalized[k]??'')}));
@@ -6525,7 +6737,23 @@ window.saveItalyCandidate=async()=>{
  if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
  if(!Array.isArray(state.archivedCountryCandidates))state.archivedCountryCandidates=[];
  const saveAsMyItem=italyCandidateSaveMode==='my-item';
- const id=document.getElementById('itCanRecordId').value||uid();
+ const existingProposalId=document.getElementById('itCanRecordId')?.value||'';
+ if(!saveAsMyItem&&!existingProposalId){
+   const approvedMyItemSelect=document.getElementById('approvedMyItemRetrieveSelect');
+   const selectedApprovedMyItemId=approvedMyItemSelect?.value||'';
+   const retrievedApprovedMyItemId=approvedMyItemSelect?.dataset?.retrievedApprovedMyItemId||'';
+   if(!selectedApprovedMyItemId){
+     alert('Retrieve Item Details from My Item is mandatory. Please select an Approved Item.');
+     approvedMyItemSelect?.focus();
+     return false;
+   }
+   if(String(retrievedApprovedMyItemId)!==String(selectedApprovedMyItemId)){
+     alert('Retrieve Item Details from My Item is mandatory. Please click Retrieve Item Details before proposing the item.');
+     document.getElementById('retrieveApprovedMyItemBtn')?.focus();
+     return false;
+   }
+ }
+ const id=existingProposalId||uid();
  const sourceCollection=saveAsMyItem?state.archivedCountryCandidates:state.countryCandidates;
  const existing=sourceCollection.find(x=>x.id===id)||{};
  const editingMyItem=saveAsMyItem&&!!existing.id;
