@@ -495,27 +495,37 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </style>
 
 <style id="allSubmittedTenderColumnFix">
+/* Tenders > All Submitted Items: keep the date field/calendar fully inside column 2 */
 #submissions .active-submissions-table{
   table-layout:auto;
   width:100%;
 }
 #submissions .active-submissions-table th:nth-child(2),
 #submissions .active-submissions-table td:nth-child(2){
-  min-width:145px;
-  width:145px;
+  min-width:185px;
+  width:185px;
+  padding-right:14px;
+  overflow:hidden;
 }
 #submissions .active-submissions-table td:nth-child(2) input[type="date"]{
-  width:135px;
-  max-width:135px;
+  display:block;
+  width:160px;
+  min-width:160px;
+  max-width:160px;
+  margin:0;
+  padding-right:10px;
   box-sizing:border-box;
 }
 #submissions .active-submissions-table th:nth-child(3),
 #submissions .active-submissions-table td:nth-child(3){
-  min-width:190px;
+  min-width:220px;
+  width:220px;
+  padding-left:12px;
 }
 #submissions .active-submissions-table td:nth-child(3){
   white-space:normal;
   overflow-wrap:anywhere;
+  word-break:normal;
 }
 </style>
 
@@ -741,6 +751,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
         <option value="">All Statuses</option>
         <option>Action Required</option>
         <option value="In Progress">PROPOSED TO HEAD OFFICE</option>
+        <option>Updated Proposal to Head Office</option>
         <option>Approved for LCBO Submission</option>
         <option value="Additional Information Required">Additional Information Requested</option>
         <option value="Tender Winner">Tender Winner</option>
@@ -855,7 +866,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </section>
 
 <section id="worker-list" class="panel">
-  <div class="box worker-list" id="worker-list"><div class="section-head"><div><h2>LCBO SUBMISSIONS LIST</h2><p class="note">All products approved by Head Office for LCBO Submission appear here automatically. Additional items can still be added manually when needed.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>Submitted</option><option>Approved for LCBO Submission</option><option value="Additional Information Required">Additional Information Requested</option><option>Declined</option><option>To Register</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Item</button></div></div>
+  <div class="box worker-list" id="worker-list"><div class="section-head"><div><h2>LCBO SUBMISSIONS LIST</h2><p class="note">All products approved by Head Office for LCBO Submission appear here automatically. Additional items can still be added manually when needed.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>Submitted</option><option>Updated Proposal to Head Office</option><option>Approved for LCBO Submission</option><option value="Additional Information Required">Additional Information Requested</option><option>Declined</option><option>To Register</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Item</button></div></div>
 </section>
 
 <section id="tenders" class="panel">
@@ -2041,7 +2052,7 @@ function renderWorkerList(){
       wi.headOfficeInstructions=candidate.headOfficeInstructions;
     }
   });
-  if(!$('#workerRows'))return;const selected=$('#workerTenderFilter')?.value||'';const old=selected;$('#workerTenderFilter').innerHTML='<option value="">All tenders</option>'+state.tenders.map(t=>`<option value="${t.id}">${escapeHtml(t.code||'—')} — ${escapeHtml(t.name)}${t.status==='Closed'?' (Closed)':''}</option>`).join('');$('#workerTenderFilter').value=old;const qId=String($('#workerTenderIdSearch')?.value||'').trim().toLowerCase(),qNameDate=String($('#workerTenderNameDateSearch')?.value||'').trim().toLowerCase(),qSupplier=String($('#workerSupplierSearch')?.value||'').trim().toLowerCase(),qItem=String($('#workerItemSearch')?.value||'').trim().toLowerCase(),qPrice=String($('#workerOfferedPriceSearch')?.value||'').trim().toLowerCase(),qAgency=$('#workerAgencySearch')?.value||'',qStatus=$('#workerStatusSearch')?.value||'';const rows=[];state.tenders.filter(t=>(!selected||t.id===selected)).forEach(t=>(t.workItems||[]).forEach(w=>{const dbItem=findDatabaseItem(w);const displayName=(w.itemName||dbItem?.productDescription||'—')+(dbItem?.vintage?' '+dbItem.vintage:'');const supplier=dbItem?.supplier||dbItem?.supplierName||w.supplierName||'—';const sourceCandidate=w.sourceCandidateId?(state.countryCandidates||[]).find(c=>c.id===w.sourceCandidateId):null;const status=sourceCandidate?normalizeHeadProposalStatus(sourceCandidate.headOfficeActionStatus||sourceCandidate.status||w.status):(w.status==='Registered'?'Registered in LCBO NISS':(w.status||'To Register'));if(sourceCandidate&&w.status!==status)w.status=status;const offered=num(w.offeredPrice),agency=agencyName(w.agencyId)||'Not assigned';const tenderNameDate=[t.name,t.presubDate,t.tastingDate].filter(Boolean).join(' ');if(qId&&!String(t.code||'').toLowerCase().includes(qId))return;if(qNameDate&&!tenderNameDate.toLowerCase().includes(qNameDate))return;if(qSupplier&&!String(supplier).toLowerCase().includes(qSupplier))return;if(qItem&&!displayName.toLowerCase().includes(qItem))return;if(qPrice&&!`${offered.toFixed(2)} ${w.currency||'CAD'}`.toLowerCase().includes(qPrice))return;if(qAgency&&w.agencyId!==qAgency)return;if(qStatus&&status!==qStatus)return;const itemCell=dbItem?`<button type="button" class="item-info-link" onclick="openWorkerItemInfo('${t.id}','${w.id}')">${escapeHtml(displayName)}</button><br><small>Click to open database information</small>`:`<b>${escapeHtml(displayName)}</b><br><small style="color:#b3261e">No matching item found in database</small>`;const quote=num(dbItem?.quotePerCase),offerCurrency=w.currency||'CAD',quoteCurrency=dbItem?.quotationCurrency||'CAD',hasQuote=!!dbItem&&String(dbItem.quotePerCase??'').trim()!=='';const matches=hasQuote&&Math.abs(offered-quote)<0.005&&offerCurrency===quoteCurrency;const priceClass=hasQuote?(matches?'price-match':'price-mismatch'):'';const reference=hasQuote?`<span class="price-reference">Database Offered Quote: ${escapeHtml(quoteCurrency)} ${quote.toFixed(2)}</span>`:`<span class="price-reference">No database offered quote</span>`;const submissionInput=status==='Registered in LCBO NISS'?`<div class="submission-number-wrap"><small>Submission #</small><input type="text" value="${escapeHtml(w.submissionNumber||'')}" placeholder="1177144" onchange="updateWorkerSubmissionNumber('${t.id}','${w.id}',this.value)"></div>`:'';rows.push(`<tr><td><b>${escapeHtml(t.code||'—')}</b></td><td><b>${escapeHtml(t.name)}</b><br><small>${escapeHtml(t.presubDate?'Pre-Submission: '+t.presubDate:(t.tastingDate?'Tasting: '+t.tastingDate:''))}</small></td><td>${escapeHtml(supplier)}</td><td>${itemCell}</td><td><span class="${priceClass}">${escapeHtml(offerCurrency)} ${offered.toFixed(2)}</span>${reference}</td><td>${escapeHtml(agency)}</td><td>${escapeHtml(w.instructions||'—')}</td><td><select class="work-status ${['Submitted','In Progress','Registered in LCBO NISS'].includes(status)?'work-status-green':'work-status-yellow'}" ${(!sourceCandidate&&t.status==='Closed')?'disabled title="Tender is closed"':''} onchange="updateWorkStatus('${t.id}','${w.id}',this.value);applyWorkStatusColor(this)">${sourceCandidate?`<option value="In Progress" ${status==='In Progress'?'selected':''}>PROPOSED TO HEAD OFFICE</option><option ${status==='Approved for LCBO Submission'?'selected':''}>Approved for LCBO Submission</option><option value="Additional Information Required" ${status==='Additional Information Required'?'selected':''}>Additional Information Requested</option><option ${status==='Tender Winner'?'selected':''}>Tender Winner</option><option value="Declined" ${status==='Declined'?'selected':''}>DECLINED BY HEAD OFFICE</option><option value="Declined on Tenders First Stage" ${status==='Declined on Tenders First Stage'?'selected':''}>DECLINED ON TENDERS FIRST STAGE</option><option value="Declined on Tenders Final Decision" ${status==='Declined on Tenders Final Decision'?'selected':''}>DECLINED ON TENDERS FINAL DECISION</option>`:`<option ${status==='To Register'?'selected':''}>To Register</option><option ${status==='Submitted'?'selected':''}>Submitted</option><option ${status==='Registered in LCBO NISS'?'selected':''}>Registered in LCBO NISS</option><option ${status==='On Hold'?'selected':''}>On Hold</option>`}</select>${status==='Additional Information Required'&&sourceCandidate?.additionalInformationRequested?`<div class="head-comment-box" style="margin-top:6px">${escapeHtml(sourceCandidate.additionalInformationRequested)}</div>`:''}${submissionInput}</td><td><button type="button" class="secondary small" onclick="addWorkerItemToTenderDatabase('${t.id}','${w.id}')">${w.itemId?'Open Tender Item Database':'Add To Tender Item Database'}</button> <button type="button" class="danger small" onclick="deleteWorkerItem('${t.id}','${w.id}')">Remove</button></td></tr>`)}));$('#workerRows').innerHTML=rows.join('')||'<tr><td colspan="9">No matching worker submission items.</td></tr>';}
+  if(!$('#workerRows'))return;const selected=$('#workerTenderFilter')?.value||'';const old=selected;$('#workerTenderFilter').innerHTML='<option value="">All tenders</option>'+state.tenders.map(t=>`<option value="${t.id}">${escapeHtml(t.code||'—')} — ${escapeHtml(t.name)}${t.status==='Closed'?' (Closed)':''}</option>`).join('');$('#workerTenderFilter').value=old;const qId=String($('#workerTenderIdSearch')?.value||'').trim().toLowerCase(),qNameDate=String($('#workerTenderNameDateSearch')?.value||'').trim().toLowerCase(),qSupplier=String($('#workerSupplierSearch')?.value||'').trim().toLowerCase(),qItem=String($('#workerItemSearch')?.value||'').trim().toLowerCase(),qPrice=String($('#workerOfferedPriceSearch')?.value||'').trim().toLowerCase(),qAgency=$('#workerAgencySearch')?.value||'',qStatus=$('#workerStatusSearch')?.value||'';const rows=[];state.tenders.filter(t=>(!selected||t.id===selected)).forEach(t=>(t.workItems||[]).forEach(w=>{const dbItem=findDatabaseItem(w);const displayName=(w.itemName||dbItem?.productDescription||'—')+(dbItem?.vintage?' '+dbItem.vintage:'');const supplier=dbItem?.supplier||dbItem?.supplierName||w.supplierName||'—';const sourceCandidate=w.sourceCandidateId?(state.countryCandidates||[]).find(c=>c.id===w.sourceCandidateId):null;const status=sourceCandidate?normalizeHeadProposalStatus(sourceCandidate.headOfficeActionStatus||sourceCandidate.status||w.status):(w.status==='Registered'?'Registered in LCBO NISS':(w.status||'To Register'));if(sourceCandidate&&w.status!==status)w.status=status;const offered=num(w.offeredPrice),agency=agencyName(w.agencyId)||'Not assigned';const tenderNameDate=[t.name,t.presubDate,t.tastingDate].filter(Boolean).join(' ');if(qId&&!String(t.code||'').toLowerCase().includes(qId))return;if(qNameDate&&!tenderNameDate.toLowerCase().includes(qNameDate))return;if(qSupplier&&!String(supplier).toLowerCase().includes(qSupplier))return;if(qItem&&!displayName.toLowerCase().includes(qItem))return;if(qPrice&&!`${offered.toFixed(2)} ${w.currency||'CAD'}`.toLowerCase().includes(qPrice))return;if(qAgency&&w.agencyId!==qAgency)return;if(qStatus&&status!==qStatus)return;const itemCell=dbItem?`<button type="button" class="item-info-link" onclick="openWorkerItemInfo('${t.id}','${w.id}')">${escapeHtml(displayName)}</button><br><small>Click to open database information</small>`:`<b>${escapeHtml(displayName)}</b><br><small style="color:#b3261e">No matching item found in database</small>`;const quote=num(dbItem?.quotePerCase),offerCurrency=w.currency||'CAD',quoteCurrency=dbItem?.quotationCurrency||'CAD',hasQuote=!!dbItem&&String(dbItem.quotePerCase??'').trim()!=='';const matches=hasQuote&&Math.abs(offered-quote)<0.005&&offerCurrency===quoteCurrency;const priceClass=hasQuote?(matches?'price-match':'price-mismatch'):'';const reference=hasQuote?`<span class="price-reference">Database Offered Quote: ${escapeHtml(quoteCurrency)} ${quote.toFixed(2)}</span>`:`<span class="price-reference">No database offered quote</span>`;const submissionInput=status==='Registered in LCBO NISS'?`<div class="submission-number-wrap"><small>Submission #</small><input type="text" value="${escapeHtml(w.submissionNumber||'')}" placeholder="1177144" onchange="updateWorkerSubmissionNumber('${t.id}','${w.id}',this.value)"></div>`:'';rows.push(`<tr><td><b>${escapeHtml(t.code||'—')}</b></td><td><b>${escapeHtml(t.name)}</b><br><small>${escapeHtml(t.presubDate?'Pre-Submission: '+t.presubDate:(t.tastingDate?'Tasting: '+t.tastingDate:''))}</small></td><td>${escapeHtml(supplier)}</td><td>${itemCell}</td><td><span class="${priceClass}">${escapeHtml(offerCurrency)} ${offered.toFixed(2)}</span>${reference}</td><td>${escapeHtml(agency)}</td><td>${escapeHtml(w.instructions||'—')}</td><td><select class="work-status ${['Submitted','In Progress','Registered in LCBO NISS'].includes(status)?'work-status-green':'work-status-yellow'}" ${(!sourceCandidate&&t.status==='Closed')?'disabled title="Tender is closed"':''} onchange="updateWorkStatus('${t.id}','${w.id}',this.value);applyWorkStatusColor(this)">${sourceCandidate?`<option value="In Progress" ${status==='In Progress'?'selected':''}>PROPOSED TO HEAD OFFICE</option><option value="Updated Proposal to Head Office" ${status==='Updated Proposal to Head Office'?'selected':''}>Updated Proposal to Head Office</option><option ${status==='Approved for LCBO Submission'?'selected':''}>Approved for LCBO Submission</option><option value="Additional Information Required" ${status==='Additional Information Required'?'selected':''}>Additional Information Requested</option><option ${status==='Tender Winner'?'selected':''}>Tender Winner</option><option value="Declined" ${status==='Declined'?'selected':''}>DECLINED BY HEAD OFFICE</option><option value="Declined on Tenders First Stage" ${status==='Declined on Tenders First Stage'?'selected':''}>DECLINED ON TENDERS FIRST STAGE</option><option value="Declined on Tenders Final Decision" ${status==='Declined on Tenders Final Decision'?'selected':''}>DECLINED ON TENDERS FINAL DECISION</option>`:`<option ${status==='To Register'?'selected':''}>To Register</option><option ${status==='Submitted'?'selected':''}>Submitted</option><option ${status==='Registered in LCBO NISS'?'selected':''}>Registered in LCBO NISS</option><option ${status==='On Hold'?'selected':''}>On Hold</option>`}</select>${status==='Additional Information Required'&&sourceCandidate?.additionalInformationRequested?`<div class="head-comment-box" style="margin-top:6px">${escapeHtml(sourceCandidate.additionalInformationRequested)}</div>`:''}${submissionInput}</td><td><button type="button" class="secondary small" onclick="addWorkerItemToTenderDatabase('${t.id}','${w.id}')">${w.itemId?'Open Tender Item Database':'Add To Tender Item Database'}</button> <button type="button" class="danger small" onclick="deleteWorkerItem('${t.id}','${w.id}')">Remove</button></td></tr>`)}));$('#workerRows').innerHTML=rows.join('')||'<tr><td colspan="9">No matching worker submission items.</td></tr>';}
 
 function addWorkerItemToTenderDatabase(tenderId,workId){
  try{
@@ -2235,7 +2246,7 @@ function updateWorkStatus(tenderId,itemId,status){
  if(!w)return;
  const candidate=w.sourceCandidateId?(state.countryCandidates||[]).find(c=>c.id===w.sourceCandidateId):null;
  if(candidate){
-   const allowed=['In Progress','Approved for LCBO Submission','Additional Information Required','Tender Winner','Declined','Declined on Tenders First Stage','Declined on Tenders Final Decision'];
+   const allowed=['In Progress','Updated Proposal to Head Office','Approved for LCBO Submission','Additional Information Required','Tender Winner','Declined','Declined on Tenders First Stage','Declined on Tenders Final Decision'];
    if(!allowed.includes(status)){alert('Select a valid Head Office Action status.');renderWorkerList();return;}
    if(status==='Additional Information Required'){
      openWorkerAdditionalInfo(tenderId,itemId,w.status||candidate.headOfficeActionStatus||candidate.status||'In Progress');
@@ -5855,7 +5866,23 @@ window.saveItalyCandidate=async()=>{
    };
    rec={...existing,...freshCasePallet,...immutableMeta};
   }
-  if(normalizeHeadProposalStatus(rec.headOfficeActionStatus||rec.status)==='Action Required'){
+  // Any existing Wine Candidate sent with the "Update Proposal to Head Office" button
+  // must immediately appear with the shared UPDATED proposal status on every page.
+  if(existing.id){
+    const updateStamp=new Date().toISOString();
+    rec.status='Updated Proposal to Head Office';
+    rec.headOfficeActionStatus='Updated Proposal to Head Office';
+    rec.headOfficeUpdatedAt=updateStamp;
+    if(!Array.isArray(rec.headOfficeActions))rec.headOfficeActions=[];
+    rec.headOfficeActions.push({status:'Updated Proposal to Head Office',comment:'Wine Candidate proposal updated and resubmitted to Head Office.',date:updateStamp,source:'Wine Candidate'});
+    // If this candidate already has a Tenders / LCBO Submission row, synchronize it too.
+    const linkedTender=(state.tenders||[]).find(t=>t.id===rec.opportunityId);
+    const linkedWorkItem=linkedTender?.workItems?.find(w=>w.sourceCandidateId===rec.id);
+    if(linkedWorkItem){
+      linkedWorkItem.status='Updated Proposal to Head Office';
+      linkedWorkItem.updatedAt=updateStamp;
+    }
+  }else if(normalizeHeadProposalStatus(rec.headOfficeActionStatus||rec.status)==='Action Required'){
     rec.status='In Progress';
     rec.headOfficeActionStatus='In Progress';
     rec.headOfficeUpdatedAt=new Date().toISOString();
@@ -5908,7 +5935,7 @@ window.proposeItalyCandidateToHeadOffice=async function(button){
 
 function wineCandidateDeleteBlockedStatus(candidate){
  const status=normalizeHeadProposalStatus(candidate?.headOfficeActionStatus||candidate?.status);
- return ['In Progress','Approved for LCBO Submission','Additional Information Required'].includes(status)?status:'';
+ return ['In Progress','Updated Proposal to Head Office','Approved for LCBO Submission','Additional Information Required'].includes(status)?status:'';
 }
 function showWineCandidateDeleteBlocked(candidate){
  const status=wineCandidateDeleteBlockedStatus(candidate);
@@ -5978,11 +6005,12 @@ function deleteHeadBonus(id){
 }
 window.openHeadBonusForm=openHeadBonusForm;
 window.deleteHeadBonus=deleteHeadBonus;
-const HEAD_PROPOSAL_STATUSES=['Action Required','In Progress','Approved for LCBO Submission','Additional Information Required','Tender Winner','Declined','Declined on Tenders First Stage','Declined on Tenders Final Decision'];
+const HEAD_PROPOSAL_STATUSES=['Action Required','In Progress','Updated Proposal to Head Office','Approved for LCBO Submission','Additional Information Required','Tender Winner','Declined','Declined on Tenders First Stage','Declined on Tenders Final Decision'];
 function normalizeHeadProposalStatus(v){
  const s=String(v||'').trim();
  if(!s||s==='More Information Required')return 'Action Required';
  if(s==='Proposed to Head Office'||s==='PROPOSED TO HEAD OFFICE'||s==='Submitted')return 'In Progress';
+ if(s==='UPDATED PROPOSAL TO HEAD OFFICE'||s==='Updated proposal to Head Office'||s==='Updated Proposal To Head Office')return 'Updated Proposal to Head Office';
  if(s==='Approved for LCBO Submission'||s==='Approved for LCBO')return 'Approved for LCBO Submission';
  if(s==='Additional Information Requested')return 'Additional Information Required';
  if(s==='Declined by Head Office')return 'Declined';
@@ -7011,7 +7039,7 @@ function renderHeadOfficeProposals(){
  }).join('')||'<tr><td colspan="17">No wine proposals match the selected filters.</td></tr>';
  const k=document.getElementById('headProposalKpis');if(k){
    const count=s=>all.filter(x=>normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status)===s).length;
-   k.innerHTML=[['Action Required',count('Action Required')],['PROPOSED TO HEAD OFFICE',count('In Progress')],['Approved',count('Approved for LCBO Submission')],['Additional Info',count('Additional Information Required')],['Tender Winner',count('Tender Winner')],['DECLINED BY HEAD OFFICE',count('Declined')],['DECLINED ON TENDERS FIRST STAGE',count('Declined on Tenders First Stage')],['DECLINED ON TENDERS FINAL DECISION',count('Declined on Tenders Final Decision')]].map(([a,b])=>`<div class="card"><span>${a}</span><strong>${b}</strong></div>`).join('');
+   k.innerHTML=[['Action Required',count('Action Required')],['PROPOSED TO HEAD OFFICE',count('In Progress')],['UPDATED PROPOSAL TO HEAD OFFICE',count('Updated Proposal to Head Office')],['Approved',count('Approved for LCBO Submission')],['Additional Info',count('Additional Information Required')],['Tender Winner',count('Tender Winner')],['DECLINED BY HEAD OFFICE',count('Declined')],['DECLINED ON TENDERS FIRST STAGE',count('Declined on Tenders First Stage')],['DECLINED ON TENDERS FINAL DECISION',count('Declined on Tenders Final Decision')]].map(([a,b])=>`<div class="card"><span>${a}</span><strong>${b}</strong></div>`).join('');
  }
 }
 window.renderHeadOfficeProposals=renderHeadOfficeProposals;
@@ -7274,7 +7302,7 @@ window.updateHeadProposalAction=function(button,id){
  const status=String(box.querySelector('.head-action-status')?.value||'').trim();
  const comment=String(box.querySelector('.head-action-comment')?.value||'').trim();
 
- const allowed=['In Progress','Approved for LCBO Submission','Additional Information Required','Tender Winner','Declined','Declined on Tenders First Stage','Declined on Tenders Final Decision'];
+ const allowed=['In Progress','Updated Proposal to Head Office','Approved for LCBO Submission','Additional Information Required','Tender Winner','Declined','Declined on Tenders First Stage','Declined on Tenders Final Decision'];
  if(!allowed.includes(status)){
    alert('Select a Head Office Action.');
    box.querySelector('.head-action-status')?.focus();
