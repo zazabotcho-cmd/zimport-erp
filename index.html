@@ -871,7 +871,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <button type="button" onclick="openCreateMyItemForm()">+ Create My Item</button>
   </div><div class="toolbar"><input id="supplierArchivedCandidatesSearch" type="search" placeholder="Search My Items" oninput="renderArchivedCountryCandidates()"></div>
   <div class="table-wrap"><table>
-    <thead><tr><th>Wine</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Submitted Date</th><th>Item Status</th><th>Actions</th><th>Comment / Reason</th></tr></thead>
+    <thead><tr><th>Wine</th><th>Supplier / Producer</th><th>Supplier Price / Case</th><th>Bottles Per Case</th><th>Score / Awards</th><th>Submitted Date</th><th>Item Status</th><th>Actions</th><th>Comment / Reason</th></tr></thead>
     <tbody id="archivedCountryCandidateRows"></tbody>
   </table></div>
 </div></section>
@@ -6207,9 +6207,10 @@ window.openCreateMyItemForm=async()=>{
 };
 
 window.openItalyCandidateForm=async(id='')=>{
- const openingMyItem=italyCandidateSaveMode==='my-item'&&!id;
+ const openingMyItem=italyCandidateSaveMode==='my-item';
+ const editingMyItem=openingMyItem&&!!id;
  if(!openingMyItem)italyCandidateSaveMode='proposal';
- const x=(state.countryCandidates||[]).find(v=>v.id===id)||{};
+ const x=(openingMyItem?state.archivedCountryCandidates||[]:state.countryCandidates||[]).find(v=>v.id===id)||{};
  document.getElementById('italyCandidateFields').innerHTML=italyCandidateGroupsHtml();
   populateWineCandidateSupplierInfoSelect(x.retrievedSupplierInfoId||'');
   const retrieveSupplierBtn=document.getElementById('retrieveWineCandidateSupplierInfoBtn');
@@ -6218,7 +6219,7 @@ window.openItalyCandidateForm=async(id='')=>{
     if(ok){
       const selected=document.getElementById('wineCandidateSupplierInfoSelect')?.value||'';
       const recordId=document.getElementById('itCanRecordId')?.value||'';
-      const existingCandidate=(state.countryCandidates||[]).find(v=>v.id===recordId);
+      const existingCandidate=(openingMyItem?state.archivedCountryCandidates||[]:state.countryCandidates||[]).find(v=>v.id===recordId);
       if(existingCandidate)existingCandidate.retrievedSupplierInfoId=selected;
     }
   };
@@ -6240,9 +6241,9 @@ window.openItalyCandidateForm=async(id='')=>{
  if(proposeBtn){
    proposeBtn.disabled=false;
    proposeBtn.style.background='';
-   proposeBtn.textContent=openingMyItem?'Submit Item Information':(x.id?(approvedLocked?'Save Case and Pallet Information':'Update Proposal to Head Office'):'Propose to Head Office');
+   proposeBtn.textContent=openingMyItem?(editingMyItem?'Save Item Information':'Submit Item Information'):(x.id?(approvedLocked?'Save Case and Pallet Information':'Update Proposal to Head Office'):'Propose to Head Office');
  }
- document.getElementById('italyCandidateModalTitle').textContent=openingMyItem?`Create My Item — ${currentSourcingCountry}`:(x.id?'Edit Wine Candidate — Italy':'Add Wine Candidate — Italy');
+ document.getElementById('italyCandidateModalTitle').textContent=openingMyItem?(editingMyItem?`Edit My Item — ${currentSourcingCountry}`:`Create My Item — ${currentSourcingCountry}`):(x.id?'Edit Wine Candidate — Italy':'Add Wine Candidate — Italy');
  document.getElementById('deleteItalyCandidateBtn').style.visibility=openingMyItem?'hidden':(x.id?'visible':'hidden');
  show('italyCandidateModal');
 };
@@ -6340,6 +6341,7 @@ window.saveItalyCandidate=async()=>{
  const id=document.getElementById('itCanRecordId').value||uid();
  const sourceCollection=saveAsMyItem?state.archivedCountryCandidates:state.countryCandidates;
  const existing=sourceCollection.find(x=>x.id===id)||{};
+ const editingMyItem=saveAsMyItem&&!!existing.id;
  const productDescription=document.getElementById('c_productDescription')?.value.trim()||'';
  const data={};itemGroups.filter(g=>g.title!=='Pricing Information').forEach(g=>g.fields.filter(f=>!['producerSameAsSupplier','producerName','producerAddress1','producerAddress2','producerCity','producerRegionCountry','producerPostalCode'].includes(f[0])).forEach(([k,,t])=>{if(['calculated','websites','attachments'].includes(t))return;const el=document.getElementById('c_'+k);if(!el)return;data[k]=t==='number'?num(el.value):(k==='productCategory'?normalizeProductCategory(el.value||'Wine'):(el.value||''))}));
  data.supplierRegion=document.getElementById('c_supplierRegion')?.value.trim()||'';data.supplierCountry=document.getElementById('c_supplierCountry')?.value.trim()||'';data.supplierRegionCountry=[data.supplierRegion,data.supplierCountry].filter(Boolean).join(' / ');data.producerSize=document.getElementById('c_producerSize')?.value||'';data.classifiedAs=data.producerSize==='Small'?'Winery with < 375,000 litres wine sales in the last 12 months':data.producerSize==='N/A'?'Winery with >= 375,000 litres wine sales in the last 12 months':'';data.retrievedSupplierInfoId=document.getElementById('wineCandidateSupplierInfoSelect')?.value||existing.retrievedSupplierInfoId||'';
@@ -6395,13 +6397,18 @@ window.saveItalyCandidate=async()=>{
     rec.status='My Item';
     rec.headOfficeActionStatus='';
     rec.myItem=true;
-    rec.itemApprovalStatus='Item Submitted';
-    rec.itemSubmittedAt=new Date().toISOString();
-    rec.itemApprovalStatusUpdatedAt=new Date().toISOString();
+    rec.tenderSupplierItemOnly=true;
+    rec.itemApprovalStatus=editingMyItem?(existing.itemApprovalStatus||'Item Submitted'):'Item Submitted';
+    rec.itemSubmittedAt=editingMyItem?(existing.itemSubmittedAt||new Date().toISOString()):new Date().toISOString();
+    rec.itemApprovalStatusUpdatedAt=editingMyItem?(existing.itemApprovalStatusUpdatedAt||existing.itemSubmittedAt||new Date().toISOString()):new Date().toISOString();
     rec.archivedAt=existing.archivedAt||new Date().toISOString();
     rec.updatedAt=new Date().toISOString();
     const ai=state.archivedCountryCandidates.findIndex(x=>x.id===id);
     if(ai>=0)state.archivedCountryCandidates[ai]=rec;else state.archivedCountryCandidates.push(rec);
+
+    // A My Item submission belongs only to TENDERS → Tender Supplier Items.
+    // Remove any legacy/same-id copy from Active Wine Candidates.
+    state.countryCandidates=(state.countryCandidates||[]).filter(x=>String(x.id)!==String(id));
   }else{
     if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
     const i=state.countryCandidates.findIndex(x=>x.id===id);
@@ -6440,12 +6447,12 @@ window.proposeItalyCandidateToHeadOffice=async function(button){
  if(button?.disabled)return false;
  const saveAsMyItem=italyCandidateSaveMode==='my-item';
  const isEdit=!!document.getElementById('itCanRecordId')?.value;
- const original=saveAsMyItem?'Submit Item Information':(isEdit?'Update Proposal to Head Office':'Propose to Head Office');
+ const original=saveAsMyItem?(isEdit?'Save Item Information':'Submit Item Information'):(isEdit?'Update Proposal to Head Office':'Propose to Head Office');
  try{
-  if(button){button.disabled=true;button.textContent=saveAsMyItem?'Submitting Item Information...':'Proposing...'}
+  if(button){button.disabled=true;button.textContent=saveAsMyItem?(isEdit?'Saving Item Information...':'Submitting Item Information...'):'Proposing...'}
   const ok=await window.saveItalyCandidate();
   if(ok){
-   if(button){button.textContent=saveAsMyItem?'Item Submitted':(isEdit?'Proposal Updated':'Proposed to Head Office');button.style.background='var(--green)'}
+   if(button){button.textContent=saveAsMyItem?(isEdit?'Item Information Saved':'Item Submitted'):(isEdit?'Proposal Updated':'Proposed to Head Office');button.style.background='var(--green)'}
    return true;
   }
   if(button){button.disabled=false;button.textContent=original;button.style.background=''}
@@ -8119,16 +8126,16 @@ window.renderArchivedCountryCandidates=()=>{
    const o=tenders.find(t=>t.id===x.opportunityId);
    const supplier=x.supplierName||x.producerName||wines.find(w=>w.id===x.wineryId)?.name||'—';
    const price=x.supplierPricePerCase??x.price??'—';
-   const retail=x.localRetailPricePerBottle??x.localRetail??'—';
+   const bottlesPerCase=x.bottlesPerCase??x.sellingUnitsPerShippingCase??'—';
    return `<tr>
      <td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td>
-     <td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td>
+     <td>${esc(supplier)}</td><td>${esc(price)}</td><td>${esc(bottlesPerCase)}</td><td>${esc(x.score||x.awards||'—')}</td>
      <td>${esc((x.itemSubmittedAt||x.archivedAt)?new Date(x.itemSubmittedAt||x.archivedAt).toLocaleDateString():'—')}</td>
      <td>${esc(x.itemApprovalStatus||'—')}</td>
-     <td><button type="button" class="secondary small" onclick="updateAndProposeArchivedCandidate('${x.id}')">Update Information / Propose Again</button> <button type="button" class="danger small" onclick="deleteArchivedCountryCandidate('${x.id}')">Delete</button></td>
+     <td style="white-space:nowrap"><button type="button" class="secondary small" onclick="editMyItem('${x.id}')">Edit Item</button> <button type="button" class="danger small" onclick="deleteMyItem('${x.id}')">Delete Item</button></td>
      <td style="min-width:240px"><textarea id="myCandidateComment_${x.id}" rows="3" style="width:100%;min-width:220px" placeholder="Write comment / reason">${esc(x.myCandidateComment||'')}</textarea><button type="button" class="secondary small" style="margin-top:6px" onclick="saveMyCandidateItemComment('${x.id}')">Save Comment / Reason</button></td>
    </tr>`;
- }).join('')||'<tr><td colspan="10">No My Items for this country.</td></tr>';
+ }).join('')||'<tr><td colspan="9">No My Items for this country.</td></tr>';
 };
 window.saveMyCandidateItemComment=id=>{
  const x=(state.archivedCountryCandidates||[]).find(v=>v.id===id);if(!x)return;
@@ -8147,6 +8154,26 @@ window.archiveCountryCandidate=id=>{
  state.countryCandidates=state.countryCandidates.filter(v=>v.id!==id);
  save();renderItalySourcing();renderArchivedCountryCandidates();
 };
+window.editMyItem=id=>{
+ if(!Array.isArray(state.archivedCountryCandidates))state.archivedCountryCandidates=[];
+ const item=state.archivedCountryCandidates.find(v=>String(v.id)===String(id));
+ if(!item)return;
+ italyCandidateSaveMode='my-item';
+ openItalyCandidateForm(id);
+};
+window.deleteMyItem=id=>{
+ const item=(state.archivedCountryCandidates||[]).find(v=>String(v.id)===String(id));
+ if(!item)return;
+ if(!confirm('Delete this item?'))return;
+ moveToPortfolioManagerRecycleBin('archivedCountryCandidate','My Items',item,{collection:'archivedCountryCandidates'});
+ state.archivedCountryCandidates=(state.archivedCountryCandidates||[]).filter(v=>String(v.id)!==String(id));
+ state.countryCandidates=(state.countryCandidates||[]).filter(v=>String(v.id)!==String(id));
+ save();
+ renderArchivedCountryCandidates();
+ if(typeof window.renderTenderSupplierItems==='function')window.renderTenderSupplierItems();
+ renderPortfolioManagerRecycleBin();
+};
+
 window.updateAndProposeArchivedCandidate=id=>{
  if(!Array.isArray(state.archivedCountryCandidates))state.archivedCountryCandidates=[];
  const x=state.archivedCountryCandidates.find(v=>v.id===id);if(!x)return;
@@ -8315,7 +8342,7 @@ function renderTenderSupplierItems(){
  const q=(document.getElementById('tenderSupplierItemSearch')?.value||'').trim().toLowerCase();
  const statusFilter=document.getElementById('tenderSupplierItemStatusFilter')?.value||'';
  const rows=state.archivedCountryCandidates
-   .filter(x=>x && x.itemApprovalStatus)
+   .filter(x=>x && x.itemApprovalStatus && (x.myItem||x.tenderSupplierItemOnly))
    .filter(x=>{
      const status=TENDER_SUPPLIER_ITEM_STATUSES.includes(x.itemApprovalStatus)?x.itemApprovalStatus:'Item Submitted';
      if(statusFilter&&status!==statusFilter)return false;
@@ -8615,7 +8642,7 @@ window.renderItalySourcing=function(){
  const archivedTitle=document.getElementById('archivedCountryCandidatesTitle');if(archivedTitle)archivedTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Items';
  const notesTitle=document.getElementById('portfolioManagerNotesTitle');if(notesTitle)notesTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Portfolio Manager Notes';
  const recycleTitle=document.getElementById('portfolioManagerRecycleTitle');if(recycleTitle)recycleTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Recycling Bin';
- if(!state.countryWineries)state.countryWineries=[];if(!state.countryCandidates)state.countryCandidates=[];if(!state.countryBonuses)state.countryBonuses=[];const tenders=(state.tenders||[]).filter(t=>(t.sourcingRepresentatives||[]).includes(currentSourcingCountry)),wins=italyOnly(state.countryWineries).filter(recordMatchesCurrentSupplier),can=italyOnly(state.countryCandidates).filter(recordMatchesCurrentSupplier),bon=italyOnly(state.countryBonuses),approved=can.filter(x=>/Approved|Submitted|Winner/.test(x.status)).length,winners=can.filter(x=>x.status==='Winner').length;const k=document.getElementById('italyKpis');if(k)k.innerHTML=[
+ if(!state.countryWineries)state.countryWineries=[];if(!state.countryCandidates)state.countryCandidates=[];if(!state.countryBonuses)state.countryBonuses=[];const tenders=(state.tenders||[]).filter(t=>(t.sourcingRepresentatives||[]).includes(currentSourcingCountry)),wins=italyOnly(state.countryWineries).filter(recordMatchesCurrentSupplier),can=italyOnly(state.countryCandidates).filter(recordMatchesCurrentSupplier).filter(x=>!x.myItem&&!x.tenderSupplierItemOnly&&!x.itemApprovalStatus),bon=italyOnly(state.countryBonuses),approved=can.filter(x=>/Approved|Submitted|Winner/.test(x.status)).length,winners=can.filter(x=>x.status==='Winner').length;const k=document.getElementById('italyKpis');if(k)k.innerHTML=[
  ['Active Tenders',tenders.filter(x=>x.status==='Active').length],
  ['Active Wine Candidates',can.filter(x=>!['Declined','Archived'].includes(normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status))).length],
  ['Approved Wine Candidates',approved],
