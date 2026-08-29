@@ -696,6 +696,44 @@ select.global-status-control{
 .global-status-info{background:#e3f0ff !important;color:#145ca8 !important;border-color:#9fc4ea !important}
 .global-status-neutral{background:#eef2f6 !important;color:#475569 !important;border-color:#cbd5e1 !important}
 select.global-status-control option{font-weight:600;background:#fff;color:#1f2937}
+
+/* === EXACT GLOBAL WORKFLOW STATUS COLORS === */
+/* These classes intentionally override the general status palette. */
+.global-status-not-contacted{
+  background:#ffe600 !important;
+  color:#3f3600 !important;
+  border-color:#d9bd00 !important;
+}
+.global-status-scheduled-confirmed{
+  background:#e3f0ff !important;
+  color:#145ca8 !important;
+  border-color:#9fc4ea !important;
+}
+.global-status-on-the-way{
+  background:#cfe4ff !important;
+  color:#0f4f8a !important;
+  border-color:#82b3e8 !important;
+}
+.global-status-delivered-consolidation{
+  background:#8ebce8 !important;
+  color:#0b355e !important;
+  border-color:#4d8fc9 !important;
+}
+.global-status-arrived-canada{
+  background:#dff4e3 !important;
+  color:#216337 !important;
+  border-color:#9bcba6 !important;
+}
+.global-status-cleared-warehouse{
+  background:#ffffff !important;
+  color:#334155 !important;
+  border-color:#cbd5e1 !important;
+}
+.global-status-lcbo-payed{
+  background:#d9f2df !important;
+  color:#166534 !important;
+  border-color:#7fc48d !important;
+}
 </style>
 
 </head>
@@ -3170,7 +3208,7 @@ function poStatusSelect(po){
 function poDisplayRow(po,archived=false){
   const calculated=(po.lines||[]).reduce((a,x)=>a+(num(x.totalQuantity)*num(x.quotedPricePerCase)),0);
   const statusCell=archived?poStatusBadge(po.poStatus||''):poStatusSelect(po);
-  return `<tr><td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(poProgramLabel(po))}</td><td>${poVendorProducerHtml(po)}</td><td>${escapeHtml(poItemDescriptions(po)||'—')}</td><td><b>${escapeHtml(poCaseQuantityWithBottlesPerCase(po))}</b></td><td>${poBottleQuantity(po).toLocaleString()}</td><td>${statusCell}</td><td>${escapeHtml((po.currency||'')+' '+poMoney(calculated))}</td><td>${po.fileName?`<button type="button" class="secondary small" onclick="openPoRecordFile('${po.id}')">${escapeHtml(po.fileName)}</button>`:'—'}</td><td><button type="button" class="secondary small" onclick="openPoEditor('${po.id}')">Edit</button> <button type="button" class="danger small" onclick="deletePoRecord('${po.id}')">Delete</button></td></tr>`;
+  return `<tr><td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(poProgramLabel(po))}</td><td>${poVendorProducerHtml(po)}</td><td>${escapeHtml(poItemDescriptions(po)||'—')}</td><td><b>${escapeHtml(poCaseQuantityWithBottlesPerCase(po))}</b></td><td>${poBottleQuantity(po).toLocaleString()}</td><td>${statusCell}</td><td>${escapeHtml((po.currency||'')+' '+poMoney(calculated))}</td><td>${po.fileName?`<button type="button" class="secondary small" onclick="openPoRecordFile('${po.id}')">${escapeHtml(po.fileName)}</button>`:'—'}</td><td>${archived?`<button type="button" class="secondary small" onclick="moveArchivedPoBackToAll('${po.id}')">Move Back to ALL PO'S &amp; PROFORMAS</button> `:''}<button type="button" class="secondary small" onclick="openPoEditor('${po.id}')">Edit</button> <button type="button" class="danger small" onclick="deletePoRecord('${po.id}')">Delete</button></td></tr>`;
 }
 function updatePoStatusFromRow(id,status){
   const po=(state.purchaseOrders||[]).find(x=>x.id===id);if(!po)return;
@@ -3200,6 +3238,27 @@ function updatePoStatusFromRow(id,status){
   renderArchivedPurchaseOrders();
 }
 window.updatePoStatusFromRow=updatePoStatusFromRow;
+
+function moveArchivedPoBackToAll(id){
+  const po=(state.purchaseOrders||[]).find(x=>String(x.id)===String(id));
+  if(!po){alert('Archived PO was not found.');return false}
+
+  // ARCHIVED PO'S is generated from PO Status = LCBO PAYED.
+  // To move it back to ALL PO'S & PROFORMAS, restore it to an active PO status.
+  po.poStatus='CLEARED OUT FROM THE WAREHOUSE';
+  po.restoredFromArchivedAt=new Date().toISOString();
+
+  syncTenderInvoiceStatusFromPo(po);
+  syncRsoInvoiceStatusFromPo(po);
+  save();
+
+  try{renderPurchaseOrders()}catch(e){}
+  try{renderArchivedPurchaseOrders()}catch(e){}
+  try{renderProformaPoRows()}catch(e){}
+
+  return true;
+}
+window.moveArchivedPoBackToAll=moveArchivedPoBackToAll;
 
 
 let poPrintPallets=[];
@@ -5336,7 +5395,7 @@ function restoreArchivedInvoice(id){
     const tbody=document.getElementById('archivedPoRows');if(!tbody)return;
     const q=(document.getElementById('archivedPoPageSearch')?.value||'').trim().toLowerCase();
     const manual=(state.manuallyArchivedPurchaseOrders||[]).filter(po=>!q||JSON.stringify(po).toLowerCase().includes(q));
-    const rows=manual.map(po=>`<tr><td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(po.program||'—')}</td><td>${escapeHtml((po.supplierNames||[]).join(', ')||'—')}</td><td>${escapeHtml(poItems(po)||'—')}</td><td>${poCases(po).toLocaleString()}</td><td>${poBottles(po).toLocaleString()}</td><td>${escapeHtml(po.poStatus||'—')}</td><td><button type="button" class="secondary small" onclick="restoreArchivedPo('${po.id}')">Restore</button> <button type="button" class="danger small" onclick="deleteArchivedPo('${po.id}')">Delete</button></td></tr>`).join('');
+    const rows=manual.map(po=>`<tr><td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(po.program||'—')}</td><td>${escapeHtml((po.supplierNames||[]).join(', ')||'—')}</td><td>${escapeHtml(poItems(po)||'—')}</td><td>${poCases(po).toLocaleString()}</td><td>${poBottles(po).toLocaleString()}</td><td>${escapeHtml(po.poStatus||'—')}</td><td><button type="button" class="secondary small" onclick="restoreArchivedPo('${po.id}')">Move Back to ALL PO'S &amp; PROFORMAS</button> <button type="button" class="danger small" onclick="deleteArchivedPo('${po.id}')">Delete</button></td></tr>`).join('');
     tbody.innerHTML=rows||'<tr><td colspan="8">No manually archived POs.</td></tr>';
   }
 
@@ -9846,8 +9905,8 @@ function globalStatusTone(value){
  if(!s)return 'neutral';
  if(/declin|reject|fail|cancel|not paid|error|non-compliant|blocked/.test(s))return 'danger';
  if(/approved|winner|fully paid|completed|cleared out|delivered|registered|success|accepted/.test(s))return 'success';
- if(/action required|information required|information requested|more information|submitted|pending|on hold|partially paid|waiting|scheduled|in progress/.test(s))return 'warning';
- if(/proposed|updated proposal|to register|on the way|processing|active/.test(s))return 'info';
+ if(/action required|information required|information requested|more information|submitted|pending|on hold|partially paid|waiting|scheduled|in progress|updated proposal to head office/.test(s))return 'warning';
+ if(/proposed|to register|on the way|processing|active/.test(s))return 'info';
  return 'neutral';
 }
 window.globalStatusTone=globalStatusTone;
@@ -9855,9 +9914,34 @@ window.globalStatusTone=globalStatusTone;
 function clearGlobalStatusTone(el){
  ['success','warning','danger','info','neutral'].forEach(t=>el.classList.remove('global-status-'+t));
 }
+function clearExactWorkflowStatusTone(el){
+ [
+   'not-contacted',
+   'scheduled-confirmed',
+   'on-the-way',
+   'delivered-consolidation',
+   'arrived-canada',
+   'cleared-warehouse',
+   'lcbo-payed'
+ ].forEach(t=>el.classList.remove('global-status-'+t));
+}
+function exactWorkflowStatusTone(value){
+ const s=String(value??'').trim().toUpperCase();
+ if(s==='NOT CONTACTED')return 'not-contacted';
+ if(s==='SCHEDULED & CONFIRMED'||s==='SCHEDULED & CONFIRMED (PARTIALLY)')return 'scheduled-confirmed';
+ if(s==='ON THE WAY'||s==='ON THE WAY (PARTIALLY)')return 'on-the-way';
+ if(s==='DELIVERED TO CONSOLIDATION'||s==='DELIVERED TO CONSOLIDATION (PARTIALLY)')return 'delivered-consolidation';
+ if(s==='ARRIVED IN CANADA'||s==='ARRIVED IN CANADA (PARTIALLY)')return 'arrived-canada';
+ if(s==='CLEARED OUT FROM THE WAREHOUSE')return 'cleared-warehouse';
+ if(s==='LCBO PAYED'||s==='LCBO PAID')return 'lcbo-payed';
+ return '';
+}
 function applyGlobalStatusTone(el,value){
  clearGlobalStatusTone(el);
- el.classList.add('global-status-'+globalStatusTone(value));
+ clearExactWorkflowStatusTone(el);
+ const exact=exactWorkflowStatusTone(value);
+ if(exact)el.classList.add('global-status-'+exact);
+ else el.classList.add('global-status-'+globalStatusTone(value));
 }
 
 function selectIsStatusControl(select){
@@ -9969,6 +10053,114 @@ const globalStatusObserver=new MutationObserver(()=>{
 if(document.body)globalStatusObserver.observe(document.body,{childList:true,subtree:true});
 setTimeout(applyGlobalStatusStandard,0);
 /* === END GLOBAL STATUS TEXT / COLOR STANDARD === */
+
+
+
+/* === SHIPMENT STATUS COLORS EVERYWHERE === */
+function isKnownShipmentStatusValue(value){
+ const s=String(value??'').trim().toUpperCase();
+ return [
+   'NOT CONTACTED',
+   'SCHEDULED & CONFIRMED',
+   'SCHEDULED & CONFIRMED (PARTIALLY)',
+   'ON THE WAY',
+   'ON THE WAY (PARTIALLY)',
+   'DELIVERED TO CONSOLIDATION',
+   'DELIVERED TO CONSOLIDATION (PARTIALLY)',
+   'ARRIVED IN CANADA',
+   'ARRIVED IN CANADA (PARTIALLY)',
+   'CLEARED OUT FROM THE WAREHOUSE',
+   'LCBO PAYED',
+   'LCBO PAID'
+ ].includes(s);
+}
+
+function applyShipmentStatusColorEverywhere(){
+ // 1) Any select currently showing a shipment status gets the exact global color,
+ // even when the select ID/class/header does not contain the word "status".
+ document.querySelectorAll('select').forEach(select=>{
+   const current=select.value||select.options?.[select.selectedIndex]?.textContent||'';
+   if(!isKnownShipmentStatusValue(current))return;
+
+   select.classList.add('global-status-control');
+   applyGlobalStatusTone(select,current);
+
+   if(select.dataset.shipmentColorBound!=='1'){
+     select.dataset.shipmentColorBound='1';
+     select.addEventListener('change',()=>{
+       const value=select.value||select.options?.[select.selectedIndex]?.textContent||'';
+       if(isKnownShipmentStatusValue(value)){
+         select.classList.add('global-status-control');
+         applyGlobalStatusTone(select,value);
+       }
+     });
+   }
+ });
+
+ // 2) Any plain table cell anywhere in the program whose whole visible value
+ // is a shipment status gets the same exact badge/color.
+ document.querySelectorAll('td').forEach(td=>{
+   if(td.querySelector('select,input,textarea,button,a'))return;
+   const raw=String(td.textContent||'').replace(/\s+/g,' ').trim();
+   if(!isKnownShipmentStatusValue(raw))return;
+
+   let badge=td.querySelector(':scope > .global-status-badge');
+   if(!badge){
+     td.textContent='';
+     badge=document.createElement('span');
+     badge.className='global-status-badge';
+     td.appendChild(badge);
+   }
+   badge.textContent=globalStatusDisplayText(raw);
+   applyGlobalStatusTone(badge,raw);
+ });
+
+ // 3) Existing badges/spans/divs showing shipment status get exact same color.
+ document.querySelectorAll('span,div,strong,b').forEach(el=>{
+   if(el.children.length)return;
+   const raw=String(el.textContent||'').replace(/\s+/g,' ').trim();
+   if(!isKnownShipmentStatusValue(raw))return;
+
+   el.textContent=globalStatusDisplayText(raw);
+   el.classList.add('global-status-badge');
+   applyGlobalStatusTone(el,raw);
+ });
+}
+window.applyShipmentStatusColorEverywhere=applyShipmentStatusColorEverywhere;
+
+// Run after the existing global status pass.
+const _shipmentColorOriginalApplyGlobalStatusStandard=window.applyGlobalStatusStandard;
+if(typeof _shipmentColorOriginalApplyGlobalStatusStandard==='function'){
+ window.applyGlobalStatusStandard=function(){
+   const result=_shipmentColorOriginalApplyGlobalStatusStandard.apply(this,arguments);
+   applyShipmentStatusColorEverywhere();
+   return result;
+ };
+}
+
+// Also run after global program refreshes.
+const _shipmentColorOriginalRefreshProgramViews=window.refreshProgramViews;
+if(typeof _shipmentColorOriginalRefreshProgramViews==='function'){
+ window.refreshProgramViews=function(){
+   const result=_shipmentColorOriginalRefreshProgramViews.apply(this,arguments);
+   setTimeout(applyShipmentStatusColorEverywhere,0);
+   return result;
+ };
+}
+
+// Catch independently-rendered pages/modals/tables.
+let shipmentStatusColorQueued=false;
+const shipmentStatusColorObserver=new MutationObserver(()=>{
+ if(shipmentStatusColorQueued)return;
+ shipmentStatusColorQueued=true;
+ setTimeout(()=>{
+   shipmentStatusColorQueued=false;
+   applyShipmentStatusColorEverywhere();
+ },0);
+});
+if(document.body)shipmentStatusColorObserver.observe(document.body,{childList:true,subtree:true});
+setTimeout(applyShipmentStatusColorEverywhere,0);
+/* === END SHIPMENT STATUS COLORS EVERYWHERE === */
 
 </script>
 
