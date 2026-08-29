@@ -10190,6 +10190,82 @@ if(document.body)shipmentStatusColorObserver.observe(document.body,{childList:tr
 setTimeout(applyShipmentStatusColorEverywhere,0);
 /* === END SHIPMENT STATUS COLORS EVERYWHERE === */
 
+
+
+/* === NORMAL CAPITALIZATION FOR ALL SUB-PAGE NAMES === */
+function normalizeProgramPageName(text){
+ const raw=String(text??'').trim();
+ if(!raw)return raw;
+
+ const keepUpper=new Set([
+   'LCBO','NISS','NTP','PO','PO\'S','DV','ASN','ERP','CAD','USD','GBP','EUR',
+   'FCA','FOB','QA','RSO','REGU','SEAS'
+ ]);
+
+ return raw.toLowerCase().replace(/\b[a-z0-9][a-z0-9'&/-]*\b/g,(word,offset)=>{
+   const upper=word.toUpperCase();
+   if(keepUpper.has(upper))return upper;
+   if(offset===0)return word.charAt(0).toUpperCase()+word.slice(1);
+   // Normal page-name capitalization: capitalize meaningful words,
+   // keep short joining words lowercase.
+   if(['and','or','of','to','in','from','for','with','by','the','a','an'].includes(word))return word;
+   return word.charAt(0).toUpperCase()+word.slice(1);
+ });
+}
+
+function applyNormalSubPageNames(){
+ // Secondary navigation only. The main first-row navigation is left unchanged.
+ document.querySelectorAll(
+   '.subnav button, .subnav .tab, nav.subnav button, [data-section-nav] button, [data-section-nav] .tab'
+ ).forEach(el=>{
+   if(el.dataset.normalPageNameApplied==='1')return;
+
+   const textNodes=[...el.childNodes].filter(n=>n.nodeType===Node.TEXT_NODE);
+   if(textNodes.length){
+     textNodes.forEach(n=>{
+       const original=n.nodeValue||'';
+       if(original.trim())n.nodeValue=original.replace(original.trim(),normalizeProgramPageName(original.trim()));
+     });
+   }else if(el.textContent.trim()){
+     el.textContent=normalizeProgramPageName(el.textContent.trim());
+   }
+
+   el.dataset.normalPageNameApplied='1';
+ });
+
+ // Also normalize secondary page headings where the heading clearly corresponds
+ // to a sub-page title. Main/top-level navigation and main first-row labels remain untouched.
+ document.querySelectorAll(
+   '.page h2[data-page-title], .page h3[data-page-title], .subpage-title, [data-subpage-title]'
+ ).forEach(el=>{
+   const t=el.textContent.trim();
+   if(t)el.textContent=normalizeProgramPageName(t);
+ });
+}
+window.applyNormalSubPageNames=applyNormalSubPageNames;
+
+const _pageNameOriginalRefresh=window.refreshProgramViews;
+if(typeof _pageNameOriginalRefresh==='function'){
+ window.refreshProgramViews=function(){
+   const result=_pageNameOriginalRefresh.apply(this,arguments);
+   setTimeout(applyNormalSubPageNames,0);
+   return result;
+ };
+}
+
+let normalSubPageNamesQueued=false;
+const normalSubPageNamesObserver=new MutationObserver(()=>{
+ if(normalSubPageNamesQueued)return;
+ normalSubPageNamesQueued=true;
+ setTimeout(()=>{
+   normalSubPageNamesQueued=false;
+   applyNormalSubPageNames();
+ },0);
+});
+if(document.body)normalSubPageNamesObserver.observe(document.body,{childList:true,subtree:true});
+setTimeout(applyNormalSubPageNames,0);
+/* === END NORMAL CAPITALIZATION FOR ALL SUB-PAGE NAMES === */
+
 </script>
 
 <div id="globalNameDetailModal" class="modal hidden"><div class="modal-card head-detail-modal-card">
