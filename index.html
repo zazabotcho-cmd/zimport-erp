@@ -708,7 +708,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <input type="hidden" id="itWinRecordId">
     <h3 id="itWinFormTitle" style="margin-top:0">Add Supplier Information</h3>
     <div class="form-grid three">
-      <label>LCBO Supplier Number<input id="itWinLcboSupplierNumber"></label>
+      <label>LCBO Supplier Number (if applicable)<input id="itWinLcboSupplierNumber"></label>
       <label>Supplier Legal Full Name<input id="itWinName"></label>
       <label>Supplier Address Line 1<input id="itWinAddress1"></label>
       <label>Supplier Address Line 2<input id="itWinAddress2"></label>
@@ -747,6 +747,33 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
         <b>Small</b> - a winery with &lt; 375,000 litres wine sales in the last 12 months<br>
         <b>N/A</b> - a winery with &gt;= 375,000 litres wine sales in the last 12 months
       </div>
+      <div class="full item-group" style="margin-top:12px">
+        <h3 style="margin-top:0">Contact Person 1</h3>
+        <div class="form-grid">
+          <label>Contact Person Name<input id="itWinContactName1"></label>
+          <label>Position<input id="itWinContactPosition1"></label>
+          <label>Email<input id="itWinContactEmail1" type="email"></label>
+          <label>Phone<input id="itWinContactPhone1" type="tel"></label>
+        </div>
+      </div>
+      <div class="full item-group">
+        <h3 style="margin-top:0">Contact Person 2</h3>
+        <div class="form-grid">
+          <label>Contact Person Name<input id="itWinContactName2"></label>
+          <label>Position<input id="itWinContactPosition2"></label>
+          <label>Email<input id="itWinContactEmail2" type="email"></label>
+          <label>Phone<input id="itWinContactPhone2" type="tel"></label>
+        </div>
+      </div>
+      <div class="full item-group">
+        <h3 style="margin-top:0">Contact Person 3</h3>
+        <div class="form-grid">
+          <label>Contact Person Name<input id="itWinContactName3"></label>
+          <label>Position<input id="itWinContactPosition3"></label>
+          <label>Email<input id="itWinContactEmail3" type="email"></label>
+          <label>Phone<input id="itWinContactPhone3" type="tel"></label>
+        </div>
+      </div>
     </div>
     <div class="modal-actions"><span></span><button class="secondary" onclick="closeItalyWineryForm()">Cancel</button><button id="itWinSaveBtn" onclick="saveItalyWinery()">Save Supplier Information</button></div>
   </div>
@@ -755,20 +782,6 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <th>LCBO Supplier #</th><th>Supplier Legal Full Name</th><th>Address</th><th>City</th><th>Region</th><th>Country</th><th>Postal Code</th>
     <th>Phone</th><th>Email</th><th>Payment Terms</th><th>Ontario / LCBO Agent?</th><th>Exports Other Provinces?</th><th>Producer Size</th><th>Action</th>
   </tr></thead><tbody id="italyWineryRows"></tbody></table></div>
-
-  <div class="box" style="margin-top:24px">
-    <div class="section-head">
-      <div>
-        <h3 style="margin:0">Contact Persons</h3>
-        <p class="note">Add and manage contact persons for the selected supplier.</p>
-      </div>
-      <button type="button" class="secondary" onclick="openSupplierContactPersonForm()">+ Add Contact Persons</button>
-    </div>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Contact Person Name</th><th>Position</th><th>Email</th><th>Phone</th><th>Actions</th></tr></thead>
-      <tbody id="supplierContactPersonsRows"></tbody>
-    </table></div>
-  </div>
 </div></section>
 <section id="country-candidates" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — Active Candidate Items</h2><p class="note">Wine Candidate uses the same detailed product profile as Add Tender Item, with country-sourcing fields added for the representative.</p></div><button type="button" onclick="openItalyCandidateForm()">+ Propose Wine</button></div><div class="toolbar"><input id="supplierWineCandidatesSearch" type="search" placeholder="Search Active Candidate Items" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Wine</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="italyCandidateRows"></tbody></table></div></div></section>
 <section id="country-archived-candidates" class="panel"><div class="box">
@@ -5398,7 +5411,7 @@ window.setSourcingCountry=country=>{
 };
 function show(id,on=true){const e=document.getElementById(id);if(e)e.classList.toggle('hidden',!on)}
 function clearSupplierInformationForm(){
- const ids=['itWinLcboSupplierNumber','itWinName','itWinAddress1','itWinAddress2','itWinCity','itWinRegion','itWinCountry','itWinPostalCode','itWinPhone','itWinEmail','itWinPaymentTerms','itWinOntario','itWinOntarioAgentCompany','itWinOntarioAgentHowLong','itWinOntarioAgentQuantity','itWinOntarioAgentImportDate','itWinOntarioAgentInfo','itWinExportsOtherProvinces','itWinOtherProvinceCompany','itWinOtherProvinceNames','itWinOtherProvinceHowLong','itWinOtherProvinceQuantity','itWinOtherProvinceImportDate','itWinOtherProvinceInfo','itWinProducerSize'];
+ const ids=['itWinLcboSupplierNumber','itWinName','itWinAddress1','itWinAddress2','itWinCity','itWinRegion','itWinCountry','itWinPostalCode','itWinPhone','itWinEmail','itWinPaymentTerms','itWinOntario','itWinOntarioAgentCompany','itWinOntarioAgentHowLong','itWinOntarioAgentQuantity','itWinOntarioAgentImportDate','itWinOntarioAgentInfo','itWinExportsOtherProvinces','itWinOtherProvinceCompany','itWinOtherProvinceNames','itWinOtherProvinceHowLong','itWinOtherProvinceQuantity','itWinOtherProvinceImportDate','itWinOtherProvinceInfo','itWinProducerSize','itWinContactName1','itWinContactPosition1','itWinContactEmail1','itWinContactPhone1','itWinContactName2','itWinContactPosition2','itWinContactEmail2','itWinContactPhone2','itWinContactName3','itWinContactPosition3','itWinContactEmail3','itWinContactPhone3'];
  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
  const rid=document.getElementById('itWinRecordId');if(rid)rid.value='';
  const title=document.getElementById('itWinFormTitle');if(title)title.textContent='Add Supplier Information';
@@ -5447,6 +5460,14 @@ window.openItalyWineryForm=(id='')=>{
   toggleSupplierOntarioAgentDetails();
   toggleSupplierOtherProvinceDetails();
   set('itWinProducerSize',x.producerSize);
+  const supplierContacts=getSupplierContactPersons().slice(0,3);
+  for(let n=1;n<=3;n++){
+    const c=supplierContacts[n-1]||{};
+    set('itWinContactName'+n,c.name);
+    set('itWinContactPosition'+n,c.position);
+    set('itWinContactEmail'+n,c.email);
+    set('itWinContactPhone'+n,c.phone);
+  }
   const title=document.getElementById('itWinFormTitle');if(title)title.textContent='Edit Supplier Information';
   const saveBtn=document.getElementById('itWinSaveBtn');if(saveBtn)saveBtn.textContent='Update Supplier Information';
  }
@@ -5938,7 +5959,30 @@ window.saveItalyWinery=()=>{
  }else{
   state.countryWineries.push(record);
  }
- save();closeItalyWineryForm();renderItalySourcing();
+
+ const currentContacts=[...getSupplierContactPersons()];
+ const formContacts=[];
+ for(let n=1;n<=3;n++){
+   const name=(document.getElementById('itWinContactName'+n)?.value||'').trim();
+   const position=(document.getElementById('itWinContactPosition'+n)?.value||'').trim();
+   const email=(document.getElementById('itWinContactEmail'+n)?.value||'').trim();
+   const phone=(document.getElementById('itWinContactPhone'+n)?.value||'').trim();
+   if(name||position||email||phone){
+     if(!name){alert(`Enter Contact Person Name for Contact Person ${n}.`);return false}
+     const old=currentContacts[n-1];
+     formContacts.push({
+       ...(old||{}),
+       id:old?.id||uid(),
+       name,position,email,phone,
+       createdAt:old?.createdAt||new Date().toISOString(),
+       updatedAt:new Date().toISOString()
+     });
+   }
+ }
+ const remainingContacts=currentContacts.slice(3);
+ setSupplierContactPersons([...formContacts,...remainingContacts]);
+
+ save();closeItalyWineryForm();renderItalySourcing();renderSupplierContactPersons();
 };
 window.saveItalyCandidate=async()=>{
  if(!state||typeof state!=='object')state={};
