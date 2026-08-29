@@ -674,17 +674,30 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </div></section>
 <section id="country-opportunities" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — My Tenders</h2><p class="note">Read-only tender information. This page automatically shows tenders created in TENDERS and announced to the Italy Country Portfolio & Sourcing Representative. Tenders cannot be created, edited, or deleted here.</p></div></div><div class="toolbar"><input id="supplierMyTendersSearch" type="search" placeholder="Search My Tenders" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name</th><th>Product Needs</th><th>Pre-Submission Date</th><th>Tasting Date</th><th>Status</th><th>Notes</th><th>Active Candidate Items</th></tr></thead><tbody id="italyOpportunityRows"></tbody></table></div></div></section>
 
-<div id="supplierTenderContactModal" class="modal hidden"><div class="modal-card" style="max-width:760px">
- <div class="modal-head"><div><h2 id="supplierContactPersonModalTitle">Add Contact Person</h2><p id="supplierTenderContactTenderLabel" class="note">Supplier contact information</p></div><button type="button" class="icon" onclick="closeSupplierTenderContact()">×</button></div>
- 
- <input type="hidden" id="supplierContactPersonRecordId"><div class="form-grid">
-  <label>Contact Person Name<input id="supplierTenderContactName"></label>
-  <label>Position<input id="supplierTenderContactPosition"></label>
-  <label>Email<input id="supplierTenderContactEmail" type="email"></label>
-  <label>Phone<input id="supplierTenderContactPhone" type="tel"></label>
-  <label class="full">Other<textarea id="supplierTenderContactOther" rows="5" placeholder="Other contact information or responsibilities"></textarea></label>
+<div id="supplierTenderContactModal" class="modal hidden"><div class="modal-card" style="max-width:900px">
+ <div class="modal-head"><div><h2 id="supplierContactPersonModalTitle">Add Contact Persons</h2><p id="supplierTenderContactTenderLabel" class="note">Supplier contact information</p></div><button type="button" class="icon" onclick="closeSupplierTenderContact()">×</button></div>
+ <input type="hidden" id="supplierContactPersonRecordId">
+ <div id="supplierContactBatchForm">
+   <div class="item-group" style="margin-bottom:14px"><h3 style="margin-top:0">Contact Person 1</h3><div class="form-grid">
+     <label>Contact Person Name<input id="supplierTenderContactName1"></label>
+     <label>Position<input id="supplierTenderContactPosition1"></label>
+     <label>Email<input id="supplierTenderContactEmail1" type="email"></label>
+     <label>Phone<input id="supplierTenderContactPhone1" type="tel"></label>
+   </div></div>
+   <div class="item-group" style="margin-bottom:14px"><h3 style="margin-top:0">Contact Person 2</h3><div class="form-grid">
+     <label>Contact Person Name<input id="supplierTenderContactName2"></label>
+     <label>Position<input id="supplierTenderContactPosition2"></label>
+     <label>Email<input id="supplierTenderContactEmail2" type="email"></label>
+     <label>Phone<input id="supplierTenderContactPhone2" type="tel"></label>
+   </div></div>
+   <div class="item-group"><h3 style="margin-top:0">Contact Person 3</h3><div class="form-grid">
+     <label>Contact Person Name<input id="supplierTenderContactName3"></label>
+     <label>Position<input id="supplierTenderContactPosition3"></label>
+     <label>Email<input id="supplierTenderContactEmail3" type="email"></label>
+     <label>Phone<input id="supplierTenderContactPhone3" type="tel"></label>
+   </div></div>
  </div>
- <div class="modal-actions"><span></span><button type="button" class="secondary" onclick="closeSupplierTenderContact()">Cancel</button><button type="button" onclick="saveSupplierTenderContact()">Save Contact</button></div>
+ <div class="modal-actions"><span></span><button type="button" class="secondary" onclick="closeSupplierTenderContact()">Cancel</button><button type="button" onclick="saveSupplierTenderContact()">Save Contacts</button></div>
 </div></div>
 <section id="country-wineries" class="panel"><div class="box">
   <div class="section-head">
@@ -727,13 +740,12 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <div class="section-head">
       <div>
         <h3 style="margin:0">Contact Persons</h3>
-        <p class="note">Add and manage contact persons for the selected supplier. Each supplier must have at least 2 contact persons.</p>
+        <p class="note">Add and manage contact persons for the selected supplier.</p>
       </div>
-      <button type="button" class="secondary" onclick="openSupplierContactPersonForm()">+ Add Contact Person</button>
+      <button type="button" class="secondary" onclick="openSupplierContactPersonForm()">+ Add Contact Persons</button>
     </div>
-    <div id="supplierContactMinimumNotice" class="note" style="margin:8px 0 14px;font-weight:700"></div>
     <div class="table-wrap"><table>
-      <thead><tr><th>Contact Person Name</th><th>Position</th><th>Email</th><th>Phone</th><th>Other</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Contact Person Name</th><th>Position</th><th>Email</th><th>Phone</th><th>Actions</th></tr></thead>
       <tbody id="supplierContactPersonsRows"></tbody>
     </table></div>
   </div>
@@ -7703,10 +7715,9 @@ function renderSupplierContactPersons(){
    <td>${esc(c.position||'—')}</td>
    <td>${esc(c.email||'—')}</td>
    <td>${esc(c.phone||'—')}</td>
-   <td>${esc(c.other||'—')}</td>
    <td><button type="button" class="secondary small" onclick="openSupplierContactPersonForm('${c.id}')">Edit</button>
        <button type="button" class="danger small" onclick="deleteSupplierContactPerson('${c.id}')">Delete</button></td>
- </tr>`).join('')||'<tr><td colspan="6">No contact persons added yet.</td></tr>';
+ </tr>`).join('')||'<tr><td colspan="5">No contact persons added yet.</td></tr>';
 }
 window.openSupplierContactPersonForm=(id='')=>{
  if(!currentCountrySupplierId){alert('Select a supplier first.');return false}
@@ -7714,40 +7725,59 @@ window.openSupplierContactPersonForm=(id='')=>{
  const c=id?rows.find(x=>x.id===id):null;
  $('#supplierContactPersonRecordId').value=c?.id||'';
  $('#supplierTenderContactTenderLabel').textContent=`${currentSourcingCountry} — ${selectedSupplierName()||'Supplier'}`;
- $('#supplierContactPersonModalTitle').textContent=c?'Edit Contact Person':'Add Contact Person';
- $('#supplierTenderContactName').value=c?.name||'';
- $('#supplierTenderContactPosition').value=c?.position||'';
- $('#supplierTenderContactEmail').value=c?.email||'';
- $('#supplierTenderContactPhone').value=c?.phone||'';
- $('#supplierTenderContactOther').value=c?.other||'';
+ $('#supplierContactPersonModalTitle').textContent=c?'Edit Contact Person':'Add Contact Persons';
+ for(let n=1;n<=3;n++){
+   const suffix=String(n);
+   const nameEl=document.getElementById('supplierTenderContactName'+suffix);
+   const posEl=document.getElementById('supplierTenderContactPosition'+suffix);
+   const emailEl=document.getElementById('supplierTenderContactEmail'+suffix);
+   const phoneEl=document.getElementById('supplierTenderContactPhone'+suffix);
+   if(nameEl)nameEl.value=n===1?(c?.name||''):'';
+   if(posEl)posEl.value=n===1?(c?.position||''):'';
+   if(emailEl)emailEl.value=n===1?(c?.email||''):'';
+   if(phoneEl)phoneEl.value=n===1?(c?.phone||''):'';
+ }
+ const groups=document.querySelectorAll('#supplierContactBatchForm .item-group');
+ groups.forEach((g,i)=>g.style.display=(c&&i>0)?'none':'');
  show('supplierTenderContactModal',true);
  return true;
 };
 window.closeSupplierTenderContact=()=>show('supplierTenderContactModal',false);
 window.saveSupplierTenderContact=()=>{
  const rows=getSupplierContactPersons();
- const id=$('#supplierContactPersonRecordId').value||uid();
- const rec={
-   id,
-   name:$('#supplierTenderContactName').value.trim(),
-   position:$('#supplierTenderContactPosition').value.trim(),
-   email:$('#supplierTenderContactEmail').value.trim(),
-   phone:$('#supplierTenderContactPhone').value.trim(),
-   other:$('#supplierTenderContactOther').value.trim(),
-   updatedAt:new Date().toISOString()
- };
- if(!rec.name){alert('Enter Contact Person Name.');return false}
- const i=rows.findIndex(x=>x.id===id);
- if(i>=0)rows[i]=rec;else rows.push(rec);
+ const existingId=$('#supplierContactPersonRecordId').value||'';
+ if(existingId){
+   const rec={
+     id:existingId,
+     name:(document.getElementById('supplierTenderContactName1')?.value||'').trim(),
+     position:(document.getElementById('supplierTenderContactPosition1')?.value||'').trim(),
+     email:(document.getElementById('supplierTenderContactEmail1')?.value||'').trim(),
+     phone:(document.getElementById('supplierTenderContactPhone1')?.value||'').trim(),
+     updatedAt:new Date().toISOString()
+   };
+   if(!rec.name){alert('Enter Contact Person Name.');return false}
+   const i=rows.findIndex(x=>x.id===existingId);
+   if(i>=0)rows[i]={...rows[i],...rec};else rows.push(rec);
+ }else{
+   const contacts=[];
+   for(let n=1;n<=3;n++){
+     const name=(document.getElementById('supplierTenderContactName'+n)?.value||'').trim();
+     const position=(document.getElementById('supplierTenderContactPosition'+n)?.value||'').trim();
+     const email=(document.getElementById('supplierTenderContactEmail'+n)?.value||'').trim();
+     const phone=(document.getElementById('supplierTenderContactPhone'+n)?.value||'').trim();
+     if(name||position||email||phone){
+       if(!name){alert(`Enter Contact Person Name for Contact Person ${n}.`);return false}
+       contacts.push({id:uid(),name,position,email,phone,updatedAt:new Date().toISOString()});
+     }
+   }
+   if(!contacts.length){alert('Enter at least one contact person.');return false}
+   rows.push(...contacts);
+ }
  save();closeSupplierTenderContact();renderSupplierContactPersons();renderItalySourcing();return true;
 };
 window.deleteSupplierContactPerson=id=>{
  const rows=getSupplierContactPersons();
  const c=rows.find(x=>x.id===id);if(!c)return false;
- if(rows.length<=2){
-   alert('Each supplier must have at least 2 contact persons. Add another contact person before deleting this contact.');
-   return false;
- }
  if(!confirm(`Delete contact person "${c.name||'this contact'}"?`))return false;
  const key=supplierContactPersonsKey();
  state.supplierContactPersons[key]=rows.filter(x=>x.id!==id);
@@ -7767,11 +7797,6 @@ window.renderItalySourcing=function(){
  const candidateTitle=document.querySelector('#country-candidates h2');if(candidateTitle)candidateTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Active Candidate Items';
  const performanceTitle=document.querySelector('#country-performance h2');if(performanceTitle)performanceTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Performance & Bonuses';
  const wineryTitle=document.querySelector('#country-wineries h2');if(wineryTitle)wineryTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Supplier Information';
- const contactMinimumNotice=document.getElementById('supplierContactMinimumNotice');
- if(contactMinimumNotice){
-   const contactCount=currentCountrySupplierId?getSupplierContactPersons().length:0;
-   contactMinimumNotice.textContent=!currentCountrySupplierId?'Select a supplier to add contact persons.':contactCount>=2?`Contact persons: ${contactCount}. Minimum requirement met.`:`Contact persons: ${contactCount}. Add at least ${2-contactCount} more contact person${2-contactCount===1?'':'s'} (minimum 2 required).`;
- }
  const archivedTitle=document.getElementById('archivedCountryCandidatesTitle');if(archivedTitle)archivedTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Candidate Items';
  const notesTitle=document.getElementById('portfolioManagerNotesTitle');if(notesTitle)notesTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Portfolio Manager Notes';
  const recycleTitle=document.getElementById('portfolioManagerRecycleTitle');if(recycleTitle)recycleTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Recycling Bin';
@@ -7789,8 +7814,7 @@ const q=(document.getElementById('italyWinerySearch')?.value||'').toLowerCase();
 <td>${esc(x.producerSize||'—')}</td>
 <td>
   <button class="secondary small" onclick="openItalyWineryForm('${x.id}')">Edit</button>
-  <button type="button" class="secondary small" onclick="openSupplierContactPersonForm()">+ Add Contact Person</button>
-  <span class="note" style="display:inline-block;margin:4px 6px">Contacts: ${getSupplierContactPersons().length} / minimum 2</span>
+  <button type="button" class="secondary small" onclick="openSupplierContactPersonForm()">+ Add Contact Persons</button>
   <button class="danger small" onclick="deleteItalySource('win','${x.id}')">Delete</button>
 </td></tr>`).join('')||'<tr><td colspan="15">No supplier information added yet.</td></tr>';
 const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document.getElementById('supplierWineCandidatesSearch')?.value||'').trim().toLowerCase();cr.innerHTML=can.filter(x=>!cq||JSON.stringify(x).toLowerCase().includes(cq)).map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=status==='Additional Information Required'?(x.additionalInformationRequested||x.headOfficeActions?.at(-1)?.comment||x.headOfficeComment||'—'):(x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—'),displayStatus=status==='In Progress'?'PROPOSED TO HEAD OFFICE':status==='Additional Information Required'?'Additional Information Requested':status==='Declined'?'Declined by head office':status==='Declined on Tenders First Stage'?'DECLINED ON TENDERS FIRST STAGE':status==='Declined on Tenders Final Decision'?'DECLINED ON TENDERS FINAL DECISION':status,workStatus=candidateLcboSubmissionWorkStatus(x);return `<tr><td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(displayStatus)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td><button class="small" onclick="openItalyCandidateForm('${x.id}')">Edit</button> ${wineCandidateCanDeleteOrArchive(x)?`<button type="button" class="secondary small" onclick="archiveCountryCandidate('${x.id}')">Move to My Candidate Items</button> <button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete</button>`:`<button type="button" class="secondary small" disabled title="Available only after a decline status">Move to My Candidate Items</button> <button class="danger small" disabled title="Available only after a decline status">Delete</button>`}</td></tr>`}).join('')||'<tr><td colspan="8">No wine candidates match the search.</td></tr>';}
