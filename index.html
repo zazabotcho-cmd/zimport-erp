@@ -581,6 +581,42 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   }
 </style>
 
+
+<style id="globalClickableTextStyle">
+/* One visual language for clickable text throughout WINGLOBAL: same as Shipment names. */
+.program-clickable-link,
+.link-button,
+.clickable-name,
+.item-info-link,
+.shipment-name-link,
+.invoice-number-link,
+.head-detail-link,
+.file-link,
+.link-cell a{
+  background:none !important;
+  border:0 !important;
+  color:#145ca8 !important;
+  padding:0 !important;
+  font:inherit;
+  font-weight:700 !important;
+  text-decoration:underline !important;
+  cursor:pointer !important;
+  text-align:left;
+}
+.program-clickable-link:hover,
+.link-button:hover,
+.clickable-name:hover,
+.item-info-link:hover,
+.shipment-name-link:hover,
+.invoice-number-link:hover,
+.head-detail-link:hover,
+.file-link:hover,
+.link-cell a:hover{
+  color:#0b4f91 !important;
+  opacity:.9;
+}
+</style>
+
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -661,7 +697,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <button class="tab" data-tab="country-opportunities">My Tenders</button>
     <button class="tab" data-tab="country-wineries">Supplier Information</button>
     <button class="tab" data-tab="country-candidates">Active Candidate Items</button>
-    <button class="tab" data-tab="country-archived-candidates">My Candidate Items</button>
+    <button class="tab" data-tab="country-archived-candidates">My Items</button>
     <button class="tab" data-tab="country-manager-notes">Supplier Working Notes</button>
      
     <button class="tab" data-tab="country-internal-mail">Internal Mail <span id="supplierInternalMailBadge" class="internal-mail-badge" style="display:none">0</span></button>
@@ -744,6 +780,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
       <label>Phone Number<input id="itWinPhone"></label>
       <label>Email Address<input id="itWinEmail" type="email"></label>
       <label>Payment Terms<select id="itWinPaymentTerms"><option value="">Select</option><option>60 days</option><option>90 days (Preferable)</option></select></label>
+      <label>Direction to Pay Agent<select id="itWinDirectionToPayAgent"><option value="">Select</option><option>Yes</option><option>No</option></select></label>
       <label>Does the supplier have a designated agent in Ontario / LCBO?<select id="itWinOntario" onchange="toggleSupplierOntarioAgentDetails()"><option value="">Select</option><option>No</option><option>Yes</option></select></label>
       <div id="itWinOntarioAgentDetails" class="full item-group hidden">
         <h3 style="margin-top:0">Ontario / LCBO Agent Information</h3>
@@ -805,12 +842,15 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
   <div class="toolbar"><input id="italyWinerySearch" placeholder="Search Supplier Information" oninput="renderItalySourcing()"></div>
   <div class="table-wrap"><table><thead><tr>
     <th>LCBO Supplier #</th><th>Supplier Legal Full Name</th><th>Address</th><th>City</th><th>Region</th><th>Country</th><th>Postal Code</th>
-    <th>Phone</th><th>Email</th><th>Payment Terms</th><th>Ontario / LCBO Agent?</th><th>Exports Other Provinces?</th><th>Producer Size</th><th>Action</th>
+    <th>Phone</th><th>Email</th><th>Payment Terms</th><th>Direction to Pay Agent</th><th>Ontario / LCBO Agent?</th><th>Exports Other Provinces?</th><th>Producer Size</th><th>Action</th>
   </tr></thead><tbody id="italyWineryRows"></tbody></table></div>
 </div></section>
 <section id="country-candidates" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — Active Candidate Items</h2><p class="note">Wine Candidate uses the same detailed product profile as Add Tender Item, with country-sourcing fields added for the representative.</p></div><button type="button" onclick="openItalyCandidateForm()">+ Propose Wine</button></div><div class="toolbar"><input id="supplierWineCandidatesSearch" type="search" placeholder="Search Active Candidate Items" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Wine</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="italyCandidateRows"></tbody></table></div></div></section>
 <section id="country-archived-candidates" class="panel"><div class="box">
-  <div class="section-head"><div><h2 id="archivedCountryCandidatesTitle">Italy — My Candidate Items</h2><p class="note">My candidate items for the selected country. Update information and propose again, or delete to the Portfolio Manager Recycling Bin.</p></div></div><div class="toolbar"><input id="supplierArchivedCandidatesSearch" type="search" placeholder="Search My Candidate Items" oninput="renderArchivedCountryCandidates()"></div>
+  <div class="section-head">
+    <div><h2 id="archivedCountryCandidatesTitle">Italy — My Items</h2><p class="note">My items for the selected country. Create and save a complete item profile here, then update or propose it to Head Office later.</p></div>
+    <button type="button" onclick="openCreateMyItemForm()">+ Create My Item</button>
+  </div><div class="toolbar"><input id="supplierArchivedCandidatesSearch" type="search" placeholder="Search My Items" oninput="renderArchivedCountryCandidates()"></div>
   <div class="table-wrap"><table>
     <thead><tr><th>Wine</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Archived Date</th><th>Actions</th><th>Comment / Reason</th></tr></thead>
     <tbody id="archivedCountryCandidateRows"></tbody>
@@ -997,8 +1037,10 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
         <th>LCBO Supplier #</th>
         <th>Email</th>
         <th>Phone</th>
+        <th>Direction to Pay Agent</th>
         <th>Submitted Date</th>
         <th>Supplier Status</th>
+        <th>Actions</th>
       </tr></thead>
       <tbody id="tenderSupplierRows"></tbody>
     </table></div>
@@ -5538,7 +5580,7 @@ window.deleteCurrentSourcingCountry=()=>{
  moveRecords('countryCandidates','countryCandidate','Country Sourcing — '+country+' — Active Candidate Items');
  moveRecords('countryBonuses','countryBonus','Country Sourcing — '+country+' — Performance & Bonuses');
  moveRecords('portfolioManagerNotes','portfolioManagerNote','Country Sourcing — '+country+' — Supplier Working Notes');
- moveRecords('archivedCountryCandidates','archivedCountryCandidate','Country Sourcing — '+country+' — My Candidate Items');
+ moveRecords('archivedCountryCandidates','archivedCountryCandidate','Country Sourcing — '+country+' — My Items');
  (state.tenders||[]).forEach(t=>{if(Array.isArray(t.sourcingRepresentatives))t.sourcingRepresentatives=t.sourcingRepresentatives.filter(x=>x!==country)});
  state.countrySourcingCountries=countries.filter(c=>c!==country);
  currentSourcingCountry=state.countrySourcingCountries[0]||'Italy';
@@ -5565,7 +5607,7 @@ window.setSourcingCountry=country=>{
 };
 function show(id,on=true){const e=document.getElementById(id);if(e)e.classList.toggle('hidden',!on)}
 function clearSupplierInformationForm(){
- const ids=['itWinLcboSupplierNumber','itWinName','itWinAddress1','itWinAddress2','itWinCity','itWinRegion','itWinCountry','itWinPostalCode','itWinPhone','itWinEmail','itWinPaymentTerms','itWinOntario','itWinOntarioAgentCompany','itWinOntarioAgentHowLong','itWinOntarioAgentQuantity','itWinOntarioAgentImportDate','itWinOntarioAgentInfo','itWinExportsOtherProvinces','itWinOtherProvinceCompany','itWinOtherProvinceNames','itWinOtherProvinceHowLong','itWinOtherProvinceQuantity','itWinOtherProvinceImportDate','itWinOtherProvinceInfo','itWinProducerSize','itWinContactName1','itWinContactPosition1','itWinContactEmail1','itWinContactPhone1','itWinContactName2','itWinContactPosition2','itWinContactEmail2','itWinContactPhone2','itWinContactName3','itWinContactPosition3','itWinContactEmail3','itWinContactPhone3'];
+ const ids=['itWinLcboSupplierNumber','itWinName','itWinAddress1','itWinAddress2','itWinCity','itWinRegion','itWinCountry','itWinPostalCode','itWinPhone','itWinEmail','itWinPaymentTerms','itWinDirectionToPayAgent','itWinOntario','itWinOntarioAgentCompany','itWinOntarioAgentHowLong','itWinOntarioAgentQuantity','itWinOntarioAgentImportDate','itWinOntarioAgentInfo','itWinExportsOtherProvinces','itWinOtherProvinceCompany','itWinOtherProvinceNames','itWinOtherProvinceHowLong','itWinOtherProvinceQuantity','itWinOtherProvinceImportDate','itWinOtherProvinceInfo','itWinProducerSize','itWinContactName1','itWinContactPosition1','itWinContactEmail1','itWinContactPhone1','itWinContactName2','itWinContactPosition2','itWinContactEmail2','itWinContactPhone2','itWinContactName3','itWinContactPosition3','itWinContactEmail3','itWinContactPhone3'];
  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
  const rid=document.getElementById('itWinRecordId');if(rid)rid.value='';
  const title=document.getElementById('itWinFormTitle');if(title)title.textContent='Add Supplier Information';
@@ -5604,6 +5646,7 @@ window.openItalyWineryForm=(id='')=>{
   set('itWinPhone',x.phone);
   set('itWinEmail',x.email);
   set('itWinPaymentTerms',x.paymentTerms);
+  set('itWinDirectionToPayAgent',x.directionToPayAgent);
   set('itWinOntario',x.ontario);
   set('itWinOntarioAgentCompany',x.ontarioAgentCompany);
   set('itWinOntarioAgentHowLong',x.ontarioAgentHowLong);
@@ -5654,7 +5697,11 @@ window.openItalyWineryForm=(id='')=>{
  show('italyWineryForm');
  return true;
 };
-window.closeItalyWineryForm=()=>{show('italyWineryForm',false);clearSupplierInformationForm();};
+window.closeItalyWineryForm=()=>{
+ show('italyWineryForm',false);
+ tenderSupplierEditModeId='';
+ clearSupplierInformationForm();
+};
 
 let currentItalyCandidateAttachments=[];
 
@@ -6055,7 +6102,28 @@ function retrieveWineCandidateSupplierInformation(){
 }
 window.retrieveWineCandidateSupplierInformation=retrieveWineCandidateSupplierInformation;
 
+
+let italyCandidateSaveMode='proposal';
+
+window.openCreateMyItemForm=async()=>{
+ italyCandidateSaveMode='my-item';
+ await openItalyCandidateForm('');
+ const title=document.getElementById('italyCandidateModalTitle');
+ if(title)title.textContent=`Create My Item — ${currentSourcingCountry}`;
+ const btn=document.getElementById('proposeItalyCandidateBtn');
+ if(btn){
+   btn.disabled=false;
+   btn.style.background='';
+   btn.textContent='Create My Item';
+ }
+ const del=document.getElementById('deleteItalyCandidateBtn');
+ if(del)del.style.visibility='hidden';
+ return true;
+};
+
 window.openItalyCandidateForm=async(id='')=>{
+ const openingMyItem=italyCandidateSaveMode==='my-item'&&!id;
+ if(!openingMyItem)italyCandidateSaveMode='proposal';
  const x=(state.countryCandidates||[]).find(v=>v.id===id)||{};
  document.getElementById('italyCandidateFields').innerHTML=italyCandidateGroupsHtml();
   populateWineCandidateSupplierInfoSelect(x.retrievedSupplierInfoId||'');
@@ -6084,10 +6152,16 @@ window.openItalyCandidateForm=async(id='')=>{
  document.getElementById('addItalyCandidateWebsiteBtn')?.addEventListener('click',()=>addItalyCandidateWebsiteRow());document.getElementById('italyCandidateAttachmentInput')?.addEventListener('change',handleItalyCandidateAttachments);['c_caseLengthCm','c_caseWidthCm','c_caseHeightCm'].forEach(id=>document.getElementById(id)?.addEventListener('input',calcItalyCandidateCaseVolume));document.getElementById('c_previouslyPurchased')?.addEventListener('change',syncItalyCandidateLcboItemVisibility);calcItalyCandidateCaseVolume();syncItalyCandidateLcboItemVisibility();
  const approvedLocked=applyApprovedWineCandidateLocks(x);
  const proposeBtn=document.getElementById('proposeItalyCandidateBtn');
- if(proposeBtn){proposeBtn.disabled=false;proposeBtn.style.background='';proposeBtn.textContent=x.id?(approvedLocked?'Save Case and Pallet Information':'Update Proposal to Head Office'):'Propose to Head Office';}
- document.getElementById('italyCandidateModalTitle').textContent=x.id?'Edit Wine Candidate — Italy':'Add Wine Candidate — Italy';document.getElementById('deleteItalyCandidateBtn').style.visibility=x.id?'visible':'hidden';show('italyCandidateModal');
+ if(proposeBtn){
+   proposeBtn.disabled=false;
+   proposeBtn.style.background='';
+   proposeBtn.textContent=openingMyItem?'Create My Item':(x.id?(approvedLocked?'Save Case and Pallet Information':'Update Proposal to Head Office'):'Propose to Head Office');
+ }
+ document.getElementById('italyCandidateModalTitle').textContent=openingMyItem?`Create My Item — ${currentSourcingCountry}`:(x.id?'Edit Wine Candidate — Italy':'Add Wine Candidate — Italy');
+ document.getElementById('deleteItalyCandidateBtn').style.visibility=openingMyItem?'hidden':(x.id?'visible':'hidden');
+ show('italyCandidateModal');
 };
-window.closeItalyCandidateForm=()=>show('italyCandidateModal',false);
+window.closeItalyCandidateForm=()=>{show('italyCandidateModal',false);italyCandidateSaveMode='proposal'};
 
 window.openItalyBonusForm=()=>{const d=document.getElementById('itBonusDate');if(d&&!d.value)d.value=new Date().toISOString().slice(0,10);show('italyBonusForm')};window.closeItalyBonusForm=()=>show('italyBonusForm',false);
 window.saveItalyWinery=()=>{
@@ -6098,8 +6172,9 @@ window.saveItalyWinery=()=>{
  const producerSize=document.getElementById('itWinProducerSize').value;
  const classifiedAs=producerSize==='Small'?'Winery with < 375,000 litres wine sales in the last 12 months':producerSize==='N/A'?'Winery with >= 375,000 litres wine sales in the last 12 months':'';
  const existing=recordId?state.countryWineries.find(x=>x.id===recordId&&x.country===currentSourcingCountry&&x.portfolioSupplierId===currentCountrySupplierId):null;
- if(existing?.supplierApprovalStatus==='Approved Supplier'){
-   alert('This supplier is approved and Supplier Information is locked. Approved supplier information cannot be updated.');
+ const isTenderSupplierEdit=!!(existing&&String(tenderSupplierEditModeId)===String(existing.id));
+ if(existing?.supplierApprovalStatus==='Approved Supplier'&&!isTenderSupplierEdit){
+   alert('This supplier is approved and Supplier Information is locked. Approved supplier information cannot be updated from Country Sourcing.');
    return false;
  }
  const record={
@@ -6119,6 +6194,7 @@ window.saveItalyWinery=()=>{
   phone:document.getElementById('itWinPhone').value.trim(),
   email:document.getElementById('itWinEmail').value.trim(),
   paymentTerms:document.getElementById('itWinPaymentTerms').value,
+  directionToPayAgent:document.getElementById('itWinDirectionToPayAgent').value,
   ontario:document.getElementById('itWinOntario').value,
   ontarioAgentCompany:document.getElementById('itWinOntario').value==='Yes'?document.getElementById('itWinOntarioAgentCompany').value.trim():'',
   ontarioAgentHowLong:document.getElementById('itWinOntario').value==='Yes'?document.getElementById('itWinOntarioAgentHowLong').value.trim():'',
@@ -6134,9 +6210,9 @@ window.saveItalyWinery=()=>{
   otherProvinceInfo:document.getElementById('itWinExportsOtherProvinces').value==='Yes'?document.getElementById('itWinOtherProvinceInfo').value.trim():'',
   producerSize,
   classifiedAs,
-  supplierApprovalStatus:'Submitted Supplier',
-  submittedAt:new Date().toISOString(),
-  supplierApprovalStatusUpdatedAt:new Date().toISOString(),
+  supplierApprovalStatus:isTenderSupplierEdit?(existing?.supplierApprovalStatus||'Submitted Supplier'):'Submitted Supplier',
+  submittedAt:isTenderSupplierEdit?(existing?.submittedAt||new Date().toISOString()):new Date().toISOString(),
+  supplierApprovalStatusUpdatedAt:isTenderSupplierEdit?(existing?.supplierApprovalStatusUpdatedAt||new Date().toISOString()):new Date().toISOString(),
   createdAt:existing?.createdAt||new Date().toISOString(),
   updatedAt:new Date().toISOString()
  };
@@ -6174,7 +6250,11 @@ window.saveItalyWinery=()=>{
 window.saveItalyCandidate=async()=>{
  if(!state||typeof state!=='object')state={};
  if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
- const id=document.getElementById('itCanRecordId').value||uid(),existing=state.countryCandidates.find(x=>x.id===id)||{};
+ if(!Array.isArray(state.archivedCountryCandidates))state.archivedCountryCandidates=[];
+ const saveAsMyItem=italyCandidateSaveMode==='my-item';
+ const id=document.getElementById('itCanRecordId').value||uid();
+ const sourceCollection=saveAsMyItem?state.archivedCountryCandidates:state.countryCandidates;
+ const existing=sourceCollection.find(x=>x.id===id)||{};
  const productDescription=document.getElementById('c_productDescription')?.value.trim()||'';
  const data={};itemGroups.filter(g=>g.title!=='Pricing Information').forEach(g=>g.fields.filter(f=>!['producerSameAsSupplier','producerName','producerAddress1','producerAddress2','producerCity','producerRegionCountry','producerPostalCode'].includes(f[0])).forEach(([k,,t])=>{if(['calculated','websites','attachments'].includes(t))return;const el=document.getElementById('c_'+k);if(!el)return;data[k]=t==='number'?num(el.value):(k==='productCategory'?normalizeProductCategory(el.value||'Wine'):(el.value||''))}));
  data.supplierRegion=document.getElementById('c_supplierRegion')?.value.trim()||'';data.supplierCountry=document.getElementById('c_supplierCountry')?.value.trim()||'';data.supplierRegionCountry=[data.supplierRegion,data.supplierCountry].filter(Boolean).join(' / ');data.producerSize=document.getElementById('c_producerSize')?.value||'';data.classifiedAs=data.producerSize==='Small'?'Winery with < 375,000 litres wine sales in the last 12 months':data.producerSize==='N/A'?'Winery with >= 375,000 litres wine sales in the last 12 months':'';data.retrievedSupplierInfoId=document.getElementById('wineCandidateSupplierInfoSelect')?.value||existing.retrievedSupplierInfoId||'';
@@ -6186,7 +6266,7 @@ window.saveItalyCandidate=async()=>{
  try{
   const itemPhotos=await persistItalyCandidatePhotos(id);
   let rec={...existing,...data,id,country:currentSourcingCountry,portfolioSupplierId:existing.portfolioSupplierId||currentCountrySupplierId,name:data.productDescription||'Untitled Wine Candidate',opportunityId:document.getElementById('itCanOpp').value,supplierPricePerCase:casePrice,bottlesPerCase,supplierCurrency,supplierBottlePrice,supplierQuoteType,promotionalSupportPercent,promotionalSupportAmount,exCellarDeliveryPerCase:supplierQuoteType==='EX-CELLAR'?exCellarDeliveryPerCase:'',giftBoxYesNo,giftBoxDescription:giftBoxYesNo==='Yes'?giftBoxDescription:'',ontarioExportDetails:ontarioExclusive==='Yes'?ontarioExportDetails:'',protectedAppellation,appellationName:protectedAppellation==='Yes'?appellationName:'',appellationDescription:protectedAppellation==='Yes'?appellationDescription:'',uniqueOtherDescription:protectedAppellation==='Other'?uniqueOtherDescription:'',outstandingLocation,supplierOntarioAgent,supplierOntarioAgentDetails:supplierOntarioAgent==='Yes'?supplierOntarioAgentDetails:'',supplierOtherProvinceExporter,supplierOtherProvinceExporterDetails:supplierOtherProvinceExporter==='Yes'?supplierOtherProvinceExporterDetails:'',sweetnessSugar:document.getElementById('c_sweetnessSugar').value.trim(),itemPhotos,localRetailPricePerBottle:localRetail,ontarioExclusivity:ontarioExclusive,why,intelligence:document.getElementById('itCanIntel').value.trim(),status:existing.id?(existing.status||'In Progress'):'In Progress',headOfficeActionStatus:existing.id?(existing.headOfficeActionStatus||existing.status||'In Progress'):'In Progress',createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
-  if(existing.id&&['In Progress','Approved for LCBO Submission'].includes(normalizeHeadProposalStatus(existing.headOfficeActionStatus||existing.status))){
+  if(!saveAsMyItem&&existing.id&&['In Progress','Approved for LCBO Submission'].includes(normalizeHeadProposalStatus(existing.headOfficeActionStatus||existing.status))){
    const editableCasePalletKeys=[
     'caseLengthCm','caseHeightCm','caseWidthCm','caseWeightKg','calculatedCaseVolume',
     'casesPerPallet','casesPerTier','numberOfTiers','cases20Container','cases40Container','casesTempContainer'
@@ -6203,7 +6283,7 @@ window.saveItalyCandidate=async()=>{
   }
   // Any existing Wine Candidate sent with the "Update Proposal to Head Office" button
   // must immediately appear with the shared UPDATED proposal status on every page.
-  if(existing.id){
+  if(!saveAsMyItem&&existing.id){
     const updateStamp=new Date().toISOString();
     rec.status='Updated Proposal to Head Office';
     rec.headOfficeActionStatus='Updated Proposal to Head Office';
@@ -6217,16 +6297,27 @@ window.saveItalyCandidate=async()=>{
       linkedWorkItem.status='Updated Proposal to Head Office';
       linkedWorkItem.updatedAt=updateStamp;
     }
-  }else if(normalizeHeadProposalStatus(rec.headOfficeActionStatus||rec.status)==='Action Required'){
+  }else if(!saveAsMyItem&&normalizeHeadProposalStatus(rec.headOfficeActionStatus||rec.status)==='Action Required'){
     rec.status='In Progress';
     rec.headOfficeActionStatus='In Progress';
     rec.headOfficeUpdatedAt=new Date().toISOString();
   }
-  if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
-  const i=state.countryCandidates.findIndex(x=>x.id===id);
-  if(i>=0)state.countryCandidates[i]=rec;else state.countryCandidates.push(rec);
+  if(saveAsMyItem){
+    rec.status='My Item';
+    rec.headOfficeActionStatus='';
+    rec.myItem=true;
+    rec.archivedAt=existing.archivedAt||new Date().toISOString();
+    rec.updatedAt=new Date().toISOString();
+    const ai=state.archivedCountryCandidates.findIndex(x=>x.id===id);
+    if(ai>=0)state.archivedCountryCandidates[ai]=rec;else state.archivedCountryCandidates.push(rec);
+  }else{
+    if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
+    const i=state.countryCandidates.findIndex(x=>x.id===id);
+    if(i>=0)state.countryCandidates[i]=rec;else state.countryCandidates.push(rec);
+  }
 
-  // Persist the proposal FIRST so Head Office always receives it.
+  // Persist the record first. My Items stay private to the Country Sourcing workflow
+  // until the representative chooses to propose them later.
   safeStorage.setItem(DATA_KEY,JSON.stringify(state));
   if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
 
@@ -6241,28 +6332,35 @@ window.saveItalyCandidate=async()=>{
   }
 
   renderItalySourcing();
-  if(typeof window.renderHeadOfficeProposals==='function')window.renderHeadOfficeProposals();renderHeadInventory();
+  if(!saveAsMyItem&&typeof window.renderHeadOfficeProposals==='function')window.renderHeadOfficeProposals();
+  if(typeof renderHeadInventory==='function')renderHeadInventory();
+  if(saveAsMyItem)renderArchivedCountryCandidates();
   closeItalyCandidateForm();
   return true;
- }catch(e){console.error(e);alert('The wine candidate could not be proposed to Head Office. '+(e?.message||''));return false}
+ }catch(e){
+   console.error(e);
+   alert(saveAsMyItem?'The My Item record could not be saved. '+(e?.message||''):'The wine candidate could not be proposed to Head Office. '+(e?.message||''));
+   return false
+ }
 };
 
 window.proposeItalyCandidateToHeadOffice=async function(button){
  if(button?.disabled)return false;
+ const saveAsMyItem=italyCandidateSaveMode==='my-item';
  const isEdit=!!document.getElementById('itCanRecordId')?.value;
- const original=isEdit?'Update Proposal to Head Office':'Propose to Head Office';
+ const original=saveAsMyItem?'Create My Item':(isEdit?'Update Proposal to Head Office':'Propose to Head Office');
  try{
-  if(button){button.disabled=true;button.textContent='Proposing...'}
+  if(button){button.disabled=true;button.textContent=saveAsMyItem?'Saving My Item...':'Proposing...'}
   const ok=await window.saveItalyCandidate();
   if(ok){
-   if(button){button.textContent=isEdit?'Proposal Updated':'Proposed to Head Office';button.style.background='var(--green)'}
+   if(button){button.textContent=saveAsMyItem?'My Item Created':(isEdit?'Proposal Updated':'Proposed to Head Office');button.style.background='var(--green)'}
    return true;
   }
   if(button){button.disabled=false;button.textContent=original;button.style.background=''}
   return false;
  }catch(err){
   console.error('Proposal failed:',err);
-  alert('Proposal could not be sent to Head Office. '+(err?.message||''));
+  alert((saveAsMyItem?'My Item could not be saved. ':'Proposal could not be sent to Head Office. ')+(err?.message||''));
   if(button){button.disabled=false;button.textContent=original;button.style.background=''}
   return false;
  }
@@ -7919,7 +8017,7 @@ window.deletePortfolioManagerNote=id=>{
 };
 
 window.renderArchivedCountryCandidates=()=>{
- const title=document.getElementById('archivedCountryCandidatesTitle');if(title)title.textContent=currentSourcingCountry+' — My Candidate Items';
+ const title=document.getElementById('archivedCountryCandidatesTitle');if(title)title.textContent=currentSourcingCountry+' — My Items';
  const body=document.getElementById('archivedCountryCandidateRows');if(!body)return;
  if(!Array.isArray(state.archivedCountryCandidates))state.archivedCountryCandidates=[];
  const tenders=(state.tenders||[]);
@@ -7937,7 +8035,7 @@ window.renderArchivedCountryCandidates=()=>{
      <td><button type="button" class="secondary small" onclick="updateAndProposeArchivedCandidate('${x.id}')">Update Information / Propose Again</button> <button type="button" class="danger small" onclick="deleteArchivedCountryCandidate('${x.id}')">Delete</button></td>
      <td style="min-width:240px"><textarea id="myCandidateComment_${x.id}" rows="3" style="width:100%;min-width:220px" placeholder="Write comment / reason">${esc(x.myCandidateComment||'')}</textarea><button type="button" class="secondary small" style="margin-top:6px" onclick="saveMyCandidateItemComment('${x.id}')">Save Comment / Reason</button></td>
    </tr>`;
- }).join('')||'<tr><td colspan="9">No candidate items for this country.</td></tr>';
+ }).join('')||'<tr><td colspan="9">No My Items for this country.</td></tr>';
 };
 window.saveMyCandidateItemComment=id=>{
  const x=(state.archivedCountryCandidates||[]).find(v=>v.id===id);if(!x)return;
@@ -7951,7 +8049,7 @@ window.archiveCountryCandidate=id=>{
  if(!Array.isArray(state.archivedCountryCandidates))state.archivedCountryCandidates=[];
  const x=(state.countryCandidates||[]).find(v=>v.id===id);if(!x)return;
  if(showWineCandidateDeleteBlocked(x,'moved to Archived Wine Candidates'))return;
- if(!confirm('Move this wine candidate to My Candidate Items?'))return;
+ if(!confirm('Move this wine candidate to My Items?'))return;
  state.archivedCountryCandidates.push({...JSON.parse(JSON.stringify(x)),archivedAt:new Date().toISOString()});
  state.countryCandidates=state.countryCandidates.filter(v=>v.id!==id);
  save();renderItalySourcing();renderArchivedCountryCandidates();
@@ -8133,19 +8231,24 @@ function renderTenderSuppliers(){
    const status=TENDER_SUPPLIER_STATUSES.includes(x.supplierApprovalStatus)?x.supplierApprovalStatus:'Submitted Supplier';
    const submitted=String(x.submittedAt||x.updatedAt||x.createdAt||'').slice(0,10)||'—';
    return `<tr>
-     <td><button type="button" class="link-button" style="font-weight:700;text-align:left" onclick="openTenderSupplierDetail('${x.id}')">${esc(x.supplierLegalFullName||x.name||'—')}</button></td>
+     <td><button type="button" class="program-clickable-link" onclick="openTenderSupplierDetail('${x.id}')">${esc(x.supplierLegalFullName||x.name||'—')}</button></td>
      <td>${esc(x.supplierCountry||x.country||'—')}</td>
      <td>${esc(x.lcboSupplierNumber||'—')}</td>
      <td>${esc(x.email||'—')}</td>
      <td>${esc(x.phone||'—')}</td>
+     <td>${esc(x.directionToPayAgent||'—')}</td>
      <td>${esc(submitted)}</td>
      <td>
        <select class="tender-supplier-status ${status==='Approved Supplier'?'status-approved':'status-pending'}" onchange="updateTenderSupplierStatus('${x.id}',this.value)">
          ${TENDER_SUPPLIER_STATUSES.map(v=>`<option ${v===status?'selected':''}>${esc(v)}</option>`).join('')}
        </select>
      </td>
+     <td style="white-space:nowrap">
+       <button type="button" class="secondary small" onclick="openTenderSupplierEdit('${x.id}')">Edit Supplier Information</button>
+       <button type="button" class="danger small" onclick="deleteTenderSupplier('${x.id}')">Delete Supplier</button>
+     </td>
    </tr>`;
- }).join('')||'<tr><td colspan="7">No submitted suppliers found.</td></tr>';
+ }).join('')||'<tr><td colspan="9">No submitted suppliers found.</td></tr>';
 }
 window.renderTenderSuppliers=renderTenderSuppliers;
 
@@ -8172,6 +8275,7 @@ function tenderSupplierDetailEntries(x){
    ['Phone Number',x.phone||''],
    ['Email Address',x.email||''],
    ['Payment Terms',x.paymentTerms||''],
+   ['Direction to Pay Agent',x.directionToPayAgent||''],
    ['Designated Agent in Ontario / LCBO?',x.ontario||''],
    ['Ontario / LCBO Agent / Company Name',x.ontarioAgentCompany||''],
    ['How Long With Ontario / LCBO Agent',x.ontarioAgentHowLong||''],
@@ -8268,6 +8372,55 @@ window.copyAllTenderSupplierDetail=()=>{
  return copyTenderSupplierText(text);
 };
 
+
+let tenderSupplierEditModeId='';
+
+window.openTenderSupplierEdit=id=>{
+ const x=(state.countryWineries||[]).find(v=>String(v.id)===String(id));
+ if(!x){alert('Supplier information was not found.');return false}
+
+ // Open the exact Supplier Information record in its Country Sourcing context.
+ currentSourcingCountry=x.country||currentSourcingCountry;
+ currentCountrySupplierId=x.portfolioSupplierId||currentCountrySupplierId;
+ if(typeof renderSourcingCountryControls==='function')renderSourcingCountryControls();
+ if(typeof renderCountrySupplierControls==='function')renderCountrySupplierControls();
+
+ if(!window.openItalyWineryForm(id))return false;
+ tenderSupplierEditModeId=String(id);
+
+ // TENDERS is the approval/review workspace, so it may edit the record.
+ // The Country Sourcing page itself remains locked when status is Approved Supplier.
+ const form=document.getElementById('italyWineryForm');
+ if(form){
+   form.classList.remove('supplier-approved-locked');
+   form.querySelectorAll('input,select,textarea').forEach(el=>{el.disabled=false});
+ }
+ const title=document.getElementById('itWinFormTitle');
+ if(title)title.textContent='Edit Supplier Information — Tender Suppliers';
+ const saveBtn=document.getElementById('itWinSaveBtn');
+ if(saveBtn){
+   saveBtn.textContent='Update Supplier Information';
+   saveBtn.disabled=false;
+   saveBtn.title='';
+ }
+ return true;
+};
+
+window.deleteTenderSupplier=id=>{
+ const x=(state.countryWineries||[]).find(v=>String(v.id)===String(id));
+ if(!x){alert('Supplier information was not found.');renderTenderSuppliers();return false}
+ const name=x.supplierLegalFullName||x.name||'this supplier';
+ if(!confirm(`Delete supplier "${name}" from Tender Suppliers? The Supplier Information record will be moved to the Portfolio Manager Recycling Bin.`))return false;
+
+ if(typeof moveToPortfolioManagerRecycleBin==='function'){
+   moveToPortfolioManagerRecycleBin('countryWinery','Supplier Information',x,{collection:'countryWineries'});
+ }
+ state.countryWineries=(state.countryWineries||[]).filter(v=>String(v.id)!==String(id));
+ save();
+ renderTenderSuppliers();
+ return true;
+};
+
 window.updateTenderSupplierStatus=(id,status)=>{
  if(!TENDER_SUPPLIER_STATUSES.includes(status)){alert('Invalid supplier status.');renderTenderSuppliers();return false}
  const supplier=(state.countryWineries||[]).find(x=>String(x.id)===String(id));
@@ -8291,7 +8444,7 @@ window.renderItalySourcing=function(){
  const candidateTitle=document.querySelector('#country-candidates h2');if(candidateTitle)candidateTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Active Candidate Items';
  const performanceTitle=document.querySelector('#country-performance h2');if(performanceTitle)performanceTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Performance & Bonuses';
  const wineryTitle=document.querySelector('#country-wineries h2');if(wineryTitle)wineryTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Supplier Information';
- const archivedTitle=document.getElementById('archivedCountryCandidatesTitle');if(archivedTitle)archivedTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Candidate Items';
+ const archivedTitle=document.getElementById('archivedCountryCandidatesTitle');if(archivedTitle)archivedTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Items';
  const notesTitle=document.getElementById('portfolioManagerNotesTitle');if(notesTitle)notesTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Portfolio Manager Notes';
  const recycleTitle=document.getElementById('portfolioManagerRecycleTitle');if(recycleTitle)recycleTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Recycling Bin';
  if(!state.countryWineries)state.countryWineries=[];if(!state.countryCandidates)state.countryCandidates=[];if(!state.countryBonuses)state.countryBonuses=[];const tenders=(state.tenders||[]).filter(t=>(t.sourcingRepresentatives||[]).includes(currentSourcingCountry)),wins=italyOnly(state.countryWineries).filter(recordMatchesCurrentSupplier),can=italyOnly(state.countryCandidates).filter(recordMatchesCurrentSupplier),bon=italyOnly(state.countryBonuses),approved=can.filter(x=>/Approved|Submitted|Winner/.test(x.status)).length,winners=can.filter(x=>x.status==='Winner').length;const k=document.getElementById('italyKpis');if(k)k.innerHTML=[
@@ -8304,15 +8457,15 @@ const or=document.getElementById('italyOpportunityRows');if(or){const tq=(docume
 const q=(document.getElementById('italyWinerySearch')?.value||'').toLowerCase();const wr=document.getElementById('italyWineryRows');if(wr)wr.innerHTML=wins.filter(x=>JSON.stringify(x).toLowerCase().includes(q)).map(x=>`<tr>
 <td>${esc(x.lcboSupplierNumber||'—')}</td><td><b>${esc(x.supplierLegalFullName||x.name||'—')}</b></td>
 <td>${esc([x.address1,x.address2].filter(Boolean).join(', ')||'—')}</td><td>${esc(x.city||'—')}</td><td>${esc(x.region||'—')}</td><td>${esc(x.supplierCountry||x.country||'—')}</td><td>${esc(x.postalCode||'—')}</td>
-<td>${esc(x.phone||'—')}</td><td>${esc(x.email||'—')}</td><td>${esc(x.paymentTerms||'—')}</td><td>${esc(x.ontario||'—')}</td><td>${esc(x.exportsOtherProvinces||'—')}</td>
+<td>${esc(x.phone||'—')}</td><td>${esc(x.email||'—')}</td><td>${esc(x.paymentTerms||'—')}</td><td>${esc(x.directionToPayAgent||'—')}</td><td>${esc(x.ontario||'—')}</td><td>${esc(x.exportsOtherProvinces||'—')}</td>
 <td>${esc(x.producerSize||'—')}</td>
 <td>
   ${x.supplierApprovalStatus==='Approved Supplier'
     ? `<button class="secondary small" onclick="openItalyWineryForm('${x.id}')" title="Approved supplier information is locked">View</button>`
     : `<button class="secondary small" onclick="openItalyWineryForm('${x.id}')">Edit</button>`}
   <button class="danger small" onclick="deleteItalySource('win','${x.id}')">Delete</button>
-</td></tr>`).join('')||'<tr><td colspan="14">No supplier information added yet.</td></tr>';
-const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document.getElementById('supplierWineCandidatesSearch')?.value||'').trim().toLowerCase();cr.innerHTML=can.filter(x=>!cq||JSON.stringify(x).toLowerCase().includes(cq)).map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=status==='Additional Information Required'?(x.additionalInformationRequested||x.headOfficeActions?.at(-1)?.comment||x.headOfficeComment||'—'):(x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—'),displayStatus=status==='In Progress'?'PROPOSED TO HEAD OFFICE':status==='Additional Information Required'?'Additional Information Requested':status==='Declined'?'Declined by head office':status==='Declined on Tenders First Stage'?'DECLINED ON TENDERS FIRST STAGE':status==='Declined on Tenders Final Decision'?'DECLINED ON TENDERS FINAL DECISION':status,workStatus=candidateLcboSubmissionWorkStatus(x);return `<tr><td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(displayStatus)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td><button class="small" onclick="openItalyCandidateForm('${x.id}')">Edit</button> ${wineCandidateCanDeleteOrArchive(x)?`<button type="button" class="secondary small" onclick="archiveCountryCandidate('${x.id}')">Move to My Candidate Items</button> <button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete</button>`:`<button type="button" class="secondary small" disabled title="Available only after a decline status">Move to My Candidate Items</button> <button class="danger small" disabled title="Available only after a decline status">Delete</button>`}</td></tr>`}).join('')||'<tr><td colspan="8">No wine candidates match the search.</td></tr>';}
+</td></tr>`).join('')||'<tr><td colspan="15">No supplier information added yet.</td></tr>';
+const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document.getElementById('supplierWineCandidatesSearch')?.value||'').trim().toLowerCase();cr.innerHTML=can.filter(x=>!cq||JSON.stringify(x).toLowerCase().includes(cq)).map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=status==='Additional Information Required'?(x.additionalInformationRequested||x.headOfficeActions?.at(-1)?.comment||x.headOfficeComment||'—'):(x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—'),displayStatus=status==='In Progress'?'PROPOSED TO HEAD OFFICE':status==='Additional Information Required'?'Additional Information Requested':status==='Declined'?'Declined by head office':status==='Declined on Tenders First Stage'?'DECLINED ON TENDERS FIRST STAGE':status==='Declined on Tenders Final Decision'?'DECLINED ON TENDERS FINAL DECISION':status,workStatus=candidateLcboSubmissionWorkStatus(x);return `<tr><td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(displayStatus)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td><button class="small" onclick="openItalyCandidateForm('${x.id}')">Edit</button> ${wineCandidateCanDeleteOrArchive(x)?`<button type="button" class="secondary small" onclick="archiveCountryCandidate('${x.id}')">Move to My Items</button> <button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete</button>`:`<button type="button" class="secondary small" disabled title="Available only after a decline status">Move to My Items</button> <button class="danger small" disabled title="Available only after a decline status">Delete</button>`}</td></tr>`}).join('')||'<tr><td colspan="8">No wine candidates match the search.</td></tr>';}
 const br=document.getElementById('italyBonusRows');if(br)br.innerHTML=bon.map(x=>`<tr><td>${esc(x.date||'—')}</td><td>${esc(x.type)}</td><td>${esc(x.related||'—')}</td><td><b>${esc(x.currency)} ${num(x.amount).toFixed(2)}</b></td><td><span class="badge">${esc(x.status)}</span></td><td>${esc(x.notes||'—')}</td></tr>`).join('')||'<tr><td colspan="6">No bonus records yet.</td></tr>';const pk=document.getElementById('italyPerformanceKpis');if(pk){const paid=bon.filter(x=>x.status==='Paid').reduce((a,x)=>a+num(x.amount),0),pending=bon.filter(x=>x.status!=='Paid').reduce((a,x)=>a+num(x.amount),0);pk.innerHTML=[['Candidates Proposed',can.length],['Approved',approved],['Winners',winners],['Win Rate',can.length?((winners/can.length)*100).toFixed(1)+'%':'0%'],['Bonus Records',bon.length],['Pending Bonus Value*',pending.toFixed(2)]].map(x=>`<div class="card"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('')}
 renderSupplierContactPersons();renderHeadOfficeProposals();populateItalySelects()};
 if(document.getElementById('headAddBonusBtn'))document.getElementById('headAddBonusBtn').onclick=()=>openHeadBonusForm();
