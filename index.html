@@ -242,6 +242,22 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 .internal-mail-message{border-bottom:1px solid var(--line);padding:12px 0}
 .internal-mail-attachments{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 @media(max-width:900px){.internal-mail-layout{grid-template-columns:1fr}}
+
+/* Retrieved Approved My Item locked fields */
+label[data-retrieved-locked="1"]{
+  opacity:1 !important;
+}
+label[data-retrieved-locked="1"] input,
+label[data-retrieved-locked="1"] select,
+label[data-retrieved-locked="1"] textarea{
+  background:rgba(15,23,42,.06) !important;
+  color:inherit !important;
+  -webkit-text-fill-color:currentColor !important;
+  opacity:1 !important;
+  font-weight:600 !important;
+  border-color:rgba(15,23,42,.20) !important;
+  box-shadow:inset 0 0 0 9999px rgba(148,163,184,.08) !important;
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -6210,6 +6226,7 @@ function applyApprovedMyItemEditLocks(item){
  const protectedFields=[
    document.getElementById('itCanPrice'),
    document.getElementById('itCanBottlesPerCase'),
+   document.getElementById('itCanCurrency'),
    document.getElementById('itCanQuoteType'),
    document.getElementById('c_sellingUnitSizeMl')
  ].filter(Boolean);
@@ -6307,34 +6324,67 @@ function applyRetrievedApprovedMyItemView(){
    if(!label.classList.contains('field-hidden'))label.style.display='';
  });
 
+ const lockedExplanation='This information was retrieved from an Approved My Item and cannot be changed in this proposal. To change it, update the Approved My Item first.';
+ const explainRetrievedLock=()=>{
+   alert(lockedExplanation);
+   return false;
+ };
  const lockElement=el=>{
    if(!el)return;
-   el.title='Retrieved from Approved My Item — this information cannot be changed here.';
+   el.title=lockedExplanation;
    el.style.cursor='not-allowed';
-   el.style.opacity='.72';
+   el.style.opacity='1';
+   el.style.background='rgba(15,23,42,.06)';
+   el.style.color='inherit';
+   el.style.borderColor='rgba(15,23,42,.20)';
+   el.style.boxShadow='inset 0 0 0 9999px rgba(148,163,184,.08)';
+   el.style.fontWeight='600';
    el.setAttribute('aria-readonly','true');
    el.dataset.retrievedItemLocked='1';
 
+   const clickExplain=ev=>{
+     ev.preventDefault();
+     ev.stopPropagation();
+     explainRetrievedLock();
+   };
+
    if(el.tagName==='SELECT'){
      el.dataset.retrievedLockedValue=el.value;
-     el.addEventListener('pointerdown',ev=>{ev.preventDefault();ev.stopPropagation();alert('This information was retrieved from an Approved My Item and cannot be changed here.');},true);
-     el.addEventListener('keydown',ev=>{ev.preventDefault();ev.stopPropagation();alert('This information was retrieved from an Approved My Item and cannot be changed here.');},true);
+     el.addEventListener('pointerdown',clickExplain,true);
+     el.addEventListener('click',clickExplain,true);
+     el.addEventListener('keydown',clickExplain,true);
      el.addEventListener('change',()=>{
        if(el.dataset.retrievedLockedValue!==undefined)el.value=el.dataset.retrievedLockedValue;
      });
    }else{
      el.readOnly=true;
-     el.addEventListener('click',()=>{
-       if(el.dataset.retrievedItemLocked==='1')el.title='Retrieved from Approved My Item — this information cannot be changed here.';
+     el.addEventListener('pointerdown',clickExplain,true);
+     el.addEventListener('click',clickExplain,true);
+     el.addEventListener('keydown',ev=>{
+       const editableKeys=['Backspace','Delete','Enter',' '];
+       if(editableKeys.includes(ev.key))clickExplain(ev);
+     },true);
+   }
+
+   const label=el.closest('label');
+   if(label){
+     label.dataset.retrievedLocked='1';
+     label.style.opacity='1';
+     label.style.color='inherit';
+     label.style.position='relative';
+     label.title=lockedExplanation;
+     label.addEventListener('click',ev=>{
+       if(ev.target===label)explainRetrievedLock();
      });
    }
  };
-
  // Individual locked fields.
  [
    'c_productDescription',
    'itCanPrice',
    'itCanBottlesPerCase',
+   'itCanCurrency',
+   'itCanRetail',
    'itCanQuoteType',
    'itCanGiftBox',
    'itCanProtectedAppellation',
@@ -6510,7 +6560,7 @@ window.openItalyCandidateForm=async(id='')=>{
   };
  document.getElementById('itCanRecordId').value=x.id||'';
  populateItalyCandidateOpportunitySelect(x.opportunityId||'');
- const showApprovedMyItemRetrieve=!openingMyItem&&!x.id;
+ const showApprovedMyItemRetrieve=!openingMyItem;
  populateApprovedMyItemRetrieveList(showApprovedMyItemRetrieve);
  const retrieveApprovedBtn=document.getElementById('retrieveApprovedMyItemBtn');
  if(retrieveApprovedBtn)retrieveApprovedBtn.onclick=retrieveApprovedMyItemDetails;
