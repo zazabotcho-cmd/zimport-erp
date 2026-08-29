@@ -557,6 +557,30 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 .head-detail-copy{flex:0 0 auto;padding:5px 9px!important;font-size:12px!important}
 @media(max-width:760px){.head-detail-grid{grid-template-columns:1fr}}
 </style>
+
+<style id="tenderSupplierStatusColorStyle">
+  #tenderSupplierRows select.tender-supplier-status{
+    font-weight:700;
+    border-width:1px;
+  }
+  #tenderSupplierRows select.tender-supplier-status.status-pending{
+    background:#fff3cd !important;
+    color:#7a5a00 !important;
+    border-color:#e5c968 !important;
+  }
+  #tenderSupplierRows select.tender-supplier-status.status-approved{
+    background:#d9f2df !important;
+    color:#166534 !important;
+    border-color:#7fc48d !important;
+  }
+  #italyWineryForm.supplier-approved-locked input:disabled,
+  #italyWineryForm.supplier-approved-locked select:disabled,
+  #italyWineryForm.supplier-approved-locked textarea:disabled{
+    opacity:.82;
+    cursor:not-allowed;
+  }
+</style>
+
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -776,7 +800,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
         </div>
       </div>
     </div>
-    <div class="modal-actions"><span></span><button class="secondary" onclick="closeItalyWineryForm()">Cancel</button><button id="itWinSaveBtn" onclick="saveItalyWinery()">Save Supplier Information</button></div>
+    <div class="modal-actions"><span></span><button class="secondary" onclick="closeItalyWineryForm()">Cancel</button><button id="itWinSaveBtn" onclick="saveItalyWinery()">Submit Supplier Information</button></div>
   </div>
   <div class="toolbar"><input id="italyWinerySearch" placeholder="Search Supplier Information" oninput="renderItalySourcing()"></div>
   <div class="table-wrap"><table><thead><tr>
@@ -952,8 +976,32 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 <section id="tender-suppliers" class="panel">
   <div class="box">
     <div class="section-head">
-      <div><h2>Tender Suppliers</h2></div>
+      <div>
+        <h2>Tender Suppliers</h2>
+        <p class="note">Suppliers submitted from Country Sourcing appear here automatically for review and approval.</p>
+      </div>
     </div>
+    <div class="toolbar">
+      <input id="tenderSupplierSearch" type="search" placeholder="Search supplier, country, LCBO supplier number or email" oninput="renderTenderSuppliers()">
+      <select id="tenderSupplierStatusFilter" onchange="renderTenderSuppliers()">
+        <option value="">All Statuses</option>
+        <option>Submitted Supplier</option>
+        <option>More Information Requested</option>
+        <option>Approved Supplier</option>
+      </select>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>Supplier</th>
+        <th>Country</th>
+        <th>LCBO Supplier #</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Submitted Date</th>
+        <th>Supplier Status</th>
+      </tr></thead>
+      <tbody id="tenderSupplierRows"></tbody>
+    </table></div>
   </div>
 </section>
 
@@ -1724,6 +1772,22 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 
 <div id="workerItemModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="workerItemModalTitle">ADD ITEM INTO LCBO SUBMISSIONS LIST</h2><p>Select an item from the Tender Item Database and assign registration details.</p></div><button id="closeWorkerItemModal" class="icon">×</button></div><input type="hidden" id="workerEditTenderId"><input type="hidden" id="workerEditWorkId"><div class="form-grid"><label>Tender *<select id="workerItemTender"></select></label><label class="full">Select item from Tender Item Database *<select id="workerDatabaseItem"></select></label><label>Offered Price<input id="workerOfferedPrice" type="number" step="0.01"></label><label>Currency<select id="workerCurrency"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></label><label>Agency / Where to Register<select id="workerAgency"></select></label><label>Work Status<select id="workerStatus"><option>To Register</option><option>Submitted</option><option>Registered in LCBO NISS</option><option>On Hold</option></select></label><label class="full">Instructions<textarea id="workerInstructions"></textarea></label></div><div class="modal-actions"><button type="button" id="removeWorkerItem" class="danger">Remove Item</button><span></span><button type="button" id="cancelWorkerItem" class="secondary">Cancel</button><button type="button" id="saveWorkerItem">Add Item</button></div></div></div>
 
+<div id="tenderSupplierDetailModal" class="modal hidden"><div class="modal-card head-detail-modal-card">
+  <div class="modal-head">
+    <div>
+      <h2 id="tenderSupplierDetailTitle">Supplier Information</h2>
+      <p id="tenderSupplierDetailSubtitle" class="note"></p>
+    </div>
+    <button type="button" class="icon" onclick="closeTenderSupplierDetail()">×</button>
+  </div>
+  <div class="head-detail-toolbar">
+    <button type="button" onclick="copyAllTenderSupplierDetail()">Copy All Supplier Information</button>
+    <span id="tenderSupplierCopyMessage" class="note"></span>
+  </div>
+  <div id="tenderSupplierDetailGrid" class="head-detail-grid"></div>
+  <div class="modal-actions"><span></span><button type="button" class="secondary" onclick="closeTenderSupplierDetail()">Close</button></div>
+</div></div>
+
 <div id="headProposalDetailModal" class="modal hidden"><div class="modal-card head-detail-modal-card">
   <div class="modal-head"><div><h2 id="headProposalDetailTitle">Proposal Information</h2><p id="headProposalDetailSubtitle" class="note"></p></div><button type="button" class="icon" onclick="closeHeadProposalDetail()">×</button></div>
   <div class="head-detail-toolbar"><button type="button" id="headProposalCopyAllBtn" onclick="copyAllHeadProposalDetail()">Copy All Information</button><span id="headProposalCopyMessage" class="note"></span></div>
@@ -1798,6 +1862,10 @@ if(!Array.isArray(state.items))state.items=[];
 if(!Array.isArray(state.tenders))state.tenders=[];
 if(!Array.isArray(state.countryOpportunities))state.countryOpportunities=[];
 if(!Array.isArray(state.countryWineries))state.countryWineries=[];
+state.countryWineries.forEach(w=>{
+ if(!w.supplierApprovalStatus)w.supplierApprovalStatus='Submitted Supplier';
+ if(!w.submittedAt)w.submittedAt=w.updatedAt||w.createdAt||new Date().toISOString();
+});
 if(!Array.isArray(state.countryCandidates))state.countryCandidates=[];
 if(!Array.isArray(state.countryBonuses))state.countryBonuses=[];if(!Array.isArray(state.pendingEmailNotifications))state.pendingEmailNotifications=[];if(!Array.isArray(state.emailNotificationLog))state.emailNotificationLog=[];if(!state.supplierContactPersons||typeof state.supplierContactPersons!=='object')state.supplierContactPersons={};
 if(!Array.isArray(state.portfolioManagerNotes))state.portfolioManagerNotes=[];
@@ -1894,6 +1962,7 @@ function refreshProgramViews(){
  safeRefreshCall(window.renderCountrySupplierControls);
  safeRefreshCall(window.renderItalySourcing);
  safeRefreshCall(window.renderSupplierContactPersons);
+ safeRefreshCall(window.renderTenderSuppliers);
 
  // Head Office / LCBO / tender workflow views that may share the same changed records.
  safeRefreshCall(window.renderHeadOfficeProposals);
@@ -3239,6 +3308,7 @@ function saveCurrentGeneratedProforma(){
   state.savedProformas.push(rec);
   save();
   renderSavedProformas();
+ if(typeof window.renderTenderSuppliers==='function')window.renderTenderSuppliers();
   activate('proformas','po-section');
   alert('Proforma saved in the Proformas page.');
 }
@@ -5499,7 +5569,13 @@ function clearSupplierInformationForm(){
  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
  const rid=document.getElementById('itWinRecordId');if(rid)rid.value='';
  const title=document.getElementById('itWinFormTitle');if(title)title.textContent='Add Supplier Information';
- const saveBtn=document.getElementById('itWinSaveBtn');if(saveBtn)saveBtn.textContent='Save Supplier Information';
+ const saveBtn=document.getElementById('itWinSaveBtn');
+ if(saveBtn){saveBtn.textContent='Submit Supplier Information';saveBtn.disabled=false;saveBtn.title=''}
+ const form=document.getElementById('italyWineryForm');
+ if(form){
+   form.classList.remove('supplier-approved-locked');
+   form.querySelectorAll('input,select,textarea').forEach(el=>{el.disabled=false});
+ }
  toggleSupplierOntarioAgentDetails();toggleSupplierOtherProvinceDetails();
 }
 window.toggleSupplierOntarioAgentDetails=()=>{
@@ -5553,7 +5629,27 @@ window.openItalyWineryForm=(id='')=>{
     set('itWinContactPhone'+n,c.phone);
   }
   const title=document.getElementById('itWinFormTitle');if(title)title.textContent='Edit Supplier Information';
-  const saveBtn=document.getElementById('itWinSaveBtn');if(saveBtn)saveBtn.textContent='Update Supplier Information';
+  const saveBtn=document.getElementById('itWinSaveBtn');
+  const approvedLocked=x.supplierApprovalStatus==='Approved Supplier';
+  const form=document.getElementById('italyWineryForm');
+  if(approvedLocked){
+    if(title)title.textContent='Supplier Information — Approved & Locked';
+    if(saveBtn){
+      saveBtn.textContent='Approved Supplier — Locked';
+      saveBtn.disabled=true;
+      saveBtn.title='Approved supplier information cannot be updated.';
+    }
+    if(form){
+      form.classList.add('supplier-approved-locked');
+      form.querySelectorAll('input,select,textarea').forEach(el=>{el.disabled=true});
+    }
+  }else{
+    if(saveBtn){saveBtn.textContent='Submit Supplier Information';saveBtn.disabled=false;saveBtn.title=''}
+    if(form){
+      form.classList.remove('supplier-approved-locked');
+      form.querySelectorAll('input,select,textarea').forEach(el=>{el.disabled=false});
+    }
+  }
  }
  show('italyWineryForm');
  return true;
@@ -6002,6 +6098,10 @@ window.saveItalyWinery=()=>{
  const producerSize=document.getElementById('itWinProducerSize').value;
  const classifiedAs=producerSize==='Small'?'Winery with < 375,000 litres wine sales in the last 12 months':producerSize==='N/A'?'Winery with >= 375,000 litres wine sales in the last 12 months':'';
  const existing=recordId?state.countryWineries.find(x=>x.id===recordId&&x.country===currentSourcingCountry&&x.portfolioSupplierId===currentCountrySupplierId):null;
+ if(existing?.supplierApprovalStatus==='Approved Supplier'){
+   alert('This supplier is approved and Supplier Information is locked. Approved supplier information cannot be updated.');
+   return false;
+ }
  const record={
   ...(existing||{}),
   id:existing?.id||uid(),
@@ -6034,6 +6134,9 @@ window.saveItalyWinery=()=>{
   otherProvinceInfo:document.getElementById('itWinExportsOtherProvinces').value==='Yes'?document.getElementById('itWinOtherProvinceInfo').value.trim():'',
   producerSize,
   classifiedAs,
+  supplierApprovalStatus:'Submitted Supplier',
+  submittedAt:new Date().toISOString(),
+  supplierApprovalStatusUpdatedAt:new Date().toISOString(),
   createdAt:existing?.createdAt||new Date().toISOString(),
   updatedAt:new Date().toISOString()
  };
@@ -8002,6 +8105,180 @@ window.deleteSupplierContactPerson=id=>{
 };
 window.renderSupplierContactPersons=renderSupplierContactPersons;
 
+
+const TENDER_SUPPLIER_STATUSES=['Submitted Supplier','More Information Requested','Approved Supplier'];
+
+function renderTenderSuppliers(){
+ const body=document.getElementById('tenderSupplierRows');
+ if(!body)return;
+ const q=(document.getElementById('tenderSupplierSearch')?.value||'').trim().toLowerCase();
+ const statusFilter=document.getElementById('tenderSupplierStatusFilter')?.value||'';
+ const rows=(state.countryWineries||[])
+   .filter(x=>x && (x.supplierLegalFullName||x.name))
+   .filter(x=>{
+     const status=TENDER_SUPPLIER_STATUSES.includes(x.supplierApprovalStatus)?x.supplierApprovalStatus:'Submitted Supplier';
+     if(statusFilter && status!==statusFilter)return false;
+     if(!q)return true;
+     return [
+       x.supplierLegalFullName||x.name||'',
+       x.supplierCountry||x.country||'',
+       x.lcboSupplierNumber||'',
+       x.email||'',
+       x.phone||''
+     ].join(' ').toLowerCase().includes(q);
+   })
+   .sort((a,b)=>String(b.submittedAt||b.updatedAt||'').localeCompare(String(a.submittedAt||a.updatedAt||'')));
+
+ body.innerHTML=rows.map(x=>{
+   const status=TENDER_SUPPLIER_STATUSES.includes(x.supplierApprovalStatus)?x.supplierApprovalStatus:'Submitted Supplier';
+   const submitted=String(x.submittedAt||x.updatedAt||x.createdAt||'').slice(0,10)||'—';
+   return `<tr>
+     <td><button type="button" class="link-button" style="font-weight:700;text-align:left" onclick="openTenderSupplierDetail('${x.id}')">${esc(x.supplierLegalFullName||x.name||'—')}</button></td>
+     <td>${esc(x.supplierCountry||x.country||'—')}</td>
+     <td>${esc(x.lcboSupplierNumber||'—')}</td>
+     <td>${esc(x.email||'—')}</td>
+     <td>${esc(x.phone||'—')}</td>
+     <td>${esc(submitted)}</td>
+     <td>
+       <select class="tender-supplier-status ${status==='Approved Supplier'?'status-approved':'status-pending'}" onchange="updateTenderSupplierStatus('${x.id}',this.value)">
+         ${TENDER_SUPPLIER_STATUSES.map(v=>`<option ${v===status?'selected':''}>${esc(v)}</option>`).join('')}
+       </select>
+     </td>
+   </tr>`;
+ }).join('')||'<tr><td colspan="7">No submitted suppliers found.</td></tr>';
+}
+window.renderTenderSuppliers=renderTenderSuppliers;
+
+
+function tenderSupplierContactsForRecord(x){
+ const store=state.supplierContactPersons;
+ if(!store||typeof store!=='object'||Array.isArray(store))return [];
+ const key=`${x.country||''}::${x.portfolioSupplierId||''}`;
+ return Array.isArray(store[key])?store[key].slice(0,3):[];
+}
+
+function tenderSupplierDetailEntries(x){
+ const contacts=tenderSupplierContactsForRecord(x);
+ const status=TENDER_SUPPLIER_STATUSES.includes(x.supplierApprovalStatus)?x.supplierApprovalStatus:'Submitted Supplier';
+ const entries=[
+   ['Supplier Legal Full Name',x.supplierLegalFullName||x.name||''],
+   ['LCBO Supplier Number (if applicable)',x.lcboSupplierNumber||''],
+   ['Supplier Address Line 1',x.address1||''],
+   ['Supplier Address Line 2',x.address2||''],
+   ['Supplier City',x.city||''],
+   ['Supplier Region',x.region||''],
+   ['Supplier Country',x.supplierCountry||x.country||''],
+   ['Supplier Postal Code',x.postalCode||''],
+   ['Phone Number',x.phone||''],
+   ['Email Address',x.email||''],
+   ['Payment Terms',x.paymentTerms||''],
+   ['Designated Agent in Ontario / LCBO?',x.ontario||''],
+   ['Ontario / LCBO Agent / Company Name',x.ontarioAgentCompany||''],
+   ['How Long With Ontario / LCBO Agent',x.ontarioAgentHowLong||''],
+   ['Ontario / LCBO Quantity Imported',x.ontarioAgentQuantity||''],
+   ['Ontario / LCBO Import Date',x.ontarioAgentImportDate||''],
+   ['Ontario / LCBO Additional Information',x.ontarioAgentInfo||''],
+   ['Exports to Canadian Provinces Other Than Ontario?',x.exportsOtherProvinces||''],
+   ['Other Province Agent / Company Name',x.otherProvinceCompany||''],
+   ['Other Province(s)',x.otherProvinceNames||''],
+   ['How Long Exported to Other Province(s)',x.otherProvinceHowLong||''],
+   ['Other Province Quantity Imported',x.otherProvinceQuantity||''],
+   ['Other Province Import Date',x.otherProvinceImportDate||''],
+   ['Other Province Additional Information',x.otherProvinceInfo||''],
+   ['Producer Size',x.producerSize||''],
+   ['Supplier Status',status],
+   ['Submitted Date',String(x.submittedAt||x.updatedAt||x.createdAt||'').slice(0,10)]
+ ];
+ for(let n=1;n<=3;n++){
+   const c=contacts[n-1]||{};
+   entries.push(
+     [`Contact Person ${n} Name`,c.name||''],
+     [`Contact Person ${n} Position`,c.position||''],
+     [`Contact Person ${n} Email`,c.email||''],
+     [`Contact Person ${n} Phone`,c.phone||'']
+   );
+ }
+ return entries;
+}
+
+let currentTenderSupplierDetailId='';
+
+window.openTenderSupplierDetail=id=>{
+ const x=(state.countryWineries||[]).find(v=>String(v.id)===String(id));
+ if(!x){alert('Supplier information was not found.');return false}
+ currentTenderSupplierDetailId=x.id;
+ const title=document.getElementById('tenderSupplierDetailTitle');
+ const subtitle=document.getElementById('tenderSupplierDetailSubtitle');
+ const grid=document.getElementById('tenderSupplierDetailGrid');
+ const msg=document.getElementById('tenderSupplierCopyMessage');
+ if(title)title.textContent=x.supplierLegalFullName||x.name||'Supplier Information';
+ if(subtitle)subtitle.textContent=`${x.supplierCountry||x.country||'Country'} — Complete Submitted Supplier Information`;
+ if(msg)msg.textContent='';
+ if(grid){
+   grid.innerHTML=tenderSupplierDetailEntries(x).map(([label,value],i)=>{
+     const display=String(value??'').trim()||'—';
+     return `<div class="head-detail-field">
+       <div class="head-detail-label">${esc(label)}</div>
+       <div class="head-detail-value">${esc(display)}</div>
+       <button type="button" class="secondary small" onclick="copyTenderSupplierField(${i})">Copy</button>
+     </div>`;
+   }).join('');
+ }
+ show('tenderSupplierDetailModal',true);
+ return true;
+};
+
+window.closeTenderSupplierDetail=()=>{
+ currentTenderSupplierDetailId='';
+ show('tenderSupplierDetailModal',false);
+};
+
+async function copyTenderSupplierText(text){
+ try{
+   if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(text);
+   else{
+     const ta=document.createElement('textarea');
+     ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+     document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();
+   }
+   const msg=document.getElementById('tenderSupplierCopyMessage');
+   if(msg){msg.textContent='Copied';setTimeout(()=>{if(msg.textContent==='Copied')msg.textContent=''},1200)}
+   return true;
+ }catch(err){
+   console.error('Copy failed',err);
+   alert('Could not copy this information.');
+   return false;
+ }
+}
+
+window.copyTenderSupplierField=index=>{
+ const x=(state.countryWineries||[]).find(v=>String(v.id)===String(currentTenderSupplierDetailId));
+ if(!x)return false;
+ const entry=tenderSupplierDetailEntries(x)[Number(index)];
+ if(!entry)return false;
+ return copyTenderSupplierText(`${entry[0]}: ${String(entry[1]??'').trim()||'—'}`);
+};
+
+window.copyAllTenderSupplierDetail=()=>{
+ const x=(state.countryWineries||[]).find(v=>String(v.id)===String(currentTenderSupplierDetailId));
+ if(!x)return false;
+ const text=tenderSupplierDetailEntries(x)
+   .map(([label,value])=>`${label}: ${String(value??'').trim()||'—'}`)
+   .join('\n');
+ return copyTenderSupplierText(text);
+};
+
+window.updateTenderSupplierStatus=(id,status)=>{
+ if(!TENDER_SUPPLIER_STATUSES.includes(status)){alert('Invalid supplier status.');renderTenderSuppliers();return false}
+ const supplier=(state.countryWineries||[]).find(x=>String(x.id)===String(id));
+ if(!supplier){alert('Supplier was not found.');renderTenderSuppliers();return false}
+ supplier.supplierApprovalStatus=status;
+ supplier.supplierApprovalStatusUpdatedAt=new Date().toISOString();
+ save();
+ renderTenderSuppliers();
+ return true;
+};
+
 window.renderItalySourcing=function(){
  renderArchivedCountryCandidates();
  renderPortfolioManagerRecycleBin();
@@ -8030,7 +8307,9 @@ const q=(document.getElementById('italyWinerySearch')?.value||'').toLowerCase();
 <td>${esc(x.phone||'—')}</td><td>${esc(x.email||'—')}</td><td>${esc(x.paymentTerms||'—')}</td><td>${esc(x.ontario||'—')}</td><td>${esc(x.exportsOtherProvinces||'—')}</td>
 <td>${esc(x.producerSize||'—')}</td>
 <td>
-  <button class="secondary small" onclick="openItalyWineryForm('${x.id}')">Edit</button>
+  ${x.supplierApprovalStatus==='Approved Supplier'
+    ? `<button class="secondary small" onclick="openItalyWineryForm('${x.id}')" title="Approved supplier information is locked">View</button>`
+    : `<button class="secondary small" onclick="openItalyWineryForm('${x.id}')">Edit</button>`}
   <button class="danger small" onclick="deleteItalySource('win','${x.id}')">Delete</button>
 </td></tr>`).join('')||'<tr><td colspan="14">No supplier information added yet.</td></tr>';
 const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document.getElementById('supplierWineCandidatesSearch')?.value||'').trim().toLowerCase();cr.innerHTML=can.filter(x=>!cq||JSON.stringify(x).toLowerCase().includes(cq)).map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=status==='Additional Information Required'?(x.additionalInformationRequested||x.headOfficeActions?.at(-1)?.comment||x.headOfficeComment||'—'):(x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—'),displayStatus=status==='In Progress'?'PROPOSED TO HEAD OFFICE':status==='Additional Information Required'?'Additional Information Requested':status==='Declined'?'Declined by head office':status==='Declined on Tenders First Stage'?'DECLINED ON TENDERS FIRST STAGE':status==='Declined on Tenders Final Decision'?'DECLINED ON TENDERS FINAL DECISION':status,workStatus=candidateLcboSubmissionWorkStatus(x);return `<tr><td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(displayStatus)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td><button class="small" onclick="openItalyCandidateForm('${x.id}')">Edit</button> ${wineCandidateCanDeleteOrArchive(x)?`<button type="button" class="secondary small" onclick="archiveCountryCandidate('${x.id}')">Move to My Candidate Items</button> <button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete</button>`:`<button type="button" class="secondary small" disabled title="Available only after a decline status">Move to My Candidate Items</button> <button class="danger small" disabled title="Available only after a decline status">Delete</button>`}</td></tr>`}).join('')||'<tr><td colspan="8">No wine candidates match the search.</td></tr>';}
