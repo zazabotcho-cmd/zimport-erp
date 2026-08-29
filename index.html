@@ -617,6 +617,24 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 }
 </style>
 
+
+<style id="tenderSupplierItemStatusColorStyle">
+  #tenderSupplierItemRows select.tender-supplier-item-status{
+    font-weight:700;
+    border-width:1px;
+  }
+  #tenderSupplierItemRows select.tender-supplier-item-status.status-pending{
+    background:#fff3cd !important;
+    color:#7a5a00 !important;
+    border-color:#e5c968 !important;
+  }
+  #tenderSupplierItemRows select.tender-supplier-item-status.status-approved{
+    background:#d9f2df !important;
+    color:#166534 !important;
+    border-color:#7fc48d !important;
+  }
+</style>
+
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -657,14 +675,15 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </nav>
 <nav class="subnav" data-section-nav="tender-niss">
   <button class="tab" data-tab="tenders">Tenders</button>
-  <button class="tab" data-tab="tender-suppliers">Tender Suppliers</button>
   <button class="tab" data-tab="worker-list">LCBO SUBMISSIONS LIST</button>
   <button class="tab" data-tab="items">Tender Item Database</button>
   <button class="tab" data-tab="submissions">All Submitted Items</button>
   <button class="tab" data-tab="tender-winners">TENDER WINNERS</button>
   
   <button class="tab" data-tab="po-page" data-po-title="TENDER PO's">TENDER PO's</button>
-<button class="tab" data-tab="archived-tenders">Archived Tenders</button>
+  <button class="tab" data-tab="tender-suppliers">Tender Suppliers</button>
+  <button class="tab" data-tab="tender-supplier-items">Tender Supplier Items</button>
+  <button class="tab" data-tab="archived-tenders">Archived Tenders</button>
 </nav>
 <nav class="subnav" data-section-nav="speciality-services">
   <button class="tab" data-tab="calculator">Suppliers</button>
@@ -852,7 +871,7 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <button type="button" onclick="openCreateMyItemForm()">+ Create My Item</button>
   </div><div class="toolbar"><input id="supplierArchivedCandidatesSearch" type="search" placeholder="Search My Items" oninput="renderArchivedCountryCandidates()"></div>
   <div class="table-wrap"><table>
-    <thead><tr><th>Wine</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Archived Date</th><th>Actions</th><th>Comment / Reason</th></tr></thead>
+    <thead><tr><th>Wine</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Submitted Date</th><th>Item Status</th><th>Actions</th><th>Comment / Reason</th></tr></thead>
     <tbody id="archivedCountryCandidateRows"></tbody>
   </table></div>
 </div></section>
@@ -1044,6 +1063,42 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
       </tr></thead>
       <tbody id="tenderSupplierRows"></tbody>
     </table></div>
+  </div>
+</section>
+
+<section id="tender-supplier-items" class="panel">
+  <div class="box">
+    <div class="section-head">
+      <div>
+        <h2>Tender Supplier Items</h2>
+        <p class="note">Items submitted from Country Sourcing → Suppliers → My Items appear here automatically for approval.</p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <input id="tenderSupplierItemSearch" type="search" placeholder="Search supplier, item, country or tender" oninput="renderTenderSupplierItems()">
+      <select id="tenderSupplierItemStatusFilter" onchange="renderTenderSupplierItems()">
+        <option value="">All Statuses</option>
+        <option>Item Submitted</option>
+        <option>More Information Requested</option>
+        <option>Approved Item</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Supplier</th>
+            <th>Item</th>
+            <th>Country</th>
+            <th>Tender</th>
+            <th>Supplier Price / Case</th>
+            <th>Submitted Date</th>
+            <th>Item Status</th>
+          </tr>
+        </thead>
+        <tbody id="tenderSupplierItemRows"></tbody>
+      </table>
+    </div>
   </div>
 </section>
 
@@ -2005,6 +2060,7 @@ function refreshProgramViews(){
  safeRefreshCall(window.renderItalySourcing);
  safeRefreshCall(window.renderSupplierContactPersons);
  safeRefreshCall(window.renderTenderSuppliers);
+ safeRefreshCall(window.renderTenderSupplierItems);
 
  // Head Office / LCBO / tender workflow views that may share the same changed records.
  safeRefreshCall(window.renderHeadOfficeProposals);
@@ -3351,6 +3407,7 @@ function saveCurrentGeneratedProforma(){
   save();
   renderSavedProformas();
  if(typeof window.renderTenderSuppliers==='function')window.renderTenderSuppliers();
+ if(typeof window.renderTenderSupplierItems==='function')window.renderTenderSupplierItems();
   activate('proformas','po-section');
   alert('Proforma saved in the Proformas page.');
 }
@@ -6114,7 +6171,7 @@ window.openCreateMyItemForm=async()=>{
  if(btn){
    btn.disabled=false;
    btn.style.background='';
-   btn.textContent='Create My Item';
+   btn.textContent='Submit Item Information';
  }
  const del=document.getElementById('deleteItalyCandidateBtn');
  if(del)del.style.visibility='hidden';
@@ -6155,7 +6212,7 @@ window.openItalyCandidateForm=async(id='')=>{
  if(proposeBtn){
    proposeBtn.disabled=false;
    proposeBtn.style.background='';
-   proposeBtn.textContent=openingMyItem?'Create My Item':(x.id?(approvedLocked?'Save Case and Pallet Information':'Update Proposal to Head Office'):'Propose to Head Office');
+   proposeBtn.textContent=openingMyItem?'Submit Item Information':(x.id?(approvedLocked?'Save Case and Pallet Information':'Update Proposal to Head Office'):'Propose to Head Office');
  }
  document.getElementById('italyCandidateModalTitle').textContent=openingMyItem?`Create My Item — ${currentSourcingCountry}`:(x.id?'Edit Wine Candidate — Italy':'Add Wine Candidate — Italy');
  document.getElementById('deleteItalyCandidateBtn').style.visibility=openingMyItem?'hidden':(x.id?'visible':'hidden');
@@ -6306,6 +6363,9 @@ window.saveItalyCandidate=async()=>{
     rec.status='My Item';
     rec.headOfficeActionStatus='';
     rec.myItem=true;
+    rec.itemApprovalStatus='Item Submitted';
+    rec.itemSubmittedAt=new Date().toISOString();
+    rec.itemApprovalStatusUpdatedAt=new Date().toISOString();
     rec.archivedAt=existing.archivedAt||new Date().toISOString();
     rec.updatedAt=new Date().toISOString();
     const ai=state.archivedCountryCandidates.findIndex(x=>x.id===id);
@@ -6316,8 +6376,8 @@ window.saveItalyCandidate=async()=>{
     if(i>=0)state.countryCandidates[i]=rec;else state.countryCandidates.push(rec);
   }
 
-  // Persist the record first. My Items stay private to the Country Sourcing workflow
-  // until the representative chooses to propose them later.
+  // Persist the record first. My Items submitted here automatically enter
+  // the Tender Supplier Items approval workflow.
   safeStorage.setItem(DATA_KEY,JSON.stringify(state));
   if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
 
@@ -6334,12 +6394,12 @@ window.saveItalyCandidate=async()=>{
   renderItalySourcing();
   if(!saveAsMyItem&&typeof window.renderHeadOfficeProposals==='function')window.renderHeadOfficeProposals();
   if(typeof renderHeadInventory==='function')renderHeadInventory();
-  if(saveAsMyItem)renderArchivedCountryCandidates();
+  if(saveAsMyItem){renderArchivedCountryCandidates();if(typeof window.renderTenderSupplierItems==='function')window.renderTenderSupplierItems();}
   closeItalyCandidateForm();
   return true;
  }catch(e){
    console.error(e);
-   alert(saveAsMyItem?'The My Item record could not be saved. '+(e?.message||''):'The wine candidate could not be proposed to Head Office. '+(e?.message||''));
+   alert(saveAsMyItem?'The item information could not be submitted. '+(e?.message||''):'The wine candidate could not be proposed to Head Office. '+(e?.message||''));
    return false
  }
 };
@@ -6348,19 +6408,19 @@ window.proposeItalyCandidateToHeadOffice=async function(button){
  if(button?.disabled)return false;
  const saveAsMyItem=italyCandidateSaveMode==='my-item';
  const isEdit=!!document.getElementById('itCanRecordId')?.value;
- const original=saveAsMyItem?'Create My Item':(isEdit?'Update Proposal to Head Office':'Propose to Head Office');
+ const original=saveAsMyItem?'Submit Item Information':(isEdit?'Update Proposal to Head Office':'Propose to Head Office');
  try{
-  if(button){button.disabled=true;button.textContent=saveAsMyItem?'Saving My Item...':'Proposing...'}
+  if(button){button.disabled=true;button.textContent=saveAsMyItem?'Submitting Item Information...':'Proposing...'}
   const ok=await window.saveItalyCandidate();
   if(ok){
-   if(button){button.textContent=saveAsMyItem?'My Item Created':(isEdit?'Proposal Updated':'Proposed to Head Office');button.style.background='var(--green)'}
+   if(button){button.textContent=saveAsMyItem?'Item Submitted':(isEdit?'Proposal Updated':'Proposed to Head Office');button.style.background='var(--green)'}
    return true;
   }
   if(button){button.disabled=false;button.textContent=original;button.style.background=''}
   return false;
  }catch(err){
   console.error('Proposal failed:',err);
-  alert((saveAsMyItem?'My Item could not be saved. ':'Proposal could not be sent to Head Office. ')+(err?.message||''));
+  alert((saveAsMyItem?'Item information could not be submitted. ':'Proposal could not be sent to Head Office. ')+(err?.message||''));
   if(button){button.disabled=false;button.textContent=original;button.style.background=''}
   return false;
  }
@@ -8031,11 +8091,12 @@ window.renderArchivedCountryCandidates=()=>{
    return `<tr>
      <td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td>
      <td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td>
-     <td>${esc(x.archivedAt?new Date(x.archivedAt).toLocaleDateString():'—')}</td>
+     <td>${esc((x.itemSubmittedAt||x.archivedAt)?new Date(x.itemSubmittedAt||x.archivedAt).toLocaleDateString():'—')}</td>
+     <td>${esc(x.itemApprovalStatus||'—')}</td>
      <td><button type="button" class="secondary small" onclick="updateAndProposeArchivedCandidate('${x.id}')">Update Information / Propose Again</button> <button type="button" class="danger small" onclick="deleteArchivedCountryCandidate('${x.id}')">Delete</button></td>
      <td style="min-width:240px"><textarea id="myCandidateComment_${x.id}" rows="3" style="width:100%;min-width:220px" placeholder="Write comment / reason">${esc(x.myCandidateComment||'')}</textarea><button type="button" class="secondary small" style="margin-top:6px" onclick="saveMyCandidateItemComment('${x.id}')">Save Comment / Reason</button></td>
    </tr>`;
- }).join('')||'<tr><td colspan="9">No My Items for this country.</td></tr>';
+ }).join('')||'<tr><td colspan="10">No My Items for this country.</td></tr>';
 };
 window.saveMyCandidateItemComment=id=>{
  const x=(state.archivedCountryCandidates||[]).find(v=>v.id===id);if(!x)return;
@@ -8203,6 +8264,81 @@ window.deleteSupplierContactPerson=id=>{
 };
 window.renderSupplierContactPersons=renderSupplierContactPersons;
 
+
+
+const TENDER_SUPPLIER_ITEM_STATUSES=['Item Submitted','More Information Requested','Approved Item'];
+
+function tenderSupplierItemSupplierName(x){
+ const savedSupplier=(state.countryWineries||[]).find(w=>
+   String(w.id)===String(x.retrievedSupplierInfoId||x.wineryId||'') ||
+   (String(w.portfolioSupplierId||'')===String(x.portfolioSupplierId||'') && String(w.country||'')===String(x.country||''))
+ );
+ return x.supplierName||x.supplierLegalFullName||savedSupplier?.supplierLegalFullName||savedSupplier?.name||'—';
+}
+
+function renderTenderSupplierItems(){
+ const body=document.getElementById('tenderSupplierItemRows');
+ if(!body)return;
+ if(!Array.isArray(state.archivedCountryCandidates))state.archivedCountryCandidates=[];
+ const q=(document.getElementById('tenderSupplierItemSearch')?.value||'').trim().toLowerCase();
+ const statusFilter=document.getElementById('tenderSupplierItemStatusFilter')?.value||'';
+ const rows=state.archivedCountryCandidates
+   .filter(x=>x && x.itemApprovalStatus)
+   .filter(x=>{
+     const status=TENDER_SUPPLIER_ITEM_STATUSES.includes(x.itemApprovalStatus)?x.itemApprovalStatus:'Item Submitted';
+     if(statusFilter&&status!==statusFilter)return false;
+     if(!q)return true;
+     const tender=(state.tenders||[]).find(t=>String(t.id)===String(x.opportunityId||''));
+     return [
+       tenderSupplierItemSupplierName(x),
+       x.productDescription||x.name||'',
+       x.country||'',
+       tender?.name||'General Portfolio'
+     ].join(' ').toLowerCase().includes(q);
+   })
+   .sort((a,b)=>String(b.itemSubmittedAt||b.updatedAt||'').localeCompare(String(a.itemSubmittedAt||a.updatedAt||'')));
+
+ body.innerHTML=rows.map(x=>{
+   const status=TENDER_SUPPLIER_ITEM_STATUSES.includes(x.itemApprovalStatus)?x.itemApprovalStatus:'Item Submitted';
+   const tender=(state.tenders||[]).find(t=>String(t.id)===String(x.opportunityId||''));
+   const submitted=String(x.itemSubmittedAt||x.updatedAt||x.createdAt||'').slice(0,10)||'—';
+   const price=x.supplierPricePerCase??x.price??'—';
+   return `<tr>
+     <td>${esc(tenderSupplierItemSupplierName(x))}</td>
+     <td><b>${esc(x.productDescription||x.name||'—')}</b></td>
+     <td>${esc(x.country||'—')}</td>
+     <td>${esc(tender?.name||'General Portfolio')}</td>
+     <td>${esc(price)}${x.supplierCurrency?' '+esc(x.supplierCurrency):''}</td>
+     <td>${esc(submitted)}</td>
+     <td>
+       <select class="tender-supplier-item-status ${status==='Approved Item'?'status-approved':'status-pending'}" onchange="updateTenderSupplierItemStatus('${x.id}',this.value)">
+         ${TENDER_SUPPLIER_ITEM_STATUSES.map(v=>`<option ${v===status?'selected':''}>${esc(v)}</option>`).join('')}
+       </select>
+     </td>
+   </tr>`;
+ }).join('')||'<tr><td colspan="7">No submitted supplier items found.</td></tr>';
+}
+window.renderTenderSupplierItems=renderTenderSupplierItems;
+
+window.updateTenderSupplierItemStatus=(id,status)=>{
+ if(!TENDER_SUPPLIER_ITEM_STATUSES.includes(status)){
+   alert('Invalid item status.');
+   renderTenderSupplierItems();
+   return false;
+ }
+ const item=(state.archivedCountryCandidates||[]).find(x=>String(x.id)===String(id));
+ if(!item){
+   alert('Submitted item was not found.');
+   renderTenderSupplierItems();
+   return false;
+ }
+ item.itemApprovalStatus=status;
+ item.itemApprovalStatusUpdatedAt=new Date().toISOString();
+ save();
+ renderTenderSupplierItems();
+ renderArchivedCountryCandidates();
+ return true;
+};
 
 const TENDER_SUPPLIER_STATUSES=['Submitted Supplier','More Information Requested','Approved Supplier'];
 
