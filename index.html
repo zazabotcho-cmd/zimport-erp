@@ -6300,108 +6300,38 @@ function applyRetrievedApprovedMyItemView(){
  const form=document.getElementById('italyCandidateFields');
  if(!form)return;
 
- const fieldsets=[...form.querySelectorAll('fieldset.item-group')];
- const byLegend=title=>fieldsets.find(fs=>String(fs.querySelector('legend')?.textContent||'').trim()===title);
+ // Keep the complete Add Propose Item form visible.
+ // Only the specifically requested retrieved fields are locked.
+ [...form.querySelectorAll('fieldset.item-group')].forEach(fs=>fs.style.display='');
+ [...form.querySelectorAll('label')].forEach(label=>{
+   if(!label.classList.contains('field-hidden'))label.style.display='';
+ });
 
- // Hide every main section first.
- fieldsets.forEach(fs=>fs.style.display='none');
+ const lockElement=el=>{
+   if(!el)return;
+   el.title='Retrieved from Approved My Item — this information cannot be changed here.';
+   el.style.cursor='not-allowed';
+   el.style.opacity='.72';
+   el.setAttribute('aria-readonly','true');
+   el.dataset.retrievedItemLocked='1';
 
- // Country Representative section stays visible for Tender Name,
- // retrieve/remove control, and the selected locked commercial fields.
- const sourcing=byLegend('Country Representative Sourcing Information');
- if(sourcing){
-   sourcing.style.display='';
-
-   // Hide everything inside sourcing, then selectively reveal required items.
-   [...sourcing.querySelectorAll('label')].forEach(label=>label.style.display='none');
-
-   const showControl=id=>{
-     const el=document.getElementById(id);
-     const label=el?.closest('label');
-     if(label)label.style.display='';
-     return el;
-   };
-
-   // Tender Name remains visible and editable.
-   showControl('itCanOpp');
-
-   // Retrieve control remains visible so the user can remove the retrieved item with ×.
-   const retrieveSection=document.getElementById('approvedMyItemRetrieveSection');
-   if(retrieveSection)retrieveSection.style.display='';
-
-   // Product Description only; hide its photo sibling.
-   const desc=showControl('c_productDescription');
-   const photoWrap=desc?.closest('.italy-product-photo-wrap');
-   if(photoWrap){
-     photoWrap.style.display='';
-     [...photoWrap.children].forEach(child=>child.style.display='none');
-     const descLabel=desc.closest('label');
-     if(descLabel)descLabel.style.display='';
+   if(el.tagName==='SELECT'){
+     el.dataset.retrievedLockedValue=el.value;
+     el.addEventListener('pointerdown',ev=>{ev.preventDefault();ev.stopPropagation();alert('This information was retrieved from an Approved My Item and cannot be changed here.');},true);
+     el.addEventListener('keydown',ev=>{ev.preventDefault();ev.stopPropagation();alert('This information was retrieved from an Approved My Item and cannot be changed here.');},true);
+     el.addEventListener('change',()=>{
+       if(el.dataset.retrievedLockedValue!==undefined)el.value=el.dataset.retrievedLockedValue;
+     });
+   }else{
+     el.readOnly=true;
+     el.addEventListener('click',()=>{
+       if(el.dataset.retrievedItemLocked==='1')el.title='Retrieved from Approved My Item — this information cannot be changed here.';
+     });
    }
+ };
 
-   // Supplier price and bottles per case only from the price row.
-   const price=showControl('itCanPrice');
-   const bottles=showControl('itCanBottlesPerCase');
-   const priceRow=price?.closest('.italy-source-price-row');
-   if(priceRow){
-     priceRow.style.display='';
-     [...priceRow.children].forEach(child=>child.style.display='none');
-     if(price?.closest('label'))price.closest('label').style.display='';
-     if(bottles?.closest('label'))bottles.closest('label').style.display='';
-   }
-
-   showControl('itCanQuoteType');
-   showControl('itCanGiftBox');
-   showControl('itCanProtectedAppellation');
-
-   // Hide conditional detail fields even when their source selector is Yes/Other.
-   [
-     'itCanExCellarDeliveryWrap',
-     'itCanGiftBoxDescriptionWrap',
-     'itCanAppellationNameWrap',
-     'itCanAppellationDescriptionWrap',
-     'itCanUniqueOtherDescriptionWrap',
-     'itCanOntarioExportDetailsWrap'
-   ].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none'});
- }
-
- // Identification: only Product Category.
- const identification=byLegend('Identification');
- if(identification){
-   identification.style.display='';
-   [...identification.querySelectorAll('label')].forEach(label=>label.style.display='none');
-   const category=document.getElementById('c_productCategory');
-   if(category?.closest('label'))category.closest('label').style.display='';
-   const purchaseRow=identification.querySelector('.purchase-row');
-   if(purchaseRow)purchaseRow.style.display='none';
- }
-
- // Supplier Information: show the complete retrieved supplier-information section,
- // but hide its separate supplier-retrieve controls because retrieved data is locked.
- const supplierInfo=byLegend('Supplier Information');
- if(supplierInfo){
-   supplierInfo.style.display='';
-   const supplierRetrieveControls=supplierInfo.querySelector('.inline-actions');
-   if(supplierRetrieveControls)supplierRetrieveControls.style.display='none';
- }
-
- // Origin and Product Details: only Producing Country and Producing Region.
- const origin=byLegend('Origin and Product Details');
- if(origin){
-   origin.style.display='';
-   [...origin.querySelectorAll('label')].forEach(label=>label.style.display='none');
-   ['c_producingCountry','c_producingRegion'].forEach(id=>{
-     const el=document.getElementById(id);
-     if(el?.closest('label'))el.closest('label').style.display='';
-   });
- }
-
- // Selling Unit Information: show the complete section.
- const selling=byLegend('Selling Unit Information');
- if(selling)selling.style.display='';
-
- // Lock all requested retrieved fields.
- const lockIds=[
+ // Individual locked fields.
+ [
    'c_productDescription',
    'itCanPrice',
    'itCanBottlesPerCase',
@@ -6409,64 +6339,33 @@ function applyRetrievedApprovedMyItemView(){
    'itCanGiftBox',
    'itCanProtectedAppellation',
    'c_productCategory',
-   'c_lcboSupplierNumber',
-   'c_supplierName',
-   'c_supplierAddress1',
-   'c_supplierAddress2',
-   'c_supplierCity',
-   'c_supplierRegion',
-   'c_supplierCountry',
-   'c_supplierPostalCode',
-   'c_phoneNumber',
-   'c_faxNumber',
-   'c_emailAddress',
-   'c_paymentTerms',
-   'c_producerSize',
-   'c_supplierOntarioAgent',
-   'c_supplierOntarioAgentDetails',
-   'c_supplierOtherProvinceExporter',
-   'c_supplierOtherProvinceExporterDetails',
    'c_producingCountry',
-   'c_producingRegion',
-   'c_sellingUnitSizeMl',
-   'c_unitsPerSellingPack',
-   'c_containerType',
-   'c_containerWeightG',
-   'c_packageMaterial',
-   'c_packageWeightG',
-   'c_stopperType',
-   'c_stopperWeightG'
- ];
+   'c_producingRegion'
+ ].forEach(id=>lockElement(document.getElementById(id)));
 
- lockIds.forEach(id=>{
-   const el=document.getElementById(id);
-   if(!el)return;
-   el.title='Retrieved from Approved My Item — this information cannot be changed here.';
-   el.style.cursor='not-allowed';
-   el.style.opacity='.72';
-   el.setAttribute('aria-readonly','true');
-   if(el.tagName==='SELECT'){
-     el.disabled=true;
-   }else{
-     el.readOnly=true;
-   }
- });
+ // Lock every field in Supplier Information.
+ const supplierFieldset=[...form.querySelectorAll('fieldset.item-group')]
+   .find(fs=>String(fs.querySelector('legend')?.textContent||'').trim()==='Supplier Information');
+ if(supplierFieldset){
+   supplierFieldset.querySelectorAll('input,select,textarea').forEach(lockElement);
+   const supplierRetrieveControls=supplierFieldset.querySelector('.inline-actions');
+   if(supplierRetrieveControls)supplierRetrieveControls.style.display='none';
+ }
 
- // Do not allow the hidden supplier detail condition controls to reopen fields.
+ // Lock every field in Selling Unit Information.
+ const sellingFieldset=[...form.querySelectorAll('fieldset.item-group')]
+   .find(fs=>String(fs.querySelector('legend')?.textContent||'').trim()==='Selling Unit Information');
+ if(sellingFieldset){
+   sellingFieldset.querySelectorAll('input,select,textarea').forEach(lockElement);
+ }
+
+ // Keep all other information visible and editable, including conditional details.
  syncItalyCandidateQuoteType();
  syncItalyCandidateGiftBox();
+ syncItalyCandidateOntarioExport();
  syncItalyCandidateProtectedAppellation();
  syncItalyCandidateSupplierOntarioAgent();
  syncItalyCandidateSupplierOtherProvince();
- [
-   'itCanExCellarDeliveryWrap',
-   'itCanGiftBoxDescriptionWrap',
-   'itCanAppellationNameWrap',
-   'itCanAppellationDescriptionWrap',
-   'itCanUniqueOtherDescriptionWrap',
-   'c_supplierOntarioAgentDetailsWrap',
-   'c_supplierOtherProvinceExporterDetailsWrap'
- ].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none'});
 }
 window.applyRetrievedApprovedMyItemView=applyRetrievedApprovedMyItemView;
 
