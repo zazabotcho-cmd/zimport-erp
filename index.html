@@ -1106,8 +1106,16 @@ label[data-retrieved-locked="1"] textarea{
             <th>Supplier</th>
             <th>Item</th>
             <th>Country</th>
-            <th>Tender</th>
+            <th>Region</th>
             <th>Supplier Price / Case</th>
+            <th>Bottle Price</th>
+            <th>Offered Vintage Score Only</th>
+            <th>Score Source — ★ indicates LCBO preferred source / Other Score Source</th>
+            <th>Bottles Per Case</th>
+            <th>Selling Unit Size (ml.)</th>
+            <th>Product Category</th>
+            <th>Has the product ever been previously purchased by the LCBO?</th>
+            <th>Quote Type</th>
             <th>Submitted Date</th>
             <th>Item Status</th>
           </tr>
@@ -1117,6 +1125,23 @@ label[data-retrieved-locked="1"] textarea{
     </div>
   </div>
 </section>
+
+<div id="tenderSupplierItemDetailModal" class="modal hidden"><div class="modal-card head-detail-modal-card">
+  <div class="modal-head">
+    <div>
+      <h2 id="tenderSupplierItemDetailTitle">Item Information</h2>
+      <p id="tenderSupplierItemDetailSubtitle" class="note"></p>
+    </div>
+    <button type="button" class="icon" onclick="closeTenderSupplierItemDetail()">×</button>
+  </div>
+  <div class="head-detail-toolbar">
+    <button type="button" onclick="copyAllTenderSupplierItemDetail()">Copy All Item Information</button>
+    <span id="tenderSupplierItemCopyMessage" class="note"></span>
+  </div>
+  <div id="tenderSupplierItemDetailGrid" class="head-detail-grid"></div>
+  <div class="modal-actions"><span></span><button type="button" class="secondary" onclick="closeTenderSupplierItemDetail()">Close</button></div>
+</div></div>
+
 
 <section id="tenders" class="panel">
   <div class="section-head"><div><h2>Tenders</h2></div><button id="addTenderBtn">+ Create a Tender</button></div>
@@ -8805,6 +8830,14 @@ function tenderSupplierItemSupplierName(x){
  return x.supplierName||x.supplierLegalFullName||savedSupplier?.supplierLegalFullName||savedSupplier?.name||'—';
 }
 
+function tenderSupplierItemSupplierRecord(x){
+ return (state.countryWineries||[]).find(w=>
+   String(w.id)===String(x?.retrievedSupplierInfoId||x?.wineryId||'') ||
+   (String(w.portfolioSupplierId||'')===String(x?.portfolioSupplierId||'') && String(w.country||'')===String(x?.country||''))
+ )||null;
+}
+window.tenderSupplierItemSupplierRecord=tenderSupplierItemSupplierRecord;
+
 function renderTenderSupplierItems(){
  const body=document.getElementById('tenderSupplierItemRows');
  if(!body)return;
@@ -8831,13 +8864,43 @@ function renderTenderSupplierItems(){
    const status=TENDER_SUPPLIER_ITEM_STATUSES.includes(x.itemApprovalStatus)?x.itemApprovalStatus:'Item Submitted';
    const tender=(state.tenders||[]).find(t=>String(t.id)===String(x.opportunityId||''));
    const submitted=String(x.itemSubmittedAt||x.updatedAt||x.createdAt||'').slice(0,10)||'—';
-   const price=x.supplierPricePerCase??x.price??'—';
+   const casePriceRaw=x.supplierPricePerCase??x.price??'';
+   const bottlesPerCaseRaw=x.bottlesPerCase??'';
+   const casePriceNum=Number(casePriceRaw);
+   const bottlesPerCaseNum=Number(bottlesPerCaseRaw);
+   const bottlePrice=(Number.isFinite(casePriceNum)&&Number.isFinite(bottlesPerCaseNum)&&bottlesPerCaseNum>0)
+     ? casePriceNum/bottlesPerCaseNum
+     : null;
+   const region=x.producingRegion||x.region||x.supplierRegion||x.supplierRegionCountry||'—';
+   const score=x.score||'—';
+   const scoreSourceMain=String(x.scoreSource||'').trim();
+   const scoreSourceOther=String(x.scoreSourceOther||'').trim();
+   const scoreSourceDisplay=scoreSourceOther
+     ? (scoreSourceMain?`${scoreSourceMain} / ${scoreSourceOther}`:scoreSourceOther)
+     : (scoreSourceMain||'—');
+   const sellingUnitSize=x.sellingUnitSizeMl??'—';
+   const productCategory=x.productCategory||x.productType||'—';
+   const previouslyPurchased=x.previouslyPurchased||'—';
+   const quoteType=x.supplierQuoteType||x.quoteType||'—';
+   const priceDisplay=(casePriceRaw!==''&&casePriceRaw!==null&&casePriceRaw!==undefined)?casePriceRaw:'—';
+   const bottlePriceDisplay=bottlePrice===null?'—':bottlePrice.toFixed(2);
+   const supplierRecord=tenderSupplierItemSupplierRecord(x);
    return `<tr>
-     <td>${esc(tenderSupplierItemSupplierName(x))}</td>
-     <td><b>${esc(x.productDescription||x.name||'—')}</b></td>
+     <td>${supplierRecord
+       ? `<button type="button" class="program-clickable-link" onclick="openTenderSupplierDetail('${supplierRecord.id}')">${esc(tenderSupplierItemSupplierName(x))}</button>`
+       : `<button type="button" class="program-clickable-link" onclick="openTenderSupplierItemSupplierFallback('${x.id}')">${esc(tenderSupplierItemSupplierName(x))}</button>`}</td>
+     <td><button type="button" class="program-clickable-link" onclick="openTenderSupplierItemDetail('${x.id}')">${esc(x.productDescription||x.name||'—')}</button></td>
      <td>${esc(x.country||'—')}</td>
-     <td>${esc(tender?.name||'General Portfolio')}</td>
-     <td>${esc(price)}${x.supplierCurrency?' '+esc(x.supplierCurrency):''}</td>
+     <td>${esc(region)}</td>
+     <td>${esc(priceDisplay)}${x.supplierCurrency?' '+esc(x.supplierCurrency):''}</td>
+     <td>${esc(bottlePriceDisplay)}${x.supplierCurrency?' '+esc(x.supplierCurrency):''}</td>
+     <td><b>${esc(score)}</b></td>
+     <td>${esc(scoreSourceDisplay)}</td>
+     <td>${esc(bottlesPerCaseRaw||'—')}</td>
+     <td>${esc(sellingUnitSize)}</td>
+     <td>${esc(productCategory)}</td>
+     <td>${esc(previouslyPurchased)}</td>
+     <td>${esc(quoteType)}</td>
      <td>${esc(submitted)}</td>
      <td>
        <select class="tender-supplier-item-status ${status==='Approved Item'?'status-approved':'status-pending'}" onchange="updateTenderSupplierItemStatus('${x.id}',this.value)">
@@ -8845,9 +8908,231 @@ function renderTenderSupplierItems(){
        </select>
      </td>
    </tr>`;
- }).join('')||'<tr><td colspan="7">No submitted supplier items found.</td></tr>';
+ }).join('')||'<tr><td colspan="15">No submitted supplier items found.</td></tr>';
 }
 window.renderTenderSupplierItems=renderTenderSupplierItems;
+
+
+let currentTenderSupplierItemDetailId='';
+
+function tenderSupplierItemHumanizeKey(key){
+ const special={
+   id:'Record ID',
+   productDescription:'Product Description',
+   supplierPricePerCase:'Supplier Price Per Offered Case',
+   bottlesPerCase:'Bottles Per Case',
+   supplierCurrency:'Currency',
+   supplierQuoteType:'Supplier Quote Type',
+   localRetailPricePerBottle:'Local Retail Price Per Bottle',
+   opportunityId:'Tender Record ID',
+   itemApprovalStatus:'Item Status',
+   itemSubmittedAt:'Submitted Date',
+   lcboSupplierNumber:'LCBO Supplier Number',
+   sellingUnitSizeMl:'Selling Unit Size (ml.)'
+ };
+ if(special[key])return special[key];
+ return String(key||'')
+   .replace(/([a-z0-9])([A-Z])/g,'$1 $2')
+   .replace(/[_-]+/g,' ')
+   .replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+function tenderSupplierItemDisplayValue(v){
+ if(v===null||v===undefined||v==='')return '—';
+ if(Array.isArray(v)){
+   if(!v.length)return '—';
+   return v.map(a=>typeof a==='object'?JSON.stringify(a,null,2):String(a)).join('\n');
+ }
+ if(typeof v==='object')return JSON.stringify(v,null,2);
+ return String(v);
+}
+
+function tenderSupplierItemDetailEntries(x){
+ const hidden=new Set([
+   'headOfficeActions','attachments','itemPhotos',
+   'myItem','tenderSupplierItemOnly','archivedAt',
+   'savedFromActiveCandidateAt'
+ ]);
+ const preferred=[
+   'productDescription','name','brandName','productCategory',
+   'supplierName','supplierLegalFullName','producerName',
+   'country','producingCountry','producingRegion',
+   'vintage','grapeVarietal1','grapeVarietal2','grapeVarietal3',
+   'supplierPricePerCase','bottlesPerCase','supplierCurrency',
+   'supplierBottlePrice','supplierQuoteType','localRetailPricePerBottle',
+   'sellingUnitSizeMl','unitsPerSellingPack','containerType',
+   'percentAlcohol','sweetnessSugar','score','scoreSource','scoreSourceOther',
+   'awards','pressCoverage','protectedAppellation','appellationName',
+   'appellationDescription','uniqueOtherDescription','outstandingLocation',
+   'ontarioExclusivity','ontarioExportDetails',
+   'supplierOntarioAgent','supplierOntarioAgentDetails',
+   'supplierOtherProvinceExporter','supplierOtherProvinceExporterDetails',
+   'pickupPoint','pickupPhone','leadTimeDays',
+   'lcboSupplierNumber','previousSubmissionNumber',
+   'itemApprovalStatus','itemSubmittedAt','itemApprovalStatusUpdatedAt',
+   'opportunityId'
+ ];
+ const out=[],seen=new Set();
+ const add=k=>{
+   if(seen.has(k)||hidden.has(k)||!(k in x))return;
+   seen.add(k);
+   out.push([k,x[k]]);
+ };
+ preferred.forEach(add);
+ Object.keys(x).sort().forEach(add);
+ return out;
+}
+
+window.openTenderSupplierItemDetail=id=>{
+ const x=(state.archivedCountryCandidates||[]).find(v=>String(v.id)===String(id));
+ if(!x){alert('Item information was not found.');return false}
+ currentTenderSupplierItemDetailId=x.id;
+
+ const title=document.getElementById('tenderSupplierItemDetailTitle');
+ const subtitle=document.getElementById('tenderSupplierItemDetailSubtitle');
+ const grid=document.getElementById('tenderSupplierItemDetailGrid');
+ const msg=document.getElementById('tenderSupplierItemCopyMessage');
+
+ if(title)title.textContent=x.productDescription||x.name||'Item Information';
+ if(subtitle)subtitle.textContent=`${tenderSupplierItemSupplierName(x)} — Complete Submitted Item Information`;
+ if(msg)msg.textContent='';
+
+ if(grid){
+   const entries=tenderSupplierItemDetailEntries(x);
+   grid.innerHTML=entries.map(([key,value],i)=>{
+     const label=tenderSupplierItemHumanizeKey(key);
+     const display=tenderSupplierItemDisplayValue(value);
+     const full=display.length>100||display.includes('\n')||typeof value==='object';
+     return `<div class="head-detail-field ${full?'full':''}">
+       <div class="head-detail-label">${esc(label)}</div>
+       <div class="head-detail-value">${esc(display)}</div>
+       <button type="button" class="secondary small" onclick="copyTenderSupplierItemField(${i})">Copy</button>
+     </div>`;
+   }).join('');
+ }
+ show('tenderSupplierItemDetailModal',true);
+ return true;
+};
+
+window.closeTenderSupplierItemDetail=()=>{
+ currentTenderSupplierItemDetailId='';
+ show('tenderSupplierItemDetailModal',false);
+};
+
+async function copyTenderSupplierItemText(text){
+ try{
+   if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(text);
+   else{
+     const ta=document.createElement('textarea');
+     ta.value=text;
+     ta.style.position='fixed';
+     ta.style.opacity='0';
+     document.body.appendChild(ta);
+     ta.select();
+     document.execCommand('copy');
+     ta.remove();
+   }
+   const msg=document.getElementById('tenderSupplierItemCopyMessage');
+   if(msg){
+     msg.textContent='Copied';
+     setTimeout(()=>{if(msg.textContent==='Copied')msg.textContent=''},1200);
+   }
+   return true;
+ }catch(err){
+   console.error('Copy failed',err);
+   alert('Could not copy this information.');
+   return false;
+ }
+}
+
+window.copyTenderSupplierItemField=index=>{
+ const x=(state.archivedCountryCandidates||[]).find(v=>String(v.id)===String(currentTenderSupplierItemDetailId));
+ if(!x)return false;
+ const entry=tenderSupplierItemDetailEntries(x)[Number(index)];
+ if(!entry)return false;
+ return copyTenderSupplierItemText(`${tenderSupplierItemHumanizeKey(entry[0])}: ${tenderSupplierItemDisplayValue(entry[1])}`);
+};
+
+window.copyAllTenderSupplierItemDetail=()=>{
+ const x=(state.archivedCountryCandidates||[]).find(v=>String(v.id)===String(currentTenderSupplierItemDetailId));
+ if(!x)return false;
+ const text=tenderSupplierItemDetailEntries(x)
+   .map(([key,value])=>`${tenderSupplierItemHumanizeKey(key)}: ${tenderSupplierItemDisplayValue(value)}`)
+   .join('\n');
+ return copyTenderSupplierItemText(text);
+};
+
+window.openTenderSupplierItemSupplierFallback=id=>{
+ const x=(state.archivedCountryCandidates||[]).find(v=>String(v.id)===String(id));
+ if(!x){alert('Supplier information was not found.');return false}
+ const supplier=tenderSupplierItemSupplierRecord(x);
+ if(supplier)return openTenderSupplierDetail(supplier.id);
+
+ // If the original Supplier Information record is unavailable, show the supplier data saved with the item.
+ const fallback={
+   id:'fallback-'+x.id,
+   supplierLegalFullName:x.supplierLegalFullName||x.supplierName||x.producerName||'Supplier Information',
+   lcboSupplierNumber:x.lcboSupplierNumber||'',
+   address1:x.supplierAddress1||'',
+   address2:x.supplierAddress2||'',
+   city:x.supplierCity||'',
+   region:x.supplierRegion||x.supplierRegionCountry||'',
+   supplierCountry:x.supplierCountry||x.country||'',
+   postalCode:x.supplierPostalCode||'',
+   phone:x.phoneNumber||'',
+   email:x.emailAddress||'',
+   paymentTerms:x.paymentTerms||'',
+   producerSize:x.producerSize||'',
+   ontario:x.supplierOntarioAgent||'',
+   ontarioAgentInfo:x.supplierOntarioAgentDetails||'',
+   exportsOtherProvinces:x.supplierOtherProvinceExporter||'',
+   otherProvinceInfo:x.supplierOtherProvinceExporterDetails||'',
+   submittedAt:x.itemSubmittedAt||x.updatedAt||x.createdAt||''
+ };
+
+ currentTenderSupplierDetailId='';
+ const title=document.getElementById('tenderSupplierDetailTitle');
+ const subtitle=document.getElementById('tenderSupplierDetailSubtitle');
+ const grid=document.getElementById('tenderSupplierDetailGrid');
+ const msg=document.getElementById('tenderSupplierCopyMessage');
+ if(title)title.textContent=fallback.supplierLegalFullName;
+ if(subtitle)subtitle.textContent='Supplier information saved with this submitted item';
+ if(msg)msg.textContent='';
+ const entries=[
+   ['Supplier Legal Full Name',fallback.supplierLegalFullName],
+   ['LCBO Supplier Number (if applicable)',fallback.lcboSupplierNumber],
+   ['Supplier Address Line 1',fallback.address1],
+   ['Supplier Address Line 2',fallback.address2],
+   ['Supplier City',fallback.city],
+   ['Supplier Region',fallback.region],
+   ['Supplier Country',fallback.supplierCountry],
+   ['Supplier Postal Code',fallback.postalCode],
+   ['Phone Number',fallback.phone],
+   ['Email Address',fallback.email],
+   ['Payment Terms',fallback.paymentTerms],
+   ['Producer Size',fallback.producerSize],
+   ['Designated Agent in Ontario / LCBO?',fallback.ontario],
+   ['Ontario / LCBO Agent Information',fallback.ontarioAgentInfo],
+   ['Exports to Other Canadian Provinces?',fallback.exportsOtherProvinces],
+   ['Other Province Information',fallback.otherProvinceInfo],
+   ['Submitted Date',String(fallback.submittedAt||'').slice(0,10)]
+ ];
+ if(grid){
+   grid.innerHTML=entries.map(([label,value])=>`<div class="head-detail-field">
+     <div class="head-detail-label">${esc(label)}</div>
+     <div class="head-detail-value">${esc(String(value??'').trim()||'—')}</div>
+     <button type="button" class="secondary small" onclick="copyTenderSupplierItemText(${JSON.stringify(label+': '+(String(value??'').trim()||'—'))})">Copy</button>
+   </div>`).join('');
+ }
+ const copyAllBtn=document.querySelector('#tenderSupplierDetailModal .head-detail-toolbar button');
+ if(copyAllBtn){
+   const allText=entries.map(([label,value])=>`${label}: ${String(value??'').trim()||'—'}`).join('\n');
+   copyAllBtn.onclick=()=>copyTenderSupplierItemText(allText);
+ }
+ show('tenderSupplierDetailModal',true);
+ return true;
+};
+
 
 window.updateTenderSupplierItemStatus=(id,status)=>{
  if(!TENDER_SUPPLIER_ITEM_STATUSES.includes(status)){
@@ -8983,6 +9268,8 @@ window.openTenderSupplierDetail=id=>{
  if(title)title.textContent=x.supplierLegalFullName||x.name||'Supplier Information';
  if(subtitle)subtitle.textContent=`${x.supplierCountry||x.country||'Country'} — Complete Submitted Supplier Information`;
  if(msg)msg.textContent='';
+ const copyAllBtn=document.querySelector('#tenderSupplierDetailModal .head-detail-toolbar button');
+ if(copyAllBtn)copyAllBtn.onclick=()=>copyAllTenderSupplierDetail();
  if(grid){
    grid.innerHTML=tenderSupplierDetailEntries(x).map(([label,value],i)=>{
      const display=String(value??'').trim()||'—';
