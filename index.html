@@ -688,13 +688,9 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
 </div></div>
 <section id="country-wineries" class="panel"><div class="box">
   <div class="section-head">
-    <div><h2>Supplier Information</h2><p class="note">Add and manage multiple Supplier Information records for the selected supplier. Each supplier must have at least 2 contact persons.</p></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button type="button" class="secondary" onclick="openSupplierContactPersonForm()">+ Add Contact Person</button>
-      <button type="button" onclick="openItalyWineryForm()">+ Add Supplier Information</button>
-    </div>
+    <div><h2>Supplier Information</h2><p class="note">Add and manage multiple Supplier Information records for the selected supplier.</p></div>
+    <button type="button" onclick="openItalyWineryForm()">+ Add Supplier Information</button>
   </div>
-  <div id="supplierContactMinimumNotice" class="note" style="margin:8px 0 14px;font-weight:700"></div>
   <div id="italyWineryForm" class="item-group hidden" style="margin:16px 0">
     <input type="hidden" id="itWinRecordId">
     <h3 id="itWinFormTitle" style="margin-top:0">Add Supplier Information</h3>
@@ -726,6 +722,21 @@ textarea.candidate-approved-locked:disabled{background:#f1f5f9;cursor:not-allowe
     <th>LCBO Supplier #</th><th>Supplier Legal Full Name</th><th>Address</th><th>City</th><th>Region</th><th>Country</th><th>Postal Code</th>
     <th>Phone</th><th>Fax</th><th>Email</th><th>Payment Terms</th><th>Ontario / LCBO Agent?</th><th>Exports Other Provinces?</th><th>Producer Size</th><th>Action</th>
   </tr></thead><tbody id="italyWineryRows"></tbody></table></div>
+
+  <div class="box" style="margin-top:24px">
+    <div class="section-head">
+      <div>
+        <h3 style="margin:0">Contact Persons</h3>
+        <p class="note">Add and manage contact persons for the selected supplier. Each supplier must have at least 2 contact persons.</p>
+      </div>
+      <button type="button" class="secondary" onclick="openSupplierContactPersonForm()">+ Add Contact Person</button>
+    </div>
+    <div id="supplierContactMinimumNotice" class="note" style="margin:8px 0 14px;font-weight:700"></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Contact Person Name</th><th>Position</th><th>Email</th><th>Phone</th><th>Other</th><th>Actions</th></tr></thead>
+      <tbody id="supplierContactPersonsRows"></tbody>
+    </table></div>
+  </div>
 </div></section>
 <section id="country-candidates" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — Active Candidate Items</h2><p class="note">Wine Candidate uses the same detailed product profile as Add Tender Item, with country-sourcing fields added for the representative.</p></div><button type="button" onclick="openItalyCandidateForm()">+ Propose Wine</button></div><div class="toolbar"><input id="supplierWineCandidatesSearch" type="search" placeholder="Search Active Candidate Items" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Wine</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="italyCandidateRows"></tbody></table></div></div></section>
 <section id="country-archived-candidates" class="panel"><div class="box">
@@ -7784,7 +7795,7 @@ const q=(document.getElementById('italyWinerySearch')?.value||'').toLowerCase();
 </td></tr>`).join('')||'<tr><td colspan="15">No supplier information added yet.</td></tr>';
 const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document.getElementById('supplierWineCandidatesSearch')?.value||'').trim().toLowerCase();cr.innerHTML=can.filter(x=>!cq||JSON.stringify(x).toLowerCase().includes(cq)).map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=status==='Additional Information Required'?(x.additionalInformationRequested||x.headOfficeActions?.at(-1)?.comment||x.headOfficeComment||'—'):(x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—'),displayStatus=status==='In Progress'?'PROPOSED TO HEAD OFFICE':status==='Additional Information Required'?'Additional Information Requested':status==='Declined'?'Declined by head office':status==='Declined on Tenders First Stage'?'DECLINED ON TENDERS FIRST STAGE':status==='Declined on Tenders Final Decision'?'DECLINED ON TENDERS FINAL DECISION':status,workStatus=candidateLcboSubmissionWorkStatus(x);return `<tr><td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(displayStatus)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td><button class="small" onclick="openItalyCandidateForm('${x.id}')">Edit</button> ${wineCandidateCanDeleteOrArchive(x)?`<button type="button" class="secondary small" onclick="archiveCountryCandidate('${x.id}')">Move to My Candidate Items</button> <button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete</button>`:`<button type="button" class="secondary small" disabled title="Available only after a decline status">Move to My Candidate Items</button> <button class="danger small" disabled title="Available only after a decline status">Delete</button>`}</td></tr>`}).join('')||'<tr><td colspan="8">No wine candidates match the search.</td></tr>';}
 const br=document.getElementById('italyBonusRows');if(br)br.innerHTML=bon.map(x=>`<tr><td>${esc(x.date||'—')}</td><td>${esc(x.type)}</td><td>${esc(x.related||'—')}</td><td><b>${esc(x.currency)} ${num(x.amount).toFixed(2)}</b></td><td><span class="badge">${esc(x.status)}</span></td><td>${esc(x.notes||'—')}</td></tr>`).join('')||'<tr><td colspan="6">No bonus records yet.</td></tr>';const pk=document.getElementById('italyPerformanceKpis');if(pk){const paid=bon.filter(x=>x.status==='Paid').reduce((a,x)=>a+num(x.amount),0),pending=bon.filter(x=>x.status!=='Paid').reduce((a,x)=>a+num(x.amount),0);pk.innerHTML=[['Candidates Proposed',can.length],['Approved',approved],['Winners',winners],['Win Rate',can.length?((winners/can.length)*100).toFixed(1)+'%':'0%'],['Bonus Records',bon.length],['Pending Bonus Value*',pending.toFixed(2)]].map(x=>`<div class="card"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('')}
-renderHeadOfficeProposals();populateItalySelects()};
+renderSupplierContactPersons();renderHeadOfficeProposals();populateItalySelects()};
 if(document.getElementById('headAddBonusBtn'))document.getElementById('headAddBonusBtn').onclick=()=>openHeadBonusForm();
 if(document.getElementById('headCancelBonusBtn'))document.getElementById('headCancelBonusBtn').onclick=closeHeadBonusForm;
 if(document.getElementById('headSaveBonusBtn'))document.getElementById('headSaveBonusBtn').onclick=saveHeadBonus;
