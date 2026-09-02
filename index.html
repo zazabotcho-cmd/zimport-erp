@@ -269,6 +269,27 @@ label[data-retrieved-locked="1"] textarea{
 /* Separate archived winner and supplier information pages from the main supplier workflow */
 #countrySourcingPageRow .country-sourcing-end-separator{display:inline-block;align-self:stretch;width:2px;min-height:30px;background:#94a3b8;margin:0 18px;flex:0 0 2px;border-radius:2px}
 #countrySourcingPageRow .country-sourcing-end-tab{flex:0 0 auto}
+
+/* Keep end-of-workflow groups clearly separated and pushed to the far right */
+[data-section-nav="tender-niss"] .tender-nav-separator{
+  margin-left:auto !important;
+  margin-right:24px !important;
+  width:2px !important;
+  flex:0 0 2px !important;
+}
+[data-section-nav="tender-niss"] .tender-admin-end-tab{
+  flex:0 0 auto !important;
+}
+
+#countrySourcingPageRow .country-sourcing-end-separator{
+  margin-left:auto !important;
+  margin-right:24px !important;
+  width:2px !important;
+  flex:0 0 2px !important;
+}
+#countrySourcingPageRow .country-sourcing-end-tab{
+  flex:0 0 auto !important;
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -4334,7 +4355,7 @@ function purgeExpiredRecycle(){if(!isAdminUser()){alert('Only an administrator c
 function restoreRecycleRecord(id){const x=(state.recycleBin||[]).find(v=>v.id===id);if(!x)return;const r=JSON.parse(JSON.stringify(x.record));const map={record:'records',tender:'tenders',item:'items',agency:'agencies',supplier:'suppliers',purchaseOrder:'purchaseOrders',shipment:'shipments',financialInvoice:'financialInvoices',supplierPaymentInvoice:'supplierPaymentInvoices',supplierPaymentInvoice2:'supplierPaymentInvoices2',otherInvoice:'otherInvoices',otherNewInvoice:'otherNewInvoices',archivedInvoice:'archivedInvoices',archivedShipment:'archivedShipments',archivedPo:'manuallyArchivedPurchaseOrders',countryWinery:'countryWineries',countryCandidate:'countryCandidates',countryBonus:'countryBonuses',countryOpportunity:'countryOpportunities'};if(x.type==='supplierItem'){const s=state.suppliers.find(v=>v.id===x.restoreMeta.supplierId);if(!s){alert('The original supplier no longer exists. Restore the supplier first.');return}(s.items||(s.items=[])).push(r)}else if(x.type==='workerItem'){const t=state.tenders.find(v=>v.id===x.restoreMeta.tenderId);if(!t){alert('The original tender no longer exists. Restore the tender first.');return}(t.workItems||(t.workItems=[])).push(r)}else{const key=x.restoreMeta?.collection||map[x.type];if(!key)return;if(!Array.isArray(state[key]))state[key]=[];if(!state[key].some(v=>v.id===r.id))state[key].push(r)}state.recycleBin=state.recycleBin.filter(v=>v.id!==id);save()}
 function permanentlyDeleteRecycle(id){if(!isAdminUser()){alert('Only an administrator can move records to Head\'s Recycling Bin.');return}const x=(state.recycleBin||[]).find(v=>v.id===id);if(!x)return;if(!confirm('Move this record to Head\'s Recycling Bin?'))return;if(!Array.isArray(state.headsRecycleBin))state.headsRecycleBin=[];state.headsRecycleBin.push({...x,movedToHeadsAt:new Date().toISOString()});state.recycleBin=state.recycleBin.filter(v=>v.id!==id);save()}
 function restoreHeadsRecycleRecord(id){if(!isAdminUser()){alert('Administrator access only.');return}const x=(state.headsRecycleBin||[]).find(v=>v.id===id);if(!x)return;if(x.directToHeads){const r=JSON.parse(JSON.stringify(x.record));const map={financialInvoice:'financialInvoices',supplierPaymentInvoice:'supplierPaymentInvoices',supplierPaymentInvoice2:'supplierPaymentInvoices2',otherInvoice:'otherInvoices',otherNewInvoice:'otherNewInvoices',archivedInvoice:'archivedInvoices',officeInventory:'officeInventory',profitCalculatorItem:'profitCalculatorItem'};const key=x.restoreMeta?.collection||map[x.type];if(!key)return;if(!Array.isArray(state[key]))state[key]=[];if(!state[key].some(v=>v.id===r.id))state[key].push(r);state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save();try{renderFinancial()}catch(e){}try{renderOtherInvoices()}catch(e){}try{renderOtherNewInvoices()}catch(e){}try{renderSupplierPaymentInvoices()}catch(e){}try{renderSupplierPaymentInvoices2()}catch(e){}try{renderArchivedInvoices()}catch(e){}try{renderOfficeInventory()}catch(e){}try{renderProfitItemCalculator()}catch(e){}return}if(!Array.isArray(state.recycleBin))state.recycleBin=[];const restored={...x};delete restored.movedToHeadsAt;if(!state.recycleBin.some(v=>v.id===restored.id))state.recycleBin.push(restored);state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save()}
-function permanentlyDeleteHeadsRecycle(id){if(!isAdminUser()){alert('Administrator access only.');return}if(!confirm('Permanently delete this record? This cannot be undone.'))return;state.headsRecycleBin=(state.headsRecycleBin||[]).filter(v=>v.id!==id);save()}
+function permanentlyDeleteHeadsRecycle(id){if(!isAdminUser()){alert('Administrator access only.');return}if(!confirm('Permanently delete this record?'))return;state.headsRecycleBin=(state.headsRecycleBin||[]).filter(v=>v.id!==id);save()}
 function renderHeadsRecycleBin(){const body=$('#headsRecycleRows');if(!body)return;const q=String($('#headsRecycleSearch')?.value||'').trim().toLowerCase();const rows=(state.headsRecycleBin||[]).filter(x=>!q||`${x.page} ${x.label}`.toLowerCase().includes(q)).sort((a,b)=>new Date(b.movedToHeadsAt||b.deletedAt)-new Date(a.movedToHeadsAt||a.deletedAt));body.innerHTML=rows.map(x=>`<tr><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.movedToHeadsAt||x.deletedAt).toLocaleString())}</td><td><button type=\"button\" onclick=\"restoreHeadsRecycleRecord('${x.id}')\">Restore</button> <button type=\"button\" class=\"danger\" onclick=\"permanentlyDeleteHeadsRecycle('${x.id}')\">Permanently Delete</button></td></tr>`).join('')||'<tr><td colspan=\"5\" class=\"note\">Head\'s Recycling Bin is empty.</td></tr>'}
 function renderRecycleBin(){const body=$('#recycleRows');if(!body)return;const q=String($('#recycleSearch')?.value||'').trim().toLowerCase();const canAdmin=isAdminUser();const rows=(state.recycleBin||[]).filter(x=>!q||`${x.page} ${x.label}`.toLowerCase().includes(q)).sort((a,b)=>new Date(b.deletedAt)-new Date(a.deletedAt));body.innerHTML=rows.map(x=>`<tr><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.deleteAfter).toLocaleDateString())}</td><td><button type="button" onclick="restoreRecycleRecord('${x.id}')">Restore</button>${canAdmin?` <button type="button" class="danger recycle-permanent-delete" onclick="permanentlyDeleteRecycle('${x.id}')">Delete Permanently</button>`:''}</td></tr>`).join('')||'<tr><td colspan="5" class="note">Recycling Bin is empty.</td></tr>';const sel=$('#recycleRetention');if(sel)sel.value=String(state.recycleRetentionDays||90);document.querySelectorAll('.recycle-admin-only').forEach(el=>el.style.display=canAdmin?'':'none')}
 
@@ -8995,7 +9016,7 @@ window.restorePortfolioManagerRecycle=id=>{
 window.permanentlyDeletePortfolioManagerRecycle=id=>{
  if(!(typeof isAdminUser==='function'&&isAdminUser())){alert('Administrator access only.');return}
  const x=(state.portfolioManagerRecycleBin||[]).find(v=>v.id===id);if(!x)return;
- if(!confirm('Permanently delete this record? This cannot be undone.'))return;
+ if(!confirm('Permanently delete this record?'))return;
  state.portfolioManagerRecycleBin=state.portfolioManagerRecycleBin.filter(v=>v.id!==id);
  save();renderPortfolioManagerRecycleBin();
 };
