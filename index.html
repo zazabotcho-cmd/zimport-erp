@@ -820,9 +820,10 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
     <button class="tab" data-tab="country-dashboard"><span id="countryDashboardTabLabel">Dashboard</span></button>
     <button class="tab" data-tab="country-opportunities">My Tenders</button>
     <button class="tab" data-tab="country-wineries">Supplier Information</button>
-    <button class="tab" data-tab="country-candidates">Active Candidate Items</button>
+    <button class="tab" data-tab="country-candidates">My Candidate Items</button>
     <button class="tab" data-tab="country-archived-candidates">My Items</button>
-    <button class="tab" data-tab="country-manager-notes">Supplier Working Notes</button>
+    <button class="tab" data-tab="country-winners">My Winners</button>
+    <button class="tab" data-tab="country-manager-notes">My Working Notes</button>
      
     <button class="tab" data-tab="country-internal-mail">Internal Mail <span id="supplierInternalMailBadge" class="internal-mail-badge" style="display:none">0</span></button>
 <button class="tab" data-tab="country-manager-recycle-bin">Recycling Bin</button>
@@ -857,7 +858,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
     </div>
   </div>
 </div></section>
-<section id="country-opportunities" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — My Tenders</h2><p class="note">Read-only tender information. This page automatically shows tenders created in TENDERS and announced to the Italy Country Portfolio & Sourcing Representative. Tenders cannot be created, edited, or deleted here.</p></div></div><div class="toolbar"><input id="supplierMyTendersSearch" type="search" placeholder="Search My Tenders" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name</th><th>Product Needs</th><th>Pre-Submission Date</th><th>Tasting Date</th><th>Status</th><th>Notes</th><th>Active Candidate Items</th></tr></thead><tbody id="italyOpportunityRows"></tbody></table></div></div></section>
+<section id="country-opportunities" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — My Tenders</h2><p class="note">Read-only tender information. This page automatically shows tenders created in TENDERS and announced to the Italy Country Portfolio & Sourcing Representative. Tenders cannot be created, edited, or deleted here.</p></div></div><div class="toolbar"><input id="supplierMyTendersSearch" type="search" placeholder="Search My Tenders" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name</th><th>Product Needs</th><th>Pre-Submission Date</th><th>Tasting Date</th><th>Status</th><th>Notes</th><th>My Candidate Items</th></tr></thead><tbody id="italyOpportunityRows"></tbody></table></div></div></section>
 
 <div id="supplierTenderContactModal" class="modal hidden"><div class="modal-card" style="max-width:900px">
  <div class="modal-head"><div><h2 id="supplierContactPersonModalTitle">Add Contact Persons</h2><p id="supplierTenderContactTenderLabel" class="note">Supplier contact information</p></div><button type="button" class="icon" onclick="closeSupplierTenderContact()">×</button></div>
@@ -969,7 +970,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
     <th>Phone</th><th>Email</th><th>Payment Terms</th><th>Direction to Pay Agent</th><th>Ontario / LCBO Agent?</th><th>Exports Other Provinces?</th><th>Producer Size</th><th>Action</th>
   </tr></thead><tbody id="italyWineryRows"></tbody></table></div>
 </div></section>
-<section id="country-candidates" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — Active Candidate Items</h2><p class="note">Item Candidate uses the same detailed product profile as Add Tender Item, with country-sourcing fields added for the representative.</p></div><button type="button" onclick="openItalyCandidateForm()">+ Propose Item</button></div><div class="toolbar"><input id="supplierWineCandidatesSearch" type="search" placeholder="Search Active Candidate Items" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Item</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="italyCandidateRows"></tbody></table></div></div></section>
+<section id="country-candidates" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — My Candidate Items</h2><p class="note">Item Candidate uses the same detailed product profile as Add Tender Item, with country-sourcing fields added for the representative.</p></div><button type="button" onclick="openItalyCandidateForm()">+ Propose Item</button></div><div class="toolbar"><input id="supplierWineCandidatesSearch" type="search" placeholder="Search My Candidate Items" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Item</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="italyCandidateRows"></tbody></table></div></div></section>
 <section id="country-archived-candidates" class="panel"><div class="box">
   <div class="section-head">
     <div><h2 id="archivedCountryCandidatesTitle">Italy — My Items</h2><p class="note">My items for the selected country. Create and save a complete item profile here, then update or propose it to Head Office later.</p></div>
@@ -980,12 +981,18 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
     <tbody id="archivedCountryCandidateRows"></tbody>
   </table></div>
 </div></section>
+<section id="country-winners" class="panel"><div class="box">
+  <div class="section-head"><div><h2 id="countryWinnersTitle">My Winners</h2><p class="note">Items from this supplier whose Submission Status is Tender Winner. Winner information is read-only here.</p></div></div>
+  <div class="toolbar"><input id="supplierMyWinnersSearch" type="search" placeholder="Search My Winners" oninput="renderItalySourcing()"></div>
+  <div class="table-wrap"><table><thead><tr><th>Item</th><th>Supplier / Producer</th><th>Tender</th><th>Supplier Price / Case</th><th>Submission Status</th></tr></thead><tbody id="countryWinnerRows"></tbody></table></div>
+</div></section>
+
 <section id="country-manager-notes" class="panel"><div class="box">
-<div class="section-head"><div><h2 id="portfolioManagerNotesTitle">Supplier Working Notes</h2><p class="note">Working notes for the selected supplier.</p></div><button id="addPortfolioManagerNoteBtn" type="button">+ Add Supplier Working Note</button></div><div class="toolbar"><input id="supplierWorkingNotesSearch" type="search" placeholder="Search Supplier Working Notes" oninput="renderPortfolioManagerNotes()"></div>
+<div class="section-head"><div><h2 id="portfolioManagerNotesTitle">My Working Notes</h2><p class="note">Working notes for the selected supplier.</p></div><button id="addPortfolioManagerNoteBtn" type="button">+ Add My Working Note</button></div><div class="toolbar"><input id="supplierWorkingNotesSearch" type="search" placeholder="Search My Working Notes" oninput="renderPortfolioManagerNotes()"></div>
 <div class="table-wrap"><table><thead><tr><th>Date</th><th>Note Title</th><th>Note</th><th>Actions</th></tr></thead><tbody id="portfolioManagerNotesRows"></tbody></table></div>
 </div></section>
 <div id="portfolioManagerNoteModal" class="modal hidden"><div class="modal-card" style="max-width:720px">
-<div class="modal-head"><div><h2 id="portfolioManagerNoteModalTitle">Supplier Working Note</h2><p class="note" id="portfolioManagerNoteCountryLabel"></p></div><button id="closePortfolioManagerNoteModal" class="icon" type="button">×</button></div>
+<div class="modal-head"><div><h2 id="portfolioManagerNoteModalTitle">My Working Note</h2><p class="note" id="portfolioManagerNoteCountryLabel"></p></div><button id="closePortfolioManagerNoteModal" class="icon" type="button">×</button></div>
 <input type="hidden" id="portfolioManagerNoteId">
 <div class="form-grid"><label>Date<input id="portfolioManagerNoteDate" type="date"></label><label>Note Title<input id="portfolioManagerNoteTitleInput" maxlength="120"></label><label class="full">Note<textarea id="portfolioManagerNoteText" rows="10"></textarea></label><div class="full note"><b>Attachments:</b> add or update up to 5 files. Add a description next to each file.</div><label>File 1<input id="portfolioManagerNoteFile1" type="file"></label><label>File 1 Description<input id="portfolioManagerNoteFileDesc1" maxlength="200" placeholder="Describe this file"></label><label>File 2<input id="portfolioManagerNoteFile2" type="file"></label><label>File 2 Description<input id="portfolioManagerNoteFileDesc2" maxlength="200" placeholder="Describe this file"></label><label>File 3<input id="portfolioManagerNoteFile3" type="file"></label><label>File 3 Description<input id="portfolioManagerNoteFileDesc3" maxlength="200" placeholder="Describe this file"></label><label>File 4<input id="portfolioManagerNoteFile4" type="file"></label><label>File 4 Description<input id="portfolioManagerNoteFileDesc4" maxlength="200" placeholder="Describe this file"></label><label>File 5<input id="portfolioManagerNoteFile5" type="file"></label><label>File 5 Description<input id="portfolioManagerNoteFileDesc5" maxlength="200" placeholder="Describe this file"></label><div id="portfolioManagerExistingFiles" class="full"></div></div>
 <div class="modal-actions"><span></span><button id="cancelPortfolioManagerNoteBtn" class="secondary" type="button">Cancel</button><button id="savePortfolioManagerNoteBtn" type="button">Save Note</button></div>
@@ -6082,9 +6089,9 @@ window.deleteCurrentSourcingCountry=()=>{
    state[key]=(state[key]||[]).filter(x=>(x.country||'Italy')!==country);
  };
  moveRecords('countryWineries','countryWinery','Country Sourcing — '+country+' — Supplier Information');
- moveRecords('countryCandidates','countryCandidate','Country Sourcing — '+country+' — Active Candidate Items');
+ moveRecords('countryCandidates','countryCandidate','Country Sourcing — '+country+' — My Candidate Items');
  moveRecords('countryBonuses','countryBonus','Country Sourcing — '+country+' — Performance & Bonuses');
- moveRecords('portfolioManagerNotes','portfolioManagerNote','Country Sourcing — '+country+' — Supplier Working Notes');
+ moveRecords('portfolioManagerNotes','portfolioManagerNote','Country Sourcing — '+country+' — My Working Notes');
  moveRecords('archivedCountryCandidates','archivedCountryCandidate','Country Sourcing — '+country+' — My Items');
  (state.tenders||[]).forEach(t=>{if(Array.isArray(t.sourcingRepresentatives))t.sourcingRepresentatives=t.sourcingRepresentatives.filter(x=>x!==country)});
  state.countrySourcingCountries=countries.filter(c=>c!==country);
@@ -6105,7 +6112,7 @@ window.setSourcingCountry=country=>{
  const tab=document.getElementById('countryDashboardTabLabel');if(tab)tab.textContent='Dashboard';
  const dashboard=document.querySelector('#country-dashboard h2');if(dashboard)dashboard.textContent='Country Portfolio & Sourcing Representative — '+country;
  const badge=document.querySelector('#country-dashboard .badge');if(badge)badge.textContent=country.toUpperCase();
- const candidateTitle=document.querySelector('#country-candidates h2');if(candidateTitle)candidateTitle.textContent=country+' — Active Candidate Items';
+ const candidateTitle=document.querySelector('#country-candidates h2');if(candidateTitle)candidateTitle.textContent=country+' — My Candidate Items';
  const performanceTitle=document.querySelector('#country-performance h2');if(performanceTitle)performanceTitle.textContent=country+' Representative — Performance & Bonuses';
  const wineryTitle=document.querySelector('#country-wineries h2');if(wineryTitle)wineryTitle.textContent=country+' — Supplier Information';
  renderItalySourcing();
@@ -6178,7 +6185,7 @@ window.openItalyWineryForm=(id='')=>{
   }
   const title=document.getElementById('itWinFormTitle');if(title)title.textContent='Edit Supplier Information';
   const saveBtn=document.getElementById('itWinSaveBtn');
-  const approvedLocked=x.supplierApprovalStatus==='Approved Supplier';
+  const approvedLocked=window.supplierInformationIsLocked?window.supplierInformationIsLocked(x):x.supplierApprovalStatus==='Approved Supplier';
   const form=document.getElementById('italyWineryForm');
   if(approvedLocked){
     if(title)title.textContent='Supplier Information — Approved & Locked';
@@ -7039,8 +7046,8 @@ window.saveItalyWinery=()=>{
  const classifiedAs=producerSize==='Small'?'Winery with < 375,000 litres wine sales in the last 12 months':producerSize==='N/A'?'Winery with >= 375,000 litres wine sales in the last 12 months':'';
  const existing=recordId?state.countryWineries.find(x=>x.id===recordId&&x.country===currentSourcingCountry&&x.portfolioSupplierId===currentCountrySupplierId):null;
  const isTenderSupplierEdit=!!(existing&&String(tenderSupplierEditModeId)===String(existing.id));
- if(existing?.supplierApprovalStatus==='Approved Supplier'&&!isTenderSupplierEdit){
-   alert('This supplier is approved and Supplier Information is locked. Approved supplier information cannot be updated from Country Sourcing.');
+ if(existing && (window.supplierInformationIsLocked?window.supplierInformationIsLocked(existing):existing.supplierApprovalStatus==='Approved Supplier')){
+   alert('Supplier Information is locked. To unlock it, change the supplier status to More Information Requested in Tenders → Tender Suppliers.');
    return false;
  }
  const record={
@@ -8982,7 +8989,7 @@ window.permanentlyDeletePortfolioManagerRecycle=id=>{
  save();renderPortfolioManagerRecycleBin();
 };
 window.renderPortfolioManagerNotes=function(){
- const title=document.getElementById('portfolioManagerNotesTitle');if(title)title.textContent=currentSourcingCountry+' — '+(selectedSupplierName()||'Supplier')+' — Supplier Working Notes';
+ const title=document.getElementById('portfolioManagerNotesTitle');if(title)title.textContent=currentSourcingCountry+' — '+(selectedSupplierName()||'Supplier')+' — My Working Notes';
  const rows=document.getElementById('portfolioManagerNotesRows');if(!rows)return;
  if(!Array.isArray(state.portfolioManagerNotes))state.portfolioManagerNotes=[];
  const nq=(document.getElementById('supplierWorkingNotesSearch')?.value||'').trim().toLowerCase();const notes=state.portfolioManagerNotes.filter(x=>(x.country||'Italy')===currentSourcingCountry&&recordMatchesCurrentSupplier(x)&&(!nq||JSON.stringify(x).toLowerCase().includes(nq))).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
@@ -8995,7 +9002,7 @@ window.openPortfolioManagerNote=(id='',readOnly=false)=>{
  $('#portfolioManagerNoteTitleInput').value=n?.title||'';
  $('#portfolioManagerNoteText').value=n?.note||'';
  $('#portfolioManagerNoteCountryLabel').textContent=currentSourcingCountry+' — '+(selectedSupplierName()||'Supplier');
- $('#portfolioManagerNoteModalTitle').textContent=readOnly?'Supplier Working Note':(n?'Edit Supplier Working Note':'Add Supplier Working Note');
+ $('#portfolioManagerNoteModalTitle').textContent=readOnly?'My Working Note':(n?'Edit My Working Note':'Add My Working Note');
  for(let i=1;i<=5;i++){
   const f=$('#portfolioManagerNoteFile'+i),d=$('#portfolioManagerNoteFileDesc'+i);
   if(f){f.value='';f.disabled=!!readOnly}
@@ -9037,8 +9044,8 @@ window.savePortfolioManagerNote=async()=>{
 };
 window.deletePortfolioManagerNote=id=>{
  const n=(state.portfolioManagerNotes||[]).find(x=>x.id===id);if(!n)return;
- if(!confirm('Move this Portfolio Manager Note to the Portfolio Manager Recycling Bin?'))return;
- moveToPortfolioManagerRecycleBin('portfolioManagerNote','Portfolio Manager Notes',n,{collection:'portfolioManagerNotes'});
+ if(!confirm('Move this My Working Note to the Portfolio Manager Recycling Bin?'))return;
+ moveToPortfolioManagerRecycleBin('portfolioManagerNote','My Working Notes',n,{collection:'portfolioManagerNotes'});
  state.portfolioManagerNotes=state.portfolioManagerNotes.filter(x=>x.id!==id);
  save();renderPortfolioManagerNotes();renderPortfolioManagerRecycleBin();
 };
@@ -9098,7 +9105,7 @@ window.saveProposalInMyItems=id=>{
  const item=(state.countryCandidates||[]).find(v=>String(v.id)===String(id));
  if(!item)return;
  if(activeCandidateActionsLocked(item))return explainActiveCandidateActionLock(item);
- if(!confirm('Save this proposal in My Items? The proposal will be moved from Active Candidate Items to My Items.'))return;
+ if(!confirm('Save this proposal in My Items? The proposal will be moved from My Candidate Items to My Items.'))return;
 
  const moved={
    ...JSON.parse(JSON.stringify(item)),
@@ -9653,6 +9660,17 @@ window.updateTenderSupplierItemStatus=(id,status)=>{
 
 const TENDER_SUPPLIER_STATUSES=['Submitted Supplier','More Information Requested','Approved Supplier'];
 
+function supplierInformationIsLocked(supplier){
+ if(!supplier)return false;
+ const status=String(supplier.supplierApprovalStatus||'Submitted Supplier').trim();
+ if(status==='Approved Supplier')return true;
+ // After a supplier has been approved once, the ONLY Tender Suppliers status
+ // that unlocks Supplier Information is More Information Requested.
+ if(supplier.supplierEverApproved && status!=='More Information Requested')return true;
+ return false;
+}
+window.supplierInformationIsLocked=supplierInformationIsLocked;
+
 function renderTenderSuppliers(){
  const body=document.getElementById('tenderSupplierRows');
  if(!body)return;
@@ -9691,7 +9709,9 @@ function renderTenderSuppliers(){
        </select>
      </td>
      <td style="white-space:nowrap">
-       <button type="button" class="secondary small" onclick="openTenderSupplierEdit('${x.id}')">Edit Supplier Information</button>
+       ${(window.supplierInformationIsLocked?window.supplierInformationIsLocked(x):status==='Approved Supplier')
+         ? `<button type="button" class="secondary small" disabled title="Locked. Change status to More Information Requested to unlock.">Supplier Information — Locked</button>`
+         : `<button type="button" class="secondary small" onclick="openTenderSupplierEdit('${x.id}')">Edit Supplier Information</button>`}
        <button type="button" class="danger small" onclick="deleteTenderSupplier('${x.id}')">Delete Supplier</button>
      </td>
    </tr>`;
@@ -9828,6 +9848,10 @@ let tenderSupplierEditModeId='';
 window.openTenderSupplierEdit=id=>{
  const x=(state.countryWineries||[]).find(v=>String(v.id)===String(id));
  if(!x){alert('Supplier information was not found.');return false}
+ if(window.supplierInformationIsLocked?window.supplierInformationIsLocked(x):x.supplierApprovalStatus==='Approved Supplier'){
+   alert('Supplier Information is locked. Change Submission Status to More Information Requested in Tenders → Tender Suppliers to unlock editing.');
+   return false;
+ }
 
  // Open the exact Supplier Information record in its Country Sourcing context.
  currentSourcingCountry=x.country||currentSourcingCountry;
@@ -9838,13 +9862,8 @@ window.openTenderSupplierEdit=id=>{
  if(!window.openItalyWineryForm(id))return false;
  tenderSupplierEditModeId=String(id);
 
- // TENDERS is the approval/review workspace, so it may edit the record.
- // The Country Sourcing page itself remains locked when status is Approved Supplier.
- const form=document.getElementById('italyWineryForm');
- if(form){
-   form.classList.remove('supplier-approved-locked');
-   form.querySelectorAll('input,select,textarea').forEach(el=>{el.disabled=false});
- }
+ // Editing is permitted here only while the supplier is not locked.
+ // After approval, More Information Requested is the only status that unlocks it.
  const title=document.getElementById('itWinFormTitle');
  if(title)title.textContent='Edit Supplier Information — Tender Suppliers';
  const saveBtn=document.getElementById('itWinSaveBtn');
@@ -9875,10 +9894,21 @@ window.updateTenderSupplierStatus=(id,status)=>{
  if(!TENDER_SUPPLIER_STATUSES.includes(status)){alert('Invalid supplier status.');renderTenderSuppliers();return false}
  const supplier=(state.countryWineries||[]).find(x=>String(x.id)===String(id));
  if(!supplier){alert('Supplier was not found.');renderTenderSuppliers();return false}
+ const previousStatus=String(supplier.supplierApprovalStatus||'Submitted Supplier').trim();
+ if(previousStatus==='Approved Supplier' || supplier.supplierEverApproved)supplier.supplierEverApproved=true;
  supplier.supplierApprovalStatus=status;
+ if(status==='Approved Supplier')supplier.supplierEverApproved=true;
  supplier.supplierApprovalStatusUpdatedAt=new Date().toISOString();
+
+ // Approval locks Supplier Information everywhere. After approval, only
+ // More Information Requested unlocks it for Country Sourcing / Tender editing.
+ if(status==='Approved Supplier' && String(tenderSupplierEditModeId)===String(id)){
+   tenderSupplierEditModeId='';
+   if(typeof closeItalyWineryForm==='function')closeItalyWineryForm();
+ }
  save();
  renderTenderSuppliers();
+ if(typeof renderItalySourcing==='function')renderItalySourcing();
  return true;
 };
 
@@ -9891,13 +9921,14 @@ window.renderItalySourcing=function(){
  const supplierLabel=selectedSupplierName()||'Select Supplier';
  const dashboard=document.querySelector('#country-dashboard h2');if(dashboard)dashboard.textContent=currentSourcingCountry+' — '+supplierLabel+' — Dashboard';
  const badge=document.querySelector('#country-dashboard .badge');if(badge)badge.textContent=currentSourcingCountry.toUpperCase();
- const candidateTitle=document.querySelector('#country-candidates h2');if(candidateTitle)candidateTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Active Candidate Items';
+ const candidateTitle=document.querySelector('#country-candidates h2');if(candidateTitle)candidateTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Candidate Items';
  const performanceTitle=document.querySelector('#country-performance h2');if(performanceTitle)performanceTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Performance & Bonuses';
  const wineryTitle=document.querySelector('#country-wineries h2');if(wineryTitle)wineryTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Supplier Information';
  const archivedTitle=document.getElementById('archivedCountryCandidatesTitle');if(archivedTitle)archivedTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Items';
- const notesTitle=document.getElementById('portfolioManagerNotesTitle');if(notesTitle)notesTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Portfolio Manager Notes';
+ const winnersTitle=document.getElementById('countryWinnersTitle');if(winnersTitle)winnersTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Winners';
+ const notesTitle=document.getElementById('portfolioManagerNotesTitle');if(notesTitle)notesTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Working Notes';
  const recycleTitle=document.getElementById('portfolioManagerRecycleTitle');if(recycleTitle)recycleTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Recycling Bin';
- if(!state.countryWineries)state.countryWineries=[];if(!state.countryCandidates)state.countryCandidates=[];if(!state.countryBonuses)state.countryBonuses=[];const tenders=(state.tenders||[]).filter(t=>(t.sourcingRepresentatives||[]).includes(currentSourcingCountry)),wins=italyOnly(state.countryWineries).filter(recordMatchesCurrentSupplier),can=italyOnly(state.countryCandidates).filter(recordMatchesCurrentSupplier).filter(x=>!x.myItem&&!x.tenderSupplierItemOnly&&!x.itemApprovalStatus),bon=italyOnly(state.countryBonuses),approved=can.filter(x=>/Approved|Submitted|Winner/.test(x.status)).length,winners=can.filter(x=>x.status==='Winner').length;const k=document.getElementById('italyKpis');if(k)k.innerHTML=[
+ if(!state.countryWineries)state.countryWineries=[];if(!state.countryCandidates)state.countryCandidates=[];if(!state.countryBonuses)state.countryBonuses=[];const tenders=(state.tenders||[]).filter(t=>(t.sourcingRepresentatives||[]).includes(currentSourcingCountry)),wins=italyOnly(state.countryWineries).filter(recordMatchesCurrentSupplier),can=italyOnly(state.countryCandidates).filter(recordMatchesCurrentSupplier).filter(x=>!x.myItem&&!x.tenderSupplierItemOnly&&!x.itemApprovalStatus),bon=italyOnly(state.countryBonuses),approved=can.filter(x=>/Approved|Submitted|Winner/.test(x.status)).length,winners=can.filter(x=>normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status)==='Tender Winner'||String(x.status||'').trim()==='Winner').length;const k=document.getElementById('italyKpis');if(k)k.innerHTML=[
  ['Active Tenders',tenders.filter(x=>x.status==='Active').length],
  ['Active Wine Candidates',can.filter(x=>!['Declined','Archived'].includes(normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status))).length],
  ['Approved Wine Candidates',approved],
@@ -9910,7 +9941,7 @@ const q=(document.getElementById('italyWinerySearch')?.value||'').toLowerCase();
 <td>${esc(x.phone||'—')}</td><td>${esc(x.email||'—')}</td><td>${esc(x.paymentTerms||'—')}</td><td>${esc(x.directionToPayAgent||'—')}</td><td>${esc(x.ontario||'—')}</td><td>${esc(x.exportsOtherProvinces||'—')}</td>
 <td>${esc(x.producerSize||'—')}</td>
 <td>
-  ${x.supplierApprovalStatus==='Approved Supplier'
+  ${(window.supplierInformationIsLocked?window.supplierInformationIsLocked(x):x.supplierApprovalStatus==='Approved Supplier')
     ? `<button class="secondary small" onclick="openItalyWineryForm('${x.id}')" title="Approved supplier information is locked">View</button>`
     : `<button class="secondary small" onclick="openItalyWineryForm('${x.id}')">Edit</button>`}
   <button class="danger small" onclick="deleteItalySource('win','${x.id}')">Delete</button>
@@ -9920,6 +9951,7 @@ const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document
  :activeCandidateActionsLocked(x)
  ?`<button type="button" class="small" style="opacity:.55;cursor:not-allowed" title="Action locked for the current proposal status" onclick="explainActiveCandidateActionLock((state.countryCandidates||[]).find(v=>String(v.id)===String('${x.id}')))">Edit Proposal</button> <button type="button" class="secondary small" style="opacity:.55;cursor:not-allowed" title="Action locked for the current proposal status" onclick="explainActiveCandidateActionLock((state.countryCandidates||[]).find(v=>String(v.id)===String('${x.id}')))">Save Proposal in My Items</button> <button type="button" class="danger small" style="opacity:.55;cursor:not-allowed" title="Action locked for the current proposal status" onclick="explainActiveCandidateActionLock((state.countryCandidates||[]).find(v=>String(v.id)===String('${x.id}')))">Delete Proposal</button>`
  :`<button class="small" onclick="editActiveCandidateProposal('${x.id}')">Edit Proposal</button> <button type="button" class="secondary small" onclick="saveProposalInMyItems('${x.id}')">Save Proposal in My Items</button> ${wineCandidateCanDeleteOrArchive(x)?`<button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete Proposal</button>`:`<button class="danger small" disabled title="Available only after a decline status">Delete Proposal</button>`}`}</td></tr>`}).join('')||'<tr><td colspan="8">No wine candidates match the search.</td></tr>';}
+const winnerRows=document.getElementById('countryWinnerRows');if(winnerRows){const wq=(document.getElementById('supplierMyWinnersSearch')?.value||'').trim().toLowerCase();const winnerCandidates=italyOnly(state.countryCandidates||[]).filter(recordMatchesCurrentSupplier).filter(x=>{const st=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status);return st==='Tender Winner'||String(x.status||'').trim()==='Winner';}).filter(x=>!wq||JSON.stringify(x).toLowerCase().includes(wq));winnerRows.innerHTML=winnerCandidates.map(x=>{const o=(state.tenders||[]).find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||(state.countryWineries||[]).find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—';return `<tr><td><button type="button" class="program-clickable-link" title="Click to read complete item information" onclick="openTenderSupplierItemDetail('${x.id}')">${esc(x.productDescription||x.name||'—')}</button><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td><span class="badge candidate-head-status">Tender Winner</span></td></tr>`}).join('')||'<tr><td colspan="5">No winner items for this supplier yet.</td></tr>';}
 const br=document.getElementById('italyBonusRows');if(br)br.innerHTML=bon.map(x=>`<tr><td>${esc(x.date||'—')}</td><td>${esc(x.type)}</td><td>${esc(x.related||'—')}</td><td><b>${esc(x.currency)} ${num(x.amount).toFixed(2)}</b></td><td><span class="badge">${esc(x.status)}</span></td><td>${esc(x.notes||'—')}</td></tr>`).join('')||'<tr><td colspan="6">No bonus records yet.</td></tr>';const pk=document.getElementById('italyPerformanceKpis');if(pk){const paid=bon.filter(x=>x.status==='Paid').reduce((a,x)=>a+num(x.amount),0),pending=bon.filter(x=>x.status!=='Paid').reduce((a,x)=>a+num(x.amount),0);pk.innerHTML=[['Candidates Proposed',can.length],['Approved',approved],['Winners',winners],['Win Rate',can.length?((winners/can.length)*100).toFixed(1)+'%':'0%'],['Bonus Records',bon.length],['Pending Bonus Value*',pending.toFixed(2)]].map(x=>`<div class="card"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('')}
 renderSupplierContactPersons();renderHeadOfficeProposals();populateItalySelects()};
 if(document.getElementById('headAddBonusBtn'))document.getElementById('headAddBonusBtn').onclick=()=>openHeadBonusForm();
