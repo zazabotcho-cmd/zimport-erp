@@ -5459,6 +5459,12 @@ function restoreArchivedInvoice(id){
 /* === GLOBAL SUPPLIER / ITEM CLICKABLE NAME + VALUE-ONLY COPY === */
 let currentGlobalNameDetailEntries=[];
 
+function globalDetailEscapeHtml(value){
+ return String(value??'').replace(/[&<>\"']/g,m=>({
+   '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'
+ }[m]));
+}
+
 function globalDetailHumanizeKey(key){
  const special={
    productDescription:'Product Description',
@@ -5581,8 +5587,8 @@ function openGlobalNameDetail(record,title,type){
  if(grid){
    grid.innerHTML=currentGlobalNameDetailEntries.map(([label,value],i)=>`
      <div class="head-detail-field ${String(value).length>100||String(value).includes('\n')?'full':''}">
-       <div class="head-detail-label">${esc(label)}</div>
-       <div class="head-detail-value">${esc(value)}</div>
+       <div class="head-detail-label">${globalDetailEscapeHtml(label)}</div>
+       <div class="head-detail-value">${globalDetailEscapeHtml(value)}</div>
        <button type="button" class="secondary global-value-copy" onclick="copyGlobalDetailValue(${i})">Copy</button>
      </div>
    `).join('')||'<div class="note">No filled information is available.</div>';
@@ -8951,7 +8957,7 @@ window.renderArchivedCountryCandidates=()=>{
    const price=x.supplierPricePerCase??x.price??'—';
    const bottlesPerCase=x.bottlesPerCase??x.sellingUnitsPerShippingCase??'—';
    return `<tr>
-     <td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td>
+     <td><button type="button" class="program-clickable-link" title="Click to read complete item information" onclick="openTenderSupplierItemDetail('${x.id}')">${esc(x.productDescription||x.name||'—')}</button><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td>
      <td>${esc(supplier)}</td><td>${esc(price)}</td><td>${esc(bottlesPerCase)}</td><td>${esc(x.score||x.awards||'—')}</td>
      <td>${esc((x.itemSubmittedAt||x.archivedAt)?new Date(x.itemSubmittedAt||x.archivedAt).toLocaleDateString():'—')}</td>
      <td>${esc(x.itemApprovalStatus||'—')}</td>
@@ -9374,7 +9380,8 @@ function tenderSupplierItemDetailEntries(x){
 }
 
 window.openTenderSupplierItemDetail=id=>{
- const x=(state.archivedCountryCandidates||[]).find(v=>String(v.id)===String(id));
+ const x=[...(state.archivedCountryCandidates||[]),...(state.countryCandidates||[]),...(state.items||[])]
+   .find(v=>String(v?.id)===String(id));
  if(!x){alert('Item information was not found.');return false}
  currentTenderSupplierItemDetailId=x.id;
 
@@ -9809,7 +9816,7 @@ const q=(document.getElementById('italyWinerySearch')?.value||'').toLowerCase();
     : `<button class="secondary small" onclick="openItalyWineryForm('${x.id}')">Edit</button>`}
   <button class="danger small" onclick="deleteItalySource('win','${x.id}')">Delete</button>
 </td></tr>`).join('')||'<tr><td colspan="15">No supplier information added yet.</td></tr>';
-const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document.getElementById('supplierWineCandidatesSearch')?.value||'').trim().toLowerCase();cr.innerHTML=can.filter(x=>!cq||JSON.stringify(x).toLowerCase().includes(cq)).map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=status==='Additional Information Required'?(x.additionalInformationRequested||x.headOfficeActions?.at(-1)?.comment||x.headOfficeComment||'—'):(x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—'),displayStatus=status==='In Progress'?'PROPOSED TO HEAD OFFICE':status==='Additional Information Required'?'Additional Information Requested':status==='Declined'?'Declined by head office':status==='Declined on Tenders First Stage'?'DECLINED ON TENDERS FIRST STAGE':status==='Declined on Tenders Final Decision'?'DECLINED ON TENDERS FINAL DECISION':status,workStatus=candidateLcboSubmissionWorkStatus(x);return `<tr><td><b>${esc(x.productDescription||x.name||'—')}</b><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(displayStatus)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td>${activeCandidateActionsLocked(x)
+const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document.getElementById('supplierWineCandidatesSearch')?.value||'').trim().toLowerCase();cr.innerHTML=can.filter(x=>!cq||JSON.stringify(x).toLowerCase().includes(cq)).map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=status==='Additional Information Required'?(x.additionalInformationRequested||x.headOfficeActions?.at(-1)?.comment||x.headOfficeComment||'—'):(x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—'),displayStatus=status==='In Progress'?'PROPOSED TO HEAD OFFICE':status==='Additional Information Required'?'Additional Information Requested':status==='Declined'?'Declined by head office':status==='Declined on Tenders First Stage'?'DECLINED ON TENDERS FIRST STAGE':status==='Declined on Tenders Final Decision'?'DECLINED ON TENDERS FINAL DECISION':status,workStatus=candidateLcboSubmissionWorkStatus(x);return `<tr><td><button type="button" class="program-clickable-link" title="Click to read complete item information" onclick="openTenderSupplierItemDetail('${x.id}')">${esc(x.productDescription||x.name||'—')}</button><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(displayStatus)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td>${activeCandidateActionsLocked(x)
  ?`<button type="button" class="small" style="opacity:.55;cursor:not-allowed" title="Action locked for the current proposal status" onclick="explainActiveCandidateActionLock((state.countryCandidates||[]).find(v=>String(v.id)===String('${x.id}')))">Edit Proposal</button> <button type="button" class="secondary small" style="opacity:.55;cursor:not-allowed" title="Action locked for the current proposal status" onclick="explainActiveCandidateActionLock((state.countryCandidates||[]).find(v=>String(v.id)===String('${x.id}')))">Save Proposal in My Items</button> <button type="button" class="danger small" style="opacity:.55;cursor:not-allowed" title="Action locked for the current proposal status" onclick="explainActiveCandidateActionLock((state.countryCandidates||[]).find(v=>String(v.id)===String('${x.id}')))">Delete Proposal</button>`
  :`<button class="small" onclick="editActiveCandidateProposal('${x.id}')">Edit Proposal</button> <button type="button" class="secondary small" onclick="saveProposalInMyItems('${x.id}')">Save Proposal in My Items</button> ${wineCandidateCanDeleteOrArchive(x)?`<button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete Proposal</button>`:`<button class="danger small" disabled title="Available only after a decline status">Delete Proposal</button>`}`}</td></tr>`}).join('')||'<tr><td colspan="8">No wine candidates match the search.</td></tr>';}
 const br=document.getElementById('italyBonusRows');if(br)br.innerHTML=bon.map(x=>`<tr><td>${esc(x.date||'—')}</td><td>${esc(x.type)}</td><td>${esc(x.related||'—')}</td><td><b>${esc(x.currency)} ${num(x.amount).toFixed(2)}</b></td><td><span class="badge">${esc(x.status)}</span></td><td>${esc(x.notes||'—')}</td></tr>`).join('')||'<tr><td colspan="6">No bonus records yet.</td></tr>';const pk=document.getElementById('italyPerformanceKpis');if(pk){const paid=bon.filter(x=>x.status==='Paid').reduce((a,x)=>a+num(x.amount),0),pending=bon.filter(x=>x.status!=='Paid').reduce((a,x)=>a+num(x.amount),0);pk.innerHTML=[['Candidates Proposed',can.length],['Approved',approved],['Winners',winners],['Win Rate',can.length?((winners/can.length)*100).toFixed(1)+'%':'0%'],['Bonus Records',bon.length],['Pending Bonus Value*',pending.toFixed(2)]].map(x=>`<div class="card"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('')}
@@ -10283,6 +10290,74 @@ setTimeout(applyNormalSubPageNames,0);
   <div id="globalNameDetailGrid" class="head-detail-grid"></div>
   <div class="modal-actions"><span></span><button type="button" class="secondary" onclick="closeGlobalNameDetail()">Close</button></div>
 </div></div>
+
+<script>
+/* === ROBUST PROGRAM-WIDE ITEM INFORMATION VIEWER === */
+(function(){
+  function e(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function humanize(k){
+    const special={productDescription:'Product Description',supplierPricePerCase:'Supplier Price Per Offered Case',bottlesPerCase:'Bottles Per Case',supplierCurrency:'Currency',supplierQuoteType:'Quote Type',sellingUnitSizeMl:'Selling Unit Size (ml.)',lcboSupplierNumber:'LCBO Supplier Number',previousSubmissionNumber:'Previous LCBO Submission Number',itemApprovalStatus:'Item Status',itemSubmittedAt:'Submitted Date',headOfficeActionStatus:'Submission Status'};
+    return special[k]||String(k||'').replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/[_-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  }
+  function display(v){
+    if(v===null||v===undefined||v==='')return '—';
+    if(Array.isArray(v))return v.length?v.map(x=>typeof x==='object'?JSON.stringify(x,null,2):String(x)).join('\n'):'—';
+    if(typeof v==='object')return JSON.stringify(v,null,2);
+    return String(v);
+  }
+  function allItemCollections(){
+    const keys=['archivedCountryCandidates','countryCandidates','items','submissions','workerSubmissions','tenderItems','allSubmittedItems','tenderWinners'];
+    const out=[];
+    keys.forEach(k=>{const a=window.state?.[k]||globalThis.state?.[k];if(Array.isArray(a))a.forEach(x=>x&&typeof x==='object'&&out.push(x));});
+    // state is declared with let in this program, so also access it lexically when available.
+    try{
+      ['archivedCountryCandidates','countryCandidates','items','submissions','workerSubmissions','tenderItems','allSubmittedItems','tenderWinners'].forEach(k=>{
+        const a=state?.[k]; if(Array.isArray(a))a.forEach(x=>x&&typeof x==='object'&&!out.includes(x)&&out.push(x));
+      });
+    }catch(_){}
+    return out;
+  }
+  function findById(id){return allItemCollections().find(x=>String(x.id??x.itemId??x.recordId??'')===String(id))||null;}
+  function entries(x){
+    const hidden=new Set(['blob','data','headOfficeActions']);
+    const preferred=['productDescription','name','brandName','productCategory','supplierName','supplierLegalFullName','producerName','country','producingCountry','producingRegion','region','vintage','grapeVarietal1','grapeVarietal2','grapeVarietal3','supplierPricePerCase','bottlesPerCase','supplierCurrency','supplierBottlePrice','supplierQuoteType','localRetailPricePerBottle','sellingUnitSizeMl','unitsPerSellingPack','containerType','percentAlcohol','sweetnessSugar','score','scoreSource','scoreSourceOther','awards','pressCoverage','protectedAppellation','appellationName','appellationDescription','uniqueOtherDescription','outstandingLocation','ontarioExclusivity','pickupPoint','pickupPhone','leadTimeDays','lcboSupplierNumber','previousSubmissionNumber','previouslyPurchased','itemApprovalStatus','headOfficeActionStatus','status','itemSubmittedAt','opportunityId','comments','myCandidateComment'];
+    const seen=new Set(),out=[];
+    const add=k=>{if(seen.has(k)||hidden.has(k)||!(k in x))return;seen.add(k);const v=display(x[k]);if(v!=='—')out.push([k,v]);};
+    preferred.forEach(add);Object.keys(x).sort().forEach(add);return out;
+  }
+  let current=null,currentEntries=[];
+  window.openProgramItemInformationById=function(id){
+    const x=findById(id);
+    if(!x){alert('Item information was not found.');return false;}
+    current=x; currentEntries=entries(x);
+    const modal=document.getElementById('tenderSupplierItemDetailModal');
+    const title=document.getElementById('tenderSupplierItemDetailTitle');
+    const subtitle=document.getElementById('tenderSupplierItemDetailSubtitle');
+    const grid=document.getElementById('tenderSupplierItemDetailGrid');
+    const msg=document.getElementById('tenderSupplierItemCopyMessage');
+    if(title)title.textContent=x.productDescription||x.productName||x.itemName||x.name||'Item Information';
+    const supplier=x.supplierName||x.supplierLegalFullName||x.producerName||x.wineryName||'';
+    if(subtitle)subtitle.textContent=(supplier?supplier+' — ':'')+'Complete Item Information';
+    if(msg)msg.textContent='';
+    if(grid)grid.innerHTML=currentEntries.map(([k,v],i)=>`<div class="head-detail-field ${v.length>100||v.includes('\n')?'full':''}"><div class="head-detail-label">${e(humanize(k))}</div><div class="head-detail-value">${e(v)}</div><button type="button" class="secondary small" onclick="copyProgramItemInformationField(${i})">Copy</button></div>`).join('')||'<div class="note">No filled item information is available.</div>';
+    if(modal)modal.classList.remove('hidden');
+    return true;
+  };
+  window.copyProgramItemInformationField=async function(i){
+    const row=currentEntries[Number(i)]; if(!row)return false;
+    try{await navigator.clipboard.writeText(row[1]);return true;}catch(_){return false;}
+  };
+  window.copyAllTenderSupplierItemDetail=async function(){
+    const text=currentEntries.map(r=>r[1]).filter(Boolean).join('\n');
+    if(!text)return false; try{await navigator.clipboard.writeText(text);return true;}catch(_){return false;}
+  };
+  const oldClose=window.closeTenderSupplierItemDetail;
+  window.closeTenderSupplierItemDetail=function(){current=null;currentEntries=[];const modal=document.getElementById('tenderSupplierItemDetailModal');if(modal)modal.classList.add('hidden');};
+  // Keep all existing item-name buttons compatible, but route them through the robust viewer.
+  window.openTenderSupplierItemDetail=function(id){return window.openProgramItemInformationById(id);};
+})();
+/* === END ROBUST PROGRAM-WIDE ITEM INFORMATION VIEWER === */
+</script>
 
 </body></html>
 
