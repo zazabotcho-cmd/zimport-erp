@@ -1901,6 +1901,8 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
     </div>
     <input type="hidden" id="workerAdditionalInfoTenderId">
     <input type="hidden" id="workerAdditionalInfoItemId">
+    <input type="hidden" id="workerAdditionalInfoCandidateId">
+    <input type="hidden" id="workerAdditionalInfoSource">
     <label>Additional Information Requested *
       <textarea id="workerAdditionalInfoText" rows="6" placeholder="Enter what additional information is requested"></textarea>
     </label>
@@ -2607,17 +2609,20 @@ function updateWorkerSubmissionNumber(tenderId,itemId,value){const t=state.tende
 
 let pendingWorkerAdditionalInfoPreviousStatus='';
 
-function openWorkerAdditionalInfo(tenderId,itemId,previousStatus){
+function openWorkerAdditionalInfo(tenderId,itemId,previousStatus,candidateId='',source='LCBO SUBMISSIONS LIST'){
   const modal=document.getElementById('workerAdditionalInfoModal');
   const t=state.tenders.find(x=>x.id===tenderId);
   const w=t?.workItems?.find(x=>x.id===itemId);
-  const candidate=w?.sourceCandidateId?(state.countryCandidates||[]).find(c=>c.id===w.sourceCandidateId):null;
-  if(!modal||!w||!candidate)return false;
+  const resolvedCandidateId=candidateId||w?.sourceCandidateId||'';
+  const candidate=resolvedCandidateId?(state.countryCandidates||[]).find(c=>c.id===resolvedCandidateId):null;
+  if(!modal||!candidate)return false;
 
-  pendingWorkerAdditionalInfoPreviousStatus=previousStatus||w.status||'In Progress';
-  document.getElementById('workerAdditionalInfoTenderId').value=tenderId;
-  document.getElementById('workerAdditionalInfoItemId').value=itemId;
-  document.getElementById('workerAdditionalInfoText').value=candidate.additionalInformationRequested||'';
+  pendingWorkerAdditionalInfoPreviousStatus=previousStatus||w?.status||candidate.headOfficeActionStatus||candidate.status||'In Progress';
+  document.getElementById('workerAdditionalInfoTenderId').value=tenderId||'';
+  document.getElementById('workerAdditionalInfoItemId').value=itemId||'';
+  document.getElementById('workerAdditionalInfoCandidateId').value=candidate.id;
+  document.getElementById('workerAdditionalInfoSource').value=source||'LCBO SUBMISSIONS LIST';
+  document.getElementById('workerAdditionalInfoText').value=candidate.additionalInformationRequested||candidate.headOfficeComment||'';
   modal.classList.remove('hidden');
   setTimeout(()=>document.getElementById('workerAdditionalInfoText')?.focus(),0);
   return true;
@@ -2633,6 +2638,8 @@ function cancelWorkerAdditionalInfo(){
 function saveWorkerAdditionalInfo(){
   const tenderId=document.getElementById('workerAdditionalInfoTenderId')?.value||'';
   const itemId=document.getElementById('workerAdditionalInfoItemId')?.value||'';
+  const candidateId=document.getElementById('workerAdditionalInfoCandidateId')?.value||'';
+  const source=document.getElementById('workerAdditionalInfoSource')?.value||'LCBO SUBMISSIONS LIST';
   const info=String(document.getElementById('workerAdditionalInfoText')?.value||'').trim();
 
   if(!info){
@@ -2643,25 +2650,29 @@ function saveWorkerAdditionalInfo(){
 
   const t=state.tenders.find(x=>x.id===tenderId);
   const w=t?.workItems?.find(x=>x.id===itemId);
-  const candidate=w?.sourceCandidateId?(state.countryCandidates||[]).find(c=>c.id===w.sourceCandidateId):null;
-  if(!w||!candidate)return;
+  const candidate=(candidateId?(state.countryCandidates||[]).find(c=>c.id===candidateId):null) || (w?.sourceCandidateId?(state.countryCandidates||[]).find(c=>c.id===w.sourceCandidateId):null);
+  if(!candidate)return;
 
   const normalized='Additional Information Required'; // keep existing internal status compatibility
   const now=new Date().toISOString();
 
   candidate.additionalInformationRequested=info;
   candidate.headOfficeComment=info;
-  w.status=normalized;
   candidate.status=normalized;
   candidate.headOfficeActionStatus=normalized;
   candidate.headOfficeUpdatedAt=now;
+  if(w){w.status=normalized;w.instructions=info;w.headOfficeComment=info;w.updatedAt=now;}
+  // Keep every LCBO submission row linked to this candidate synchronized with the same request text.
+  (state.tenders||[]).forEach(tender=>(tender.workItems||[]).forEach(workItem=>{
+    if(workItem.sourceCandidateId===candidate.id){
+      workItem.status=normalized;
+      workItem.instructions=info;
+      workItem.headOfficeComment=info;
+      workItem.updatedAt=now;
+    }
+  }));
   if(!Array.isArray(candidate.headOfficeActions))candidate.headOfficeActions=[];
-  candidate.headOfficeActions.push({
-    status:normalized,
-    comment:info,
-    date:now,
-    source:'LCBO SUBMISSIONS LIST'
-  });
+  candidate.headOfficeActions.push({status:normalized,comment:info,date:now,source:source});
 
   save();
 
@@ -7274,6 +7285,24 @@ function activeCandidateActionsLocked(candidate){
    'Tender Winner'
  ].includes(normalized);
 }
+function activeCandidateEditLocked(candidate){
+ const raw=String(candidate?.headOfficeActionStatus||candidate?.status||'').trim();
+ const normalized=normalizeHeadProposalStatus(raw);
+ // Additional Information Requested must unlock Edit Proposal so the representative
+ // can supply the requested changes and resubmit the proposal to Head Office.
+ return [
+   'Proposed to Head Office',
+   'In Progress',
+   'Updated Proposal to Head Office',
+   'Approved for LCBO Submission',
+   'Tender Winner'
+ ].includes(raw)||[
+   'In Progress',
+   'Updated Proposal to Head Office',
+   'Approved for LCBO Submission',
+   'Tender Winner'
+ ].includes(normalized);
+}
 function explainActiveCandidateActionLock(candidate){
  const raw=String(candidate?.headOfficeActionStatus||candidate?.status||'').trim();
  const status=normalizeHeadProposalStatus(raw)||raw||'Current status';
@@ -7281,12 +7310,13 @@ function explainActiveCandidateActionLock(candidate){
  return false;
 }
 window.activeCandidateActionsLocked=activeCandidateActionsLocked;
+window.activeCandidateEditLocked=activeCandidateEditLocked;
 window.explainActiveCandidateActionLock=explainActiveCandidateActionLock;
 
 window.editActiveCandidateProposal=id=>{
  const item=(state.countryCandidates||[]).find(v=>String(v.id)===String(id));
  if(!item)return;
- if(activeCandidateActionsLocked(item))return explainActiveCandidateActionLock(item);
+ if(activeCandidateEditLocked(item))return explainActiveCandidateActionLock(item);
  return openItalyCandidateForm(id);
 };
 
@@ -8835,6 +8865,14 @@ window.updateHeadSubmissionStatus=function(candidateId,status){
  if(!allowed.includes(status)){alert('Select a valid Submission Status.');renderHeadOfficeProposals();return false;}
  const previous=window.normalizeHeadProposalStatus(candidate.headOfficeActionStatus||candidate.status||'In Progress');
 
+ // Additional Information Requested uses the exact same required-information modal as LCBO SUBMISSIONS LIST.
+ if(status==='Additional Information Required'){
+   const existingWorkItem=window.candidateLcboSubmissionWorkItem(candidate);
+   const existingTender=resolveCandidateTender(candidate);
+   openWorkerAdditionalInfo(existingTender?.id||'',existingWorkItem?.id||'',previous,candidate.id,"HEAD'S PAGE");
+   return true;
+ }
+
  // Approval creates the LCBO SUBMISSIONS LIST row first, then the shared LCBO status handler updates both pages.
  if(status==='Approved for LCBO Submission'){
    candidate.status=status;
@@ -9874,7 +9912,9 @@ const q=(document.getElementById('italyWinerySearch')?.value||'').toLowerCase();
     : `<button class="secondary small" onclick="openItalyWineryForm('${x.id}')">Edit</button>`}
   <button class="danger small" onclick="deleteItalySource('win','${x.id}')">Delete</button>
 </td></tr>`).join('')||'<tr><td colspan="15">No supplier information added yet.</td></tr>';
-const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document.getElementById('supplierWineCandidatesSearch')?.value||'').trim().toLowerCase();cr.innerHTML=can.filter(x=>!cq||JSON.stringify(x).toLowerCase().includes(cq)).map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),latestComment=status==='Additional Information Required'?(x.additionalInformationRequested||x.headOfficeActions?.at(-1)?.comment||x.headOfficeComment||'—'):(x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—'),displayStatus=status==='In Progress'?'PROPOSED TO HEAD OFFICE':status==='Additional Information Required'?'Additional Information Requested':status==='Declined'?'Declined by head office':status==='Declined on Tenders First Stage'?'DECLINED ON TENDERS FIRST STAGE':status==='Declined on Tenders Final Decision'?'DECLINED ON TENDERS FINAL DECISION':status,workStatus=window.candidateLcboSubmissionWorkStatus(x);return `<tr><td><button type="button" class="program-clickable-link" title="Click to read complete item information" onclick="openTenderSupplierItemDetail('${x.id}')">${esc(x.productDescription||x.name||'—')}</button><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(displayStatus)}</span><br><small class="head-comment-box">${esc(latestComment)}</small></td><td>${activeCandidateActionsLocked(x)
+const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document.getElementById('supplierWineCandidatesSearch')?.value||'').trim().toLowerCase();cr.innerHTML=can.filter(x=>!cq||JSON.stringify(x).toLowerCase().includes(cq)).map(x=>{const o=tenders.find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||wins.find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—',retail=x.localRetailPricePerBottle??x.localRetail??'—',status=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status),linkedWorkItem=window.candidateLcboSubmissionWorkItem?.(x),additionalInfo=(x.additionalInformationRequested||((status==='Additional Information Required')?(linkedWorkItem?.instructions||linkedWorkItem?.headOfficeComment||''):'')||x.headOfficeActions?.slice().reverse().find(a=>normalizeHeadProposalStatus(a?.status)==='Additional Information Required'&&String(a?.comment||'').trim())?.comment||x.headOfficeComment||''),latestComment=status==='Additional Information Required'?additionalInfo:(x.headOfficeComment||x.headOfficeActions?.at(-1)?.comment||'—'),displayStatus=status==='In Progress'?'PROPOSED TO HEAD OFFICE':status==='Additional Information Required'?'Additional Information Requested':status==='Declined'?'Declined by head office':status==='Declined on Tenders First Stage'?'DECLINED ON TENDERS FIRST STAGE':status==='Declined on Tenders Final Decision'?'DECLINED ON TENDERS FINAL DECISION':status,workStatus=window.candidateLcboSubmissionWorkStatus(x);return `<tr><td><button type="button" class="program-clickable-link" title="Click to read complete item information" onclick="openTenderSupplierItemDetail('${x.id}')">${esc(x.productDescription||x.name||'—')}</button><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td>${esc(retail)}</td><td>${esc(x.score||x.awards||'—')}</td><td><span class="badge candidate-head-status">${esc(displayStatus)}</span>${status==='Additional Information Required'?`<div class="head-comment-box" style="margin-top:7px"><b>Additional Information Requested:</b><br>${esc(additionalInfo||'No request text entered.')}</div>`:`<br><small class="head-comment-box">${esc(latestComment)}</small>`}</td><td>${status==='Additional Information Required'
+ ?`<button class="small" onclick="editActiveCandidateProposal('${x.id}')">Edit Proposal</button> <button type="button" class="secondary small" style="opacity:.55;cursor:not-allowed" title="Save in My Items remains locked while additional information is requested" onclick="explainActiveCandidateActionLock((state.countryCandidates||[]).find(v=>String(v.id)===String('${x.id}')))">Save Proposal in My Items</button> <button type="button" class="danger small" style="opacity:.55;cursor:not-allowed" title="Delete remains locked while additional information is requested" onclick="explainActiveCandidateActionLock((state.countryCandidates||[]).find(v=>String(v.id)===String('${x.id}')))">Delete Proposal</button>`
+ :activeCandidateActionsLocked(x)
  ?`<button type="button" class="small" style="opacity:.55;cursor:not-allowed" title="Action locked for the current proposal status" onclick="explainActiveCandidateActionLock((state.countryCandidates||[]).find(v=>String(v.id)===String('${x.id}')))">Edit Proposal</button> <button type="button" class="secondary small" style="opacity:.55;cursor:not-allowed" title="Action locked for the current proposal status" onclick="explainActiveCandidateActionLock((state.countryCandidates||[]).find(v=>String(v.id)===String('${x.id}')))">Save Proposal in My Items</button> <button type="button" class="danger small" style="opacity:.55;cursor:not-allowed" title="Action locked for the current proposal status" onclick="explainActiveCandidateActionLock((state.countryCandidates||[]).find(v=>String(v.id)===String('${x.id}')))">Delete Proposal</button>`
  :`<button class="small" onclick="editActiveCandidateProposal('${x.id}')">Edit Proposal</button> <button type="button" class="secondary small" onclick="saveProposalInMyItems('${x.id}')">Save Proposal in My Items</button> ${wineCandidateCanDeleteOrArchive(x)?`<button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete Proposal</button>`:`<button class="danger small" disabled title="Available only after a decline status">Delete Proposal</button>`}`}</td></tr>`}).join('')||'<tr><td colspan="8">No wine candidates match the search.</td></tr>';}
 const br=document.getElementById('italyBonusRows');if(br)br.innerHTML=bon.map(x=>`<tr><td>${esc(x.date||'—')}</td><td>${esc(x.type)}</td><td>${esc(x.related||'—')}</td><td><b>${esc(x.currency)} ${num(x.amount).toFixed(2)}</b></td><td><span class="badge">${esc(x.status)}</span></td><td>${esc(x.notes||'—')}</td></tr>`).join('')||'<tr><td colspan="6">No bonus records yet.</td></tr>';const pk=document.getElementById('italyPerformanceKpis');if(pk){const paid=bon.filter(x=>x.status==='Paid').reduce((a,x)=>a+num(x.amount),0),pending=bon.filter(x=>x.status!=='Paid').reduce((a,x)=>a+num(x.amount),0);pk.innerHTML=[['Candidates Proposed',can.length],['Approved',approved],['Winners',winners],['Win Rate',can.length?((winners/can.length)*100).toFixed(1)+'%':'0%'],['Bonus Records',bon.length],['Pending Bonus Value*',pending.toFixed(2)]].map(x=>`<div class="card"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('')}
