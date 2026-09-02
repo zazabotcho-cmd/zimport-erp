@@ -269,6 +269,20 @@ label[data-retrieved-locked="1"] textarea{
 /* Separate archived winner and supplier information pages from the main supplier workflow */
 #countrySourcingPageRow .country-sourcing-end-separator{display:inline-block;align-self:stretch;width:2px;min-height:30px;background:#94a3b8;margin:0 18px;flex:0 0 2px;border-radius:2px}
 #countrySourcingPageRow .country-sourcing-end-tab{flex:0 0 auto}
+
+/* Push separated end-of-workflow tabs to the far right of their navigation line */
+[data-section-nav="tender-niss"] .tender-nav-separator{
+  margin-left:auto !important;
+  margin-right:18px !important;
+  width:2px !important;
+  flex:0 0 2px !important;
+}
+#countrySourcingPageRow .country-sourcing-end-separator{
+  margin-left:auto !important;
+  margin-right:18px !important;
+  width:2px !important;
+  flex:0 0 2px !important;
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
