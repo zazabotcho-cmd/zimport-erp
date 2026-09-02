@@ -788,7 +788,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   <button class="tab" data-tab="po-page" data-po-title="TENDER PO's">TENDER PO's</button>
   <button class="tab" data-tab="tender-suppliers">Tender Suppliers</button>
   <button class="tab" data-tab="tender-supplier-items">Tender Supplier Items</button>
-  <button class="tab" data-tab="archived-tenders">Archived Tenders</button>
+  <button class="tab" data-tab="archived-tenders">Archived Tender Winners</button>
 </nav>
 <nav class="subnav" data-section-nav="speciality-services">
   <button class="tab" data-tab="calculator">Suppliers</button>
@@ -819,14 +819,13 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   <div class="country-sourcing-page-row" id="countrySourcingPageRow">
     <button class="tab" data-tab="country-dashboard"><span id="countryDashboardTabLabel">Dashboard</span></button>
     <button class="tab" data-tab="country-opportunities">My Tenders</button>
-    <button class="tab" data-tab="country-wineries">Supplier Information</button>
-    <button class="tab" data-tab="country-candidates">My Candidate Items</button>
+    <button class="tab" data-tab="country-candidates">My Active Items</button>
     <button class="tab" data-tab="country-archived-candidates">My Items</button>
-    <button class="tab" data-tab="country-winners">My Winners</button>
+    <button class="tab" data-tab="country-winners">My Archived Winners</button>
     <button class="tab" data-tab="country-manager-notes">My Working Notes</button>
-     
     <button class="tab" data-tab="country-internal-mail">Internal Mail <span id="supplierInternalMailBadge" class="internal-mail-badge" style="display:none">0</span></button>
-<button class="tab" data-tab="country-manager-recycle-bin">Recycling Bin</button>
+    <button class="tab" data-tab="country-wineries">Supplier Information</button>
+    <button class="tab" data-tab="country-manager-recycle-bin">My Recycling Bin</button>
   </div>
 </nav>
 <nav class="subnav" data-section-nav="internal-mail-section"><button class="tab" data-tab="internal-mail">Internal Mail <span id="mainInternalMailTabBadge" class="internal-mail-badge" style="display:none">0</span></button></nav>
@@ -858,7 +857,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
     </div>
   </div>
 </div></section>
-<section id="country-opportunities" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — My Tenders</h2><p class="note">Read-only tender information. This page automatically shows tenders created in TENDERS and announced to the Italy Country Portfolio & Sourcing Representative. Tenders cannot be created, edited, or deleted here.</p></div></div><div class="toolbar"><input id="supplierMyTendersSearch" type="search" placeholder="Search My Tenders" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name</th><th>Product Needs</th><th>Pre-Submission Date</th><th>Tasting Date</th><th>Status</th><th>Notes</th><th>My Candidate Items</th></tr></thead><tbody id="italyOpportunityRows"></tbody></table></div></div></section>
+<section id="country-opportunities" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — My Tenders</h2><p class="note">Read-only tender information. This page automatically shows tenders created in TENDERS and announced to the Italy Country Portfolio & Sourcing Representative. Tenders cannot be created, edited, or deleted here.</p></div></div><div class="toolbar"><input id="supplierMyTendersSearch" type="search" placeholder="Search My Tenders" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name</th><th>Product Needs</th><th>Pre-Submission Date</th><th>Tasting Date</th><th>Status</th><th>Notes</th><th>My Active Items</th></tr></thead><tbody id="italyOpportunityRows"></tbody></table></div></div></section>
 
 <div id="supplierTenderContactModal" class="modal hidden"><div class="modal-card" style="max-width:900px">
  <div class="modal-head"><div><h2 id="supplierContactPersonModalTitle">Add Contact Persons</h2><p id="supplierTenderContactTenderLabel" class="note">Supplier contact information</p></div><button type="button" class="icon" onclick="closeSupplierTenderContact()">×</button></div>
@@ -970,7 +969,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
     <th>Phone</th><th>Email</th><th>Payment Terms</th><th>Direction to Pay Agent</th><th>Ontario / LCBO Agent?</th><th>Exports Other Provinces?</th><th>Producer Size</th><th>Action</th>
   </tr></thead><tbody id="italyWineryRows"></tbody></table></div>
 </div></section>
-<section id="country-candidates" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — My Candidate Items</h2><p class="note">Item Candidate uses the same detailed product profile as Add Tender Item, with country-sourcing fields added for the representative.</p></div><button type="button" onclick="openItalyCandidateForm()">+ Propose Item</button></div><div class="toolbar"><input id="supplierWineCandidatesSearch" type="search" placeholder="Search My Candidate Items" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Item</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="italyCandidateRows"></tbody></table></div></div></section>
+<section id="country-candidates" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — My Active Items</h2><p class="note">Item Candidate uses the same detailed product profile as Add Tender Item, with country-sourcing fields added for the representative.</p></div><button type="button" onclick="openItalyCandidateForm()">+ Propose Item</button></div><div class="toolbar"><input id="supplierWineCandidatesSearch" type="search" placeholder="Search My Active Items" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Item</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="italyCandidateRows"></tbody></table></div></div></section>
 <section id="country-archived-candidates" class="panel"><div class="box">
   <div class="section-head">
     <div><h2 id="archivedCountryCandidatesTitle">Italy — My Items</h2><p class="note">My items for the selected country. Create and save a complete item profile here, then update or propose it to Head Office later.</p></div>
@@ -982,8 +981,8 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   </table></div>
 </div></section>
 <section id="country-winners" class="panel"><div class="box">
-  <div class="section-head"><div><h2 id="countryWinnersTitle">My Winners</h2><p class="note">Items from this supplier whose Submission Status is Tender Winner. Winner information is read-only here.</p></div></div>
-  <div class="toolbar"><input id="supplierMyWinnersSearch" type="search" placeholder="Search My Winners" oninput="renderItalySourcing()"></div>
+  <div class="section-head"><div><h2 id="countryWinnersTitle">My Archived Winners</h2><p class="note">Items from this supplier whose Submission Status is Tender Winner. Winner information is read-only here.</p></div></div>
+  <div class="toolbar"><input id="supplierMyWinnersSearch" type="search" placeholder="Search My Archived Winners" oninput="renderItalySourcing()"></div>
   <div class="table-wrap"><table><thead><tr><th>Item</th><th>Supplier / Producer</th><th>Tender</th><th>Supplier Price / Case</th><th>Submission Status</th></tr></thead><tbody id="countryWinnerRows"></tbody></table></div>
 </div></section>
 
@@ -998,7 +997,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 <div class="modal-actions"><span></span><button id="cancelPortfolioManagerNoteBtn" class="secondary" type="button">Cancel</button><button id="savePortfolioManagerNoteBtn" type="button">Save Note</button></div>
 </div></div>
 <section id="country-manager-recycle-bin" class="panel"><div class="box">
-  <div class="section-head"><div><h2 id="portfolioManagerRecycleTitle">Italy — Portfolio Manager Recycling Bin</h2><p class="note">Deleted records from this country are kept here. Everyone can restore records. Only an Administrator can permanently delete them.</p></div></div><div class="toolbar"><input id="supplierRecycleSearch" type="search" placeholder="Search Recycling Bin" oninput="renderPortfolioManagerRecycleBin()"></div>
+  <div class="section-head"><div><h2 id="portfolioManagerRecycleTitle">Italy — My Recycling Bin</h2><p class="note">Deleted records from this country are kept here. Everyone can restore records. Only an Administrator can permanently delete them.</p></div></div><div class="toolbar"><input id="supplierRecycleSearch" type="search" placeholder="Search My Recycling Bin" oninput="renderPortfolioManagerRecycleBin()"></div>
   <div class="table-wrap"><table>
     <thead><tr><th>Deleted Date</th><th>Page</th><th>Record</th><th>Type</th><th>Actions</th></tr></thead>
     <tbody id="portfolioManagerRecycleRows"></tbody>
@@ -1102,7 +1101,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 
 
 <section id="archived-tenders" class="panel">
-  <div class="section-head"><div><h2>Archived Tenders</h2><p class="note">Submissions automatically moved here when the 1st Stage Decision or Final Decision is Declined.</p></div></div>
+  <div class="section-head"><div><h2>Archived Tender Winners</h2><p class="note">Submissions automatically moved here when the 1st Stage Decision or Final Decision is Declined.</p></div></div>
   <div class="submission-search-toggle"><button type="button" id="toggleArchivedSearch" class="secondary">Search</button></div>
   <div id="archivedSearchPanel" class="filters archived-search-filters hidden">
     <label>Search by Tender Name<input id="archivedTenderSearch" type="search" placeholder="Type tender name"></label>
@@ -2288,8 +2287,8 @@ function winnerTransportationInfo(r){
 }
 function shipmentDeliveryLabel(status=''){return status==='Delivered to Consolidation'?'Delivery Date':status==='Arrived in Canada'?'Canada Delivery Date':'Approximate Delivery Date'}
 function formatTransportationDate(value){const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return value||'';const months=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];return `${Number(m[3])}.${months[Number(m[2])-1]}${m[1]}`}
-function completeWinnerPO(id){const r=state.records.find(x=>x.id===id);if(!r)return;if(!confirm('Complete this PO and move the submission to Archived Tenders?'))return;r.completedPO=true;r.completedPODate=new Date().toISOString().slice(0,10);save()}
-function deleteArchivedSubmission(id){const r=state.records.find(x=>x.id===id);if(!r||!confirm('Move this archived submission to the Recycling Bin?'))return;moveToRecycleBin('record','Archived Tenders',r);deleteNtpAttachment(id);deletePoAttachment(id);state.records=state.records.filter(x=>x.id!==id);state.tenders.forEach(t=>(t.workItems||[]).forEach(w=>{if(w.submissionId===id){w.submissionId='';w.status='Submitted'}}));save()}
+function completeWinnerPO(id){const r=state.records.find(x=>x.id===id);if(!r)return;if(!confirm('Move this Tender Winner into Archived Tender Winners?'))return;r.completedPO=true;r.completedPODate=new Date().toISOString().slice(0,10);save()}
+function deleteArchivedSubmission(id){const r=state.records.find(x=>x.id===id);if(!r||!confirm('Move this archived submission to the Recycling Bin?'))return;moveToRecycleBin('record','Archived Tender Winners',r);deleteNtpAttachment(id);deletePoAttachment(id);state.records=state.records.filter(x=>x.id!==id);state.tenders.forEach(t=>(t.workItems||[]).forEach(w=>{if(w.submissionId===id){w.submissionId='';w.status='Submitted'}}));save()}
 function moveBackToAllSubmitted(id){const r=state.records.find(x=>x.id===id);if(!r)return;if(!confirm('Move this submission back to All Submitted Items?'))return;r.completedPO=false;r.completedPODate='';if(r.stage1Decision==='Declined')r.stage1Decision='In Progress';if(r.finalDecision==='Declined'||r.finalDecision==='Winner')r.finalDecision='In Progress';r.registered='Yes';save()}
 function productSubmissionCell(r){const value=String(r.submissionNumber||'').trim();return `<td><div><b>${escapeHtml(r.productType||'—')}</b><div class="tracking-number submission-number-cell"><small>Submission #</small><b>${escapeHtml(value||'—')}</b>${value?`<button type="button" class="secondary small" onclick='copyText(${JSON.stringify(value)})'>Copy</button>`:''}</div></div></td>`}
 function renderSubmissionTable(targetId='submissionRows',mode='active',useFilters=true){
@@ -2344,7 +2343,7 @@ function renderSubmissionTable(targetId='submissionRows',mode='active',useFilter
     if(mode==='archived')return `<tr data-record-id="${r.id}">${base}${productSubmissionCell(r)}<td><span class="${decisionClass(stage)}">${escapeHtml(stage)}</span></td><td><span class="${decisionClass(forced)}">${escapeHtml(forced)}</span></td><td>${num(item.quotePerCase||r.offeredQuote).toFixed(2)}</td><td>${escapeHtml(item.quotationCurrency||r.offeredQuoteCurrency||'CAD')}</td><td>${escapeHtml(item.sellingUnitsPerShippingCase||r.bottles||'—')}</td><td>${num(item.estimatedRetailPrice||r.erpManual).toFixed(2)}</td><td>${escapeHtml(item.quoteType||'FOB')}</td><td>${escapeHtml(item.sellingUnitSizeMl||'—')}</td><td>${escapeHtml(item.limitedCaseQty||'—')}</td><td><div class="action-buttons"><button type="button" class="secondary small" onclick="moveBackToAllSubmitted('${r.id}')">Move Back to All Submitted Items</button><button type="button" class="danger small" onclick="deleteArchivedSubmission('${r.id}')">Delete Submission</button></div></td></tr>`;
     if(mode==='winner'){
       const transport=winnerTransportationInfo(r);const ref=transport.ref||'—';
-      return `<tr data-record-id="${r.id}">${base}${productSubmissionCell(r)}<td><div class="qty-input"><input type="number" min="0" step="1" value="${num(r.finalOrderedQty)||''}" placeholder="800" onchange="updateSubmissionField('${r.id}','finalOrderedQty',this.value)"><span>cases</span></div></td><td><textarea rows="2" placeholder="Type comments" onchange="updateSubmissionField('${r.id}','comments',this.value)">${escapeHtml(r.comments||'')}</textarea></td><td><select onchange="updateSubmissionField('${r.id}','ntpStatus',this.value)">${selectOptions(ntpOpts,r.ntpStatus||'Not Issued')}</select>${(r.ntpStatus||'Not Issued')==='Issued'?`<div class="ntp-file"><input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" onchange="saveNtpAttachment('${r.id}',this.files[0])">${r.ntpFileName?`<div class="file-actions"><button type="button" class="small secondary" onclick="openNtpAttachment('${r.id}')">Open ${escapeHtml(r.ntpFileName)}</button><button type="button" class="small danger" onclick="removeNtpFile('${r.id}')">Remove File</button></div>`:'<small>Attach NTP file</small>'}</div>`:''}</td><td><input type="date" value="${escapeHtml(r.storeReleaseDate||'')}" onchange="updateSubmissionField('${r.id}','storeReleaseDate',this.value)"></td><td><select onchange="updateSubmissionField('${r.id}','poStatus',this.value)">${selectOptions(poOpts,r.poStatus||'Not Issued')}</select>${(r.poStatus||'Not Issued')==='Issued'?`<input type="text" value="${escapeHtml(r.poNumber||'')}" placeholder="Type PO number" onchange="updateSubmissionField('${r.id}','poNumber',this.value)"><div class="po-file"><input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" onchange="savePoAttachment('${r.id}',this.files[0])">${r.poFileName?`<div class="file-actions"><button type="button" class="small secondary" onclick="openPoAttachment('${r.id}')">Open ${escapeHtml(r.poFileName)}</button><button type="button" class="small danger" onclick="removePoFile('${r.id}')">Remove File</button></div>`:'<small>Attach PO file</small>'}</div>`:''}</td><td>${shipmentStatusBadge(transport.status)}</td><td><div class="tracking-number"><b>${escapeHtml(ref)}</b>${transport.ref?`<button type="button" class="secondary small" onclick='copyText(${JSON.stringify(transport.ref)})'>Copy</button>`:''}</div></td><td><input type="url" value="${escapeHtml(r.trackingLink||'')}" placeholder="Paste tracking link here" onchange="updateSubmissionField('${r.id}','trackingLink',this.value)">${r.trackingLink?`<div class="file-actions"><a class="button-link small" href="${escapeHtml(r.trackingLink)}" target="_blank" rel="noopener">Open Link</a><button type="button" class="secondary small" onclick='copyText(${JSON.stringify(r.trackingLink)})'>Copy Link</button></div>`:''}</td><td><div class="action-buttons"><button class="small success" onclick="completeWinnerPO('${r.id}')">Complete the PO</button><button type="button" class="secondary small" onclick="moveBackToAllSubmitted('${r.id}')">Move Back to All Submitted Items</button></div></td></tr>`;
+      return `<tr data-record-id="${r.id}">${base}${productSubmissionCell(r)}<td><div class="qty-input"><input type="number" min="0" step="1" value="${num(r.finalOrderedQty)||''}" placeholder="800" onchange="updateSubmissionField('${r.id}','finalOrderedQty',this.value)"><span>cases</span></div></td><td><textarea rows="2" placeholder="Type comments" onchange="updateSubmissionField('${r.id}','comments',this.value)">${escapeHtml(r.comments||'')}</textarea></td><td><select onchange="updateSubmissionField('${r.id}','ntpStatus',this.value)">${selectOptions(ntpOpts,r.ntpStatus||'Not Issued')}</select>${(r.ntpStatus||'Not Issued')==='Issued'?`<div class="ntp-file"><input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" onchange="saveNtpAttachment('${r.id}',this.files[0])">${r.ntpFileName?`<div class="file-actions"><button type="button" class="small secondary" onclick="openNtpAttachment('${r.id}')">Open ${escapeHtml(r.ntpFileName)}</button><button type="button" class="small danger" onclick="removeNtpFile('${r.id}')">Remove File</button></div>`:'<small>Attach NTP file</small>'}</div>`:''}</td><td><input type="date" value="${escapeHtml(r.storeReleaseDate||'')}" onchange="updateSubmissionField('${r.id}','storeReleaseDate',this.value)"></td><td><select onchange="updateSubmissionField('${r.id}','poStatus',this.value)">${selectOptions(poOpts,r.poStatus||'Not Issued')}</select>${(r.poStatus||'Not Issued')==='Issued'?`<input type="text" value="${escapeHtml(r.poNumber||'')}" placeholder="Type PO number" onchange="updateSubmissionField('${r.id}','poNumber',this.value)"><div class="po-file"><input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" onchange="savePoAttachment('${r.id}',this.files[0])">${r.poFileName?`<div class="file-actions"><button type="button" class="small secondary" onclick="openPoAttachment('${r.id}')">Open ${escapeHtml(r.poFileName)}</button><button type="button" class="small danger" onclick="removePoFile('${r.id}')">Remove File</button></div>`:'<small>Attach PO file</small>'}</div>`:''}</td><td>${shipmentStatusBadge(transport.status)}</td><td><div class="tracking-number"><b>${escapeHtml(ref)}</b>${transport.ref?`<button type="button" class="secondary small" onclick='copyText(${JSON.stringify(transport.ref)})'>Copy</button>`:''}</div></td><td><input type="url" value="${escapeHtml(r.trackingLink||'')}" placeholder="Paste tracking link here" onchange="updateSubmissionField('${r.id}','trackingLink',this.value)">${r.trackingLink?`<div class="file-actions"><a class="button-link small" href="${escapeHtml(r.trackingLink)}" target="_blank" rel="noopener">Open Link</a><button type="button" class="secondary small" onclick='copyText(${JSON.stringify(r.trackingLink)})'>Copy Link</button></div>`:''}</td><td><div class="action-buttons"><button class="small success" onclick="completeWinnerPO('${r.id}')">TENDER WINNERS &amp; move into archived tender winners</button><button type="button" class="secondary small" onclick="moveBackToAllSubmitted('${r.id}')">Move Back to All Submitted Items</button></div></td></tr>`;
     }
     return `<tr data-record-id="${r.id}">${base}<td><span class="badge Yes">Yes</span></td>${productSubmissionCell(r)}<td><select class="${stage==='In Progress'?'decision-yellow':decisionClass(stage)}" onchange="updateSubmissionField('${r.id}','stage1Decision',this.value);applyDecisionColor(this)">${selectLabeledOptions(stageDisplayOpts,stage)}</select></td><td><input type="date" value="${escapeHtml(r.sampleProvideDate||'')}" onchange="updateSubmissionField('${r.id}','sampleProvideDate',this.value)"></td><td><select class="sample-doc-status ${(r.sampleDocumentStatus||'Requested to the Supplier')==='Delivered to Consolidation'?'sample-doc-green':'sample-doc-yellow'}" onchange="updateSubmissionField('${r.id}','sampleDocumentStatus',this.value);this.classList.toggle('sample-doc-green',this.value==='Delivered to Consolidation');this.classList.toggle('sample-doc-yellow',this.value!=='Delivered to Consolidation')">${selectLabeledOptions(sampleDocDisplayOpts,r.sampleDocumentStatus||'Requested to the Supplier')}</select></td><td><div class="submitted-comment-box"><textarea id="submittedComment_${r.id}" rows="3" placeholder="Write a reminder or comment...">${escapeHtml(r.submittedReminderComment||'')}</textarea><div class="file-actions"><button type="button" class="small" onclick="saveSubmittedReminderComment('${r.id}')">Save Comment</button><button type="button" class="small danger" onclick="deleteSubmittedReminderComment('${r.id}')">Delete Comment</button></div></div></td><td><select class="${decisionClass(forced)}" onchange="updateSubmissionField('${r.id}','finalDecision',this.value);applyDecisionColor(this)" ${finalDisabled?'disabled title="Final Decision is controlled by the 1st Stage Decision"':''}>${selectOptions(finalOpts,forced)}</select></td></tr>`
   }).join('');
@@ -6089,7 +6088,7 @@ window.deleteCurrentSourcingCountry=()=>{
    state[key]=(state[key]||[]).filter(x=>(x.country||'Italy')!==country);
  };
  moveRecords('countryWineries','countryWinery','Country Sourcing — '+country+' — Supplier Information');
- moveRecords('countryCandidates','countryCandidate','Country Sourcing — '+country+' — My Candidate Items');
+ moveRecords('countryCandidates','countryCandidate','Country Sourcing — '+country+' — My Active Items');
  moveRecords('countryBonuses','countryBonus','Country Sourcing — '+country+' — Performance & Bonuses');
  moveRecords('portfolioManagerNotes','portfolioManagerNote','Country Sourcing — '+country+' — My Working Notes');
  moveRecords('archivedCountryCandidates','archivedCountryCandidate','Country Sourcing — '+country+' — My Items');
@@ -6112,7 +6111,7 @@ window.setSourcingCountry=country=>{
  const tab=document.getElementById('countryDashboardTabLabel');if(tab)tab.textContent='Dashboard';
  const dashboard=document.querySelector('#country-dashboard h2');if(dashboard)dashboard.textContent='Country Portfolio & Sourcing Representative — '+country;
  const badge=document.querySelector('#country-dashboard .badge');if(badge)badge.textContent=country.toUpperCase();
- const candidateTitle=document.querySelector('#country-candidates h2');if(candidateTitle)candidateTitle.textContent=country+' — My Candidate Items';
+ const candidateTitle=document.querySelector('#country-candidates h2');if(candidateTitle)candidateTitle.textContent=country+' — My Active Items';
  const performanceTitle=document.querySelector('#country-performance h2');if(performanceTitle)performanceTitle.textContent=country+' Representative — Performance & Bonuses';
  const wineryTitle=document.querySelector('#country-wineries h2');if(wineryTitle)wineryTitle.textContent=country+' — Supplier Information';
  renderItalySourcing();
@@ -8949,7 +8948,7 @@ window.moveToPortfolioManagerRecycleBin=(type,page,record,restoreMeta={})=>{
 };
 window.renderPortfolioManagerRecycleBin=()=>{
  const title=document.getElementById('portfolioManagerRecycleTitle');
- if(title)title.textContent=currentSourcingCountry+' — Portfolio Manager Recycling Bin';
+ if(title)title.textContent=currentSourcingCountry+' — My Recycling Bin';
  const body=document.getElementById('portfolioManagerRecycleRows');if(!body)return;
  if(!Array.isArray(state.portfolioManagerRecycleBin))state.portfolioManagerRecycleBin=[];
  const items=state.portfolioManagerRecycleBin
@@ -9105,7 +9104,7 @@ window.saveProposalInMyItems=id=>{
  const item=(state.countryCandidates||[]).find(v=>String(v.id)===String(id));
  if(!item)return;
  if(activeCandidateActionsLocked(item))return explainActiveCandidateActionLock(item);
- if(!confirm('Save this proposal in My Items? The proposal will be moved from My Candidate Items to My Items.'))return;
+ if(!confirm('Save this proposal in My Items? The proposal will be moved from My Active Items to My Items.'))return;
 
  const moved={
    ...JSON.parse(JSON.stringify(item)),
@@ -9921,13 +9920,13 @@ window.renderItalySourcing=function(){
  const supplierLabel=selectedSupplierName()||'Select Supplier';
  const dashboard=document.querySelector('#country-dashboard h2');if(dashboard)dashboard.textContent=currentSourcingCountry+' — '+supplierLabel+' — Dashboard';
  const badge=document.querySelector('#country-dashboard .badge');if(badge)badge.textContent=currentSourcingCountry.toUpperCase();
- const candidateTitle=document.querySelector('#country-candidates h2');if(candidateTitle)candidateTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Candidate Items';
+ const candidateTitle=document.querySelector('#country-candidates h2');if(candidateTitle)candidateTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Active Items';
  const performanceTitle=document.querySelector('#country-performance h2');if(performanceTitle)performanceTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Performance & Bonuses';
  const wineryTitle=document.querySelector('#country-wineries h2');if(wineryTitle)wineryTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Supplier Information';
  const archivedTitle=document.getElementById('archivedCountryCandidatesTitle');if(archivedTitle)archivedTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Items';
- const winnersTitle=document.getElementById('countryWinnersTitle');if(winnersTitle)winnersTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Winners';
+ const winnersTitle=document.getElementById('countryWinnersTitle');if(winnersTitle)winnersTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Archived Winners';
  const notesTitle=document.getElementById('portfolioManagerNotesTitle');if(notesTitle)notesTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Working Notes';
- const recycleTitle=document.getElementById('portfolioManagerRecycleTitle');if(recycleTitle)recycleTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — Recycling Bin';
+ const recycleTitle=document.getElementById('portfolioManagerRecycleTitle');if(recycleTitle)recycleTitle.textContent=currentSourcingCountry+' — '+supplierLabel+' — My Recycling Bin';
  if(!state.countryWineries)state.countryWineries=[];if(!state.countryCandidates)state.countryCandidates=[];if(!state.countryBonuses)state.countryBonuses=[];const tenders=(state.tenders||[]).filter(t=>(t.sourcingRepresentatives||[]).includes(currentSourcingCountry)),wins=italyOnly(state.countryWineries).filter(recordMatchesCurrentSupplier),can=italyOnly(state.countryCandidates).filter(recordMatchesCurrentSupplier).filter(x=>!x.myItem&&!x.tenderSupplierItemOnly&&!x.itemApprovalStatus),bon=italyOnly(state.countryBonuses),approved=can.filter(x=>/Approved|Submitted|Winner/.test(x.status)).length,winners=can.filter(x=>normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status)==='Tender Winner'||String(x.status||'').trim()==='Winner').length;const k=document.getElementById('italyKpis');if(k)k.innerHTML=[
  ['Active Tenders',tenders.filter(x=>x.status==='Active').length],
  ['Active Wine Candidates',can.filter(x=>!['Declined','Archived'].includes(normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status))).length],
