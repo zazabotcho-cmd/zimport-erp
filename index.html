@@ -261,6 +261,14 @@ label[data-retrieved-locked="1"] textarea{
   border-color:rgba(15,23,42,.20) !important;
   box-shadow:inset 0 0 0 9999px rgba(148,163,184,.08) !important;
 }
+
+/* Visual separation for supplier/archive administration pages at end of Tenders navigation */
+[data-section-nav="tender-niss"] .tender-nav-separator{display:inline-block;align-self:stretch;width:2px;min-height:30px;background:#94a3b8;margin:0 18px;flex:0 0 2px;border-radius:2px}
+[data-section-nav="tender-niss"] .tender-admin-end-tab:first-of-type{margin-left:0}
+
+/* Separate archived winner and supplier information pages from the main supplier workflow */
+#countrySourcingPageRow .country-sourcing-end-separator{display:inline-block;align-self:stretch;width:2px;min-height:30px;background:#94a3b8;margin:0 18px;flex:0 0 2px;border-radius:2px}
+#countrySourcingPageRow .country-sourcing-end-tab{flex:0 0 auto}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -786,9 +794,10 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   <button class="tab" data-tab="tender-winners">TENDER WINNERS</button>
   
   <button class="tab" data-tab="po-page" data-po-title="TENDER PO's">TENDER PO's</button>
-  <button class="tab" data-tab="tender-suppliers">Tender Suppliers</button>
-  <button class="tab" data-tab="tender-supplier-items">Tender Supplier Items</button>
-  <button class="tab" data-tab="archived-tenders">Archived Tender Winners</button>
+  <span class="tender-nav-separator" aria-hidden="true"></span>
+  <button class="tab tender-admin-end-tab" data-tab="tender-suppliers">Tender Suppliers</button>
+  <button class="tab tender-admin-end-tab" data-tab="tender-supplier-items">Tender Supplier Items</button>
+  <button class="tab tender-admin-end-tab" data-tab="archived-tenders">Archived Tender Winners</button>
 </nav>
 <nav class="subnav" data-section-nav="speciality-services">
   <button class="tab" data-tab="calculator">Suppliers</button>
@@ -821,11 +830,12 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
     <button class="tab" data-tab="country-opportunities">My Tenders</button>
     <button class="tab" data-tab="country-candidates">My Active Items</button>
     <button class="tab" data-tab="country-archived-candidates">My Items</button>
-    <button class="tab" data-tab="country-winners">My Archived Winners</button>
     <button class="tab" data-tab="country-manager-notes">My Working Notes</button>
     <button class="tab" data-tab="country-internal-mail">Internal Mail <span id="supplierInternalMailBadge" class="internal-mail-badge" style="display:none">0</span></button>
-    <button class="tab" data-tab="country-wineries">Supplier Information</button>
     <button class="tab" data-tab="country-manager-recycle-bin">My Recycling Bin</button>
+    <span class="country-sourcing-end-separator" aria-hidden="true"></span>
+    <button class="tab country-sourcing-end-tab" data-tab="country-winners">My Archived Winners</button>
+    <button class="tab country-sourcing-end-tab" data-tab="country-wineries">Supplier Information</button>
   </div>
 </nav>
 <nav class="subnav" data-section-nav="internal-mail-section"><button class="tab" data-tab="internal-mail">Internal Mail <span id="mainInternalMailTabBadge" class="internal-mail-badge" style="display:none">0</span></button></nav>
@@ -981,7 +991,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   </table></div>
 </div></section>
 <section id="country-winners" class="panel"><div class="box">
-  <div class="section-head"><div><h2 id="countryWinnersTitle">My Archived Winners</h2><p class="note">Items from this supplier whose Submission Status is Tender Winner. Winner information is read-only here.</p></div></div>
+  <div class="section-head"><div><h2 id="countryWinnersTitle">My Archived Winners</h2><p class="note">Items automatically appear here after they are moved from TENDER WINNERS into Archived Tender Winners. Winner information is read-only here.</p></div></div>
   <div class="toolbar"><input id="supplierMyWinnersSearch" type="search" placeholder="Search My Archived Winners" oninput="renderItalySourcing()"></div>
   <div class="table-wrap"><table><thead><tr><th>Item</th><th>Supplier / Producer</th><th>Tender</th><th>Supplier Price / Case</th><th>Submission Status</th></tr></thead><tbody id="countryWinnerRows"></tbody></table></div>
 </div></section>
@@ -2287,7 +2297,7 @@ function winnerTransportationInfo(r){
 }
 function shipmentDeliveryLabel(status=''){return status==='Delivered to Consolidation'?'Delivery Date':status==='Arrived in Canada'?'Canada Delivery Date':'Approximate Delivery Date'}
 function formatTransportationDate(value){const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return value||'';const months=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];return `${Number(m[3])}.${months[Number(m[2])-1]}${m[1]}`}
-function completeWinnerPO(id){const r=state.records.find(x=>x.id===id);if(!r)return;if(!confirm('Move this Tender Winner into Archived Tender Winners?'))return;r.completedPO=true;r.completedPODate=new Date().toISOString().slice(0,10);save()}
+function completeWinnerPO(id){const r=state.records.find(x=>x.id===id);if(!r)return;if(!confirm('Move this Tender Winner into Archived Tender Winners?'))return;r.completedPO=true;r.completedPODate=new Date().toISOString().slice(0,10);const linkedWork=(state.tenders||[]).flatMap(t=>t.workItems||[]).find(w=>String(w.submissionId||'')===String(r.id));if(linkedWork?.sourceCandidateId){const candidate=(state.countryCandidates||[]).find(c=>String(c.id)===String(linkedWork.sourceCandidateId));if(candidate){candidate.headOfficeActionStatus='Tender Winner';candidate.status='Tender Winner';candidate.archivedTenderWinner=true;candidate.archivedTenderWinnerDate=r.completedPODate;}}save()}
 function deleteArchivedSubmission(id){const r=state.records.find(x=>x.id===id);if(!r||!confirm('Move this archived submission to the Recycling Bin?'))return;moveToRecycleBin('record','Archived Tender Winners',r);deleteNtpAttachment(id);deletePoAttachment(id);state.records=state.records.filter(x=>x.id!==id);state.tenders.forEach(t=>(t.workItems||[]).forEach(w=>{if(w.submissionId===id){w.submissionId='';w.status='Submitted'}}));save()}
 function moveBackToAllSubmitted(id){const r=state.records.find(x=>x.id===id);if(!r)return;if(!confirm('Move this submission back to All Submitted Items?'))return;r.completedPO=false;r.completedPODate='';if(r.stage1Decision==='Declined')r.stage1Decision='In Progress';if(r.finalDecision==='Declined'||r.finalDecision==='Winner')r.finalDecision='In Progress';r.registered='Yes';save()}
 function productSubmissionCell(r){const value=String(r.submissionNumber||'').trim();return `<td><div><b>${escapeHtml(r.productType||'—')}</b><div class="tracking-number submission-number-cell"><small>Submission #</small><b>${escapeHtml(value||'—')}</b>${value?`<button type="button" class="secondary small" onclick='copyText(${JSON.stringify(value)})'>Copy</button>`:''}</div></div></td>`}
@@ -9950,7 +9960,7 @@ const cr=document.getElementById('italyCandidateRows');if(cr){const cq=(document
  :activeCandidateActionsLocked(x)
  ?`<button type="button" class="small" style="opacity:.55;cursor:not-allowed" title="Action locked for the current proposal status" onclick="explainActiveCandidateActionLock((state.countryCandidates||[]).find(v=>String(v.id)===String('${x.id}')))">Edit Proposal</button> <button type="button" class="secondary small" style="opacity:.55;cursor:not-allowed" title="Action locked for the current proposal status" onclick="explainActiveCandidateActionLock((state.countryCandidates||[]).find(v=>String(v.id)===String('${x.id}')))">Save Proposal in My Items</button> <button type="button" class="danger small" style="opacity:.55;cursor:not-allowed" title="Action locked for the current proposal status" onclick="explainActiveCandidateActionLock((state.countryCandidates||[]).find(v=>String(v.id)===String('${x.id}')))">Delete Proposal</button>`
  :`<button class="small" onclick="editActiveCandidateProposal('${x.id}')">Edit Proposal</button> <button type="button" class="secondary small" onclick="saveProposalInMyItems('${x.id}')">Save Proposal in My Items</button> ${wineCandidateCanDeleteOrArchive(x)?`<button class="danger small" onclick="deleteItalySource('can','${x.id}')">Delete Proposal</button>`:`<button class="danger small" disabled title="Available only after a decline status">Delete Proposal</button>`}`}</td></tr>`}).join('')||'<tr><td colspan="8">No wine candidates match the search.</td></tr>';}
-const winnerRows=document.getElementById('countryWinnerRows');if(winnerRows){const wq=(document.getElementById('supplierMyWinnersSearch')?.value||'').trim().toLowerCase();const winnerCandidates=italyOnly(state.countryCandidates||[]).filter(recordMatchesCurrentSupplier).filter(x=>{const st=normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status);return st==='Tender Winner'||String(x.status||'').trim()==='Winner';}).filter(x=>!wq||JSON.stringify(x).toLowerCase().includes(wq));winnerRows.innerHTML=winnerCandidates.map(x=>{const o=(state.tenders||[]).find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||(state.countryWineries||[]).find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—';return `<tr><td><button type="button" class="program-clickable-link" title="Click to read complete item information" onclick="openTenderSupplierItemDetail('${x.id}')">${esc(x.productDescription||x.name||'—')}</button><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td><span class="badge candidate-head-status">Tender Winner</span></td></tr>`}).join('')||'<tr><td colspan="5">No winner items for this supplier yet.</td></tr>';}
+const winnerRows=document.getElementById('countryWinnerRows');if(winnerRows){const wq=(document.getElementById('supplierMyWinnersSearch')?.value||'').trim().toLowerCase();const winnerCandidates=italyOnly(state.countryCandidates||[]).filter(recordMatchesCurrentSupplier).filter(x=>{const linkedArchived=(state.tenders||[]).some(t=>(t.workItems||[]).some(w=>String(w.sourceCandidateId||'')===String(x.id)&&w.submissionId&&(state.records||[]).some(r=>String(r.id)===String(w.submissionId)&&r.completedPO===true)));return linkedArchived;}).filter(x=>!wq||JSON.stringify(x).toLowerCase().includes(wq));winnerRows.innerHTML=winnerCandidates.map(x=>{const o=(state.tenders||[]).find(z=>z.id===x.opportunityId),supplier=x.supplierName||x.producerName||(state.countryWineries||[]).find(z=>z.id===x.wineryId)?.name||'—',price=x.supplierPricePerCase??x.price??'—';return `<tr><td><button type="button" class="program-clickable-link" title="Click to read complete item information" onclick="openTenderSupplierItemDetail('${x.id}')">${esc(x.productDescription||x.name||'—')}</button><br><small>${esc(x.vintage||'')} ${esc(x.grapeVarietal1||x.grape||'')}</small></td><td>${esc(supplier)}</td><td>${esc(o?.name||'General Portfolio')}</td><td>${esc(price)}</td><td><span class="badge candidate-head-status">Tender Winner</span></td></tr>`}).join('')||'<tr><td colspan="5">No winner items for this supplier yet.</td></tr>';}
 const br=document.getElementById('italyBonusRows');if(br)br.innerHTML=bon.map(x=>`<tr><td>${esc(x.date||'—')}</td><td>${esc(x.type)}</td><td>${esc(x.related||'—')}</td><td><b>${esc(x.currency)} ${num(x.amount).toFixed(2)}</b></td><td><span class="badge">${esc(x.status)}</span></td><td>${esc(x.notes||'—')}</td></tr>`).join('')||'<tr><td colspan="6">No bonus records yet.</td></tr>';const pk=document.getElementById('italyPerformanceKpis');if(pk){const paid=bon.filter(x=>x.status==='Paid').reduce((a,x)=>a+num(x.amount),0),pending=bon.filter(x=>x.status!=='Paid').reduce((a,x)=>a+num(x.amount),0);pk.innerHTML=[['Candidates Proposed',can.length],['Approved',approved],['Winners',winners],['Win Rate',can.length?((winners/can.length)*100).toFixed(1)+'%':'0%'],['Bonus Records',bon.length],['Pending Bonus Value*',pending.toFixed(2)]].map(x=>`<div class="card"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('')}
 renderSupplierContactPersons();renderHeadOfficeProposals();populateItalySelects()};
 if(document.getElementById('headAddBonusBtn'))document.getElementById('headAddBonusBtn').onclick=()=>openHeadBonusForm();
