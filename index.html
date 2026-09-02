@@ -1171,7 +1171,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 </section>
 
 <section id="worker-list" class="panel">
-  <div class="box worker-list" id="worker-list"><div class="section-head"><div><h2>LCBO SUBMISSIONS LIST</h2><p class="note">All products approved by Head Office for LCBO Submission appear here automatically. Additional items can still be added manually when needed.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>Submitted</option><option>Updated Proposal to Head Office</option><option>Approved for LCBO Submission</option><option value="Additional Information Required">Additional Information Requested</option><option>Declined</option><option>To Register</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Item</button></div></div>
+  <div class="box worker-list"><div class="section-head"><div><h2>LCBO SUBMISSIONS LIST</h2><p class="note">All products approved by Head Office for LCBO Submission appear here automatically. Additional items can still be added manually when needed.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>Submitted</option><option>Updated Proposal to Head Office</option><option>Approved for LCBO Submission</option><option>Submitted to the LCBO</option><option value="Additional Information Required">Additional Information Requested</option><option>Declined</option><option>To Register</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Item</button></div></div>
 </section>
 
 <section id="tender-suppliers" class="panel">
@@ -1529,189 +1529,9 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 </div>
 <div class="financial-actions"><button type="button" id="deleteFinancialInvoice" class="danger">Delete Invoice</button><button type="button" id="saveFinancialInvoice">Save Invoice</button></div>
 </div></div></section>
-<section id="financialRSO-rso" class="panel"><div class="box"><div class="section-head"><div><h2>LCBO to Agent REGU / SEAS / OTHER Invoices</h2><p class="note">Create and manage REGU, SEAS, and OTHER LCBO to Agent invoice records.</p></div><button type="button" id="createFinancialInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleFinancialRSOSearch">Search</button><div class="page-search-panel" id="financialRSOSearchPanel"><label>Search Invoices<input id="financialRSOPageSearch" type="search" placeholder="PO, invoice, submission, status, amount or currency"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearFinancialPageSearch">Clear Search</button></div></div>
-<div id="financialRSOInvoiceList"><div class="table-wrap"><table><thead><tr><th>PO #</th><th>Invoice Number</th><th>Submission #</th><th>Total PO Quoted Value *</th><th>Total Netted Expenses</th><th>Total Advertising Expenses</th><th>Failed Sales LCBO Rebate</th><th>Other Expense Amount</th><th>Transportation Cost CAD</th><th>Supplier Payment CAD</th><th>LCBO PAYMENT STATUS</th><th>NET PROFIT CAD</th><th>Actions</th></tr></thead><tbody id="financialRSOInvoiceRows"></tbody></table></div></div>
-<div id="financialRSOInvoiceDetails" class="hidden"><div class="invoice-detail-actions"><button type="button" class="secondary" id="backFromFinancialDetails">Back to Invoice List</button><button type="button" class="secondary" id="copyAllFinancialDetails">Copy All Invoice Information</button><button type="button" id="editFromFinancialDetails">Edit Invoice</button></div><div id="financialRSOInvoiceDetailsContent"></div></div>
-<div id="financialRSOInvoiceEditor" class="hidden">
-<div class="section-head"><div><h2 id="financialRSOEditorTitle">Create Invoice</h2><p class="note">Select the PO, enter the invoice details, and review the automatically calculated transportation cost.</p></div><button type="button" class="secondary" id="backToFinancialList">Back to Invoice List</button></div>
-<input type="hidden" id="rsoFinInvoiceId">
-<div class="financial-grid">
-  <div class="financial-group"><h3>Invoice Identification</h3>
-    <label>PO # *<input id="rsoFinPoNumber" required list="financialPoNumbers" placeholder="Select or enter PO number"></label>
-    <datalist id="financialRSOPoNumbers"></datalist>
-    <label>Invoice Number<input id="rsoFinInvoiceNumber" placeholder="Enter invoice number"></label>
-    <label>Submission # *<input id="rsoFinSubmissionNumber" required placeholder="Enter submission number"></label>
-  </div>
-  <div class="financial-group"><h3>LCBO Invoice</h3>
-    <div class="amount-currency-row"><label>Total PO Quoted Value *<input id="rsoFinLcboInvoiceCad" type="number" min="0" step="0.01"></label><label class="currency-mini">Invoice Currency<select id="rsoFinLcboCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option></select></label></div>
-    <label>LCBO Invoice Approximate Date<input id="rsoFinLcboApproxDate" type="text" placeholder="Example: March/April 2027 or End of March 2028"></label>
-    <label>LCBO Invoice Pay Date Confirmed<input id="rsoFinLcboPayDate" type="date"></label>
-    <label>LCBO PAYMENT STATUS<select id="rsoFinLcboPaidStatus"><option>No</option><option>Yes</option></select></label>
-  </div>
-  <div class="financial-group"><h3>Transportation Invoice</h3>
-    <label>PO TRANSPORTATION INVOICE NAME<input id="rsoFinTransportInvoiceName" placeholder="Enter transportation invoice name"></label>
-    <label>Total Transported Bottles<input id="rsoFinTotalBottles" type="number" readonly></label>
-    <label>Cost per Bottle CAD<input id="rsoFinCostPerBottle" type="number" readonly></label>
-    <label>PO Bottle Quantity<input id="rsoFinPoBottleQuantity" type="number" readonly></label>
-    <label>The PO Transportation Cost CAD<input id="rsoFinPoTransportationCost" type="number" readonly></label>
-  </div>
-  <div class="financial-group"><h3>Supplier Payment</h3>
-    <div class="amount-currency-row"><label>SUPPLIER ITEM PRICE<input id="rsoFinSupplierItemPrice" type="number" min="0" step="0.0001"></label><label class="currency-mini">Currency<select id="rsoFinSupplierCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option></select></label></div>
-    <label>ITEMS IN CASE<input id="rsoFinSupplierItemsInCase" type="number" min="0" step="1"></label>
-    <div class="amount-currency-row"><label>SUPPLIER CASE PRICE<input id="rsoFinSupplierCasePrice" type="number" readonly></label><label class="currency-mini">Currency<input id="rsoFinSupplierCaseCurrency" value="CAD" readonly></label></div>
-    <label>Currency Calculator — CAD to Supplier Currency<div class="converter-inline"><span>1 CAD =</span><input id="rsoFinSupplierRate" type="number" min="0.00000001" step="0.0001" placeholder="Enter manually"><strong id="rsoFinSupplierRateCurrency">CAD</strong></div></label>
-    <label>Supplier Item Price CAD<input id="rsoFinSupplierItemCad" type="number" readonly></label>
-    <label>Total Supplier Payment Amount<input id="rsoFinSupplierTotalCad" type="number" readonly></label>
-  </div>
-  <div class="financial-group"><h3>Expenses</h3>
-    <h4>Netted Expenses</h4>
-    <div class="expense-amount-description-row"><label>Netted Amount 1<input id="rsoFinNettedAmount1" type="number" min="0" step="0.01"></label><label>Description<input id="rsoFinNettedDescription1" type="text" placeholder="Lab cost, damage, or other"></label></div>
-    <div class="expense-amount-description-row"><label>Netted Amount 2<input id="rsoFinNettedAmount2" type="number" min="0" step="0.01"></label><label>Description<input id="rsoFinNettedDescription2" type="text" placeholder="Lab cost, damage, or other"></label></div>
-    <div class="expense-amount-description-row"><label>Netted Amount 3<input id="rsoFinNettedAmount3" type="number" min="0" step="0.01"></label><label>Description<input id="rsoFinNettedDescription3" type="text" placeholder="Lab cost, damage, or other"></label></div>
-    <h4>Advertising Expenses</h4>
-    <div class="expense-amount-description-row"><label>Advertising Amount 1<input id="rsoFinAdAmount1" type="number" min="0" step="0.01"></label><label>Advertising Description 1<input id="rsoFinAdDescription1" type="text" placeholder="Example: Social media"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 2<input id="rsoFinAdAmount2" type="number" min="0" step="0.01"></label><label>Advertising Description 2<input id="rsoFinAdDescription2" type="text"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 3<input id="rsoFinAdAmount3" type="number" min="0" step="0.01"></label><label>Advertising Description 3<input id="rsoFinAdDescription3" type="text"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 4<input id="rsoFinAdAmount4" type="number" min="0" step="0.01"></label><label>Advertising Description 4<input id="rsoFinAdDescription4" type="text"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 5<input id="rsoFinAdAmount5" type="number" min="0" step="0.01"></label><label>Advertising Description 5<input id="rsoFinAdDescription5" type="text"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 6<input id="rsoFinAdAmount6" type="number" min="0" step="0.01"></label><label>Advertising Description 6<input id="rsoFinAdDescription6" type="text"></label></div>
-    <h4>Failed Sales LCBO Rebate</h4>
-    <div class="amount-currency-row"><label>Rebate Percentage %<input id="rsoFinFailedSalesPercent" type="number" min="0" step="0.01" placeholder="Enter manually"></label><label>Calculated Rebate Amount CAD<input id="rsoFinFailedSalesAmount" type="number" readonly></label></div>
-    <h4>Other Expenses</h4>
-    <div class="amount-currency-row"><label>Other Expense Amount<input id="rsoFinOtherExpenseAmount" type="number" min="0" step="0.01"></label><label>Other Expense Description<input id="rsoFinOtherExpenseDescription" type="text"></label></div>
-  </div>
-  <div class="financial-group"><h3>Notes</h3><label>Financial Notes<textarea id="rsoFinNotes" placeholder="Add comments or calculation notes"></textarea></label></div>
-</div>
-<div class="financial-summary">
-  <div class="card"><span>Transportation Total CAD</span><strong id="rsoFinSummaryTransport">$0.00</strong></div>
-  <div class="card"><span>Supplier Payment CAD</span><strong id="rsoFinSummarySupplier">$0.00</strong></div>
-  <div class="card"><span>Total Other Expenses CAD</span><strong id="rsoFinSummaryExpenses">$0.00</strong></div>
-  <div class="card"><span>NET PROFIT CAD</span><strong id="rsoFinNetProfit" class="financial-net">$0.00</strong></div>
-</div>
-<div class="financial-actions"><button type="button" id="deleteFinancialInvoice" class="danger">Delete Invoice</button><button type="button" id="saveFinancialInvoice">Save Invoice</button></div>
-</div></div></section>
-<section id="financialSS-ss" class="panel"><div class="box"><div class="section-head"><div><h2>LCBO to Agent SS Invoices</h2><p class="note">Create and manage LCBO to Agent SS invoice records by PO number and invoice number.</p></div><button type="button" id="createFinancialInvoiceBtn">+ Create SS Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleFinancialSSSearch">Search</button><div class="page-search-panel" id="financialSSSearchPanel"><label>Search Invoices<input id="financialSSPageSearch" type="search" placeholder="PO, invoice, submission, status, amount or currency"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearFinancialPageSearch">Clear Search</button></div></div>
-<div id="financialSSInvoiceList"><div class="table-wrap"><table><thead><tr><th>PO #</th><th>Invoice Number</th><th>Submission #</th><th>Total PO Quoted Value *</th><th>Total Netted Expenses</th><th>Total Advertising Expenses</th><th>Failed Sales LCBO Rebate</th><th>Other Expense Amount</th><th>Transportation Cost CAD</th><th>Supplier Payment CAD</th><th>LCBO PAYMENT STATUS</th><th>NET PROFIT CAD</th><th>Actions</th></tr></thead><tbody id="financialSSInvoiceRows"></tbody></table></div></div>
-<div id="financialSSInvoiceDetails" class="hidden"><div class="invoice-detail-actions"><button type="button" class="secondary" id="backFromFinancialDetails">Back to Invoice List</button><button type="button" class="secondary" id="copyAllFinancialDetails">Copy All Invoice Information</button><button type="button" id="editFromFinancialDetails">Edit Invoice</button></div><div id="financialSSInvoiceDetailsContent"></div></div>
-<div id="financialSSInvoiceEditor" class="hidden">
-<div class="section-head"><div><h2 id="financialSSEditorTitle">Create SS Invoice</h2><p class="note">Select the PO, enter the invoice details, and review the automatically calculated transportation cost.</p></div><button type="button" class="secondary" id="backToFinancialList">Back to Invoice List</button></div>
-<input type="hidden" id="ssFinInvoiceId">
-<div class="financial-grid">
-  <div class="financial-group"><h3>Invoice Identification</h3>
-    <label>PO # *<input id="ssFinPoNumber" required list="financialPoNumbers" placeholder="Select or enter PO number"></label>
-    <datalist id="financialSSPoNumbers"></datalist>
-    <label>Invoice Number<input id="ssFinInvoiceNumber" placeholder="Enter invoice number"></label>
-    <label>Submission # *<input id="ssFinSubmissionNumber" required placeholder="Enter submission number"></label>
-  </div>
-  <div class="financial-group"><h3>LCBO Invoice</h3>
-    <div class="amount-currency-row"><label>Total PO Quoted Value *<input id="ssFinLcboInvoiceCad" type="number" min="0" step="0.01"></label><label class="currency-mini">Invoice Currency<select id="ssFinLcboCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option></select></label></div>
-    <label>LCBO Invoice Approximate Date<input id="ssFinLcboApproxDate" type="text" placeholder="Example: March/April 2027 or End of March 2028"></label>
-    <label>LCBO Invoice Pay Date Confirmed<input id="ssFinLcboPayDate" type="date"></label>
-    <label>LCBO PAYMENT STATUS<select id="ssFinLcboPaidStatus"><option>No</option><option>Yes</option></select></label>
-  </div>
-  <div class="financial-group"><h3>Transportation Invoice</h3>
-    <label>PO TRANSPORTATION INVOICE NAME<input id="ssFinTransportInvoiceName" placeholder="Enter transportation invoice name"></label>
-    <label>Total Transported Bottles<input id="ssFinTotalBottles" type="number" readonly></label>
-    <label>Cost per Bottle CAD<input id="ssFinCostPerBottle" type="number" readonly></label>
-    <label>PO Bottle Quantity<input id="ssFinPoBottleQuantity" type="number" readonly></label>
-    <label>The PO Transportation Cost CAD<input id="ssFinPoTransportationCost" type="number" readonly></label>
-  </div>
-  <div class="financial-group"><h3>Supplier Payment</h3>
-    <div class="amount-currency-row"><label>SUPPLIER ITEM PRICE<input id="ssFinSupplierItemPrice" type="number" min="0" step="0.0001"></label><label class="currency-mini">Currency<select id="ssFinSupplierCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option></select></label></div>
-    <label>ITEMS IN CASE<input id="ssFinSupplierItemsInCase" type="number" min="0" step="1"></label>
-    <div class="amount-currency-row"><label>SUPPLIER CASE PRICE<input id="ssFinSupplierCasePrice" type="number" readonly></label><label class="currency-mini">Currency<input id="ssFinSupplierCaseCurrency" value="CAD" readonly></label></div>
-    <label>Currency Calculator — CAD to Supplier Currency<div class="converter-inline"><span>1 CAD =</span><input id="ssFinSupplierRate" type="number" min="0.00000001" step="0.0001" placeholder="Enter manually"><strong id="ssFinSupplierRateCurrency">CAD</strong></div></label>
-    <label>Supplier Item Price CAD<input id="ssFinSupplierItemCad" type="number" readonly></label>
-    <label>Total Supplier Payment Amount<input id="ssFinSupplierTotalCad" type="number" readonly></label>
-  </div>
-  <div class="financial-group"><h3>Expenses</h3>
-    <h4>Netted Expenses</h4>
-    <div class="expense-amount-description-row"><label>Netted Amount 1<input id="ssFinNettedAmount1" type="number" min="0" step="0.01"></label><label>Description<input id="ssFinNettedDescription1" type="text" placeholder="Lab cost, damage, or other"></label></div>
-    <div class="expense-amount-description-row"><label>Netted Amount 2<input id="ssFinNettedAmount2" type="number" min="0" step="0.01"></label><label>Description<input id="ssFinNettedDescription2" type="text" placeholder="Lab cost, damage, or other"></label></div>
-    <div class="expense-amount-description-row"><label>Netted Amount 3<input id="ssFinNettedAmount3" type="number" min="0" step="0.01"></label><label>Description<input id="ssFinNettedDescription3" type="text" placeholder="Lab cost, damage, or other"></label></div>
-    <h4>Advertising Expenses</h4>
-    <div class="expense-amount-description-row"><label>Advertising Amount 1<input id="ssFinAdAmount1" type="number" min="0" step="0.01"></label><label>Advertising Description 1<input id="ssFinAdDescription1" type="text" placeholder="Example: Social media"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 2<input id="ssFinAdAmount2" type="number" min="0" step="0.01"></label><label>Advertising Description 2<input id="ssFinAdDescription2" type="text"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 3<input id="ssFinAdAmount3" type="number" min="0" step="0.01"></label><label>Advertising Description 3<input id="ssFinAdDescription3" type="text"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 4<input id="ssFinAdAmount4" type="number" min="0" step="0.01"></label><label>Advertising Description 4<input id="ssFinAdDescription4" type="text"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 5<input id="ssFinAdAmount5" type="number" min="0" step="0.01"></label><label>Advertising Description 5<input id="ssFinAdDescription5" type="text"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 6<input id="ssFinAdAmount6" type="number" min="0" step="0.01"></label><label>Advertising Description 6<input id="ssFinAdDescription6" type="text"></label></div>
-    <h4>Failed Sales LCBO Rebate</h4>
-    <div class="amount-currency-row"><label>Rebate Percentage %<input id="ssFinFailedSalesPercent" type="number" min="0" step="0.01" placeholder="Enter manually"></label><label>Calculated Rebate Amount CAD<input id="ssFinFailedSalesAmount" type="number" readonly></label></div>
-    <h4>Other Expenses</h4>
-    <div class="amount-currency-row"><label>Other Expense Amount<input id="ssFinOtherExpenseAmount" type="number" min="0" step="0.01"></label><label>Other Expense Description<input id="ssFinOtherExpenseDescription" type="text"></label></div>
-  </div>
-  <div class="financial-group"><h3>Notes</h3><label>Financial Notes<textarea id="ssFinNotes" placeholder="Add comments or calculation notes"></textarea></label></div>
-</div>
-<div class="financial-summary">
-  <div class="card"><span>Transportation Total CAD</span><strong id="ssFinSummaryTransport">$0.00</strong></div>
-  <div class="card"><span>Supplier Payment CAD</span><strong id="ssFinSummarySupplier">$0.00</strong></div>
-  <div class="card"><span>Total Other Expenses CAD</span><strong id="ssFinSummaryExpenses">$0.00</strong></div>
-  <div class="card"><span>NET PROFIT CAD</span><strong id="ssFinNetProfit" class="financial-net">$0.00</strong></div>
-</div>
-<div class="financial-actions"><button type="button" id="deleteFinancialInvoice" class="danger">Delete Invoice</button><button type="button" id="saveFinancialInvoice">Save Invoice</button></div>
-</div></div></section>
-<section id="financialSS-ss" class="panel"><div class="box"><div class="section-head"><div><h2>LCBO to Agent SS Invoices</h2><p class="note">Create and manage LCBO to Agent Specialty Services invoice records by PO number and invoice number.</p></div><button type="button" id="createFinancialInvoiceBtn">+ Create SS Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleFinancialSSSearch">Search</button><div class="page-search-panel" id="financialSSSearchPanel"><label>Search Invoices<input id="financialSSPageSearch" type="search" placeholder="PO, invoice, submission, status, amount or currency"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearFinancialPageSearch">Clear Search</button></div></div>
-<div id="financialSSInvoiceList"><div class="table-wrap"><table><thead><tr><th>PO #</th><th>Invoice Number</th><th>Submission #</th><th>Total PO Quoted Value *</th><th>Total Netted Expenses</th><th>Total Advertising Expenses</th><th>Failed Sales LCBO Rebate</th><th>Other Expense Amount</th><th>Transportation Cost CAD</th><th>Supplier Payment CAD</th><th>LCBO PAYMENT STATUS</th><th>NET PROFIT CAD</th><th>Actions</th></tr></thead><tbody id="financialSSInvoiceRows"></tbody></table></div></div>
-<div id="financialSSInvoiceDetails" class="hidden"><div class="invoice-detail-actions"><button type="button" class="secondary" id="backFromFinancialDetails">Back to Invoice List</button><button type="button" class="secondary" id="copyAllFinancialDetails">Copy All Invoice Information</button><button type="button" id="editFromFinancialDetails">Edit Invoice</button></div><div id="financialSSInvoiceDetailsContent"></div></div>
-<div id="financialSSInvoiceEditor" class="hidden">
-<div class="section-head"><div><h2 id="financialSSEditorTitle">Create SS Invoice</h2><p class="note">Select the PO, enter the invoice details, and review the automatically calculated transportation cost.</p></div><button type="button" class="secondary" id="backToFinancialList">Back to Invoice List</button></div>
-<input type="hidden" id="ssFinInvoiceId">
-<div class="financial-grid">
-  <div class="financial-group"><h3>Invoice Identification</h3>
-    <label>PO # *<input id="ssFinPoNumber" required list="financialPoNumbers" placeholder="Select or enter PO number"></label>
-    <datalist id="financialSSPoNumbers"></datalist>
-    <label>Invoice Number<input id="ssFinInvoiceNumber" placeholder="Enter invoice number"></label>
-    <label>Submission # *<input id="ssFinSubmissionNumber" required placeholder="Enter submission number"></label>
-  </div>
-  <div class="financial-group"><h3>LCBO Invoice</h3>
-    <div class="amount-currency-row"><label>Total PO Quoted Value *<input id="ssFinLcboInvoiceCad" type="number" min="0" step="0.01"></label><label class="currency-mini">Invoice Currency<select id="ssFinLcboCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option></select></label></div>
-    <label>LCBO Invoice Approximate Date<input id="ssFinLcboApproxDate" type="text" placeholder="Example: March/April 2027 or End of March 2028"></label>
-    <label>LCBO Invoice Pay Date Confirmed<input id="ssFinLcboPayDate" type="date"></label>
-    <label>LCBO PAYMENT STATUS<select id="ssFinLcboPaidStatus"><option>No</option><option>Yes</option></select></label>
-  </div>
-  <div class="financial-group"><h3>Transportation Invoice</h3>
-    <label>PO TRANSPORTATION INVOICE NAME<input id="ssFinTransportInvoiceName" placeholder="Enter transportation invoice name"></label>
-    <label>Total Transported Bottles<input id="ssFinTotalBottles" type="number" readonly></label>
-    <label>Cost per Bottle CAD<input id="ssFinCostPerBottle" type="number" readonly></label>
-    <label>PO Bottle Quantity<input id="ssFinPoBottleQuantity" type="number" readonly></label>
-    <label>The PO Transportation Cost CAD<input id="ssFinPoTransportationCost" type="number" readonly></label>
-  </div>
-  <div class="financial-group"><h3>Supplier Payment</h3>
-    <div class="amount-currency-row"><label>SUPPLIER ITEM PRICE<input id="ssFinSupplierItemPrice" type="number" min="0" step="0.0001"></label><label class="currency-mini">Currency<select id="ssFinSupplierCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option></select></label></div>
-    <label>ITEMS IN CASE<input id="ssFinSupplierItemsInCase" type="number" min="0" step="1"></label>
-    <div class="amount-currency-row"><label>SUPPLIER CASE PRICE<input id="ssFinSupplierCasePrice" type="number" readonly></label><label class="currency-mini">Currency<input id="ssFinSupplierCaseCurrency" value="CAD" readonly></label></div>
-    <label>Currency Calculator — CAD to Supplier Currency<div class="converter-inline"><span>1 CAD =</span><input id="ssFinSupplierRate" type="number" min="0.00000001" step="0.0001" placeholder="Enter manually"><strong id="ssFinSupplierRateCurrency">CAD</strong></div></label>
-    <label>Supplier Item Price CAD<input id="ssFinSupplierItemCad" type="number" readonly></label>
-    <label>Total Supplier Payment Amount<input id="ssFinSupplierTotalCad" type="number" readonly></label>
-  </div>
-  <div class="financial-group"><h3>Expenses</h3>
-    <h4>Netted Expenses</h4>
-    <div class="expense-amount-description-row"><label>Netted Amount 1<input id="ssFinNettedAmount1" type="number" min="0" step="0.01"></label><label>Description<input id="ssFinNettedDescription1" type="text" placeholder="Lab cost, damage, or other"></label></div>
-    <div class="expense-amount-description-row"><label>Netted Amount 2<input id="ssFinNettedAmount2" type="number" min="0" step="0.01"></label><label>Description<input id="ssFinNettedDescription2" type="text" placeholder="Lab cost, damage, or other"></label></div>
-    <div class="expense-amount-description-row"><label>Netted Amount 3<input id="ssFinNettedAmount3" type="number" min="0" step="0.01"></label><label>Description<input id="ssFinNettedDescription3" type="text" placeholder="Lab cost, damage, or other"></label></div>
-    <h4>Advertising Expenses</h4>
-    <div class="expense-amount-description-row"><label>Advertising Amount 1<input id="ssFinAdAmount1" type="number" min="0" step="0.01"></label><label>Advertising Description 1<input id="ssFinAdDescription1" type="text" placeholder="Example: Social media"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 2<input id="ssFinAdAmount2" type="number" min="0" step="0.01"></label><label>Advertising Description 2<input id="ssFinAdDescription2" type="text"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 3<input id="ssFinAdAmount3" type="number" min="0" step="0.01"></label><label>Advertising Description 3<input id="ssFinAdDescription3" type="text"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 4<input id="ssFinAdAmount4" type="number" min="0" step="0.01"></label><label>Advertising Description 4<input id="ssFinAdDescription4" type="text"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 5<input id="ssFinAdAmount5" type="number" min="0" step="0.01"></label><label>Advertising Description 5<input id="ssFinAdDescription5" type="text"></label></div>
-    <div class="expense-amount-description-row"><label>Advertising Amount 6<input id="ssFinAdAmount6" type="number" min="0" step="0.01"></label><label>Advertising Description 6<input id="ssFinAdDescription6" type="text"></label></div>
-    <h4>Failed Sales LCBO Rebate</h4>
-    <div class="amount-currency-row"><label>Rebate Percentage %<input id="ssFinFailedSalesPercent" type="number" min="0" step="0.01" placeholder="Enter manually"></label><label>Calculated Rebate Amount CAD<input id="ssFinFailedSalesAmount" type="number" readonly></label></div>
-    <h4>Other Expenses</h4>
-    <div class="amount-currency-row"><label>Other Expense Amount<input id="ssFinOtherExpenseAmount" type="number" min="0" step="0.01"></label><label>Other Expense Description<input id="ssFinOtherExpenseDescription" type="text"></label></div>
-  </div>
-  <div class="financial-group"><h3>Notes</h3><label>Financial Notes<textarea id="ssFinNotes" placeholder="Add comments or calculation notes"></textarea></label></div>
-</div>
-<div class="financial-summary">
-  <div class="card"><span>Transportation Total CAD</span><strong id="ssFinSummaryTransport">$0.00</strong></div>
-  <div class="card"><span>Supplier Payment CAD</span><strong id="ssFinSummarySupplier">$0.00</strong></div>
-  <div class="card"><span>Total Other Expenses CAD</span><strong id="ssFinSummaryExpenses">$0.00</strong></div>
-  <div class="card"><span>NET PROFIT CAD</span><strong id="ssFinNetProfit" class="financial-net">$0.00</strong></div>
-</div>
-<div class="financial-actions"><button type="button" id="deleteFinancialInvoice" class="danger">Delete Invoice</button><button type="button" id="saveFinancialInvoice">Save Invoice</button></div>
-</div></div></section>
+
+
+
 
 
 <section id="all-other-invoices" class="panel"><div class="box">
@@ -1753,7 +1573,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments-2','heads-page')">Suppliers to Agent Fee Payment</button>
   <button type="button" class="invoice-page-tab" onclick="activate('archived-invoices','heads-page')">Archived Invoices</button>
 </div>
-  <div class="section-head"><div><h2>OTHER MIXED INVOICES</h2><p class="note">Create and manage invoices that do not belong to the supplier-payment or agency-fee pages.</p></div><button type="button" id="createOtherNewInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleOtherNewInvoiceSearch">Search</button><div class="page-search-panel" id="otherNewInvoiceSearchPanel"><label>Search Invoices<input id="otherNewInvoicePageSearch" type="search" placeholder="Invoice name, number, date, status, notes or amount"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearOtherInvoicePageSearch">Clear Search</button></div></div>
+  <div class="section-head"><div><h2>OTHER MIXED INVOICES</h2><p class="note">Create and manage invoices that do not belong to the supplier-payment or agency-fee pages.</p></div><button type="button" id="createOtherNewInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleOtherNewInvoiceSearch">Search</button><div class="page-search-panel" id="otherNewInvoiceSearchPanel"><label>Search Invoices<input id="otherNewInvoicePageSearch" type="search" placeholder="Invoice name, number, date, status, notes or amount"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearOtherNewInvoiceSearch">Clear Search</button></div></div>
   <div id="otherNewInvoiceList"><div class="table-wrap"><table><thead><tr><th>Invoice Number</th><th>Invoice Date</th><th>Invoice Amount</th><th>Currency</th><th>Invoice Notes</th><th>Paid Status</th><th>Actions</th></tr></thead><tbody id="otherNewInvoiceRows"></tbody></table></div></div>
   <div id="otherNewInvoiceEditor" class="hidden">
     <div class="section-head"><div><h2 id="otherNewInvoiceEditorTitle">Create Invoice</h2><p class="note">Enter invoice details. Attached files are saved with the invoice.</p></div><button type="button" class="secondary" id="backToOtherNewInvoiceList">Back to Invoice List</button></div>
@@ -1771,7 +1591,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
         <label>Attach Invoice<input id="otherNewInvoiceFile" type="file"><div id="otherNewInvoiceFileStatus" class="payment-file-status">No invoice attached</div><button type="button" class="secondary small" onclick="openOtherInvoiceFile()">Open Invoice</button> <button type="button" class="danger small" onclick="removeOtherInvoiceFile()">Remove</button></label>
       </div>
     </div>
-    <div class="financial-actions"><button type="button" class="danger" id="deleteOtherNewInvoice">Delete Invoice</button><button type="button" class="secondary" id="cancelOtherInvoice">Cancel</button><button type="button" id="saveOtherNewInvoice">Save Invoice</button></div>
+    <div class="financial-actions"><button type="button" class="danger" id="deleteOtherNewInvoice">Delete Invoice</button><button type="button" class="secondary" id="cancelOtherNewInvoice">Cancel</button><button type="button" id="saveOtherNewInvoice">Save Invoice</button></div>
   </div>
 </div></section>
 
@@ -3513,7 +3333,62 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets,allowS
       thead{display:table-header-group}
       tfoot{display:table-footer-group}
     }
-  </style></head><body>
+  </style>
+<style id="winglobalUnifiedButtonSystem">
+/* Unified action-button design across WINGLOBAL. Navigation and clickable text links keep their dedicated styles. */
+button:not(.tab):not(.invoice-page-tab):not(.main-section-btn):not(.icon):not(.program-clickable-link):not(.link-button):not(.clickable-name):not(.item-info-link):not(.shipment-name-link):not(.invoice-number-link):not(.head-detail-link):not(.file-link):not(.copy-field),
+.button:not(.button-link){
+  min-height:36px;
+  padding:8px 13px;
+  border:1px solid transparent;
+  border-radius:7px;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.2;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  vertical-align:middle;
+  box-sizing:border-box;
+  cursor:pointer;
+  transition:opacity .15s ease, box-shadow .15s ease, transform .05s ease;
+}
+button.small:not(.program-clickable-link):not(.item-info-link):not(.shipment-name-link):not(.invoice-number-link):not(.head-detail-link):not(.file-link):not(.copy-field){
+  min-height:31px;
+  padding:6px 10px;
+  font-size:12px;
+}
+button.secondary:not(.tab):not(.invoice-page-tab):not(.main-section-btn):not(.program-clickable-link):not(.item-info-link):not(.shipment-name-link):not(.invoice-number-link):not(.head-detail-link):not(.file-link):not(.copy-field){
+  background:#eef3f8;
+  color:#1f3b57;
+  border-color:#cbd5e1;
+}
+button.danger:not(.program-clickable-link):not(.item-info-link):not(.shipment-name-link):not(.invoice-number-link):not(.head-detail-link):not(.file-link):not(.copy-field){
+  background:#b42318;
+  color:#fff;
+  border-color:#b42318;
+}
+button.success:not(.program-clickable-link):not(.item-info-link):not(.shipment-name-link):not(.invoice-number-link):not(.head-detail-link):not(.file-link):not(.copy-field){
+  background:#16803c;
+  color:#fff;
+  border-color:#16803c;
+}
+button:not(:disabled):not(.tab):not(.invoice-page-tab):not(.main-section-btn):not(.icon):not(.program-clickable-link):not(.link-button):not(.clickable-name):not(.item-info-link):not(.shipment-name-link):not(.invoice-number-link):not(.head-detail-link):not(.file-link):not(.copy-field):hover{
+  box-shadow:0 2px 7px rgba(15,23,42,.16);
+}
+button:disabled{
+  opacity:.42 !important;
+  cursor:not-allowed !important;
+  box-shadow:none !important;
+  filter:saturate(.55);
+}
+.action-buttons,.supplier-actions,.shipment-actions,.financial-actions,.file-actions,.inline-actions{
+  gap:6px;
+}
+</style>
+
+</head><body>
     <div class="print-actions"><button onclick="window.print()">Print</button>${allowSave?'<button onclick="window.opener&&window.opener.saveCurrentGeneratedProforma&&window.opener.saveCurrentGeneratedProforma()">Save / Move to Proformas</button>':''}</div>
     <div class="sheet-head">
       <div class="order-name">Order Name: ${escapeHtml(orderName||'')}</div>
@@ -5197,6 +5072,7 @@ function renderOtherNewInvoices(){
   function bindOtherNew(){
     document.getElementById('createOtherNewInvoiceBtn')?.addEventListener('click',()=>openOtherNewInvoice(''));
     document.getElementById('backToOtherNewInvoiceList')?.addEventListener('click',nBack);
+    document.getElementById('cancelOtherNewInvoice')?.addEventListener('click',nBack);
     document.getElementById('saveOtherNewInvoice')?.addEventListener('click',saveOtherNewInvoice);
     document.getElementById('deleteOtherNewInvoice')?.addEventListener('click',deleteOtherNewInvoice);
     document.getElementById('otherNewInvoicePageSearch')?.addEventListener('input',renderOtherNewInvoices);
@@ -10527,6 +10403,70 @@ setTimeout(applyNormalSubPageNames,0);
   window.openTenderSupplierItemDetail=function(id){return window.openProgramItemInformationById(id);};
 })();
 /* === END ROBUST PROGRAM-WIDE ITEM INFORMATION VIEWER === */
+</script>
+
+
+<script id="winglobalPoDetailsRuntimeFix">
+(function(){
+  function poEscape(value){
+    return String(value===undefined||value===null?'':value)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function poReadableLabel(key){
+    const special={
+      id:'Record ID',number:'PO #',poNumber:'PO #',ref:'Ref #',reference:'Ref #',program:'Classification',
+      supplier:'Supplier',suppliers:'Suppliers',item:'Item',itemName:'Item',cases:'Cases',unitsPerCase:'Units / Case',
+      quotePerCase:'Quoted Price / Case',quotedPricePerCase:'Quoted Price / Case',totalQuotedValue:'Total Quoted Value',
+      currency:'Currency',createdAt:'Created At',updatedAt:'Updated At',status:'Status'
+    };
+    if(special[key])return special[key];
+    return String(key||'').replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/[_-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  }
+  function poTextValue(value){
+    if(value===undefined||value===null||value==='')return '—';
+    if(Array.isArray(value))return value.map(v=>typeof v==='object'?JSON.stringify(v):String(v)).join(', ')||'—';
+    if(typeof value==='object'){
+      if(value.name)return String(value.name);
+      try{return JSON.stringify(value)}catch(e){return String(value)}
+    }
+    return String(value);
+  }
+  function currentPo(id){
+    if(typeof state==='undefined')return null;
+    return (state.purchaseOrders||[]).find(x=>String(x.id)===String(id)) ||
+      (state.manuallyArchivedPurchaseOrders||[]).find(x=>String(x.id)===String(id)) || null;
+  }
+  window.openPoDetails=function(id){
+    const po=currentPo(id);
+    if(!po){alert('PO information was not found.');return false;}
+    const modal=document.getElementById('poDetailsModal');
+    const title=document.getElementById('poDetailsTitle');
+    const body=document.getElementById('poDetailsContent');
+    if(!modal||!body){alert('PO details viewer is unavailable.');return false;}
+    const poNo=po.number||po.poNumber||po.poNo||'PO Details';
+    if(title)title.textContent='PO Details — '+poNo;
+    const hidden=new Set(['file','fileData','attachment','attachments','blob','dataUrl']);
+    const entries=Object.entries(po).filter(([k,v])=>!hidden.has(k)&&typeof v!=='function');
+    body.innerHTML='<div class="head-detail-grid">'+entries.map(([k,v])=>
+      '<div class="head-detail-field"><span class="head-detail-label">'+poEscape(poReadableLabel(k))+'</span><div class="head-detail-value">'+poEscape(poTextValue(v))+'</div></div>'
+    ).join('')+'</div>';
+    modal.classList.remove('hidden');
+    return true;
+  };
+  window.closePoDetails=function(){document.getElementById('poDetailsModal')?.classList.add('hidden');};
+  window.copyAllPoDetails=function(){
+    const modal=document.getElementById('poDetailsModal');
+    const text=Array.from(modal?.querySelectorAll('.head-detail-field')||[]).map(el=>{
+      const a=el.querySelector('.head-detail-label')?.textContent?.trim()||'';
+      const b=el.querySelector('.head-detail-value')?.textContent?.trim()||'';
+      return a+': '+b;
+    }).join('\n');
+    if(!text)return false;
+    if(window.copyText){window.copyText(text);return true;}
+    if(navigator.clipboard?.writeText){navigator.clipboard.writeText(text);return true;}
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();return true;
+  };
+})();
 </script>
 
 </body></html>

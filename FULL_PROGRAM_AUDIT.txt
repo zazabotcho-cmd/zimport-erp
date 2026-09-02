@@ -1,0 +1,19 @@
+WINGLOBAL FULL PROGRAM AUDIT
+
+- Removed 1 unreachable duplicate panel(s): financialRSO-rso
+- Removed 2 unreachable duplicate panel(s): financialSS-ss
+- Removed duplicate worker-list DOM id
+- Fixed Other Mixed Invoices Clear Search button id
+- Fixed Other Mixed Invoices Cancel button id
+- Wired Other Mixed Invoices Cancel button
+- Added Submitted to the LCBO to Submission Status filter
+- Added unified action-button design and disabled/shadow state
+- Added missing PO Details open/close/copy handlers
+
+Validation performed:
+- All standalone JavaScript files: node --check
+- Every inline <script> block: node --check separately
+- Duplicate static DOM IDs reviewed and repaired for live workflow elements
+- Inline HTML event handlers checked against available functions
+- Static runtime wiring audit: all inline HTML event handlers resolve to available functions
+- Headless browser launch was attempted; this container Chromium environment did not complete page rendering, so no claim is made for backend/network-dependent interactions
