@@ -7376,8 +7376,22 @@ function normalizeHeadProposalStatus(v){
  return s;
 }
 window.normalizeHeadProposalStatus=normalizeHeadProposalStatus;
+function resolveCandidateTender(candidate){
+ if(!candidate||!Array.isArray(state.tenders))return null;
+ const refs=[candidate.opportunityId,candidate.tenderRecordId,candidate.tenderId]
+   .map(v=>String(v||'').trim()).filter(Boolean);
+ const code=String(candidate.tenderCode||candidate.tenderID||'').trim().toLowerCase();
+ const name=String(candidate.tenderName||candidate.opportunityName||'').trim().toLowerCase();
+ return state.tenders.find(t=>{
+   const tid=String(t.id||'').trim();
+   const tcode=String(t.code||'').trim().toLowerCase();
+   const tname=String(t.name||'').trim().toLowerCase();
+   return refs.includes(tid)||refs.some(r=>String(r).toLowerCase()===tcode)||(code&&tcode===code)||(name&&tname===name);
+ })||null;
+}
+window.resolveCandidateTender=resolveCandidateTender;
 function headProposalTender(candidate){
- return (state.tenders||[]).find(x=>x.id===candidate.opportunityId)||null;
+ return resolveCandidateTender(candidate);
 }
 function headProposalTenderName(candidate){
  const t=headProposalTender(candidate);
@@ -8664,14 +8678,7 @@ function ensureApprovedCandidateInLcboSubmissions(candidate){
 
  // Resolve the proposal's tender reliably. Older records may store the link under
  // opportunityId, tenderRecordId, tenderId, tender code, or tender name.
- const candidateTenderRef=String(candidate.opportunityId||candidate.tenderRecordId||candidate.tenderId||'').trim();
- const candidateTenderCode=String(candidate.tenderCode||candidate.tenderID||'').trim().toLowerCase();
- const candidateTenderName=String(candidate.tenderName||'').trim().toLowerCase();
- const tender=state.tenders.find(t=>
-   (candidateTenderRef&&String(t.id||'')===candidateTenderRef)||
-   (candidateTenderCode&&String(t.code||'').trim().toLowerCase()===candidateTenderCode)||
-   (candidateTenderName&&String(t.name||'').trim().toLowerCase()===candidateTenderName)
- );
+ const tender=resolveCandidateTender(candidate);
  if(!tender){
    console.warn('Approved Wine Candidate could not be moved to LCBO SUBMISSIONS LIST because its Tender was not found.',candidate);
    return null;
@@ -8764,9 +8771,12 @@ window.updateHeadProposalAction=function(button,id){
    // Any status selected here must create/synchronize the matching LCBO row.
    try{
      if(typeof ensureApprovedCandidateInLcboSubmissions==='function'){
-       ensureApprovedCandidateInLcboSubmissions(x);
+       const approvedWorkItem=ensureApprovedCandidateInLcboSubmissions(x);
+       if(status==='Approved for LCBO Submission'&&!approvedWorkItem){
+         throw new Error('This item is not linked to a Tender, so it cannot be moved to LCBO SUBMISSIONS LIST.');
+       }
      }
-     const tender=(state.tenders||[]).find(t=>t.id===x.opportunityId);
+     const tender=resolveCandidateTender(x);
      const workItem=tender?.workItems?.find(w=>w.sourceCandidateId===x.id);
      if(workItem){
        workItem.status=status;
@@ -8779,7 +8789,7 @@ window.updateHeadProposalAction=function(button,id){
    // Head Office Comment must appear as Instructions in LCBO SUBMISSIONS LIST.
    // Update the matching submission row whenever it already exists or was just created above.
    try{
-     const tender=(state.tenders||[]).find(t=>t.id===x.opportunityId);
+     const tender=resolveCandidateTender(x);
      const workItem=tender?.workItems?.find(w=>w.sourceCandidateId===x.id);
      if(workItem){
        workItem.instructions=comment;
@@ -8812,7 +8822,7 @@ function populateItalySelects(){}
 
 function candidateLcboSubmissionWorkItem(candidate){
  if(!candidate||!Array.isArray(state.tenders))return null;
- const tender=state.tenders.find(t=>t.id===candidate.opportunityId);
+ const tender=resolveCandidateTender(candidate);
  if(!tender||!Array.isArray(tender.workItems))return null;
  return tender.workItems.find(w=>w.sourceCandidateId===candidate.id)||null;
 }
