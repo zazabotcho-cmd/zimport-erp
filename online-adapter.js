@@ -4,8 +4,6 @@
   let client=null,user=null,profile=null,syncTimer=null,syncing=false,dirty=false,realtimeTimer=null;
   let loginInFlight=null,realtimeChannel=null,loadedUserId=null;
   let latestState=null,latestSettings=null,baseline=new Map();
-  let cloudLoadComplete=false; // Never synchronize an incomplete or empty startup snapshot.
-  let cloudShipmentIds=new Set();
   const $=id=>document.getElementById(id);
   const collectionMap={agencies:'agencies',suppliers:'suppliers',items:'items',tenders:'tenders',purchaseOrders:'purchase_orders',shipments:'shipments'};
   const allTables=['agencies','suppliers','items','tenders','worker_submissions','submitted_items','winners','archived_tenders','purchase_orders','shipments','supplier_invoices','settings','recycle_bin'];
@@ -49,20 +47,18 @@
   }
   async function updateRow(table,row,base){const nextVersion=(base?.version||1)+1;const q=await client.from(table).update({data:cleanData(row),updated_by:user.id,version:nextVersion}).eq('organization_id',cfg.organizationId).eq('id',String(row.id)).eq('version',base.version).select('version,updated_at');if(q.error)throw q.error;if(!q.data?.length){const e=new Error('CONFLICT');e.code='CONFLICT';e.table=table;e.id=row.id;throw e;}baseline.set(key(table,row.id),{data:cleanData(row),version:q.data[0].version,updatedAt:q.data[0].updated_at});await log('UPDATE',table,row.id,{fromVersion:base.version,toVersion:nextVersion});}
   async function deleteRow(table,id,base){const q=await client.from(table).delete().eq('organization_id',cfg.organizationId).eq('id',String(id)).eq('version',base.version).select('id');if(q.error)throw q.error;if(!q.data?.length){const e=new Error('CONFLICT');e.code='CONFLICT';e.table=table;e.id=id;throw e;}baseline.delete(key(table,id));await log('DELETE',table,id,{version:base.version});}
-  async function syncState(state,settings){if(!configured()||!user||syncing)return;
-    if(!cloudLoadComplete){status('Sync blocked: cloud data has not finished loading','error');return;}
-    if(cloudShipmentIds.size && !(state.shipments||[]).length){status('Sync blocked: saved cloud shipments are missing from this browser. Reload cloud data.','error');return;}if(profile?.role==='readonly'){status('Read-only account','error');return;}syncing=true;dirty=false;status('Saving changes…');try{
+  async function syncState(state,settings){if(!configured()||!user||syncing)return;if(profile?.role==='readonly'){status('Read-only account','error');return;}syncing=true;dirty=false;status('Saving changes…');try{
     const flat=flatten(state,settings);
     for(const table of Object.keys(flat)){
       const rows=flat[table],current=new Map(rows.map(r=>[String(r.id),r]));
       for(const row of rows){const b=baseline.get(key(table,row.id));if(!b)await insertRow(table,row);else if(JSON.stringify(cleanData(row))!==JSON.stringify(b.data))await updateRow(table,row,b);}
-      for(const [k,b] of [...baseline]){const [bt,id]=k.split(':');if(bt===table&&!current.has(id)){if(table==='shipments')throw new Error('Shipment deletion via bulk sync is disabled to protect saved records. Delete individual shipments using the shipment screen.');await deleteRow(table,id,b);}}
+      for(const [k,b] of [...baseline]){const [bt,id]=k.split(':');if(bt===table&&!current.has(id))await deleteRow(table,id,b);}
     }
     status('All changes saved','connected');
   }catch(e){console.error(e);if(e.code==='CONFLICT'){status('Conflict detected — reloading latest data','error');alert('Another user changed the same record before your save. The latest cloud version will now load. Please review and enter your change again.');await loadState();}else if(String(e.code||'')==='23505'){status('Sync error: duplicate cloud record detected. Reloading shared data…','error');await loadState();}else status('Sync error: '+(e.message||'Unknown error'),'error');}finally{syncing=false;}
   }
   async function loadTable(table){const r=await client.from(table).select('id,data,created_by,created_at,updated_by,updated_at,deleted_by,restore_date,version').eq('organization_id',cfg.organizationId);if(r.error)throw r.error;return (r.data||[]).map(x=>{baseline.set(key(table,x.id),{data:x.data||{},version:x.version||1,updatedAt:x.updated_at});return {...x.data,id:x.id,_cloudVersion:x.version||1,_audit:{createdBy:x.created_by,createdAt:x.created_at,updatedBy:x.updated_by,updatedAt:x.updated_at,deletedBy:x.deleted_by,restoreDate:x.restore_date}};});}
-  async function loadState(){if(syncing)return;cloudLoadComplete=false;status('Loading shared data…');try{baseline=new Map();const out={};for(const [k,t] of Object.entries(collectionMap))out[k]=await loadTable(t);
+  async function loadState(){if(syncing)return;status('Loading shared data…');try{baseline=new Map();const out={};for(const [k,t] of Object.entries(collectionMap))out[k]=await loadTable(t);
     // One-time cleanup of erroneous tender requested by Head Office: 2546 — Italy North.
     const badTenders=(out.tenders||[]).filter(t=>String(t.code||'').trim()==='2546' && String(t.name||'').trim().toLowerCase().includes('italy north'));
     for(const t of badTenders){
@@ -73,10 +69,7 @@
     // worker_submissions are already represented inside tender.workItems in the app state,
     // but their cloud rows must still be loaded so sync knows they already exist.
     await loadTable('worker_submissions');
-    const [a,w,ar,inv,rec,set]=await Promise.all([loadTable('submitted_items'),loadTable('winners'),loadTable('archived_tenders'),loadTable('supplier_invoices'),loadTable('recycle_bin'),loadTable('settings')]);out.records=[...a,...w,...ar];out.recycleBin=rec;out.financialInvoices=inv.filter(x=>x.invoice_group==='financialInvoices');out.supplierPaymentInvoices=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices');out.supplierPaymentInvoices2=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices2');out.otherInvoices=inv.filter(x=>x.invoice_group==='otherInvoices');const s=set.find(x=>x.id==='main')||{};out.recycleRetentionDays=s.recycleRetentionDays||90;if(Array.isArray(s.countrySourcingCountries))out.countrySourcingCountries=s.countrySourcingCountries;if(Array.isArray(s.countryPortfolioSuppliers))out.countryPortfolioSuppliers=s.countryPortfolioSuppliers;cloudShipmentIds=new Set((out.shipments||[]).map(x=>String(x.id)));window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:out,settings:s.settings||{}}}));cloudLoadComplete=true;status('Cloud connected · '+cloudShipmentIds.size+' shipment(s) loaded','connected');}catch(e){console.error(e);status('Load error: '+(e.message||'')+' — synchronization disabled','error');
-      // Recover the shipment list independently if another table prevents full startup.
-      try{const recovered=await loadTable('shipments');cloudShipmentIds=new Set(recovered.map(x=>String(x.id)));if(recovered.length){window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:{shipments:recovered},partialRecovery:true}}));status('Recovered '+recovered.length+' cloud shipment(s); other cloud data did not finish loading. Sync disabled.','error');}}catch(recoveryError){console.error('Shipment recovery failed',recoveryError);}
-    }}
+    const [a,w,ar,inv,rec,set]=await Promise.all([loadTable('submitted_items'),loadTable('winners'),loadTable('archived_tenders'),loadTable('supplier_invoices'),loadTable('recycle_bin'),loadTable('settings')]);out.records=[...a,...w,...ar];out.recycleBin=rec;out.financialInvoices=inv.filter(x=>x.invoice_group==='financialInvoices');out.supplierPaymentInvoices=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices');out.supplierPaymentInvoices2=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices2');out.otherInvoices=inv.filter(x=>x.invoice_group==='otherInvoices');const s=set.find(x=>x.id==='main')||{};out.recycleRetentionDays=s.recycleRetentionDays||90;if(Array.isArray(s.countrySourcingCountries))out.countrySourcingCountries=s.countrySourcingCountries;if(Array.isArray(s.countryPortfolioSuppliers))out.countryPortfolioSuppliers=s.countryPortfolioSuppliers;window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:out,settings:s.settings||{}}}));status('Cloud connected','connected');}catch(e){console.error(e);status('Load error: '+(e.message||''),'error');}}
   function scheduleRealtimeReload(){if(syncing||dirty)return;clearTimeout(realtimeTimer);realtimeTimer=setTimeout(loadState,700);}
   function subscribeRealtime(){
     if(realtimeChannel){try{client.removeChannel(realtimeChannel);}catch(e){console.warn('Could not remove old realtime channel:',e);}}
