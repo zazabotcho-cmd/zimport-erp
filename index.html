@@ -10501,25 +10501,11 @@ setTimeout(applyNormalSubPageNames,0);
     if(!modal||!body){alert('PO details viewer is unavailable.');return false;}
     const poNo=po.number||po.poNumber||po.poNo||'PO Details';
     if(title)title.textContent='PO Details — '+poNo;
-    // Only show human-readable PO fields; internal IDs, audit and sync metadata stay in the saved record.
-    const hidden=new Set(['id','recordId','vendorSupplierIds','producerSameVendor','producerSupplierIds',
-      'supplierIds','audit','cloudVersion','createdBy','createdAt','updatedBy','updatedAt',
-      'deletedBy','deletedAt','restoreDate','file','fileData','attachment','attachments','blob','dataUrl']);
-    const entries=Object.entries(po).filter(([k,v])=>!hidden.has(k)&&typeof v!=='function'&&
-      v!==null&&v!==undefined&&v!==''&&k!=='lines'&&typeof v!=='object');
-    const lines=Array.isArray(po.lines)?po.lines:[];
-    const lineHtml=lines.length?'<div class="head-detail-field full"><span class="head-detail-label">PO Items</span><div class="head-detail-value">'+
-      lines.map((line,i)=>'<div style="padding:8px 0;border-bottom:1px solid #ddd">'+
-        poEscape((i+1)+'. '+(line.yearProductName||line.productName||line.itemName||'Item'))+
-        (line.itemNo?' — Item # '+poEscape(line.itemNo):'')+
-        (line.totalQuantity!=null?' | Cases: '+poEscape(line.totalQuantity):'')+
-        (line.bottleQuantity!=null?' | Bottles: '+poEscape(line.bottleQuantity):'')+
-        (line.quotedPricePerCase!=null?' | Price / Case: '+poEscape(line.quotedPricePerCase):'')+
-        (line.lineTotal!=null?' | Total: '+poEscape(line.lineTotal):'')+'</div>').join('')+
-      '</div></div>':'';
+    const hidden=new Set(['file','fileData','attachment','attachments','blob','dataUrl']);
+    const entries=Object.entries(po).filter(([k,v])=>!hidden.has(k)&&typeof v!=='function');
     body.innerHTML='<div class="head-detail-grid">'+entries.map(([k,v])=>
       '<div class="head-detail-field"><span class="head-detail-label">'+poEscape(poReadableLabel(k))+'</span><div class="head-detail-value">'+poEscape(poTextValue(v))+'</div></div>'
-    ).join('')+lineHtml+'</div>';
+    ).join('')+'</div>';
     modal.classList.remove('hidden');
     return true;
   };
