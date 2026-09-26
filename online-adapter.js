@@ -52,7 +52,19 @@
   async function deleteRow(table,id,base){const q=await client.from(table).delete().eq('organization_id',cfg.organizationId).eq('id',String(id)).eq('version',base.version).select('id');if(q.error)throw q.error;if(!q.data?.length){const e=new Error('CONFLICT');e.code='CONFLICT';e.table=table;e.id=id;throw e;}baseline.delete(key(table,id));await log('DELETE',table,id,{version:base.version});}
   async function syncState(state,settings){if(!configured()||!user||syncing)return;
     if(!cloudLoadComplete){status('Sync blocked: cloud data has not finished loading','error');return;}
-    if(cloudShipmentIds.size && !((state.shipments||[]).length+(state.archivedShipments||[]).length)){status('Sync blocked: saved cloud shipments are missing from this browser. Reload cloud data.','error');return;}if(profile?.role==='readonly'){status('Read-only account','error');return;}syncing=true;dirty=false;status('Saving changes…');try{
+    const browserShipmentIds=new Set([...(state.shipments||[]),...(state.archivedShipments||[])].map(x=>String(x.id)));
+    if([...cloudShipmentIds].some(id=>!browserShipmentIds.has(id))){
+      status('Restoring saved cloud shipments…');
+      try{
+        const recovered=await loadTable('shipments');
+        if(!recovered.length){status('Sync blocked: cloud shipment recovery returned no records. Reload cloud data.','error');return;}
+        cloudShipmentIds=new Set(recovered.map(x=>String(x.id)));
+        const localOnly=[...(state.shipments||[]),...(state.archivedShipments||[])].filter(x=>!cloudShipmentIds.has(String(x.id)));
+        window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:{shipments:[...recovered.filter(x=>!x.archived),...localOnly.filter(x=>!x.archived)],archivedShipments:[...recovered.filter(x=>x.archived),...localOnly.filter(x=>x.archived)]},partialRecovery:true,repairSync:true}}));
+        status('Saved cloud shipments restored. Saving archive changes…');
+      }catch(e){console.error(e);status('Sync blocked: cloud shipment recovery failed. Reload cloud data.','error');}
+      return;
+    }if(profile?.role==='readonly'){status('Read-only account','error');return;}syncing=true;dirty=false;status('Saving changes…');try{
     const flat=flatten(state,settings);
     for(const table of Object.keys(flat)){
       const rows=flat[table],current=new Map(rows.map(r=>[String(r.id),r]));
