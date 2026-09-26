@@ -4644,12 +4644,12 @@ function archiveRequestedTransportations(){
   state.shipments=state.shipments.filter(sh=>!names.has(String(sh.name||'').trim().toUpperCase())&&!sh.archiveRequestHandled);
   return true;
 }
-// Remove only this named shipment, detaching its PO links. PO records remain intact.
+// Remove the two requested shipments, detaching PO links. PO records remain intact.
 function removeRequestedShipment(){
-  const target='TR.JUL.17.26.MS';
+  const targets=new Set(['TR.JUL.17.26.MS','TR.AUG.17.26.SS']);
   let removed=false;
   for(const [collection,type,page] of [['shipments','shipment','Transportation'],['archivedShipments','archivedShipment','Archived Transportation']]){
-    const matches=(state[collection]||[]).filter(sh=>String(sh.name||'').trim().toUpperCase()===target);
+    const matches=(state[collection]||[]).filter(sh=>targets.has(String(sh.name||'').trim().toUpperCase()));
     for(const sh of matches){
       if(!(state.recycleBin||[]).some(entry=>entry.record?.id===sh.id&&['shipment','archivedShipment'].includes(entry.type)))
         moveToRecycleBin(type,page,{...sh,poLinks:[]},{collection});
