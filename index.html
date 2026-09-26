@@ -4644,9 +4644,26 @@ function archiveRequestedTransportations(){
   state.shipments=state.shipments.filter(sh=>!names.has(String(sh.name||'').trim().toUpperCase())&&!sh.archiveRequestHandled);
   return true;
 }
-if(archiveRequestedTransportations())safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+// Remove only this named shipment, detaching its PO links. PO records remain intact.
+function removeRequestedShipment(){
+  const target='TR.JUL.17.26.MS';
+  let removed=false;
+  for(const [collection,type,page] of [['shipments','shipment','Transportation'],['archivedShipments','archivedShipment','Archived Transportation']]){
+    const matches=(state[collection]||[]).filter(sh=>String(sh.name||'').trim().toUpperCase()===target);
+    for(const sh of matches){
+      if(!(state.recycleBin||[]).some(entry=>entry.record?.id===sh.id&&['shipment','archivedShipment'].includes(entry.type)))
+        moveToRecycleBin(type,page,{...sh,poLinks:[]},{collection});
+      removed=true;
+    }
+    if(matches.length)state[collection]=state[collection].filter(sh=>!matches.includes(sh));
+  }
+  return removed;
+}
+const initialArchiveChange=archiveRequestedTransportations();
+const initialShipmentRemoval=removeRequestedShipment();
+if(initialArchiveChange||initialShipmentRemoval)safeStorage.setItem(DATA_KEY,JSON.stringify(state));
 buildFields();buildItemFields();syncTenderItemCategoriesFromItems();
-window.addEventListener('zimport-online-state-loaded',e=>{if(e.detail?.state){const localCountrySourcingCountries=Array.isArray(state.countrySourcingCountries)?state.countrySourcingCountries:[];const localCountryPortfolioSuppliers=Array.isArray(state.countryPortfolioSuppliers)?state.countryPortfolioSuppliers:[];state={...state,...e.detail.state};if(!Array.isArray(e.detail.state.countrySourcingCountries)||!e.detail.state.countrySourcingCountries.length)state.countrySourcingCountries=localCountrySourcingCountries.length?localCountrySourcingCountries:['Italy','Portugal','Spain','France'];if(!Array.isArray(e.detail.state.countryPortfolioSuppliers)||(!e.detail.state.countryPortfolioSuppliers.length&&localCountryPortfolioSuppliers.length))state.countryPortfolioSuppliers=localCountryPortfolioSuppliers;if(!e.detail.partialRecovery)settings=e.detail.settings||settings;const archivedNow=archiveRequestedTransportations();safeStorage.setItem(DATA_KEY,JSON.stringify(state));safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));renderShipments();window.renderArchivedShipments?.();safeStartupRender();if((archivedNow&&!e.detail.partialRecovery)||e.detail.repairSync)setTimeout(()=>window.ZimportOnline?.queueSync?.(state,settings),0);}});
+window.addEventListener('zimport-online-state-loaded',e=>{if(e.detail?.state){const localCountrySourcingCountries=Array.isArray(state.countrySourcingCountries)?state.countrySourcingCountries:[];const localCountryPortfolioSuppliers=Array.isArray(state.countryPortfolioSuppliers)?state.countryPortfolioSuppliers:[];state={...state,...e.detail.state};if(!Array.isArray(e.detail.state.countrySourcingCountries)||!e.detail.state.countrySourcingCountries.length)state.countrySourcingCountries=localCountrySourcingCountries.length?localCountrySourcingCountries:['Italy','Portugal','Spain','France'];if(!Array.isArray(e.detail.state.countryPortfolioSuppliers)||(!e.detail.state.countryPortfolioSuppliers.length&&localCountryPortfolioSuppliers.length))state.countryPortfolioSuppliers=localCountryPortfolioSuppliers;if(!e.detail.partialRecovery)settings=e.detail.settings||settings;const archivedNow=archiveRequestedTransportations();const removedNow=removeRequestedShipment();safeStorage.setItem(DATA_KEY,JSON.stringify(state));safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));renderShipments();window.renderArchivedShipments?.();safeStartupRender();if(((archivedNow||removedNow)&&!e.detail.partialRecovery)||e.detail.repairSync)setTimeout(()=>window.ZimportOnline?.queueSync?.(state,settings),0);}});
 window.addEventListener('zimport-online-role',e=>{window.ZIMPORT_CURRENT_ROLE=e.detail?.role||'readonly';applyOnlinePermissions?.();});
 if($('#closeGenericInvoiceDetails'))$('#closeGenericInvoiceDetails').onclick=closeGenericInvoiceDetails;
 if($('#closeGenericInvoiceDetailsBottom'))$('#closeGenericInvoiceDetailsBottom').onclick=closeGenericInvoiceDetails;
