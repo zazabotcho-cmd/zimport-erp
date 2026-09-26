@@ -4620,8 +4620,20 @@ window.openWorkerItemInfo=openWorkerItemInfo;window.openTenderItemInfo=openTende
 window.editItem=editItem;
 
 window.deleteArchivedSubmission=deleteArchivedSubmission;window.updateSubmissionField=updateSubmissionField;window.removeSubmissionFromPage=removeSubmissionFromPage;window.editRecord=editRecord;window.editAgency=editAgency;window.editTender=editTender;window.updateWorkStatus=updateWorkStatus;window.deleteWorkerItem=deleteWorkerItem;window.addNewWorkerListItem=addNewWorkerListItem;window.editWorkerListItem=editWorkerListItem;
+// Move only the two requested transportation records. Keep every PO and all shipment fields.
+function archiveRequestedTransportations(){
+  const names=new Set(['TR.JUL.17.26.MS','TR.AUG.17.26.SS']);
+  if(!Array.isArray(state.archivedShipments))state.archivedShipments=[];
+  const moved=(state.shipments||[]).filter(sh=>names.has(String(sh.name||'').trim().toUpperCase())&&!sh.archiveRequestHandled);
+  if(!moved.length)return false;
+  const archivedIds=new Set(state.archivedShipments.map(sh=>String(sh.id)));
+  for(const sh of moved)if(!archivedIds.has(String(sh.id)))state.archivedShipments.push({...sh,archived:true});
+  state.shipments=state.shipments.filter(sh=>!names.has(String(sh.name||'').trim().toUpperCase())&&!sh.archiveRequestHandled);
+  return true;
+}
+if(archiveRequestedTransportations())safeStorage.setItem(DATA_KEY,JSON.stringify(state));
 buildFields();buildItemFields();syncTenderItemCategoriesFromItems();
-window.addEventListener('zimport-online-state-loaded',e=>{if(e.detail?.state){const localCountrySourcingCountries=Array.isArray(state.countrySourcingCountries)?state.countrySourcingCountries:[];const localCountryPortfolioSuppliers=Array.isArray(state.countryPortfolioSuppliers)?state.countryPortfolioSuppliers:[];state={...state,...e.detail.state};if(!Array.isArray(e.detail.state.countrySourcingCountries)||!e.detail.state.countrySourcingCountries.length)state.countrySourcingCountries=localCountrySourcingCountries.length?localCountrySourcingCountries:['Italy','Portugal','Spain','France'];if(!Array.isArray(e.detail.state.countryPortfolioSuppliers)||(!e.detail.state.countryPortfolioSuppliers.length&&localCountryPortfolioSuppliers.length))state.countryPortfolioSuppliers=localCountryPortfolioSuppliers;if(!e.detail.partialRecovery)settings=e.detail.settings||settings;safeStorage.setItem(DATA_KEY,JSON.stringify(state));safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));safeStartupRender();}});
+window.addEventListener('zimport-online-state-loaded',e=>{if(e.detail?.state){const localCountrySourcingCountries=Array.isArray(state.countrySourcingCountries)?state.countrySourcingCountries:[];const localCountryPortfolioSuppliers=Array.isArray(state.countryPortfolioSuppliers)?state.countryPortfolioSuppliers:[];state={...state,...e.detail.state};if(!Array.isArray(e.detail.state.countrySourcingCountries)||!e.detail.state.countrySourcingCountries.length)state.countrySourcingCountries=localCountrySourcingCountries.length?localCountrySourcingCountries:['Italy','Portugal','Spain','France'];if(!Array.isArray(e.detail.state.countryPortfolioSuppliers)||(!e.detail.state.countryPortfolioSuppliers.length&&localCountryPortfolioSuppliers.length))state.countryPortfolioSuppliers=localCountryPortfolioSuppliers;if(!e.detail.partialRecovery)settings=e.detail.settings||settings;const archivedNow=archiveRequestedTransportations();safeStorage.setItem(DATA_KEY,JSON.stringify(state));safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));safeStartupRender();if(archivedNow&&!e.detail.partialRecovery)setTimeout(()=>window.ZimportOnline?.queueSync?.(state,settings),0);}});
 window.addEventListener('zimport-online-role',e=>{window.ZIMPORT_CURRENT_ROLE=e.detail?.role||'readonly';applyOnlinePermissions?.();});
 if($('#closeGenericInvoiceDetails'))$('#closeGenericInvoiceDetails').onclick=closeGenericInvoiceDetails;
 if($('#closeGenericInvoiceDetailsBottom'))$('#closeGenericInvoiceDetailsBottom').onclick=closeGenericInvoiceDetails;
@@ -5327,7 +5339,7 @@ function restoreArchivedInvoice(id){
   function archiveShipment(id){
     const i=(state.shipments||[]).findIndex(x=>x.id===id);if(i<0)return;
     if(!Array.isArray(state.archivedShipments))state.archivedShipments=[];
-    state.archivedShipments.push(state.shipments[i]);
+    state.archivedShipments.push({...state.shipments[i],archived:true});
     state.shipments.splice(i,1);
     save();
     try{renderShipments()}catch(e){}
@@ -5335,7 +5347,7 @@ function restoreArchivedInvoice(id){
   }
   function restoreShipment(id){
     const i=(state.archivedShipments||[]).findIndex(x=>x.id===id);if(i<0)return;
-    state.shipments.push(state.archivedShipments[i]);
+    state.shipments.push({...state.archivedShipments[i],archived:false,archiveRequestHandled:true});
     state.archivedShipments.splice(i,1);
     save();renderArchivedShipments();try{renderShipments()}catch(e){}
   }
