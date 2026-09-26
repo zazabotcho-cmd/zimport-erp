@@ -52,25 +52,12 @@
   async function deleteRow(table,id,base){const q=await client.from(table).delete().eq('organization_id',cfg.organizationId).eq('id',String(id)).eq('version',base.version).select('id');if(q.error)throw q.error;if(!q.data?.length){const e=new Error('CONFLICT');e.code='CONFLICT';e.table=table;e.id=id;throw e;}baseline.delete(key(table,id));await log('DELETE',table,id,{version:base.version});}
   async function syncState(state,settings){if(!configured()||!user||syncing)return;
     if(!cloudLoadComplete){status('Sync blocked: cloud data has not finished loading','error');return;}
-    const recycledShipmentIds=new Set((state.recycleBin||[]).filter(x=>['shipment','archivedShipment'].includes(x.type)).map(x=>String(x.record?.id)));
-    const browserShipmentIds=new Set([...(state.shipments||[]),...(state.archivedShipments||[])].map(x=>String(x.id)));
-    if([...cloudShipmentIds].some(id=>!browserShipmentIds.has(id)&&!recycledShipmentIds.has(id))){
-      status('Restoring saved cloud shipments…');
-      try{
-        const recovered=await loadTable('shipments');
-        if(!recovered.length){status('Sync blocked: cloud shipment recovery returned no records. Reload cloud data.','error');return;}
-        cloudShipmentIds=new Set(recovered.map(x=>String(x.id)));
-        const localOnly=[...(state.shipments||[]),...(state.archivedShipments||[])].filter(x=>!cloudShipmentIds.has(String(x.id)));
-        window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:{shipments:[...recovered.filter(x=>!x.archived),...localOnly.filter(x=>!x.archived)],archivedShipments:[...recovered.filter(x=>x.archived),...localOnly.filter(x=>x.archived)]},partialRecovery:true,repairSync:true}}));
-        status('Saved cloud shipments restored. Saving archive changes…');
-      }catch(e){console.error(e);status('Sync blocked: cloud shipment recovery failed. Reload cloud data.','error');}
-      return;
-    }if(profile?.role==='readonly'){status('Read-only account','error');return;}syncing=true;dirty=false;status('Saving changes…');try{
+    if(profile?.role==='readonly'){status('Read-only account','error');return;}syncing=true;dirty=false;status('Saving changes…');try{
     const flat=flatten(state,settings);
     for(const table of Object.keys(flat)){
       const rows=flat[table],current=new Map(rows.map(r=>[String(r.id),r]));
       for(const row of rows){const b=baseline.get(key(table,row.id));if(!b)await insertRow(table,row);else if(JSON.stringify(cleanData(row))!==JSON.stringify(b.data))await updateRow(table,row,b);}
-      for(const [k,b] of [...baseline]){const [bt,id]=k.split(':');if(bt===table&&!current.has(id)){if(table==='shipments'&&!recycledShipmentIds.has(id))throw new Error('Shipment deletion blocked: record is neither active, archived, nor in the Recycling Bin.');await deleteRow(table,id,b);}}
+      for(const [k,b] of [...baseline]){const [bt,id]=k.split(':');if(bt===table&&!current.has(id)){await deleteRow(table,id,b);}}
     }
     cloudShipmentIds=new Set((flat.shipments||[]).map(x=>String(x.id)));
     status('All changes saved','connected');
