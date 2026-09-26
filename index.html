@@ -4293,8 +4293,9 @@ function renderHeadsRecycleBin(){const body=$('#headsRecycleRows');if(!body)retu
 function renderRecycleBin(){const body=$('#recycleRows');if(!body)return;const q=String($('#recycleSearch')?.value||'').trim().toLowerCase();const canAdmin=isAdminUser();const rows=(state.recycleBin||[]).filter(x=>!q||`${x.page} ${x.label}`.toLowerCase().includes(q)).sort((a,b)=>new Date(b.deletedAt)-new Date(a.deletedAt));body.innerHTML=rows.map(x=>`<tr><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.deleteAfter).toLocaleDateString())}</td><td><button type="button" onclick="restoreRecycleRecord('${x.id}')">Restore</button>${canAdmin?` <button type="button" class="danger recycle-permanent-delete" onclick="permanentlyDeleteRecycle('${x.id}')">Delete Permanently</button>`:''}</td></tr>`).join('')||'<tr><td colspan="5" class="note">Recycling Bin is empty.</td></tr>';const sel=$('#recycleRetention');if(sel)sel.value=String(state.recycleRetentionDays||90);document.querySelectorAll('.recycle-admin-only').forEach(el=>el.style.display=canAdmin?'':'none')}
 
 let __startupRenderRunning=false;
+let __startupRenderAgain=false;
 function safeStartupRender(){
-  if(__startupRenderRunning)return;
+  if(__startupRenderRunning){__startupRenderAgain=true;return;}
   __startupRenderRunning=true;
   const steps=[
     ['syncTenderItemCategoriesFromItems',()=>syncTenderItemCategoriesFromItems()],
@@ -4325,7 +4326,7 @@ function safeStartupRender(){
   ];
   let i=0;
   const next=()=>{
-    if(i>=steps.length){__startupRenderRunning=false;document.body?.classList.remove('winglobal-starting');return;}
+    if(i>=steps.length){__startupRenderRunning=false;document.body?.classList.remove('winglobal-starting');if(__startupRenderAgain){__startupRenderAgain=false;safeStartupRender();}return;}
     const [name,fn]=steps[i++];
     try{fn()}catch(err){console.error('WINGLOBAL startup render failed at '+name,err);}
     setTimeout(next,0);
@@ -4391,7 +4392,7 @@ function activate(tab,preferredSection=''){
       $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
     }
   }
-  const panel=$('#'+tab);if(panel)panel.classList.add('active');
+  const panel=$('#'+tab);if(panel)panel.classList.add('active');if(tab==='transportation')renderShipments();
   if(preferredSection==='heads-page' && (['inventory-in-stock','inventory-in-stock-office','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
     $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav==='heads-page'));
     $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section==='heads-page'));
@@ -4633,7 +4634,7 @@ function archiveRequestedTransportations(){
 }
 if(archiveRequestedTransportations())safeStorage.setItem(DATA_KEY,JSON.stringify(state));
 buildFields();buildItemFields();syncTenderItemCategoriesFromItems();
-window.addEventListener('zimport-online-state-loaded',e=>{if(e.detail?.state){const localCountrySourcingCountries=Array.isArray(state.countrySourcingCountries)?state.countrySourcingCountries:[];const localCountryPortfolioSuppliers=Array.isArray(state.countryPortfolioSuppliers)?state.countryPortfolioSuppliers:[];state={...state,...e.detail.state};if(!Array.isArray(e.detail.state.countrySourcingCountries)||!e.detail.state.countrySourcingCountries.length)state.countrySourcingCountries=localCountrySourcingCountries.length?localCountrySourcingCountries:['Italy','Portugal','Spain','France'];if(!Array.isArray(e.detail.state.countryPortfolioSuppliers)||(!e.detail.state.countryPortfolioSuppliers.length&&localCountryPortfolioSuppliers.length))state.countryPortfolioSuppliers=localCountryPortfolioSuppliers;if(!e.detail.partialRecovery)settings=e.detail.settings||settings;const archivedNow=archiveRequestedTransportations();safeStorage.setItem(DATA_KEY,JSON.stringify(state));safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));safeStartupRender();if((archivedNow&&!e.detail.partialRecovery)||e.detail.repairSync)setTimeout(()=>window.ZimportOnline?.queueSync?.(state,settings),0);}});
+window.addEventListener('zimport-online-state-loaded',e=>{if(e.detail?.state){const localCountrySourcingCountries=Array.isArray(state.countrySourcingCountries)?state.countrySourcingCountries:[];const localCountryPortfolioSuppliers=Array.isArray(state.countryPortfolioSuppliers)?state.countryPortfolioSuppliers:[];state={...state,...e.detail.state};if(!Array.isArray(e.detail.state.countrySourcingCountries)||!e.detail.state.countrySourcingCountries.length)state.countrySourcingCountries=localCountrySourcingCountries.length?localCountrySourcingCountries:['Italy','Portugal','Spain','France'];if(!Array.isArray(e.detail.state.countryPortfolioSuppliers)||(!e.detail.state.countryPortfolioSuppliers.length&&localCountryPortfolioSuppliers.length))state.countryPortfolioSuppliers=localCountryPortfolioSuppliers;if(!e.detail.partialRecovery)settings=e.detail.settings||settings;const archivedNow=archiveRequestedTransportations();safeStorage.setItem(DATA_KEY,JSON.stringify(state));safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));renderShipments();safeStartupRender();if((archivedNow&&!e.detail.partialRecovery)||e.detail.repairSync)setTimeout(()=>window.ZimportOnline?.queueSync?.(state,settings),0);}});
 window.addEventListener('zimport-online-role',e=>{window.ZIMPORT_CURRENT_ROLE=e.detail?.role||'readonly';applyOnlinePermissions?.();});
 if($('#closeGenericInvoiceDetails'))$('#closeGenericInvoiceDetails').onclick=closeGenericInvoiceDetails;
 if($('#closeGenericInvoiceDetailsBottom'))$('#closeGenericInvoiceDetailsBottom').onclick=closeGenericInvoiceDetails;
