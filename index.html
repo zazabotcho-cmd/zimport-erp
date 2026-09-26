@@ -793,7 +793,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   <button class="main-section-btn" data-section="tender-niss">TENDERS</button>
   <button class="main-section-btn" data-section="speciality-services">SPECIALITY SERVICES / PRIVATE ORDERS</button>
   <button class="main-section-btn" data-section="transportations">TRANSPORTATIONS</button>
-  <button class="main-section-btn" data-section="po-section">ALL PO'S & PROFORMAS</button>
+  <button class="main-section-btn" data-section="po-section">ALL PO'S & ORDER FORMS</button>
   <button class="main-section-btn" data-section="country-sourcing">COUNTRY SOURCING</button>
   <button class="main-section-btn" data-section="internal-mail-section">INTERNAL MAIL <span id="mainInternalMailBadge" class="internal-mail-badge" style="display:none">0</span></button>
 <button class="main-section-btn" data-section="recycle-section">RECYCLING BIN</button>
@@ -830,8 +830,8 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   <button class="tab" data-tab="archived-transportation">Archived Transportation</button>
 </nav>
 <nav class="subnav" data-section-nav="po-section">
-  <button class="tab" data-tab="po-page" data-po-title="ALL PO'S & PROFORMAS">ALL PO'S & PROFORMAS</button>
-  <button class="tab" data-tab="proformas">Proformas</button>
+  <button class="tab" data-tab="po-page" data-po-title="ALL PO'S & ORDER FORMS">ALL PO'S & ORDER FORMS</button>
+  <button class="tab" data-tab="proformas">Order Forms</button>
   <button class="tab" data-tab="archived-pos">ARCHIVED PO'S</button>
 </nav>
 <nav class="subnav country-sourcing-nav" data-section-nav="country-sourcing">
@@ -1316,13 +1316,13 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   <div class="table-wrap"><table><thead><tr><th>Shipment</th><th>PO'S</th><th>Transport Company</th><th>Pallets</th><th>Shipment Status</th><th>Actions</th></tr></thead><tbody id="archivedShipmentRows"></tbody></table></div>
 </div></section>
 
-<section id="po-page" class="panel"><div class="box"><div class="section-head"><div><h2 id="poPageTitle">ALL PO'S & PROFORMAS</h2><p class="note">Create and manage active purchase-order records. POs with status LCBO PAYED automatically move to Archived PO'S.</p></div><button id="addPoBtn" type="button">+ Create New PO</button></div>
+<section id="po-page" class="panel"><div class="box"><div class="section-head"><div><h2 id="poPageTitle">ALL PO'S & ORDER FORMS</h2><p class="note">Create and manage active purchase-order records. POs with status LCBO PAYED automatically move to Archived PO'S.</p></div><button id="addPoBtn" type="button">+ Create New PO</button></div>
 <button type="button" class="secondary page-search-toggle" id="togglePoSearch">Search</button><div class="page-search-panel" id="poSearchPanel"><label>PO #<input id="poNumberSearch" type="search" placeholder="Type PO number"></label><label>PO Program<input id="poProgramSearch" type="search" placeholder="TENDER, REGU, SEAS or OTHER"></label><label>Vendor/Producer<input id="poSupplierSearch" type="search" placeholder="Type vendor/producer name"></label><label>Item Description<input id="poItemSearch" type="search" placeholder="Type item description"></label><label>Shipment Status<select id="poStatusSearch"><option value="">All statuses</option><option>Not Contacted</option><option>Scheduled &amp; Confirmed</option><option>On the Way</option><option>Delivered to Consolidation</option><option>Arrived in Canada</option><option>CLEARED OUT FROM THE WAREHOUSE</option><option>LCBO PAYED</option></select></label><div class="page-search-actions"><button type="button" class="secondary" id="clearPoSearch">Clear Search</button></div></div><div class="table-wrap"><table><thead><tr><th>PO #</th><th>PO Program</th><th>Vendor/Producer</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>Shipment Status</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="poRows"></tbody></table></div></div></section>
 
 <section id="proformas" class="panel"><div class="box">
   <div class="section-head">
-    <div><h2>Proformas</h2><p class="note">Create pallets, mark POs, then use Add Marked POs. If one PO must be split across multiple pallets, the same PO can be added to more than one pallet.</p></div>
-    <button id="printPoProformasBtn" type="button">Generate PO Proformas</button>
+    <div><h2>Order Forms</h2><p class="note">Create pallets, mark POs, then use Add Marked POs. If one PO must be split across multiple pallets, the same PO can be added to more than one pallet.</p></div>
+    <button id="printPoProformasBtn" type="button">Generate PO Order Forms</button>
   </div>
   <div class="form-grid three">
     <label>Agency<select id="poPrintAgencySelect"></select></label>
@@ -1345,7 +1345,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   </table></div>
 
   <div class="section-head" style="margin-top:22px">
-    <div><h3 style="margin:0">Saved Proformas</h3><p class="note">Saved proformas remain available here for opening, printing, or deleting.</p></div>
+    <div><h3 style="margin:0">Saved Order Forms</h3><p class="note">Saved order forms remain available here for opening, printing, or deleting.</p></div>
   </div>
   <div class="table-wrap"><table>
     <thead><tr><th>Order Name</th><th>Agency</th><th>Total Pallets</th><th>POs</th><th>Actions</th></tr></thead>
@@ -3148,7 +3148,7 @@ function poStatusSelect(po){
 function poDisplayRow(po,archived=false){
   const calculated=(po.lines||[]).reduce((a,x)=>a+(num(x.totalQuantity)*num(x.quotedPricePerCase)),0);
   const statusCell=archived?poStatusBadge(po.poStatus||''):poStatusSelect(po);
-  return `<tr><td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(poProgramLabel(po))}</td><td>${poVendorProducerHtml(po)}</td><td>${escapeHtml(poItemDescriptions(po)||'—')}</td><td><b>${escapeHtml(poCaseQuantityWithBottlesPerCase(po))}</b></td><td>${poBottleQuantity(po).toLocaleString()}</td><td>${statusCell}</td><td>${escapeHtml((po.currency||'')+' '+poMoney(calculated))}</td><td>${po.fileName?`<button type="button" class="secondary small" onclick="openPoRecordFile('${po.id}')">${escapeHtml(po.fileName)}</button>`:'—'}</td><td>${archived?`<button type="button" class="secondary small" onclick="moveArchivedPoBackToAll('${po.id}')">Move Back to ALL PO'S &amp; PROFORMAS</button> `:''}<button type="button" class="secondary small" onclick="openPoEditor('${po.id}')">Edit</button> <button type="button" class="danger small" onclick="deletePoRecord('${po.id}')">Delete</button></td></tr>`;
+  return `<tr><td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(poProgramLabel(po))}</td><td>${poVendorProducerHtml(po)}</td><td>${escapeHtml(poItemDescriptions(po)||'—')}</td><td><b>${escapeHtml(poCaseQuantityWithBottlesPerCase(po))}</b></td><td>${poBottleQuantity(po).toLocaleString()}</td><td>${statusCell}</td><td>${escapeHtml((po.currency||'')+' '+poMoney(calculated))}</td><td>${po.fileName?`<button type="button" class="secondary small" onclick="openPoRecordFile('${po.id}')">${escapeHtml(po.fileName)}</button>`:'—'}</td><td>${archived?`<button type="button" class="secondary small" onclick="moveArchivedPoBackToAll('${po.id}')">Move Back to ALL PO'S &amp; ORDER FORMS</button> `:''}<button type="button" class="secondary small" onclick="openPoEditor('${po.id}')">Edit</button> <button type="button" class="danger small" onclick="deletePoRecord('${po.id}')">Delete</button></td></tr>`;
 }
 function updatePoStatusFromRow(id,status){
   const po=(state.purchaseOrders||[]).find(x=>x.id===id);if(!po)return;
@@ -3184,7 +3184,7 @@ function moveArchivedPoBackToAll(id){
   if(!po){alert('Archived PO was not found.');return false}
 
   // ARCHIVED PO'S is generated from PO Status = LCBO PAYED.
-  // To move it back to ALL PO'S & PROFORMAS, restore it to an active PO status.
+  // To move it back to ALL PO'S & ORDER FORMS, restore it to an active PO status.
   po.poStatus='CLEARED OUT FROM THE WAREHOUSE';
   po.restoredFromArchivedAt=new Date().toISOString();
 
@@ -3360,7 +3360,7 @@ function poProformaHtml(selectedPos,agency,totalPallets,orderName,pallets,allowS
     <div class="instruction-section"><b>3. Invoice must contain the following information:</b>
       <div>PO NUMBER, LCBO ITEM NUMBER, ITEM DESCRIPTION, SELLER, IMPORTER, BUYER, CONSIGNEE, ALCOHOL%, UNIT SIZE mL, CAPACITY IN L, VINTAGE, QTTY CASE, QTTY BOTTLES, CASE PRICE, BOTTLE PRICE, TTL PRICE, WEIGHT, DATE, BANK ACCOUNT INFORMATION.</div>
     </div>`;
-  return `<!doctype html><html><head><meta charset="utf-8"><title>PO Proformas - ${escapeHtml(agency?.name||'Agency')}</title>
+  return `<!doctype html><html><head><meta charset="utf-8"><title>PO - ${escapeHtml(agency?.name||'Agency')}</title>
   <style>
     @page{size:landscape;margin:5mm 5mm 5mm 8mm}
     *{box-sizing:border-box}
@@ -3455,7 +3455,7 @@ button:disabled{
 </style>
 
 </head><body>
-    <div class="print-actions"><button onclick="window.print()">Print</button>${allowSave?'<button onclick="window.opener&&window.opener.saveCurrentGeneratedProforma&&window.opener.saveCurrentGeneratedProforma()">Save / Move to Proformas</button>':''}</div>
+    <div class="print-actions"><button onclick="window.print()">Print</button>${allowSave?'<button onclick="window.opener&&window.opener.saveCurrentGeneratedProforma&&window.opener.saveCurrentGeneratedProforma()">Save / Move to Order Forms</button>':''}</div>
     <div class="sheet-head">
       <div class="order-name">Order Name: ${escapeHtml(orderName||'')}</div>
       <div class="pallets">Total Pallet Quantity: ${escapeHtml(String(totalPallets||0))}</div>
@@ -3484,9 +3484,9 @@ function renderSavedProformas(){
     <td>${escapeHtml(rec.agency?.name||'—')}</td>
     <td>${num(rec.totalPallets).toLocaleString()}</td>
     <td>${escapeHtml(savedProformaPoNumbers(rec).join(', ')||'—')}</td>
-    <td><button type="button" class="secondary small" onclick="openSavedProforma('${rec.id}')">Open</button> <button type="button" class="secondary small" onclick="printSavedProforma('${rec.id}')">Print</button> <button type="button" class="secondary small" onclick="saveSavedProformaFile('${rec.id}')">Save File</button> <button type="button" class="danger small" onclick="deleteSavedProforma('${rec.id}')">Delete Proforma</button></td>
+    <td><button type="button" class="secondary small" onclick="openSavedProforma('${rec.id}')">Open</button> <button type="button" class="secondary small" onclick="printSavedProforma('${rec.id}')">Print</button> <button type="button" class="secondary small" onclick="saveSavedProformaFile('${rec.id}')">Save File</button> <button type="button" class="danger small" onclick="deleteSavedProforma('${rec.id}')">Delete Order Form</button></td>
   </tr>`).join('');
-  tbody.innerHTML=rows||'<tr><td colspan="5">No saved proformas.</td></tr>';
+  tbody.innerHTML=rows||'<tr><td colspan="5">No saved order forms.</td></tr>';
 }
 function savedProformaHtml(rec){
   return poProformaHtml(rec.selectedPos||[],rec.agency||null,num(rec.totalPallets),rec.orderName||'',rec.pallets||[],false);
@@ -3494,7 +3494,7 @@ function savedProformaHtml(rec){
 function openSavedProforma(id){
   const rec=(state.savedProformas||[]).find(x=>x.id===id);if(!rec)return;
   const w=window.open('','_blank');
-  if(!w){alert('The proforma window was blocked by the browser. Please allow pop-ups and try again.');return}
+  if(!w){alert('The order form window was blocked by the browser. Please allow pop-ups and try again.');return}
   w.document.open();w.document.write(savedProformaHtml(rec));w.document.close();w.focus();
 }
 function printSavedProforma(id){
@@ -3508,13 +3508,13 @@ async function saveSavedProformaFile(id){
   const rec=(state.savedProformas||[]).find(x=>x.id===id);if(!rec)return;
   const html=savedProformaHtml(rec);
   const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  const safeName=String(rec.orderName||'proforma').replace(/[^a-z0-9_-]+/gi,'-').replace(/^-+|-+$/g,'')||'proforma';
-  const fileName=`${safeName}-proforma.html`;
+  const safeName=String(rec.orderName||'order-form').replace(/[^a-z0-9_-]+/gi,'-').replace(/^-+|-+$/g,'')||'order-form';
+  const fileName=`${safeName}-order-form.html`;
   if('showSaveFilePicker' in window){
     try{
       const handle=await window.showSaveFilePicker({
         suggestedName:fileName,
-        types:[{description:'Proforma HTML File',accept:{'text/html':['.html']}}]
+        types:[{description:'Order Form HTML File',accept:{'text/html':['.html']}}]
       });
       const writable=await handle.createWritable();
       await writable.write(blob);
@@ -3534,7 +3534,7 @@ async function saveSavedProformaFile(id){
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function saveCurrentGeneratedProforma(){
-  const d=currentGeneratedProforma;if(!d){alert('Generate a proforma first.');return}
+  const d=currentGeneratedProforma;if(!d){alert('Generate an order form first.');return}
   if(!Array.isArray(state.savedProformas))state.savedProformas=[];
   const rec={
     id:uid(),
@@ -3551,12 +3551,12 @@ function saveCurrentGeneratedProforma(){
  if(typeof window.renderTenderSuppliers==='function')window.renderTenderSuppliers();
  if(typeof window.renderTenderSupplierItems==='function')window.renderTenderSupplierItems();
   activate('proformas','po-section');
-  alert('Proforma saved in the Proformas page.');
+  alert('Order form saved in the Order Forms page.');
 }
 function deleteSavedProforma(id){
   const rec=(state.savedProformas||[]).find(x=>x.id===id);if(!rec)return;
-  if(!confirm('Move this proforma to the Recycling Bin?'))return;
-  moveToRecycleBin('savedProforma','Proformas',rec,{collection:'savedProformas'});
+  if(!confirm('Move this order form to the Recycling Bin?'))return;
+  moveToRecycleBin('savedProforma','Order Forms',rec,{collection:'savedProformas'});
   state.savedProformas=state.savedProformas.filter(x=>x.id!==id);
   save();renderSavedProformas();
 }
@@ -3948,7 +3948,7 @@ async function removeCurrentPoRecordFile(){const id=$('#poRecordId').value;if(id
 async function deletePoRecord(id){
  const x=state.purchaseOrders.find(v=>v.id===id);if(!x||!confirm('Move this PO to the Recycling Bin?'))return;
  snapshotInventoryPoBeforeDeletion(x);
- moveToRecycleBin('purchaseOrder',"ALL PO'S & PROFORMAS",x);
+ moveToRecycleBin('purchaseOrder',"ALL PO'S & ORDER FORMS",x);
  await deletePoRecordFile(id);
  state.purchaseOrders=state.purchaseOrders.filter(v=>v.id!==id);
  // IMPORTANT: keep existing PO links inside Transportation even after the PO record is deleted.
@@ -4477,7 +4477,7 @@ function activate(tab,preferredSection=''){
   }
 }
 let currentPoContext='main';
-function openPoPage(section='po-section',title="ALL PO'S & PROFORMAS"){
+function openPoPage(section='po-section',title="ALL PO'S & ORDER FORMS"){
   currentPoContext=section;
   $$('.tab,.panel').forEach(x=>x.classList.remove('active'));
   $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
@@ -4494,13 +4494,13 @@ function activateMainSection(section){
     alert('Administrator access only.');
     section='tender-niss';
   }
-  if(section==='po-section'){openPoPage('po-section',"ALL PO'S & PROFORMAS");return;}
+  if(section==='po-section'){openPoPage('po-section',"ALL PO'S & ORDER FORMS");return;}
   $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
   $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav===section));
   const tabs=[...document.querySelectorAll(`.subnav[data-section-nav="${section}"] .tab[data-tab]`)];
   const first=tabs.find(el=>el.style.display!=='none' && el.dataset.tab && !(!isAdminUser() && isAdminOnlyTab(el.dataset.tab)));
   if(first){
-    if(first.dataset.tab==='po-page')openPoPage(section,first.dataset.poTitle||"ALL PO'S & PROFORMAS");
+    if(first.dataset.tab==='po-page')openPoPage(section,first.dataset.poTitle||"ALL PO'S & ORDER FORMS");
     else{if(first.dataset.tab==='transportation'&&$('#transportationPageSearch'))$('#transportationPageSearch').value='';activate(first.dataset.tab,section);}
   }
 }
@@ -4741,7 +4741,7 @@ if($('#closeGenericInvoiceDetails'))$('#closeGenericInvoiceDetails').onclick=clo
 if($('#closeGenericInvoiceDetailsBottom'))$('#closeGenericInvoiceDetailsBottom').onclick=closeGenericInvoiceDetails;
 if($('#copyAllGenericInvoiceDetails'))$('#copyAllGenericInvoiceDetails').onclick=copyAllGenericInvoiceDetails;
 safeStartupRender();
-$$('.tab').forEach(b=>b.onclick=()=>{const section=b.closest('.subnav')?.dataset.sectionNav||'';if(b.dataset.tab==='po-page')openPoPage(section,b.dataset.poTitle||"ALL PO'S & PROFORMAS");else activate(b.dataset.tab,section)});$$('.main-section-btn').forEach(b=>b.onclick=()=>activateMainSection(b.dataset.section));$('#closeItemSelect').onclick=$('#cancelItemSelect').onclick=closeItemSelector;$('#itemSelectSearch').oninput=renderItemSelector;$('#itemSelectType').onchange=renderItemSelector;$('#goToItems').onclick=()=>{closeItemSelector();activate('items');editItem();};$('#closeModal').onclick=$('#cancelModal').onclick=closeModal;$('#recordFields').addEventListener('input',e=>{if(e.target.id==='f_currency'){const c=e.target.value;$('#f_exchangeRate').value=currencyToCadRate(c)}if(e.target.id==='f_itemId')applyItemToSubmission(e.target.value);if(e.target.id==='f_tenderName')applyTenderToSubmission(e.target.value);if(e.target.id==='f_registered'&&e.target.value==='No'){$('#f_finalDecision').value='Not Registered';$('#f_finalDecision').disabled=true}else if(e.target.id==='f_registered'&&e.target.value==='Yes'){$('#f_finalDecision').disabled=false;if($('#f_finalDecision').value==='Not Registered')$('#f_finalDecision').value='In Progress'}liveCalc()});const submittedSearchIds=['submittedTenderNameSearch','submittedTenderNumberSearch','submittedPreDateSearch','submittedItemSearch','submittedSupplierSearch','submittedAgencySearch','submittedProductSearch','submittedStageSearch','submittedSampleDateSearch','submittedSampleStatusSearch','submittedFinalSearch'];submittedSearchIds.forEach(id=>{const el=$('#'+id);if(el){el.oninput=renderTable;el.onchange=renderTable}});const submittedToggle=$('#toggleSubmittedSearch'),submittedPanel=$('#submittedSearchPanel');if(submittedToggle&&submittedPanel)submittedToggle.onclick=()=>{const hidden=submittedPanel.classList.toggle('hidden');submittedToggle.textContent=hidden?'Search':'Hide Search'};if($('#clearSubmittedSearch'))$('#clearSubmittedSearch').onclick=()=>{submittedSearchIds.forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderTable()};const submittedAgency=$('#submittedAgencySearch');if(submittedAgency){submittedAgency.innerHTML='<option value="">All registered agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('')}const submittedProduct=$('#submittedProductSearch');if(submittedProduct){const products=[...new Set(state.records.map(r=>r.productType).filter(Boolean))].sort();submittedProduct.innerHTML='<option value="">All products</option>'+products.map(v=>`<option>${escapeHtml(v)}</option>`).join('')}const archivedToggle=$('#toggleArchivedSearch'),archivedPanel=$('#archivedSearchPanel');if(archivedToggle&&archivedPanel)archivedToggle.onclick=()=>{const hidden=archivedPanel.classList.toggle('hidden');archivedToggle.textContent=hidden?'Search':'Hide Search'};
+$$('.tab').forEach(b=>b.onclick=()=>{const section=b.closest('.subnav')?.dataset.sectionNav||'';if(b.dataset.tab==='po-page')openPoPage(section,b.dataset.poTitle||"ALL PO'S & ORDER FORMS");else activate(b.dataset.tab,section)});$$('.main-section-btn').forEach(b=>b.onclick=()=>activateMainSection(b.dataset.section));$('#closeItemSelect').onclick=$('#cancelItemSelect').onclick=closeItemSelector;$('#itemSelectSearch').oninput=renderItemSelector;$('#itemSelectType').onchange=renderItemSelector;$('#goToItems').onclick=()=>{closeItemSelector();activate('items');editItem();};$('#closeModal').onclick=$('#cancelModal').onclick=closeModal;$('#recordFields').addEventListener('input',e=>{if(e.target.id==='f_currency'){const c=e.target.value;$('#f_exchangeRate').value=currencyToCadRate(c)}if(e.target.id==='f_itemId')applyItemToSubmission(e.target.value);if(e.target.id==='f_tenderName')applyTenderToSubmission(e.target.value);if(e.target.id==='f_registered'&&e.target.value==='No'){$('#f_finalDecision').value='Not Registered';$('#f_finalDecision').disabled=true}else if(e.target.id==='f_registered'&&e.target.value==='Yes'){$('#f_finalDecision').disabled=false;if($('#f_finalDecision').value==='Not Registered')$('#f_finalDecision').value='In Progress'}liveCalc()});const submittedSearchIds=['submittedTenderNameSearch','submittedTenderNumberSearch','submittedPreDateSearch','submittedItemSearch','submittedSupplierSearch','submittedAgencySearch','submittedProductSearch','submittedStageSearch','submittedSampleDateSearch','submittedSampleStatusSearch','submittedFinalSearch'];submittedSearchIds.forEach(id=>{const el=$('#'+id);if(el){el.oninput=renderTable;el.onchange=renderTable}});const submittedToggle=$('#toggleSubmittedSearch'),submittedPanel=$('#submittedSearchPanel');if(submittedToggle&&submittedPanel)submittedToggle.onclick=()=>{const hidden=submittedPanel.classList.toggle('hidden');submittedToggle.textContent=hidden?'Search':'Hide Search'};if($('#clearSubmittedSearch'))$('#clearSubmittedSearch').onclick=()=>{submittedSearchIds.forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderTable()};const submittedAgency=$('#submittedAgencySearch');if(submittedAgency){submittedAgency.innerHTML='<option value="">All registered agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('')}const submittedProduct=$('#submittedProductSearch');if(submittedProduct){const products=[...new Set(state.records.map(r=>r.productType).filter(Boolean))].sort();submittedProduct.innerHTML='<option value="">All products</option>'+products.map(v=>`<option>${escapeHtml(v)}</option>`).join('')}const archivedToggle=$('#toggleArchivedSearch'),archivedPanel=$('#archivedSearchPanel');if(archivedToggle&&archivedPanel)archivedToggle.onclick=()=>{const hidden=archivedPanel.classList.toggle('hidden');archivedToggle.textContent=hidden?'Search':'Hide Search'};
 $('#submissionForm').onsubmit=e=>{e.preventDefault();const r=formRecord();if(r.registered==='No')r.finalDecision='Not Registered';if(r.caseKg>18.9){alert('Case KG cannot exceed 18.9 KG.');return}r.id=r.id||uid();const i=state.records.findIndex(x=>x.id===r.id);if(i>=0)state.records[i]=r;else state.records.push(r);const t=state.tenders.find(x=>x.id===r.tenderRecordId),w=t?.workItems?.find(x=>x.itemId===r.itemId&&(!x.agencyId||x.agencyId===r.agencyId));if(w&&r.registered==='Yes')w.status='Registered in LCBO NISS';else if(w&&w.status==='Registered in LCBO NISS'&&r.registered!=='Yes')w.status='Submitted';save();closeModal()};
 $('#deleteRecord').onclick=()=>{const id=$('#recordId').value,r=state.records.find(x=>x.id===id);if(r&&confirm('Move this submission to the Recycling Bin?')){moveToRecycleBin('record','All Submitted Items',r);deleteNtpAttachment(id);deletePoAttachment(id);state.records=state.records.filter(x=>x.id!==id);save();closeModal()}};
 $('#addPoBtn').onclick=()=>openPoEditor();$('#closePoModal').onclick=$('#cancelPoBtn').onclick=closePoEditor;$('#savePoBtn').onclick=savePoRecord;$('#deletePoBtn').onclick=deletePoFromEditor;$('#poProgramInput').onchange=syncPoProgramOther;
@@ -4981,7 +4981,7 @@ $('#saveSettings').onclick=()=>{settings={usd:num($('#setUsd').value),gbp:num($(
 $('#saveProgramSettings').onclick=()=>$('#saveSettings').click();
 $('#exportBtn').onclick=()=>download('zimport-program-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({settings,...state},null,2),'application/json');$('#importFile').onchange=e=>{const file=e.target.files[0];if(!file)return;const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);if(!d||typeof d!=='object'||Array.isArray(d)||!['agencies','records','items','tenders','suppliers','purchaseOrders','shipments'].some(key=>Array.isArray(d[key])))throw new Error('Invalid program backup');const {settings:backupSettings,...backupData}=d;const safeData={};for(const [key,value] of Object.entries(backupData)){if(!Object.prototype.hasOwnProperty.call(state,key))continue;const current=state[key];if(Array.isArray(current)?Array.isArray(value):(current&&typeof current==='object'?value&&typeof value==='object'&&!Array.isArray(value):typeof value===typeof current))safeData[key]=value;}state={...state,...safeData};settings={...settings,...(backupSettings&&typeof backupSettings==='object'?backupSettings:{}),recycleBinClearOnce20260926:settings.recycleBinClearOnce20260926===true||backupSettings?.recycleBinClearOnce20260926===true,targetShipmentRemovalComplete20260926:settings.targetShipmentRemovalComplete20260926===true||backupSettings?.targetShipmentRemovalComplete20260926===true};safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));save();alert('Backup imported.')}catch{alert('Invalid backup file.')}};fr.readAsText(file)};
 $('#csvBtn').onclick=()=>{const keys=['tenderName','tenderDate','agency','supplier','brand','itemName','registered','year','award1','link1','award2','link2','award3','link3','additionalAwards','productType','caseKg','currency','exchangeRate','supplierPrice','supplierCad','agencyFee','bottles','offeredQuoteCurrency','offeredQuote','offeredQuoteCad','erp','transportExpense','netProfit','potentialCases','potentialBottles','totalProfit','sampleProvideDate','sampleStatus','documentsToProvideStatus','sampleDocumentStatus','stage1Decision','finalDecision','finalOrderedQty','comments','ntpStatus','ntpFileName','poStatus','poNumber','poFileName','submissionNumber','poFileName','submissionNumber'];const rows=[keys,...state.records.map(x=>{const d=derive(x);const o={...d,agency:agencyName(x.agencyId),erp:num(x.erpManual)||d.estimatedErp,additionalAwards:(x.extraAwards||[]).map(a=>[a.award,a.link].filter(Boolean).join(' - ')).join(' | ')};return keys.map(k=>String(o[k]??'').replaceAll('"','""'))})];download('zimport-submissions.csv',rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n'),'text/csv')};
-$('#clearBtn').onclick=()=>{if(confirm('Move all program records to the Recycling Bin?')){const groups=[['agency','Agencies','agencies'],['record','Submissions','records'],['item','Tender Item Database','items'],['tender','Tenders','tenders'],['supplier','Suppliers','suppliers'],['purchaseOrder',"ALL PO'S & PROFORMAS",'purchaseOrders'],['shipment','Transportation','shipments'],['financialInvoice','LCBO to Agent Tender Invoices','financialInvoices'],['supplierPaymentInvoice','Paying to Suppliers Invoices','supplierPaymentInvoices'],['supplierPaymentInvoice2','Suppliers to Agent Fee Payment','supplierPaymentInvoices2'],['otherInvoice','SEAS/REGU/OTHER TO AGENT INVOICES','otherInvoices'],['otherNewInvoice','OTHER MIXED INVOICES','otherNewInvoices'],['archivedInvoice','Archived Invoices','archivedInvoices'],['archivedShipment','Archived Transportation','archivedShipments'],['archivedPo',"ARCHIVED PO'S",'manuallyArchivedPurchaseOrders'],['countryWinery','Winery Database','countryWineries'],['countryCandidate','Wine Candidates','countryCandidates'],['countryBonus','Performance & Bonuses','countryBonuses']];groups.forEach(([type,page,key])=>(state[key]||[]).forEach(r=>moveToRecycleBin(type,page,r,{collection:key})));groups.forEach(([, ,key])=>state[key]=[]);save()}};
+$('#clearBtn').onclick=()=>{if(confirm('Move all program records to the Recycling Bin?')){const groups=[['agency','Agencies','agencies'],['record','Submissions','records'],['item','Tender Item Database','items'],['tender','Tenders','tenders'],['supplier','Suppliers','suppliers'],['purchaseOrder',"ALL PO'S & ORDER FORMS",'purchaseOrders'],['shipment','Transportation','shipments'],['financialInvoice','LCBO to Agent Tender Invoices','financialInvoices'],['supplierPaymentInvoice','Paying to Suppliers Invoices','supplierPaymentInvoices'],['supplierPaymentInvoice2','Suppliers to Agent Fee Payment','supplierPaymentInvoices2'],['otherInvoice','SEAS/REGU/OTHER TO AGENT INVOICES','otherInvoices'],['otherNewInvoice','OTHER MIXED INVOICES','otherNewInvoices'],['archivedInvoice','Archived Invoices','archivedInvoices'],['archivedShipment','Archived Transportation','archivedShipments'],['archivedPo',"ARCHIVED PO'S",'manuallyArchivedPurchaseOrders'],['countryWinery','Winery Database','countryWineries'],['countryCandidate','Wine Candidates','countryCandidates'],['countryBonus','Performance & Bonuses','countryBonuses']];groups.forEach(([type,page,key])=>(state[key]||[]).forEach(r=>moveToRecycleBin(type,page,r,{collection:key})));groups.forEach(([, ,key])=>state[key]=[]);save()}};
 
 
 const shipmentPoSelectEl=$('#shipmentPoSelect');
@@ -5504,7 +5504,7 @@ function restoreArchivedInvoice(id){
     const tbody=document.getElementById('archivedPoRows');if(!tbody)return;
     const q=(document.getElementById('archivedPoPageSearch')?.value||'').trim().toLowerCase();
     const manual=(state.manuallyArchivedPurchaseOrders||[]).filter(po=>!q||JSON.stringify(po).toLowerCase().includes(q));
-    const rows=manual.map(po=>`<tr><td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(po.program||'—')}</td><td>${escapeHtml((po.supplierNames||[]).join(', ')||'—')}</td><td>${escapeHtml(poItems(po)||'—')}</td><td>${poCases(po).toLocaleString()}</td><td>${poBottles(po).toLocaleString()}</td><td>${escapeHtml(po.poStatus||'—')}</td><td><button type="button" class="secondary small" onclick="restoreArchivedPo('${po.id}')">Move Back to ALL PO'S &amp; PROFORMAS</button> <button type="button" class="danger small" onclick="deleteArchivedPo('${po.id}')">Delete</button></td></tr>`).join('');
+    const rows=manual.map(po=>`<tr><td><b>${escapeHtml(po.number||'—')}</b></td><td>${escapeHtml(po.program||'—')}</td><td>${escapeHtml((po.supplierNames||[]).join(', ')||'—')}</td><td>${escapeHtml(poItems(po)||'—')}</td><td>${poCases(po).toLocaleString()}</td><td>${poBottles(po).toLocaleString()}</td><td>${escapeHtml(po.poStatus||'—')}</td><td><button type="button" class="secondary small" onclick="restoreArchivedPo('${po.id}')">Move Back to ALL PO'S &amp; ORDER FORMS</button> <button type="button" class="danger small" onclick="deleteArchivedPo('${po.id}')">Delete</button></td></tr>`).join('');
     tbody.innerHTML=rows||'<tr><td colspan="8">No manually archived POs.</td></tr>';
   }
 
@@ -8288,7 +8288,7 @@ function financialProfitPageHtml(p){
       </tr>
       <tr>
        <th>Item Description</th><th>PO #</th><th class="profit-manual-col">Supplier Bottle Price</th><th class="profit-manual-col">Supplier Currency</th><th class="profit-manual-col">1 CAD to 1 Supplier Currency Exchange Rate</th>
-       <th>Supplier Price Converted into CAD</th><th>CAD Transportation Price / Btl</th><th>Bottles / Case</th><th>Proforma Price / Bottle</th><th>GST/HST/OTHER</th><th>Bottle Deposit</th><th>Price Currency Difference / Bottle</th><th class="profit-green">Agency Fee HST Included</th><th>RPIME Cost in CAD</th><th>Selling Price / Bottle</th><th>Total Case Qtty</th><th>Lab / Other Cost</th><th class="profit-green">Net Profit</th><th class="profit-orange">Total Money Needed</th><th>Approx Sales Month Qtty</th><th>Profit Approx Net / Month</th><th>Actually Was Sold in # Month</th><th class="profit-green">Actual Monthly Profit</th><th>Action</th>
+       <th>Supplier Price Converted into CAD</th><th>CAD Transportation Price / Btl</th><th>Bottles / Case</th><th>Order Form Price / Bottle</th><th>GST/HST/OTHER</th><th>Bottle Deposit</th><th>Price Currency Difference / Bottle</th><th class="profit-green">Agency Fee HST Included</th><th>RPIME Cost in CAD</th><th>Selling Price / Bottle</th><th>Total Case Qtty</th><th>Lab / Other Cost</th><th class="profit-green">Net Profit</th><th class="profit-orange">Total Money Needed</th><th>Approx Sales Month Qtty</th><th>Profit Approx Net / Month</th><th>Actually Was Sold in # Month</th><th class="profit-green">Actual Monthly Profit</th><th>Action</th>
       </tr></thead>
       <tbody id="${pid}-rows"></tbody>
     </table></div>
