@@ -76,6 +76,23 @@
     status('All changes saved','connected');
   }catch(e){console.error(e);if(e.code==='CONFLICT'){status('Conflict detected — reloading latest data','error');alert('Another user changed the same record before your save. The latest cloud version will now load. Please review and enter your change again.');await loadState();}else if(String(e.code||'')==='23505'){status('Sync error: duplicate cloud record detected. Reloading shared data…','error');await loadState();}else status('Sync error: '+(e.message||'Unknown error'),'error');}finally{syncing=false;}
   }
+  async function deleteShipmentRecord(id){
+    if(!configured())return;
+    if(!user||!cloudLoadComplete)throw new Error('Cloud data has not finished loading. Please sign in and retry.');
+    if(profile?.role==='readonly')throw new Error('This account cannot delete shipments.');
+    if(syncing)throw new Error('Cloud save is in progress. Please retry in a moment.');
+    const shipmentId=String(id);
+    let base=baseline.get(key('shipments',shipmentId));
+    if(!base){
+      const existing=await client.from('shipments').select('id,data,version,updated_at').eq('organization_id',cfg.organizationId).eq('id',shipmentId).maybeSingle();
+      if(existing.error)throw existing.error;
+      if(!existing.data){cloudShipmentIds.delete(shipmentId);return;}
+      base={data:existing.data.data||{},version:existing.data.version||1,updatedAt:existing.data.updated_at};
+      baseline.set(key('shipments',shipmentId),base);
+    }
+    await deleteRow('shipments',shipmentId,base);
+    cloudShipmentIds.delete(shipmentId);
+  }
   async function loadTable(table){const r=await client.from(table).select('id,data,created_by,created_at,updated_by,updated_at,deleted_by,restore_date,version').eq('organization_id',cfg.organizationId);if(r.error)throw r.error;return (r.data||[]).map(x=>{baseline.set(key(table,x.id),{data:x.data||{},version:x.version||1,updatedAt:x.updated_at});return {...x.data,id:x.id,_cloudVersion:x.version||1,_audit:{createdBy:x.created_by,createdAt:x.created_at,updatedBy:x.updated_by,updatedAt:x.updated_at,deletedBy:x.deleted_by,restoreDate:x.restore_date}};});}
   async function loadState(){if(syncing)return;cloudLoadComplete=false;status('Loading shared data…');try{baseline=new Map();const out={};for(const [k,t] of Object.entries(collectionMap))out[k]=await loadTable(t);
     out.archivedShipments=(out.shipments||[]).filter(x=>x.archived);out.shipments=(out.shipments||[]).filter(x=>!x.archived);
@@ -228,6 +245,6 @@
   async function uploadFile(path,file){if(!client||!user)throw new Error('Not signed in');const clean=`${cfg.organizationId}/${path}`.replace(/[^a-zA-Z0-9._\/-]/g,'_');const r=await client.storage.from(cfg.storageBucket).upload(clean,file,{upsert:true});if(r.error)throw r.error;await log('UPLOAD_FILE','storage',clean,{name:file.name,size:file.size,type:file.type});return clean;}
   async function deleteFile(path){const r=await client.storage.from(cfg.storageBucket).remove([path]);if(r.error)throw r.error;await log('DELETE_FILE','storage',path);}
   async function signedFileUrl(path,seconds=600){const r=await client.storage.from(cfg.storageBucket).createSignedUrl(path,seconds);if(r.error)throw r.error;return r.data.signedUrl;}
-  window.ZimportOnline={configured,init,queueSync:(s,se)=>{latestState=s;latestSettings=se;dirty=true;clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncState(s,se),500);},syncNow:()=>latestState?syncState(latestState,latestSettings||{}):Promise.resolve(),loadNow:loadState,uploadFile,deleteFile,signedFileUrl,get client(){return client},get user(){return user},get profile(){return profile}};
+  window.ZimportOnline={configured,init,deleteShipmentRecord,queueSync:(s,se)=>{latestState=s;latestSettings=se;dirty=true;clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncState(s,se),500);},syncNow:()=>latestState?syncState(latestState,latestSettings||{}):Promise.resolve(),loadNow:loadState,uploadFile,deleteFile,signedFileUrl,get client(){return client},get user(){return user},get profile(){return profile}};
   window.addEventListener('DOMContentLoaded',init);
 })();

@@ -3032,12 +3032,19 @@ function saveShipment(){
  if(typeof renderFinancialProfitPages==='function')renderFinancialProfitPages();
  closeShipmentEditor();
 }
-function deleteShipment(id){
+async function deleteShipment(id){
  const x=state.shipments.find(v=>v.id===id);if(!x||!confirm('Move this shipment to the Recycling Bin?'))return;
- // Once a non-TENDER PO has entered Inventory in Stock, deleting Transportation does not remove it from inventory.
  moveToRecycleBin('shipment','Transportation',x);
+ const recycleId=state.recycleBin[state.recycleBin.length-1].id;
+ safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+ try{await window.ZimportOnline?.deleteShipmentRecord?.(id)}catch(e){
+   state.recycleBin=state.recycleBin.filter(v=>v.id!==recycleId);
+   safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+   alert('Shipment was not deleted: '+(e.message||e));return;
+ }
+ // Keep linked POs and their inventory history.
  state.shipments=state.shipments.filter(v=>v.id!==id);
- const affectedPoIds=(x.poLinks||[]).map(link=>link.poId).filter(Boolean);affectedPoIds.forEach(refreshSplitPoStatus);
+ (x.poLinks||[]).map(link=>link?.poId).filter(Boolean).forEach(refreshSplitPoStatus);
  save();
  if(typeof renderHeadInventory==='function')renderHeadInventory();
  closeShipmentEditor();
@@ -5357,10 +5364,17 @@ function restoreArchivedInvoice(id){
     state.archivedShipments.splice(i,1);
     save();renderArchivedShipments();try{renderShipments()}catch(e){}
   }
-  function deleteArchivedShipment(id){
+  async function deleteArchivedShipment(id){
     const x=(state.archivedShipments||[]).find(v=>v.id===id);if(!x||!confirm('Move this archived transportation record to the Recycling Bin?'))return;
     moveToRecycleBin('archivedShipment','Archived Transportation',x,{collection:'archivedShipments'});
-    state.archivedShipments=(state.archivedShipments||[]).filter(v=>v.id!==id);
+    const recycleId=state.recycleBin[state.recycleBin.length-1].id;
+    safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+    try{await window.ZimportOnline?.deleteShipmentRecord?.(id)}catch(e){
+      state.recycleBin=state.recycleBin.filter(v=>v.id!==recycleId);
+      safeStorage.setItem(DATA_KEY,JSON.stringify(state));
+      alert('Archived shipment was not deleted: '+(e.message||e));return;
+    }
+    state.archivedShipments=state.archivedShipments.filter(v=>v.id!==id);
     save();renderArchivedShipments();
   }
   function renderArchivedShipments(){
