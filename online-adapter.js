@@ -52,8 +52,9 @@
   async function deleteRow(table,id,base){const q=await client.from(table).delete().eq('organization_id',cfg.organizationId).eq('id',String(id)).eq('version',base.version).select('id');if(q.error)throw q.error;if(!q.data?.length){const e=new Error('CONFLICT');e.code='CONFLICT';e.table=table;e.id=id;throw e;}baseline.delete(key(table,id));await log('DELETE',table,id,{version:base.version});}
   async function syncState(state,settings){if(!configured()||!user||syncing)return;
     if(!cloudLoadComplete){status('Sync blocked: cloud data has not finished loading','error');return;}
+    const recycledShipmentIds=new Set((state.recycleBin||[]).filter(x=>['shipment','archivedShipment'].includes(x.type)).map(x=>String(x.record?.id)));
     const browserShipmentIds=new Set([...(state.shipments||[]),...(state.archivedShipments||[])].map(x=>String(x.id)));
-    if([...cloudShipmentIds].some(id=>!browserShipmentIds.has(id))){
+    if([...cloudShipmentIds].some(id=>!browserShipmentIds.has(id)&&!recycledShipmentIds.has(id))){
       status('Restoring saved cloud shipments…');
       try{
         const recovered=await loadTable('shipments');
@@ -69,8 +70,9 @@
     for(const table of Object.keys(flat)){
       const rows=flat[table],current=new Map(rows.map(r=>[String(r.id),r]));
       for(const row of rows){const b=baseline.get(key(table,row.id));if(!b)await insertRow(table,row);else if(JSON.stringify(cleanData(row))!==JSON.stringify(b.data))await updateRow(table,row,b);}
-      for(const [k,b] of [...baseline]){const [bt,id]=k.split(':');if(bt===table&&!current.has(id)){if(table==='shipments')throw new Error('Shipment deletion via bulk sync is disabled to protect saved records. Delete individual shipments using the shipment screen.');await deleteRow(table,id,b);}}
+      for(const [k,b] of [...baseline]){const [bt,id]=k.split(':');if(bt===table&&!current.has(id)){if(table==='shipments'&&!recycledShipmentIds.has(id))throw new Error('Shipment deletion blocked: record is neither active, archived, nor in the Recycling Bin.');await deleteRow(table,id,b);}}
     }
+    cloudShipmentIds=new Set((flat.shipments||[]).map(x=>String(x.id)));
     status('All changes saved','connected');
   }catch(e){console.error(e);if(e.code==='CONFLICT'){status('Conflict detected — reloading latest data','error');alert('Another user changed the same record before your save. The latest cloud version will now load. Please review and enter your change again.');await loadState();}else if(String(e.code||'')==='23505'){status('Sync error: duplicate cloud record detected. Reloading shared data…','error');await loadState();}else status('Sync error: '+(e.message||'Unknown error'),'error');}finally{syncing=false;}
   }
