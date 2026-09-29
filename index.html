@@ -772,25 +772,26 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 <style>
 /* Keep the Active Transportation column headings visible while scrolling shipments. */
 #transportation .active-transportation-scroll {
-  max-height: 75vh;
-  overflow: auto;
+  max-height: none;
+  overflow-x: auto;
+  overflow-y: hidden;
   position: relative;
 }
 #transportation .active-transportation-scroll thead th {
-  position: sticky;
-  top: 0;
-  z-index: 5;
+  position: static;
   background: #eef3f8;
-  box-shadow: 0 1px 0 #d4dce5;
 }
 </style>
 <style>
 /* Freeze All PO's & Proformas list headings during vertical scrolling. */
 #po-page .po-list-scroll {max-height:none;overflow-x:auto;overflow-y:hidden;position:relative;}
 #po-page .po-list-scroll thead th {background:#eef3f8;}
-#po-sticky-screen-header{position:fixed;top:0;z-index:1000;overflow:hidden;pointer-events:none;background:#eef3f8;box-shadow:0 2px 5px #0002;}
-#po-sticky-screen-header table{margin:0;table-layout:fixed;border-collapse:collapse;}
-#po-sticky-screen-header th{position:static;background:#eef3f8;box-sizing:border-box;}
+#screen-top-table-header{position:fixed;top:0;z-index:1000;overflow:hidden;pointer-events:none;background:#eef3f8;box-shadow:0 2px 5px #0002;}
+#screen-top-table-header table{margin:0;table-layout:fixed;border-collapse:collapse;}
+#screen-top-table-header th{position:static;background:#eef3f8;box-sizing:border-box;}
+.panel .table-wrap:not(.modal .table-wrap) {max-height:none;overflow-x:auto;overflow-y:hidden;}
+.panel .table-wrap > table > thead th {position:static!important;top:auto!important;}
+#screen-top-table-header thead th{position:static!important;top:auto!important;background:#eef3f8!important;}
 </style>
 </head>
 <body>
@@ -10694,35 +10695,35 @@ setTimeout(applyNormalSubPageNames,0);
 </script>
 
 <script>
-/* Freeze PO headings only after the original headings reach the viewport top. */
+/* Freeze visible page-table headings only when they reach the screen top. */
 (function(){
-  let overlay=null;
-  function update(){
-    const wrap=document.querySelector('#po-page .po-list-scroll');
-    const head=wrap?.querySelector('thead');
-    const page=document.querySelector('#po-page');
-    if(!wrap||!head||!page||page.classList.contains('hidden')||getComputedStyle(page).display==='none'){
-      if(overlay)overlay.style.display='none';return;
-    }
-    const rect=wrap.getBoundingClientRect(),h=head.getBoundingClientRect().height;
-    if(!h||head.getBoundingClientRect().top>=0||rect.bottom<=h||rect.top>=innerHeight){
-      if(overlay)overlay.style.display='none';return;
-    }
-    if(!overlay){overlay=document.createElement('div');overlay.id='po-sticky-screen-header';document.body.appendChild(overlay);}
-    overlay.style.display='block';overlay.style.left=rect.left+'px';overlay.style.width=rect.width+'px';overlay.style.height=h+'px';
-    const table=wrap.querySelector('table'),originals=[...head.querySelectorAll('th')];
-    const clone=document.createElement('table');clone.style.width=table.getBoundingClientRect().width+'px';
-    const copied=head.cloneNode(true);copied.querySelectorAll('th').forEach((th,i)=>{
-      const width=originals[i].getBoundingClientRect().width;
-      th.style.width=width+'px';th.style.minWidth=width+'px';th.style.maxWidth=width+'px';
-    });
-    clone.appendChild(copied);clone.style.transform='translateX(-'+wrap.scrollLeft+'px)';
-    overlay.replaceChildren(clone);
+ let overlay=null,pending=false;
+ function update(){
+  if(!overlay){overlay=document.createElement('div');overlay.id='screen-top-table-header';document.body.appendChild(overlay);}
+  overlay.style.display='none';
+  const wraps=[...document.querySelectorAll('.panel .table-wrap')].filter(w=>
+    !w.closest('.modal')&&w.querySelector(':scope > table > thead')&&w.getClientRects().length&&
+    getComputedStyle(w).visibility!=='hidden'&&!w.closest('.hidden')&&!w.closest('[hidden]'));
+  for(const wrap of wraps){
+   const table=wrap.querySelector(':scope > table'),head=table?.tHead;
+   if(!head)continue;
+   const rect=wrap.getBoundingClientRect(),headRect=head.getBoundingClientRect(),height=headRect.height;
+   if(!height||headRect.top>=0||rect.bottom<=height||rect.top>=innerHeight)continue;
+   const originals=[...head.querySelectorAll('th')];if(!originals.length)continue;
+   overlay.style.left=rect.left+'px';overlay.style.width=rect.width+'px';overlay.style.height=height+'px';
+   const clone=document.createElement('table');clone.style.width=table.getBoundingClientRect().width+'px';
+   const copied=head.cloneNode(true);
+   copied.querySelectorAll('th').forEach((th,i)=>{
+    const width=originals[i]?.getBoundingClientRect().width||0;
+    th.style.width=width+'px';th.style.minWidth=width+'px';th.style.maxWidth=width+'px';
+   });
+   clone.appendChild(copied);clone.style.transform='translateX(-'+wrap.scrollLeft+'px)';
+   overlay.replaceChildren(clone);overlay.style.display='block';break;
   }
-  let pending=false;
-  function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;update();});}
-  addEventListener('scroll',schedule,true);addEventListener('resize',schedule);
-  document.addEventListener('DOMContentLoaded',schedule);
+ }
+ function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;update();});}
+ addEventListener('scroll',schedule,true);addEventListener('resize',schedule);
+ document.addEventListener('DOMContentLoaded',schedule);
 })();
 </script>
 </body></html>
