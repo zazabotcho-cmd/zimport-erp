@@ -2161,15 +2161,23 @@ function currentTenderForRecord(r){return state.tenders.find(t=>t.id===r.tenderR
 function decisionClass(value){const v=String(value||'').toLowerCase().replaceAll(' ','-');return 'decision-select decision-'+v;}
 function applyDecisionColor(el){el.className=decisionClass(el.value);}
 function winnerTransportationInfo(r){
-  const poNumber=String(r.poNumber||'').trim();
-  if(!poNumber)return {status:'No PO Number',ref:'',statusDate:'',shipment:null};
-  const po=(state.purchaseOrders||[]).find(p=>String(p.number||'').trim().toLowerCase()===poNumber.toLowerCase());
-  if(!po)return {status:'PO Not Found',ref:'',statusDate:'',shipment:null};
-  for(const shipment of allTransportationRecords()){
-    const link=(shipment.poLinks||[]).find(l=>l.poId===po.id);
+  const unassigned={status:'Not Assigned to Shipment',ref:'',statusDate:'',shipment:null};
+  const poNumber=String(r.poNumber||'').trim().toLowerCase();
+  if(!poNumber)return unassigned;
+  const po=(state.purchaseOrders||[]).find(p=>String(p.number||'').trim().toLowerCase()===poNumber);
+  if(!po)return unassigned;
+  for(const shipment of (state.shipments||[])){
+    const link=(shipment.poLinks||[]).find(l=>String(l.poId)===String(po.id));
     if(link)return {status:shipment.status||'Not Contacted',ref:link.ref||'',statusDate:shipment.statusDate||'',shipment};
   }
-  return {status:'Not Assigned to Shipment',ref:'',statusDate:'',shipment:null};
+  return unassigned;
+}
+function refreshWinnerEditorTransportation(){
+ const poInput=document.getElementById('wePoNumber'),status=document.getElementById('weTransport'),ref=document.getElementById('weRef');
+ if(!poInput||!status||!ref)return;
+ const result=winnerTransportationInfo({poNumber:poInput.value});
+ status.value=result.status;
+ ref.value=result.ref||'';
 }
 function shipmentDeliveryLabel(status=''){return status==='Delivered to Consolidation'?'Delivery Date':status==='Arrived in Canada'?'Canada Delivery Date':'Approximate Delivery Date'}
 function formatTransportationDate(value){const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return value||'';const months=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];return `${Number(m[3])}.${months[Number(m[2])-1]}${m[1]}`}
@@ -2234,11 +2242,11 @@ function openWinnerEditor(id=''){
  el('Release').value=r?.storeReleaseDate||'';
  el('PoStatus').value=r?.poStatus||'Not Issued';
  el('PoNumber').value=r?.poNumber||'';
+ el('PoNumber').addEventListener('input',refreshWinnerEditorTransportation);
  el('Tracking').value=r?.trackingLink||'';
- const transport=r?winnerTransportationInfo(r):null;
- el('Transport').value=transport?.status||'Automatically imported from linked PO shipment';
- el('Ref').value=transport?.ref||'';
+ refreshWinnerEditorTransportation();
  document.getElementById('winnerEditorOverlay').classList.remove('hidden');
+ el('PoNumber').addEventListener('focus',refreshWinnerEditorTransportation);
 }
 function saveWinnerEditor(event){
  event.preventDefault();const el=n=>document.getElementById('we'+n).value.trim();
