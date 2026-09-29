@@ -1160,7 +1160,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
     <label>Final Decision<select id="submittedFinalSearch"><option value="">All final decisions</option><option>In Progress</option><option>Winner</option><option>Declined</option></select></label>
     <div class="search-actions"><button type="button" id="clearSubmittedSearch" class="secondary">Clear Search</button></div>
   </div>
-  <div class="table-wrap"><table class="active-submissions-table"><thead><tr><th>Tender ID</th><th>Pre-Submission Date</th><th>Tender Name</th><th>Agency</th><th>Supplier</th><th>Brand / Item</th><th>Submission Status</th><th>Product / Submission #</th><th>1st Stage Decision</th><th>Sample Provide Date</th><th>Sample and Documents Status</th><th>Write Comment</th><th>Final Decision</th></tr></thead><tbody id="submissionRows"></tbody></table></div>
+  <div class="table-wrap"><table class="active-submissions-table"><thead><tr><th>Tender ID</th><th>Pre-Submission Date</th><th>Tender Name</th><th>Agency</th><th>Supplier</th><th>Item Description</th><th>Submission Status</th><th>Product / Submission #</th><th>1st Stage Decision</th><th>Sample Provide Date</th><th>Sample and Documents Status</th><th>Write Comment</th><th>Final Decision</th></tr></thead><tbody id="submissionRows"></tbody></table></div>
 </section>
 
 
@@ -2259,6 +2259,15 @@ function saveWinnerEditor(event){
  if(!existing)state.records.push(record);
  closeWinnerEditor();save();
 }
+function descriptionWithItemSize(description,...sources){
+ const text=String(description||'').trim();
+ const raw=sources.map(x=>x&&(x.sellingUnitSizeMl??x.bottleSizeMl??x.unitSizeMl??x.sizeMl??x.bottleSize??x.unitSize)).find(v=>v!==undefined&&v!==null&&String(v).trim()!=='');
+ if(raw===undefined)return text;
+ const size=String(raw).trim();
+ const formatted=/^\d+(?:\.\d+)?$/.test(size)?size+'ml':size;
+ if(!formatted||new RegExp('(?:^|\\s)'+formatted.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:$|\\s)','i').test(text))return text;
+ return (text+' '+formatted).trim();
+}
 function renderSubmissionTable(targetId='submissionRows',mode='active',useFilters=true){
   const submittedTenderName=useFilters?String($('#submittedTenderNameSearch')?.value||'').trim().toLowerCase():'',submittedTenderNumber=useFilters?String($('#submittedTenderNumberSearch')?.value||'').trim().toLowerCase():'',submittedPreDate=useFilters?String($('#submittedPreDateSearch')?.value||'').trim():'',submittedItem=useFilters?String($('#submittedItemSearch')?.value||'').trim().toLowerCase():'',submittedSupplier=useFilters?String($('#submittedSupplierSearch')?.value||'').trim().toLowerCase():'',submittedAgency=useFilters?String($('#submittedAgencySearch')?.value||'').trim():'',submittedProduct=useFilters?String($('#submittedProductSearch')?.value||'').trim():'',submittedStage=useFilters?String($('#submittedStageSearch')?.value||'').trim():'',submittedSampleDate=useFilters?String($('#submittedSampleDateSearch')?.value||'').trim():'',submittedSampleStatus=useFilters?String($('#submittedSampleStatusSearch')?.value||'').trim():'',submittedFinal=useFilters?String($('#submittedFinalSearch')?.value||'').trim():'';
   const winnerSupplier=mode==='winner'?String($('#winnerSupplierSearch')?.value||'').trim().toLowerCase():'',winnerTenderNumber=mode==='winner'?String($('#winnerTenderNumberSearch')?.value||'').trim().toLowerCase():'',winnerTenderName=mode==='winner'?String($('#winnerTenderNameSearch')?.value||'').trim().toLowerCase():'',winnerAgency=mode==='winner'?String($('#winnerAgencySearch')?.value||'').trim().toLowerCase():'',winnerItem=mode==='winner'?String($('#winnerItemSearch')?.value||'').trim().toLowerCase():'',winnerProduct=mode==='winner'?String($('#winnerProductSearch')?.value||'').trim().toLowerCase():'',winnerNtpStatus=mode==='winner'?String($('#winnerNtpStatusSearch')?.value||'').trim():'',winnerPoStatus=mode==='winner'?String($('#winnerPoStatusSearch')?.value||'').trim():'',winnerTransportStatus=mode==='winner'?String($('#winnerTransportStatusSearch')?.value||'').trim():'';
@@ -2306,7 +2315,7 @@ function renderSubmissionTable(targetId='submissionRows',mode='active',useFilter
   }).map(r=>{
     const tr=currentTenderForRecord(r);const item=state.items.find(x=>x.id===r.itemId)||{};const preDate=tr?.presubDate||r.tenderDate||'';if(preDate&&r.tenderDate!==preDate)r.tenderDate=preDate;
     const stage=(r.stage1Decision==='In Progress'?'':(r.stage1Decision||''));const forced=stage===''?'In Progress':stage==='Declined'?'Declined':(r.finalDecision||'In Progress');const finalDisabled=stage===''||stage==='Declined';
-    const itemDisplay=(()=>{const parts=[r.brand,r.itemName].filter(Boolean).join(' ');const year=r.year||item.year||'';return parts+(year&&!parts.includes(String(year))?' '+year:'')})()||'—';
+    const itemDisplay=(()=>{const parts=[r.brand,r.itemName].filter(Boolean).join(' ');const year=r.year||item.year||'';return descriptionWithItemSize(parts+(year&&!parts.includes(String(year))?' '+year:''),item,r)})()||'—';
     const winnerAgencyNiss=mode==='winner'?(state.agencies||[]).find(a=>String(a.id)===String(r.agencyId))?.nissNumber||'':'';
     const winnerSupplierNiss=mode==='winner'?(()=>{
       const normalize=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
@@ -2359,7 +2368,7 @@ function renderDashboardRows(){
   const rows=winnerItems.map(x=>{
     const {r,item,merged,d,finalCases,winnerBottles,totalProfit,advertisingBudget}=x;
     const erp=num(merged.erpManual)||d.estimatedErp;
-    const description=merged.itemName||item.productDescription||'—';
+    const description=descriptionWithItemSize(merged.itemName||item.productDescription||'—',item,r);
     const date=merged.tenderDate||r.storeReleaseDate||'—';
     return `<tr data-record-id="${escapeHtml(r.id)}"><td><b>${escapeHtml(merged.tenderName||'—')}</b><br><small>${escapeHtml(date)}</small></td><td>${escapeHtml(agencyName(r.agencyId)||'—')}</td><td>${escapeHtml(merged.brand||'—')}</td><td><b>${escapeHtml(description)}</b>${merged.supplier?`<br><small>${escapeHtml(merged.supplier)}</small>`:''}</td><td>${finalCases.toLocaleString()}</td><td class="${d.agencyFee>=0?'positive':'negative'}">${money(d.agencyFee)}</td><td>${num(merged.bottles).toLocaleString()}</td><td><span class="currency-tag">${escapeHtml(merged.offeredQuoteCurrency||'CAD')}</span> ${num(merged.offeredQuote).toFixed(2)}<br><small>${money(d.offeredQuoteCad)} CAD</small></td><td>${money(erp)}</td><td class="${d.netProfit>=0?'positive':'negative'}">${money(d.netProfit)}</td><td>${finalCases.toLocaleString()}</td><td>${winnerBottles.toLocaleString()}</td><td class="${totalProfit>=0?'positive':'negative'}">${money(totalProfit)}</td><td><input class="advertising-budget-input" type="number" min="0" step="0.01" value="${advertisingBudget||''}" placeholder="0.00" onchange="updateWinnerAdvertisingBudget('${r.id}',this.value)"></td><td>${escapeHtml(date)}</td></tr>`;
   }).join('');
@@ -3159,7 +3168,10 @@ function purchaseOrdersForCurrentSection(){
   return all;
 }
 function archivedPurchaseOrders(){return (Array.isArray(state.purchaseOrders)?state.purchaseOrders:[]).filter(po=>(po.poStatus||'')==='LCBO PAYED')}
-function poItemDescriptions(po){return (po.lines||[]).map(x=>x.yearProductName||x.itemNo||'').filter(Boolean).join(' / ')}
+function poItemDescriptions(po){return (po.lines||[]).map(x=>{
+ const item=(state.items||[]).find(i=>String(i.id)===String(x.itemId||x.tenderItemId||'')||(x.itemNo&&String(i.lcboItemNumber||'')===String(x.itemNo)));
+ return descriptionWithItemSize(x.yearProductName||x.itemNo||'',x,item);
+ }).filter(Boolean).join(' / ')}
 function poCaseQuantity(po){return (po.lines||[]).reduce((sum,line)=>sum+num(line.totalQuantity),0)}
 function poCaseQuantityWithBottlesPerCase(po){
   const lines=(po?.lines||[]).filter(line=>line.totalQuantity!==''&&line.totalQuantity!=null);
