@@ -3498,38 +3498,6 @@ button:disabled{
     <tfoot><tr><td class="total-cases">Total Cases: ${totalCases.toLocaleString()}</td><td colspan="3"></td><td class="total-bottles">Total Bottles: ${totalBottles.toLocaleString()}</td><td colspan="4"></td></tr></tfoot></table>
     <div class="bottom-warning">${warning}</div>
     <div class="instructions">${instructions}</div>
-  <script>
-/* Freeze PO headings only after the original headings reach the viewport top. */
-(function(){
-  let overlay=null;
-  function update(){
-    const wrap=document.querySelector('#po-page .po-list-scroll');
-    const head=wrap?.querySelector('thead');
-    const page=document.querySelector('#po-page');
-    if(!wrap||!head||!page||page.classList.contains('hidden')||getComputedStyle(page).display==='none'){
-      if(overlay)overlay.style.display='none';return;
-    }
-    const rect=wrap.getBoundingClientRect(),h=head.getBoundingClientRect().height;
-    if(!h||head.getBoundingClientRect().top>=0||rect.bottom<=h||rect.top>=innerHeight){
-      if(overlay)overlay.style.display='none';return;
-    }
-    if(!overlay){overlay=document.createElement('div');overlay.id='po-sticky-screen-header';document.body.appendChild(overlay);}
-    overlay.style.display='block';overlay.style.left=rect.left+'px';overlay.style.width=rect.width+'px';overlay.style.height=h+'px';
-    const table=wrap.querySelector('table'),originals=[...head.querySelectorAll('th')];
-    const clone=document.createElement('table');clone.style.width=table.getBoundingClientRect().width+'px';
-    const copied=head.cloneNode(true);copied.querySelectorAll('th').forEach((th,i)=>{
-      const width=originals[i].getBoundingClientRect().width;
-      th.style.width=width+'px';th.style.minWidth=width+'px';th.style.maxWidth=width+'px';
-    });
-    clone.appendChild(copied);clone.style.transform='translateX(-'+wrap.scrollLeft+'px)';
-    overlay.replaceChildren(clone);
-  }
-  let pending=false;
-  function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;update();});}
-  addEventListener('scroll',schedule,true);addEventListener('resize',schedule);
-  document.addEventListener('DOMContentLoaded',schedule);
-})();
-</script>
 </body></html>`;
 }
 
@@ -10725,6 +10693,38 @@ setTimeout(applyNormalSubPageNames,0);
 })();
 </script>
 
+<script>
+/* Freeze PO headings only after the original headings reach the viewport top. */
+(function(){
+  let overlay=null;
+  function update(){
+    const wrap=document.querySelector('#po-page .po-list-scroll');
+    const head=wrap?.querySelector('thead');
+    const page=document.querySelector('#po-page');
+    if(!wrap||!head||!page||page.classList.contains('hidden')||getComputedStyle(page).display==='none'){
+      if(overlay)overlay.style.display='none';return;
+    }
+    const rect=wrap.getBoundingClientRect(),h=head.getBoundingClientRect().height;
+    if(!h||head.getBoundingClientRect().top>=0||rect.bottom<=h||rect.top>=innerHeight){
+      if(overlay)overlay.style.display='none';return;
+    }
+    if(!overlay){overlay=document.createElement('div');overlay.id='po-sticky-screen-header';document.body.appendChild(overlay);}
+    overlay.style.display='block';overlay.style.left=rect.left+'px';overlay.style.width=rect.width+'px';overlay.style.height=h+'px';
+    const table=wrap.querySelector('table'),originals=[...head.querySelectorAll('th')];
+    const clone=document.createElement('table');clone.style.width=table.getBoundingClientRect().width+'px';
+    const copied=head.cloneNode(true);copied.querySelectorAll('th').forEach((th,i)=>{
+      const width=originals[i].getBoundingClientRect().width;
+      th.style.width=width+'px';th.style.minWidth=width+'px';th.style.maxWidth=width+'px';
+    });
+    clone.appendChild(copied);clone.style.transform='translateX(-'+wrap.scrollLeft+'px)';
+    overlay.replaceChildren(clone);
+  }
+  let pending=false;
+  function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;update();});}
+  addEventListener('scroll',schedule,true);addEventListener('resize',schedule);
+  document.addEventListener('DOMContentLoaded',schedule);
+})();
+</script>
 </body></html>
 
 <script>document.addEventListener('DOMContentLoaded',()=>{if(typeof renderOfficeInventory==='function')renderOfficeInventory();});</script>
