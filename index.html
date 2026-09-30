@@ -10949,16 +10949,36 @@ function normalizeGtin14(v){const d=String(v||'').replace(/\D/g,'');if(d.length=
 function itf14Pattern(gtin){const patterns=['00110','10001','01001','11000','00101','10100','01100','00011','10010','01010'];let bars='1010';for(let i=0;i<14;i+=2){const a=patterns[+gtin[i]],b=patterns[+gtin[i+1]];for(let j=0;j<5;j++)bars+=(a[j]==='1'?'111':'1')+(b[j]==='1'?'000':'0');}return bars+'11101'}
 function centeredTextOps(text,y,size=18,font='F1'){const t=pdfSafeText(text);const approx=t.length*size*.53;return ['BT','/'+font+' '+size+' Tf',Math.max(36,(612-approx)/2).toFixed(1)+' '+y+' Td','('+t+') Tj','ET']}
 function buildCaseLabelPdf(data){
- const ops=['0.9 w','35 35 542 722 re','S']; let y=710;
- const add=(label,value,size=21)=>{ops.push(...centeredTextOps(label,y,11));y-=24;ops.push(...centeredTextOps(value||'—',y,size));y-=43};
- ops.push(...centeredTextOps('SHIPPING CASE LABEL',y,22));y-=50;
- add('PO #',data.po,25); add('ITEM #',data.itemNo,24); add('ITEM SIZE',data.size,23); add('ITEM QTY IN THE CASE',data.caseQty,23); add('CASE WEIGHT',data.weight+' KG',23);
- y-=5; ops.push(...centeredTextOps('GTIN-14 / SCC',y,11)); y-=105;
- const pattern=itf14Pattern(data.gtin), module=1.35, total=pattern.length*module, x0=(612-total)/2, barBottom=y, barHeight=82;
- ops.push('0 g'); let x=x0; for(const bit of pattern){if(bit==='1')ops.push(x.toFixed(2)+' '+barBottom+' '+module.toFixed(2)+' '+barHeight+' re','f');x+=module;}
- // bearer bars improve ITF-14 print/scanner reliability
- ops.push('3 w',(x0-4).toFixed(2)+' '+(barBottom-4)+' '+(total+8).toFixed(2)+' '+(barHeight+8)+' re','S');
- y-=30; ops.push(...centeredTextOps(data.gtin,y,18));
+ const ops=[];
+ function drawLabel(top,bottom){
+  const center=(top+bottom)/2;
+  ops.push('0.9 w','35 '+(bottom+12)+' 542 '+(top-bottom-24)+' re','S');
+  let y=top-50;
+  const desc=pdfSafeText(data.itemName||'ITEM DESCRIPTION');
+  let descSize=22;if(desc.length>34)descSize=19;if(desc.length>48)descSize=16;
+  ops.push(...centeredTextOps(desc,y,descSize));
+  y-=48;
+  const poText=pdfSafeText('PO# '+(data.po||'—'));
+  const itemText=pdfSafeText('ITEM# '+(data.itemNo||'—'));
+  const itemsText=pdfSafeText('ITEMS '+(data.size||'—')+' x '+(data.caseQty||'—'));
+  ops.push('BT','/F1 15 Tf','55 '+y+' Td','('+poText+') Tj','ET');
+  const itemsApprox=itemsText.length*15*.53,itemsX=Math.max(320,555-itemsApprox);
+  ops.push('BT','/F1 15 Tf',itemsX.toFixed(1)+' '+y+' Td','('+itemsText+') Tj','ET');
+  y-=32;ops.push('BT','/F1 15 Tf','55 '+y+' Td','('+itemText+') Tj','ET');
+  y-=34;ops.push('BT','/F1 14 Tf','55 '+y+' Td','('+pdfSafeText('CASE WEIGHT '+data.weight+' KG')+') Tj','ET');
+  y-=28;ops.push(...centeredTextOps('GTIN-14 / SCC',y,9));
+  const pattern=itf14Pattern(data.gtin),maxWidth=480,module=Math.min(2.05,maxWidth/pattern.length),total=pattern.length*module,x0=(612-total)/2;
+  const barBottom=bottom+50,barHeight=Math.max(72,Math.min(94,y-barBottom-14));
+  ops.push('0 g');let x=x0;for(const bit of pattern){if(bit==='1')ops.push(x.toFixed(2)+' '+barBottom+' '+module.toFixed(2)+' '+barHeight+' re','f');x+=module;}
+  ops.push('3 w',(x0-6).toFixed(2)+' '+(barBottom-6)+' '+(total+12).toFixed(2)+' '+(barHeight+12)+' re','S');
+  ops.push(...centeredTextOps(data.gtin,bottom+25,15));
+ }
+ drawLabel(792,396);
+ drawLabel(396,0);
+ // Center cutting guide with scissors marks.
+ ops.push('0.7 w','[5 5] 0 d','28 396 m','584 396 l','S','[] 0 d');
+ ops.push('BT','/F1 11 Tf','36 402 Td','(CUT HERE  < <) Tj','ET');
+ ops.push('BT','/F1 11 Tf','505 402 Td','(> >  CUT HERE) Tj','ET');
  const stream=ops.join('\n'),objs=[];objs[1]='<< /Type /Catalog /Pages 2 0 R >>';objs[2]='<< /Type /Pages /Kids [3 0 R] /Count 1 >>';objs[3]='<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>';objs[4]='<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream';objs[5]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>';
  let pdf='%PDF-1.4\n',offset=[0];for(let i=1;i<=5;i++){offset[i]=pdf.length;pdf+=i+' 0 obj\n'+objs[i]+'\nendobj\n'}const xref=pdf.length;pdf+='xref\n0 6\n0000000000 65535 f \n';for(let i=1;i<=5;i++)pdf+=String(offset[i]).padStart(10,'0')+' 00000 n \n';pdf+='trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';return new Blob([pdf],{type:'application/pdf'});
 }
@@ -10967,7 +10987,7 @@ function generateShippingCaseLabelPdf(){
  const weight=document.getElementById('caseLabelCaseWeight').value.trim();if(!weight||!Number.isFinite(Number(weight))||Number(weight)<=0){alert('Please enter the Case Weight in KG.');document.getElementById('caseLabelCaseWeight').focus();return}
  document.getElementById('caseLabelScc').value=gtin;
  const poId=document.getElementById('caseLabelPoId').value,po=(state.purchaseOrders||[]).find(x=>String(x.id)===String(poId));if(po){po.shippingCaseSccCode=gtin;po.shippingCaseWeightKg=weight;if(typeof save==='function')save()}
- const data={po:document.getElementById('caseLabelPoNumber').value,itemNo:document.getElementById('caseLabelItemNumber').value,size:document.getElementById('caseLabelItemSize').value,caseQty:document.getElementById('caseLabelCaseQty').value,weight,gtin};
+ const data={po:document.getElementById('caseLabelPoNumber').value,itemName:document.getElementById('caseLabelItemName').value,itemNo:document.getElementById('caseLabelItemNumber').value,size:document.getElementById('caseLabelItemSize').value,caseQty:document.getElementById('caseLabelCaseQty').value,weight,gtin};
  const blob=buildCaseLabelPdf(data),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Shipping_Case_Label_'+String(data.po||'PO').replace(/[^A-Za-z0-9_-]+/g,'_')+'.pdf';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
 window.openShippingCaseLabelGenerator=openShippingCaseLabelGenerator;window.closeShippingCaseLabelGenerator=closeShippingCaseLabelGenerator;window.generateShippingCaseLabelPdf=generateShippingCaseLabelPdf;
