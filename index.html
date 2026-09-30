@@ -801,6 +801,42 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 #transportation .warehouse-status-line>span:last-child{flex:none;font-size:10px;padding:1px 4px;line-height:1.2;}
 #transportation #shipmentRows td:nth-child(13){width:180px;min-width:180px;max-width:180px;}
 </style>
+<style>
+/* Active Transportation: fit the complete 15-column list on one desktop page without horizontal scrolling. */
+#transportation .box{padding:12px;}
+#transportation .active-transportation-scroll{width:100%;max-width:100%;overflow-x:hidden!important;overflow-y:visible!important;}
+#transportation .active-transportation-scroll table{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important;}
+#transportation .active-transportation-scroll th,
+#transportation .active-transportation-scroll td{font-size:9px!important;line-height:1.18!important;padding:5px 3px!important;white-space:normal!important;overflow-wrap:anywhere;word-break:normal;}
+#transportation .active-transportation-scroll th{font-size:8.5px!important;text-align:left;}
+#transportation .active-transportation-scroll select,
+#transportation .active-transportation-scroll input{min-width:0!important;width:100%!important;font-size:9px!important;padding:4px 2px!important;height:auto!important;}
+#transportation .active-transportation-scroll button{font-size:9px!important;padding:4px 5px!important;white-space:normal;}
+#transportation .active-transportation-scroll .shipment-actions{display:flex;flex-direction:column;gap:3px;}
+#transportation .active-transportation-scroll .shipment-actions button{width:100%;}
+#transportation .active-transportation-scroll .transport-converter{font-size:8.5px;}
+#transportation #shipmentRows td:nth-child(13){width:auto!important;min-width:0!important;max-width:none!important;}
+#transportation .active-transportation-scroll th:nth-child(1){width:7%;}
+#transportation .active-transportation-scroll th:nth-child(2){width:7%;}
+#transportation .active-transportation-scroll th:nth-child(3){width:8%;}
+#transportation .active-transportation-scroll th:nth-child(4){width:5%;}
+#transportation .active-transportation-scroll th:nth-child(5){width:4%;}
+#transportation .active-transportation-scroll th:nth-child(6){width:7%;}
+#transportation .active-transportation-scroll th:nth-child(7){width:6%;}
+#transportation .active-transportation-scroll th:nth-child(8){width:7%;}
+#transportation .active-transportation-scroll th:nth-child(9){width:6%;}
+#transportation .active-transportation-scroll th:nth-child(10){width:9%;}
+#transportation .active-transportation-scroll th:nth-child(11){width:8%;}
+#transportation .active-transportation-scroll th:nth-child(12){width:7%;}
+#transportation .active-transportation-scroll th:nth-child(13){width:7%;}
+#transportation .active-transportation-scroll th:nth-child(14){width:7%;}
+#transportation .active-transportation-scroll th:nth-child(15){width:5%;}
+@media(max-width:1100px){
+ #transportation .active-transportation-scroll th,#transportation .active-transportation-scroll td{font-size:8px!important;padding:4px 2px!important;}
+ #transportation .active-transportation-scroll th{font-size:7.5px!important;}
+ #transportation .active-transportation-scroll button,#transportation .active-transportation-scroll select{font-size:8px!important;}
+}
+</style>
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -1369,6 +1405,11 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   <div class="section-head" style="margin-top:18px">
     <div><h3 style="margin:0">Available POs</h3><p class="note">Select a pallet above, mark the POs below, then click Add Marked POs. POs already used on another pallet remain visible and can be added again if the order must be split.</p></div>
     <button id="addMarkedPosToPalletBtn" type="button" class="secondary small">Add Marked POs</button>
+  </div>
+  <button type="button" class="secondary page-search-toggle" id="toggleOrderFormSearch">Search</button>
+  <div class="page-search-panel" id="orderFormSearchPanel">
+    <label>Search POs<input id="orderFormPageSearch" type="search" placeholder="Type PO #, program, vendor, item or shipment status"></label>
+    <div class="page-search-actions"><button type="button" class="secondary" id="clearOrderFormPageSearch">Clear Search</button></div>
   </div>
   <div class="table-wrap"><table>
     <thead><tr>
@@ -3379,7 +3420,13 @@ function proformaAvailablePos(){
 function renderProformaPoRows(){
   const tbody=$('#proformaPoRows');if(!tbody)return;
   const active=poPrintPallets.find(p=>p.id===activePoPrintPalletId);
-  const rows=proformaAvailablePos().map(po=>{
+  const search=String($('#orderFormPageSearch')?.value||'').trim().toLowerCase();
+  const rows=proformaAvailablePos().filter(po=>{
+    if(!search)return true;
+    const shipmentStatus=splitPoLinkedShipments(po.id).length ? (splitPoAggregateStatus(po)||'Not Contacted') : 'Not Assigned to Shipment';
+    const haystack=[po.number,poProgramLabel(po),poItemDescriptions(po),shipmentStatus,(po.supplierNames||[]).join(' '),poAgencyDisplayName(po)].join(' ').toLowerCase();
+    return haystack.includes(search);
+  }).map(po=>{
     const inActive=!!active?.poIds?.includes(po.id);
     const otherPalletNumbers=poPrintPallets
       .map((p,i)=>({pallet:p,index:i+1}))
@@ -3397,7 +3444,7 @@ function renderProformaPoRows(){
       <td>${escapeHtml(poItemDescriptions(po)||'—')}</td>
       <td>${escapeHtml(poCaseQuantityWithBottlesPerCase(po))}</td>
       <td>${poBottleQuantity(po).toLocaleString()}</td>
-      <td>${poStatusBadge(po.poStatus||'')}</td>
+      <td>${poStatusSelect(po)}</td>
     </tr>`;
   }).join('');
   tbody.innerHTML=rows||'<tr><td colspan="8">No active POs available.</td></tr>';
@@ -3578,6 +3625,42 @@ button:disabled{
 }
 </style>
 
+<style>
+/* Active Transportation: fit the complete 15-column list on one desktop page without horizontal scrolling. */
+#transportation .box{padding:12px;}
+#transportation .active-transportation-scroll{width:100%;max-width:100%;overflow-x:hidden!important;overflow-y:visible!important;}
+#transportation .active-transportation-scroll table{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important;}
+#transportation .active-transportation-scroll th,
+#transportation .active-transportation-scroll td{font-size:9px!important;line-height:1.18!important;padding:5px 3px!important;white-space:normal!important;overflow-wrap:anywhere;word-break:normal;}
+#transportation .active-transportation-scroll th{font-size:8.5px!important;text-align:left;}
+#transportation .active-transportation-scroll select,
+#transportation .active-transportation-scroll input{min-width:0!important;width:100%!important;font-size:9px!important;padding:4px 2px!important;height:auto!important;}
+#transportation .active-transportation-scroll button{font-size:9px!important;padding:4px 5px!important;white-space:normal;}
+#transportation .active-transportation-scroll .shipment-actions{display:flex;flex-direction:column;gap:3px;}
+#transportation .active-transportation-scroll .shipment-actions button{width:100%;}
+#transportation .active-transportation-scroll .transport-converter{font-size:8.5px;}
+#transportation #shipmentRows td:nth-child(13){width:auto!important;min-width:0!important;max-width:none!important;}
+#transportation .active-transportation-scroll th:nth-child(1){width:7%;}
+#transportation .active-transportation-scroll th:nth-child(2){width:7%;}
+#transportation .active-transportation-scroll th:nth-child(3){width:8%;}
+#transportation .active-transportation-scroll th:nth-child(4){width:5%;}
+#transportation .active-transportation-scroll th:nth-child(5){width:4%;}
+#transportation .active-transportation-scroll th:nth-child(6){width:7%;}
+#transportation .active-transportation-scroll th:nth-child(7){width:6%;}
+#transportation .active-transportation-scroll th:nth-child(8){width:7%;}
+#transportation .active-transportation-scroll th:nth-child(9){width:6%;}
+#transportation .active-transportation-scroll th:nth-child(10){width:9%;}
+#transportation .active-transportation-scroll th:nth-child(11){width:8%;}
+#transportation .active-transportation-scroll th:nth-child(12){width:7%;}
+#transportation .active-transportation-scroll th:nth-child(13){width:7%;}
+#transportation .active-transportation-scroll th:nth-child(14){width:7%;}
+#transportation .active-transportation-scroll th:nth-child(15){width:5%;}
+@media(max-width:1100px){
+ #transportation .active-transportation-scroll th,#transportation .active-transportation-scroll td{font-size:8px!important;padding:4px 2px!important;}
+ #transportation .active-transportation-scroll th{font-size:7.5px!important;}
+ #transportation .active-transportation-scroll button,#transportation .active-transportation-scroll select{font-size:8px!important;}
+}
+</style>
 </head><body>
     <div class="print-actions"><button onclick="window.print()">Print</button>${allowSave?'<button onclick="window.opener&&window.opener.saveCurrentGeneratedProforma&&window.opener.saveCurrentGeneratedProforma()">Save / Move to Order Forms</button>':''}</div>
     <div class="sheet-head">
@@ -5141,6 +5224,9 @@ const poSearchInputs=['poNumberSearch','poProgramSearch','poSupplierSearch','poI
 if($('#printPoProformasBtn'))$('#printPoProformasBtn').onclick=printSelectedPoProformas;
 if($('#createPoPrintPalletBtn'))$('#createPoPrintPalletBtn').onclick=createPoPrintPallet;if($('#addMarkedPosToPalletBtn'))$('#addMarkedPosToPalletBtn').onclick=addMarkedPosToActivePallet;
 if($('#selectAllPoPrint'))$('#selectAllPoPrint').onchange=e=>{$$('.po-print-checkbox:not(:disabled)').forEach(cb=>cb.checked=e.target.checked)};
+if($('#orderFormPageSearch'))$('#orderFormPageSearch').oninput=renderProformaPoRows;
+if($('#toggleOrderFormSearch'))$('#toggleOrderFormSearch').onclick=()=>{const panel=$('#orderFormSearchPanel');panel.classList.toggle('open');$('#toggleOrderFormSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};
+if($('#clearOrderFormPageSearch'))$('#clearOrderFormPageSearch').onclick=()=>{const el=$('#orderFormPageSearch');if(el)el.value='';renderProformaPoRows()};
 if($('#togglePoSearch'))$('#togglePoSearch').onclick=()=>{const panel=$('#poSearchPanel');panel.classList.toggle('open');$('#togglePoSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearPoSearch'))$('#clearPoSearch').onclick=()=>{poSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderPurchaseOrders()};
 const simplePageSearches=[
   ['toggleFinancialSearch','financialSearchPanel','financialPageSearch','clearFinancialPageSearch',renderFinancial],
