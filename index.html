@@ -1393,7 +1393,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   <div class="table-wrap"><table>
     <thead><tr>
       <th style="width:44px"><input id="selectAllPoPrint" type="checkbox" title="Mark all available POs"></th>
-      <th>PO #</th><th>PO Program</th><th>Vendor/Producer</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>Shipment Status</th>
+      <th>PO #</th><th>PO Program</th><th>Vendor/Producer</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>Shipment Status</th><th>Generate Shipping Case Label</th>
     </tr></thead>
     <tbody id="proformaPoRows"></tbody>
   </table></div>
@@ -3465,9 +3465,10 @@ function renderProformaPoRows(){
       <td>${escapeHtml(poCaseQuantityWithBottlesPerCase(po))}</td>
       <td>${poBottleQuantity(po).toLocaleString()}</td>
       <td>${poStatusSelect(po)}</td>
+      <td><button type="button" class="secondary small" onclick="openShippingCaseLabelGenerator('${po.id}')">Generate Shipping Case Label</button></td>
     </tr>`;
   }).join('');
-  tbody.innerHTML=rows||'<tr><td colspan="8">No active POs available.</td></tr>';
+  tbody.innerHTML=rows||'<tr><td colspan="9">No active POs available.</td></tr>';
   const all=$('#selectAllPoPrint');
   if(all){
     all.checked=false;
