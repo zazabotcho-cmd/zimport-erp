@@ -802,40 +802,19 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 #transportation #shipmentRows td:nth-child(13){width:180px;min-width:180px;max-width:180px;}
 </style>
 <style>
-/* Active Transportation: fit the complete 15-column list on one desktop page without horizontal scrolling. */
-#transportation .box{padding:12px;}
-#transportation .active-transportation-scroll{width:100%;max-width:100%;overflow-x:hidden!important;overflow-y:visible!important;}
-#transportation .active-transportation-scroll table{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important;}
+/* Active Transportation: regular readable size. Horizontal scrolling is allowed when needed. */
+#transportation .box{padding:20px;}
+#transportation .active-transportation-scroll{width:100%;max-width:100%;overflow-x:auto!important;overflow-y:hidden!important;}
+#transportation .active-transportation-scroll table{width:100%;min-width:1650px!important;table-layout:auto!important;}
 #transportation .active-transportation-scroll th,
-#transportation .active-transportation-scroll td{font-size:9px!important;line-height:1.18!important;padding:5px 3px!important;white-space:normal!important;overflow-wrap:anywhere;word-break:normal;}
-#transportation .active-transportation-scroll th{font-size:8.5px!important;text-align:left;}
+#transportation .active-transportation-scroll td{font-size:13px!important;line-height:1.4!important;padding:11px 9px!important;white-space:normal!important;}
+#transportation .active-transportation-scroll th{font-size:13px!important;}
 #transportation .active-transportation-scroll select,
-#transportation .active-transportation-scroll input{min-width:0!important;width:100%!important;font-size:9px!important;padding:4px 2px!important;height:auto!important;}
-#transportation .active-transportation-scroll button{font-size:9px!important;padding:4px 5px!important;white-space:normal;}
-#transportation .active-transportation-scroll .shipment-actions{display:flex;flex-direction:column;gap:3px;}
+#transportation .active-transportation-scroll input{font-size:13px!important;padding:8px 9px!important;}
+#transportation .active-transportation-scroll button{font-size:12px!important;padding:6px 10px!important;}
+#transportation .active-transportation-scroll .transport-converter{font-size:12px!important;}
+#transportation .active-transportation-scroll .shipment-actions{display:flex;flex-direction:column;gap:6px;}
 #transportation .active-transportation-scroll .shipment-actions button{width:100%;}
-#transportation .active-transportation-scroll .transport-converter{font-size:8.5px;}
-#transportation #shipmentRows td:nth-child(13){width:auto!important;min-width:0!important;max-width:none!important;}
-#transportation .active-transportation-scroll th:nth-child(1){width:7%;}
-#transportation .active-transportation-scroll th:nth-child(2){width:7%;}
-#transportation .active-transportation-scroll th:nth-child(3){width:8%;}
-#transportation .active-transportation-scroll th:nth-child(4){width:5%;}
-#transportation .active-transportation-scroll th:nth-child(5){width:4%;}
-#transportation .active-transportation-scroll th:nth-child(6){width:7%;}
-#transportation .active-transportation-scroll th:nth-child(7){width:6%;}
-#transportation .active-transportation-scroll th:nth-child(8){width:7%;}
-#transportation .active-transportation-scroll th:nth-child(9){width:6%;}
-#transportation .active-transportation-scroll th:nth-child(10){width:9%;}
-#transportation .active-transportation-scroll th:nth-child(11){width:8%;}
-#transportation .active-transportation-scroll th:nth-child(12){width:7%;}
-#transportation .active-transportation-scroll th:nth-child(13){width:7%;}
-#transportation .active-transportation-scroll th:nth-child(14){width:7%;}
-#transportation .active-transportation-scroll th:nth-child(15){width:5%;}
-@media(max-width:1100px){
- #transportation .active-transportation-scroll th,#transportation .active-transportation-scroll td{font-size:8px!important;padding:4px 2px!important;}
- #transportation .active-transportation-scroll th{font-size:7.5px!important;}
- #transportation .active-transportation-scroll button,#transportation .active-transportation-scroll select{font-size:8px!important;}
-}
 </style>
 </head>
 <body>
@@ -3626,40 +3605,19 @@ button:disabled{
 </style>
 
 <style>
-/* Active Transportation: fit the complete 15-column list on one desktop page without horizontal scrolling. */
-#transportation .box{padding:12px;}
-#transportation .active-transportation-scroll{width:100%;max-width:100%;overflow-x:hidden!important;overflow-y:visible!important;}
-#transportation .active-transportation-scroll table{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important;}
+/* Active Transportation: regular readable size. Horizontal scrolling is allowed when needed. */
+#transportation .box{padding:20px;}
+#transportation .active-transportation-scroll{width:100%;max-width:100%;overflow-x:auto!important;overflow-y:hidden!important;}
+#transportation .active-transportation-scroll table{width:100%;min-width:1650px!important;table-layout:auto!important;}
 #transportation .active-transportation-scroll th,
-#transportation .active-transportation-scroll td{font-size:9px!important;line-height:1.18!important;padding:5px 3px!important;white-space:normal!important;overflow-wrap:anywhere;word-break:normal;}
-#transportation .active-transportation-scroll th{font-size:8.5px!important;text-align:left;}
+#transportation .active-transportation-scroll td{font-size:13px!important;line-height:1.4!important;padding:11px 9px!important;white-space:normal!important;}
+#transportation .active-transportation-scroll th{font-size:13px!important;}
 #transportation .active-transportation-scroll select,
-#transportation .active-transportation-scroll input{min-width:0!important;width:100%!important;font-size:9px!important;padding:4px 2px!important;height:auto!important;}
-#transportation .active-transportation-scroll button{font-size:9px!important;padding:4px 5px!important;white-space:normal;}
-#transportation .active-transportation-scroll .shipment-actions{display:flex;flex-direction:column;gap:3px;}
+#transportation .active-transportation-scroll input{font-size:13px!important;padding:8px 9px!important;}
+#transportation .active-transportation-scroll button{font-size:12px!important;padding:6px 10px!important;}
+#transportation .active-transportation-scroll .transport-converter{font-size:12px!important;}
+#transportation .active-transportation-scroll .shipment-actions{display:flex;flex-direction:column;gap:6px;}
 #transportation .active-transportation-scroll .shipment-actions button{width:100%;}
-#transportation .active-transportation-scroll .transport-converter{font-size:8.5px;}
-#transportation #shipmentRows td:nth-child(13){width:auto!important;min-width:0!important;max-width:none!important;}
-#transportation .active-transportation-scroll th:nth-child(1){width:7%;}
-#transportation .active-transportation-scroll th:nth-child(2){width:7%;}
-#transportation .active-transportation-scroll th:nth-child(3){width:8%;}
-#transportation .active-transportation-scroll th:nth-child(4){width:5%;}
-#transportation .active-transportation-scroll th:nth-child(5){width:4%;}
-#transportation .active-transportation-scroll th:nth-child(6){width:7%;}
-#transportation .active-transportation-scroll th:nth-child(7){width:6%;}
-#transportation .active-transportation-scroll th:nth-child(8){width:7%;}
-#transportation .active-transportation-scroll th:nth-child(9){width:6%;}
-#transportation .active-transportation-scroll th:nth-child(10){width:9%;}
-#transportation .active-transportation-scroll th:nth-child(11){width:8%;}
-#transportation .active-transportation-scroll th:nth-child(12){width:7%;}
-#transportation .active-transportation-scroll th:nth-child(13){width:7%;}
-#transportation .active-transportation-scroll th:nth-child(14){width:7%;}
-#transportation .active-transportation-scroll th:nth-child(15){width:5%;}
-@media(max-width:1100px){
- #transportation .active-transportation-scroll th,#transportation .active-transportation-scroll td{font-size:8px!important;padding:4px 2px!important;}
- #transportation .active-transportation-scroll th{font-size:7.5px!important;}
- #transportation .active-transportation-scroll button,#transportation .active-transportation-scroll select{font-size:8px!important;}
-}
 </style>
 </head><body>
     <div class="print-actions"><button onclick="window.print()">Print</button>${allowSave?'<button onclick="window.opener&&window.opener.saveCurrentGeneratedProforma&&window.opener.saveCurrentGeneratedProforma()">Save / Move to Order Forms</button>':''}</div>
