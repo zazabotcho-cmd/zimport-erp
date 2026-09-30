@@ -3677,7 +3677,66 @@ button:disabled{
     <div class="bottom-warning">${warning}</div>
     <div class="instructions">${instructions}</div>
 
+<script>
+function shippingCaseLabelItemData(po){
+ const names=[],sizes=[];
+ (po.lines||[]).forEach(line=>{
+  const item=(state.items||[]).find(i=>String(i.id)===String(line.itemId||line.tenderItemId||'')||(line.itemNo&&String(i.lcboItemNumber||'')===String(line.itemNo)));
+  const name=String(line.yearProductName||line.itemNo||item?.description||'').trim();
+  const raw=line.unitSizeMl||item?.sellingUnitSizeMl||item?.bottleSizeMl||item?.unitSizeMl||item?.sizeMl||'';
+  if(name)names.push(name);
+  if(raw!==''&&raw!=null)sizes.push(String(raw).match(/[a-zA-Z]/)?String(raw):String(raw)+' mL');
+ });
+ return {names:names.join(' / ')||'—',sizes:sizes.join(' / ')||'—'};
+}
+function openShippingCaseLabelGenerator(poId){
+ const po=(state.purchaseOrders||[]).find(x=>String(x.id)===String(poId)); if(!po){alert('PO not found.');return;}
+ const d=shippingCaseLabelItemData(po);
+ document.getElementById('caseLabelPoId').value=po.id;
+ document.getElementById('caseLabelPoNumber').value=po.number||'';
+ document.getElementById('caseLabelVendor').value=(typeof poVendorNameList==='function'?poVendorNameList(po).join(', '):(po.supplierNames||[]).join(', '))||'';
+ document.getElementById('caseLabelItemName').value=d.names;
+ document.getElementById('caseLabelItemSize').value=d.sizes;
+ document.getElementById('caseLabelScc').value=po.shippingCaseSccCode||'';
+ document.getElementById('shippingCaseLabelOverlay').classList.remove('hidden');
+ setTimeout(()=>document.getElementById('caseLabelScc').focus(),50);
+}
+function closeShippingCaseLabelGenerator(){document.getElementById('shippingCaseLabelOverlay').classList.add('hidden')}
+function pdfSafeText(v){return String(v??'').replace(/[^\x20-\x7E]/g,' ').replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')}
+function pdfWrap(text,max=62){const words=String(text||'').split(/\s+/),out=[];let line='';for(const w of words){if((line+' '+w).trim().length>max&&line){out.push(line);line=w}else line=(line+' '+w).trim()}if(line)out.push(line);return out.length?out:['—']}
+function buildSimpleCaseLabelPdf(data){
+ let y=735,ops=['BT','/F1 18 Tf','72 '+y+' Td','(SHIPPING CASE LABEL) Tj','ET']; y-=42;
+ const add=(label,value)=>{ops.push('BT','/F1 11 Tf','72 '+y+' Td','('+pdfSafeText(label)+') Tj','ET');y-=17;pdfWrap(value).forEach(line=>{ops.push('BT','/F1 13 Tf','90 '+y+' Td','('+pdfSafeText(line)+') Tj','ET');y-=18});y-=10};
+ add('PO #',data.po);add('VENDOR NAME',data.vendor);add('ITEM NAME',data.item);add('ITEM SIZE',data.size);add('SHIPPING CASE SCC CODE',data.scc);
+ ops.push('0.8 w','55 55 502 720 re','S');
+ const stream=ops.join('\n');
+ const objs=[];objs[1]='<< /Type /Catalog /Pages 2 0 R >>';objs[2]='<< /Type /Pages /Kids [3 0 R] /Count 1 >>';objs[3]='<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>';objs[4]='<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream';objs[5]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>';
+ let pdf='%PDF-1.4\n',offset=[0];for(let i=1;i<=5;i++){offset[i]=pdf.length;pdf+=i+' 0 obj\n'+objs[i]+'\nendobj\n'}const xref=pdf.length;pdf+='xref\n0 6\n0000000000 65535 f \n';for(let i=1;i<=5;i++)pdf+=String(offset[i]).padStart(10,'0')+' 00000 n \n';pdf+='trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';return new Blob([pdf],{type:'application/pdf'});
+}
+function generateShippingCaseLabelPdf(){
+ const scc=document.getElementById('caseLabelScc').value.trim();if(!scc){alert('Please enter the Shipping Case SCC Code.');document.getElementById('caseLabelScc').focus();return}if(!/^\d+$/.test(scc)){alert('Shipping Case SCC Code must contain numbers only.');return}
+ const poId=document.getElementById('caseLabelPoId').value,po=(state.purchaseOrders||[]).find(x=>String(x.id)===String(poId));if(po){po.shippingCaseSccCode=scc;if(typeof save==='function')save()}
+ const data={po:document.getElementById('caseLabelPoNumber').value,vendor:document.getElementById('caseLabelVendor').value,item:document.getElementById('caseLabelItemName').value,size:document.getElementById('caseLabelItemSize').value,scc};
+ const blob=buildSimpleCaseLabelPdf(data),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Shipping_Case_Label_'+String(data.po||'PO').replace(/[^A-Za-z0-9_-]+/g,'_')+'.pdf';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+window.openShippingCaseLabelGenerator=openShippingCaseLabelGenerator;window.closeShippingCaseLabelGenerator=closeShippingCaseLabelGenerator;window.generateShippingCaseLabelPdf=generateShippingCaseLabelPdf;
+</script>
 
+
+<div id="shippingCaseLabelOverlay" class="hidden" style="position:fixed;inset:0;z-index:2600;background:#0009;overflow:auto;padding:22px">
+ <div style="max-width:720px;margin:35px auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 12px 35px #0005">
+  <div class="section-head"><div><h2>Generate Shipping Case Label</h2><p class="note">PO information is imported automatically. Enter the Shipping Case SCC Code and generate a printable PDF.</p></div><button type="button" class="secondary" onclick="closeShippingCaseLabelGenerator()">Close</button></div>
+  <input id="caseLabelPoId" type="hidden">
+  <div class="form-grid two" style="margin-top:16px">
+   <label>PO #<input id="caseLabelPoNumber" readonly></label>
+   <label>Vendor Name<input id="caseLabelVendor" readonly></label>
+   <label>Item Name<textarea id="caseLabelItemName" rows="3" readonly></textarea></label>
+   <label>Item Size<textarea id="caseLabelItemSize" rows="3" readonly></textarea></label>
+   <label style="grid-column:1/-1">Shipping Case SCC Code<input id="caseLabelScc" inputmode="numeric" autocomplete="off" placeholder="Enter SCC code numbers"></label>
+  </div>
+  <div class="action-buttons" style="margin-top:18px"><button type="button" class="success" onclick="generateShippingCaseLabelPdf()">Generate PDF</button><button type="button" class="secondary" onclick="closeShippingCaseLabelGenerator()">Cancel</button></div>
+ </div>
+</div>
 
 </body></html>`;
 }
