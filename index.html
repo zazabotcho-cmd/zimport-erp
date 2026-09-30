@@ -10965,20 +10965,19 @@ function buildCaseLabelPdf(data){
   const itemsApprox=itemsText.length*15*.53,itemsX=Math.max(320,555-itemsApprox);
   ops.push('BT','/F1 15 Tf',itemsX.toFixed(1)+' '+y+' Td','('+itemsText+') Tj','ET');
   y-=32;ops.push('BT','/F1 15 Tf','55 '+y+' Td','('+itemText+') Tj','ET');
-  y-=34;ops.push('BT','/F1 14 Tf','55 '+y+' Td','('+pdfSafeText('CASE WEIGHT '+data.weight+' KG')+') Tj','ET');
+  const weightText=pdfSafeText('CASE WEIGHT '+data.weight+' KG');
+  const weightApprox=weightText.length*14*.53,weightX=Math.max(320,555-weightApprox);
+  ops.push('BT','/F1 14 Tf',weightX.toFixed(1)+' '+y+' Td','('+weightText+') Tj','ET');
   y-=28;ops.push(...centeredTextOps('GTIN-14 / SCC',y,9));
   const pattern=itf14Pattern(data.gtin),maxWidth=480,module=Math.min(2.05,maxWidth/pattern.length),total=pattern.length*module,x0=(612-total)/2;
   const barBottom=bottom+50,barHeight=Math.max(72,Math.min(94,y-barBottom-14));
   ops.push('0 g');let x=x0;for(const bit of pattern){if(bit==='1')ops.push(x.toFixed(2)+' '+barBottom+' '+module.toFixed(2)+' '+barHeight+' re','f');x+=module;}
-  ops.push('3 w',(x0-6).toFixed(2)+' '+(barBottom-6)+' '+(total+12).toFixed(2)+' '+(barHeight+12)+' re','S');
   ops.push(...centeredTextOps(data.gtin,bottom+25,15));
  }
  drawLabel(792,396);
  drawLabel(396,0);
- // Center cutting guide with scissors marks.
+ // Center dashed cutting guide.
  ops.push('0.7 w','[5 5] 0 d','28 396 m','584 396 l','S','[] 0 d');
- ops.push('BT','/F1 11 Tf','36 402 Td','(CUT HERE  < <) Tj','ET');
- ops.push('BT','/F1 11 Tf','505 402 Td','(> >  CUT HERE) Tj','ET');
  const stream=ops.join('\n'),objs=[];objs[1]='<< /Type /Catalog /Pages 2 0 R >>';objs[2]='<< /Type /Pages /Kids [3 0 R] /Count 1 >>';objs[3]='<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>';objs[4]='<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream';objs[5]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>';
  let pdf='%PDF-1.4\n',offset=[0];for(let i=1;i<=5;i++){offset[i]=pdf.length;pdf+=i+' 0 obj\n'+objs[i]+'\nendobj\n'}const xref=pdf.length;pdf+='xref\n0 6\n0000000000 65535 f \n';for(let i=1;i<=5;i++)pdf+=String(offset[i]).padStart(10,'0')+' 00000 n \n';pdf+='trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';return new Blob([pdf],{type:'application/pdf'});
 }
