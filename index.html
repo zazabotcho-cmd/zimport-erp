@@ -972,7 +972,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
     <h3 id="itWinFormTitle" style="margin-top:0">Add Supplier Information</h3>
     <div class="form-grid three">
       <label>LCBO Supplier Number (if applicable)<input id="itWinLcboSupplierNumber"></label>
-      <label>Supplier # in NISS (if applicable)<input id="itWinAgencyNissNumber" autocomplete="off"></label>
+      <label>Vendor # in NISS (if applicable)<input id="itWinAgencyNissNumber" autocomplete="off"></label>
       <label>Supplier Legal Full Name<input id="itWinName"></label>
       <label>Supplier Address Line 1<input id="itWinAddress1"></label>
       <label>Supplier Address Line 2<input id="itWinAddress2"></label>
@@ -1175,7 +1175,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
     <label>Final Decision<select id="submittedFinalSearch"><option value="">All final decisions</option><option>In Progress</option><option>Winner</option><option>Declined</option></select></label>
     <div class="search-actions"><button type="button" id="clearSubmittedSearch" class="secondary">Clear Search</button></div>
   </div>
-  <div class="table-wrap"><table class="active-submissions-table"><thead><tr><th>Tender ID</th><th>Pre-Submission Date</th><th>Tender Name</th><th>Agency</th><th>Supplier / Supplier # in NISS</th><th>Item Description</th><th>Submission Status</th><th>Product / Submission #</th><th>1st Stage Decision</th><th>Sample Provide Date</th><th>Sample and Documents Status</th><th>Write Comment</th><th>Final Decision</th></tr></thead><tbody id="submissionRows"></tbody></table></div>
+  <div class="table-wrap"><table class="active-submissions-table"><thead><tr><th>Tender ID</th><th>Pre-Submission Date</th><th>Tender Name</th><th>Agency</th><th>Supplier / Vendor # in NISS</th><th>Item Description</th><th>Submission Status</th><th>Product / Submission #</th><th>1st Stage Decision</th><th>Sample Provide Date</th><th>Sample and Documents Status</th><th>Write Comment</th><th>Final Decision</th></tr></thead><tbody id="submissionRows"></tbody></table></div>
 </section>
 
 
@@ -1390,7 +1390,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
     <label>Search POs<input id="orderFormPageSearch" type="search" placeholder="Type PO #, program, vendor, item or shipment status"></label>
     <div class="page-search-actions"><button type="button" class="secondary" id="clearOrderFormPageSearch">Clear Search</button></div>
   </div>
-  <div class="action-buttons" style="margin:12px 0"><button type="button" class="success" onclick="openMarkedShippingCaseLabels()">Generate Shipping Case Labels</button><button type="button" class="secondary" onclick="clearShippingCaseLabelSelection()">Clear Label Selection</button><span id="caseLabelSelectedCount">0 POs marked for labels</span></div>
+  <div class="action-buttons" style="margin:12px 0;display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap"><span id="caseLabelSelectedCount" style="font-size:12px">0 POs marked for labels</span><button type="button" class="success small" style="font-size:12px;padding:5px 9px;min-height:0;width:auto" onclick="openMarkedShippingCaseLabels()">Generate Shipping Case Labels</button><button type="button" class="secondary small" style="font-size:12px;padding:5px 9px;min-height:0;width:auto" onclick="clearShippingCaseLabelSelection()">Clear Label Selection</button></div>
   <div class="table-wrap"><table>
     <thead><tr>
       <th style="width:44px"><input id="selectAllPoPrint" type="checkbox" title="Mark all available POs"></th>
@@ -1948,7 +1948,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 <div id="agencyModal" class="modal hidden"><div class="modal-card agency-modal"><div class="modal-head"><h2 id="agencyModalTitle">Add Agency</h2><button id="closeAgency" class="icon">×</button></div><input type="hidden" id="agencyId"><div class="form-grid"><label>Agency Name *<input id="agencyName" placeholder="Enter full agency name" required></label><label>Agency LCBO Number<input id="agencyShort" placeholder="Example: 142858"></label><label>Agency # in NISS<input id="agencyNissNumber" placeholder="Enter NISS agency number"></label><label>Contact Name *<input id="agencyContactName" placeholder="Enter contact name" required></label><label>Phone Number *<input id="agencyPhone" type="tel" placeholder="Enter phone number" required></label><label class="full">Address Line 1 *<input id="agencyAddress1" placeholder="Street address" required></label><label class="full">Address Line 2<input id="agencyAddress2" placeholder="Unit, suite, building, etc."></label><label class="full">City, Province and Postal Code *<input id="agencyCityProvincePostal" placeholder="Example: Toronto, ON M1M 1M1" required></label><label class="full">Email Address *<input id="agencyEmail" type="email" placeholder="name@example.com" required></label><label class="full">Notes<textarea id="agencyNotes"></textarea></label></div><div class="modal-actions"><button id="deleteAgency" type="button" class="danger">Delete</button><span></span><button id="cancelAgency" type="button" class="secondary">Cancel</button><button id="saveAgency" type="button">Save Agency</button></div></div></div>
 <div id="agencyInfoModal" class="modal hidden"><div class="modal-card agency-modal"><div class="modal-head"><div><h2 id="agencyInfoTitle">Agency Information</h2><p>Click Copy beside any field.</p></div><button id="closeAgencyInfo" class="icon">×</button></div><div id="agencyInfoContent"></div><div class="modal-actions"><span></span><button id="copyAllAgencyInfo" type="button" class="secondary">Copy All Information</button><button id="closeAgencyInfoBottom" type="button">Close</button></div></div></div>
 <div id="supplierModal" class="modal hidden"><div class="modal-card agency-modal"><div class="modal-head"><h2 id="supplierModalTitle">Add Supplier</h2><button id="closeSupplier" class="icon">×</button></div><input type="hidden" id="supplierId"><div class="form-grid">
-<label>LCBO Supplier Number<input id="supplierLcboNumber" placeholder="Example: 0144513"></label><label>Supplier # in NISS<input id="supplierNissNumber" placeholder="Enter supplier NISS number"></label><label>Supplier Name *<input id="supplierName" required></label><label class="full">Supplier Address Line 1<input id="supplierAddress1"></label><label class="full">Supplier Address Line 2<input id="supplierAddress2"></label><label>Supplier City<input id="supplierCity"></label><label>Supplier Region<input id="supplierRegion"></label><label>Supplier Country<input id="supplierCountry"></label><label>Supplier Postal Code<input id="supplierPostalCode"></label><label>Supplier Email<input id="supplierEmail" type="email"></label><label>Supplier Phone Number<input id="supplierPhone" type="tel"></label>
+<label>LCBO Supplier Number<input id="supplierLcboNumber" placeholder="Example: 0144513"></label><label>Vendor # in NISS<input id="supplierNissNumber" placeholder="Enter vendor NISS number"></label><label>Supplier Name *<input id="supplierName" required></label><label class="full">Supplier Address Line 1<input id="supplierAddress1"></label><label class="full">Supplier Address Line 2<input id="supplierAddress2"></label><label>Supplier City<input id="supplierCity"></label><label>Supplier Region<input id="supplierRegion"></label><label>Supplier Country<input id="supplierCountry"></label><label>Supplier Postal Code<input id="supplierPostalCode"></label><label>Supplier Email<input id="supplierEmail" type="email"></label><label>Supplier Phone Number<input id="supplierPhone" type="tel"></label>
 <div class="full"><h3>LCBO Gateway Login</h3><p class="note">Use the description field to note what this email account is for.</p></div><label class="full">What is this email for?<input id="supplierGatewayEmailPurpose" placeholder="Example: LCBO Gateway purchasing account"></label><label>Supplier LCBO Gateway Email<input id="supplierGatewayEmail" type="email" autocomplete="off"></label><label>Supplier LCBO Gateway Password<input id="supplierGatewayPassword" type="password" autocomplete="new-password"></label>
 <div class="full"><h3>Contact Person #1</h3></div><label>Name<input id="supplierContactName1"></label><label>Position<input id="supplierContactPosition1"></label><label>Email<input id="supplierContactEmail1" type="email"></label><label>Phone Number<input id="supplierContactPhone1" type="tel"></label>
 <div class="full"><h3>Contact Person #2</h3></div><label>Name<input id="supplierContactName2"></label><label>Position<input id="supplierContactPosition2"></label><label>Email<input id="supplierContactEmail2" type="email"></label><label>Phone Number<input id="supplierContactPhone2" type="tel"></label>
@@ -2380,7 +2380,7 @@ function renderSubmissionTable(targetId='submissionRows',mode='active',useFilter
         (supplierName&&normalize(w.name)===supplierName));
       return supplier?.nissNumber||supplier?.supplierNissNumber||winery?.agencyNissNumber||winery?.nissNumber||'';
     })():'';
-    const base=`<td><b>${escapeHtml(r.tenderId||tr?.code||'—')}</b></td>${mode==='winner'?'':`<td><input type="date" value="${escapeHtml(preDate)}" disabled title="Automatically filled from the tender pre-submission date"></td>`}<td><b>${escapeHtml(r.tenderName||tr?.name||'—')}</b></td><td>${escapeHtml(agencyName(r.agencyId))}${mode==='winner'?(winnerAgencyNiss?`<br><small>Agency # in NISS: ${escapeHtml(winnerAgencyNiss)}</small>`:''):(agencyNumber(r.agencyId)?`<br><small>Agent # ${escapeHtml(agencyNumber(r.agencyId))}</small>`:'')}</td><td>${escapeHtml(r.supplier||'—')}${mode==='winner'?`<br><small>Supplier # in NISS: ${escapeHtml(winnerSupplierNiss||'—')}</small>`:(item?.lcboSupplierNumber?`<br><small>Supplier # ${escapeHtml(item.lcboSupplierNumber)}</small>`:'')}</td><td><b>${escapeHtml(itemDisplay)}</b>${mode==='winner'?`<div style="margin-top:8px;display:grid;gap:6px"><label style="display:grid;gap:3px;font-size:11px;font-weight:700">ITEM LCBO#<input type="text" value="${escapeHtml(r.lcboItemNumber||item.lcboItemNumber||'')}" placeholder="Enter LCBO #" onchange="updateSubmissionField('${r.id}','lcboItemNumber',this.value)"></label></div>`:(item.lcboItemNumber?`<br><small>Item # ${escapeHtml(item.lcboItemNumber)}</small>`:'')}</td>`;
+    const base=`<td><b>${escapeHtml(r.tenderId||tr?.code||'—')}</b></td>${mode==='winner'?'':`<td><input type="date" value="${escapeHtml(preDate)}" disabled title="Automatically filled from the tender pre-submission date"></td>`}<td><b>${escapeHtml(r.tenderName||tr?.name||'—')}</b></td><td>${escapeHtml(agencyName(r.agencyId))}${mode==='winner'?(winnerAgencyNiss?`<br><small>Agency # in NISS: ${escapeHtml(winnerAgencyNiss)}</small>`:''):(agencyNumber(r.agencyId)?`<br><small>Agent # ${escapeHtml(agencyNumber(r.agencyId))}</small>`:'')}</td><td>${escapeHtml(r.supplier||'—')}${mode==='winner'?`<br><small>Vendor # in NISS: ${escapeHtml(winnerSupplierNiss||'—')}</small>`:(item?.lcboSupplierNumber?`<br><small>Supplier # ${escapeHtml(item.lcboSupplierNumber)}</small>`:'')}</td><td><b>${escapeHtml(itemDisplay)}</b>${mode==='winner'?`<div style="margin-top:8px;display:grid;gap:6px"><label style="display:grid;gap:3px;font-size:11px;font-weight:700">ITEM LCBO#<input type="text" value="${escapeHtml(r.lcboItemNumber||item.lcboItemNumber||'')}" placeholder="Enter LCBO #" onchange="updateSubmissionField('${r.id}','lcboItemNumber',this.value)"></label></div>`:(item.lcboItemNumber?`<br><small>Item # ${escapeHtml(item.lcboItemNumber)}</small>`:'')}</td>`;
     if(mode==='archived')return `<tr data-record-id="${r.id}">${base}${productSubmissionCell(r)}<td><span class="${decisionClass(stage)}">${escapeHtml(stage)}</span></td><td><span class="${decisionClass(forced)}">${escapeHtml(forced)}</span></td><td>${num(item.quotePerCase||r.offeredQuote).toFixed(2)}</td><td>${escapeHtml(item.quotationCurrency||r.offeredQuoteCurrency||'CAD')}</td><td>${escapeHtml(item.sellingUnitsPerShippingCase||r.bottles||'—')}</td><td>${num(item.estimatedRetailPrice||r.erpManual).toFixed(2)}</td><td>${escapeHtml(item.quoteType||'FOB')}</td><td>${escapeHtml(item.sellingUnitSizeMl||'—')}</td><td>${escapeHtml(item.limitedCaseQty||'—')}</td><td><div class="action-buttons"><button type="button" class="secondary small" onclick="moveBackToAllSubmitted('${r.id}')">Move Back to All Submitted Items</button><button type="button" class="danger small" onclick="deleteArchivedSubmission('${r.id}')">Delete Submission</button></div></td></tr>`;
     if(mode==='winner'){
       const transport=winnerTransportationInfo(r);const ref=transport.ref||'—';
@@ -4747,7 +4747,7 @@ const itemGroups=[
   ['productCategory','Product Category *','select',PRODUCT_CATEGORIES],['previousSubmissionNumber','Previous Submission Number','text','full'],['lcboItemNumber','LCBO Item Number','text'],['productDescription','Product Description *','text','full'],['previouslyPurchased','Has the product ever been previously purchased by the LCBO? *','select','Yes|No'],['upcNumber','UPC Number','text'],['sccNumber','SCC Number','text']
  ]},
  {title:'Supplier and Producer Information',layout:'supplierProducer',fields:[
-  ['lcboSupplierNumber','LCBO Supplier Number','text'],['supplierName','Supplier Name *','text'],['supplierAddress1','Supplier Address Line 1 *','text'],['supplierAddress2','Supplier Address Line 2','text'],['supplierCity','Supplier City *','text'],['supplierRegionCountry','Supplier Region / Country *','text'],['supplierPostalCode','Supplier Postal Code','text'],['phoneNumber','Phone Number *','text'],['faxNumber','Fax Number','text'],['emailAddress','Email Address','email'],['paymentTerms','Payment Terms','text'],
+  ['lcboSupplierNumber','Vendor # in NISS','text'],['supplierName','Supplier Name *','text'],['supplierAddress1','Supplier Address Line 1 *','text'],['supplierAddress2','Supplier Address Line 2','text'],['supplierCity','Supplier City *','text'],['supplierRegionCountry','Supplier Region / Country *','text'],['supplierPostalCode','Supplier Postal Code','text'],['phoneNumber','Phone Number *','text'],['faxNumber','Fax Number','text'],['emailAddress','Email Address','email'],['paymentTerms','Payment Terms','text'],
   ['producerSameAsSupplier','Is the Producer the same as the Supplier?','select','Yes|No'],['producerName','Producer Name *','text'],['producerAddress1','Producer Address Line 1 *','text'],['producerAddress2','Producer Address Line 2','text'],['producerCity','Producer City *','text'],['producerRegionCountry','Producer Region / Country *','text'],['producerPostalCode','Producer Postal Code','text']
  ]},
  {title:'Origin and Product Details',fields:[
@@ -9751,7 +9751,7 @@ function tenderSupplierItemHumanizeKey(key){
    opportunityId:'Tender Record ID',
    itemApprovalStatus:'Item Status',
    itemSubmittedAt:'Submitted Date',
-   lcboSupplierNumber:'LCBO Supplier Number',
+   lcboSupplierNumber:'Vendor # in NISS',
    sellingUnitSizeMl:'Selling Unit Size (ml.)'
  };
  if(special[key])return special[key];
@@ -10754,7 +10754,7 @@ setTimeout(applyNormalSubPageNames,0);
 (function(){
   function e(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
   function humanize(k){
-    const special={productDescription:'Product Description',supplierPricePerCase:'Supplier Price Per Offered Case',bottlesPerCase:'Bottles Per Case',supplierCurrency:'Currency',supplierQuoteType:'Quote Type',sellingUnitSizeMl:'Selling Unit Size (ml.)',lcboSupplierNumber:'LCBO Supplier Number',previousSubmissionNumber:'Previous LCBO Submission Number',itemApprovalStatus:'Item Status',itemSubmittedAt:'Submitted Date',headOfficeActionStatus:'Submission Status'};
+    const special={productDescription:'Product Description',supplierPricePerCase:'Supplier Price Per Offered Case',bottlesPerCase:'Bottles Per Case',supplierCurrency:'Currency',supplierQuoteType:'Quote Type',sellingUnitSizeMl:'Selling Unit Size (ml.)',lcboSupplierNumber:'Vendor # in NISS',previousSubmissionNumber:'Previous LCBO Submission Number',itemApprovalStatus:'Item Status',itemSubmittedAt:'Submitted Date',headOfficeActionStatus:'Submission Status'};
     return special[k]||String(k||'').replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/[_-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
   }
   function display(v){
@@ -11031,4 +11031,62 @@ window.openShippingCaseLabelGenerator=openShippingCaseLabelGenerator;window.clos
  </div>
 </div>
 
+<script>
+// Retrieve saved vendor details while entering the NISS number in the Tender Item editor.
+function tenderVendorNumberKey(value){
+ const text=String(value??'').trim().replace(/\s+/g,'');
+ return /^\d+$/.test(text)?text.replace(/^0+(?=\d)/,''):text.toUpperCase();
+}
+function autofillTenderItemVendor(input){
+ if(!input||input.id!=='i_lcboSupplierNumber')return;
+ const key=tenderVendorNumberKey(input.value);
+ let note=document.getElementById('tenderVendorAutofillNote');
+ if(!note){note=document.createElement('small');note.id='tenderVendorAutofillNote';note.setAttribute('aria-live','polite');input.closest('label')?.appendChild(note);}
+ if(!key){note.textContent='';return;}
+ const matches=[];
+ (state.suppliers||[]).forEach(s=>{
+  const number=s.nissNumber||s.supplierNissNumber||s.vendorNissNumber||s.lcboNumber;
+  if(number&&tenderVendorNumberKey(number)===key)matches.push({s,kind:'supplier'});
+ });
+ (state.countryWineries||[]).forEach(s=>{
+  const number=s.agencyNissNumber||s.nissNumber||s.vendorNissNumber||s.lcboSupplierNumber;
+  if(number&&tenderVendorNumberKey(number)===key)matches.push({s,kind:'country'});
+ });
+ if(!matches.length){note.textContent='No saved vendor matches this number.';return;}
+ // A country supplier-information record can supplement the same registered supplier.
+ const identity=s=>String(s.supplierLegalFullName||s.name||'').trim().toLowerCase();
+ const names=new Set(matches.map(({s})=>identity(s)));
+ if(names.size>1){note.textContent='More than one saved vendor matches this number. Check the vendor records.';return;}
+ const supplier=matches.find(m=>m.kind==='supplier')?.s||{};
+ const country=matches.find(m=>m.kind==='country')?.s||{};
+ const pick=(...values)=>values.find(v=>v!==undefined&&v!==null&&String(v).trim()!=='')??'';
+ const fields={
+  supplierName:pick(country.supplierLegalFullName,country.name,supplier.name),
+  supplierAddress1:pick(country.address1,supplier.address1),
+  supplierAddress2:pick(country.address2,supplier.address2),
+  supplierCity:pick(country.city,supplier.city),
+  supplierRegionCountry:pick(country.regionCountry,[country.region,country.supplierCountry||country.country].filter(Boolean).join(' / '),supplier.regionCountry,[supplier.region,supplier.country].filter(Boolean).join(' / ')),
+  supplierPostalCode:pick(country.postalCode,supplier.postalCode),
+  phoneNumber:pick(country.phone,country.supplierPhone,supplier.supplierPhone,supplier.phone1,supplier.phone),
+  faxNumber:pick(country.fax,supplier.faxNumber,supplier.fax),
+  emailAddress:pick(country.email,country.supplierEmail,supplier.supplierEmail,supplier.email1,supplier.email),
+  paymentTerms:pick(country.paymentTerms,supplier.paymentTerms)
+ };
+ Object.entries(fields).forEach(([field,value])=>{const el=document.getElementById('i_'+field);if(el&&!el.disabled&&!el.readOnly)el.value=value;});
+ if(typeof syncProducerVisibility==='function')syncProducerVisibility();
+ note.textContent='Supplier information filled from saved vendor: '+fields.supplierName+'.';
+}
+let tenderVendorAutofillTimer;
+document.addEventListener('input',event=>{
+ if(event.target.id!=='i_lcboSupplierNumber')return;
+ clearTimeout(tenderVendorAutofillTimer);
+ const input=event.target;
+ tenderVendorAutofillTimer=setTimeout(()=>{if(input.isConnected)autofillTenderItemVendor(input);},300);
+});
+document.addEventListener('change',event=>{
+ if(event.target.id!=='i_lcboSupplierNumber')return;
+ clearTimeout(tenderVendorAutofillTimer);autofillTenderItemVendor(event.target);
+});
+
+</script>
 </body></html>
