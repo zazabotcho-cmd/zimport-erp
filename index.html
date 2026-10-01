@@ -4816,9 +4816,10 @@ function buildItemFields(){
    const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
    return `<fieldset class="item-group"><legend>${g.title}</legend><div class="form-grid">
     ${itemFieldHtml(byId.previousSubmissionNumber)}
+    ${itemFieldHtml(['lcboItemNumber','LCBO ITEM#','text','full'])}
     ${itemFieldHtml(byId.productDescription)}
     ${itemFieldHtml(byId.productCategory)}
-    <div class="purchase-row full">${itemFieldHtml(byId.previouslyPurchased)}${itemFieldHtml(byId.lcboItemNumber)}</div>
+    <div class="purchase-row full">${itemFieldHtml(byId.previouslyPurchased)}</div>
     ${itemFieldHtml(byId.upcNumber)}
     ${itemFieldHtml(byId.sccNumber)}
    </div></fieldset>`;
@@ -4851,7 +4852,7 @@ function handleAttachments(e){const files=[...e.target.files];for(const file of 
 function itemFromForm(){const x={};itemGroups.forEach(g=>g.fields.forEach(([k,,t])=>{if(t==='calculated'||t==='websites'||t==='attachments')return;const el=$('#i_'+k);x[k]=t==='number'?num(el.value):(k==='productCategory'?normalizeProductCategory(el.value):el.value)}));x.websites=[...document.querySelectorAll('.website-url')].map(el=>el.value.trim()).filter(Boolean);x.attachments=currentAttachments.map(({id,name,size,type,lastModified})=>({id,name,size,type,lastModified}));x.id=$('#itemRecordId').value||'';const existing=state.items.find(i=>i.id===x.id);if(existing){x.sourceSupplierId=existing.sourceSupplierId||'';x.sourceSupplierItemId=existing.sourceSupplierItemId||'';x.supplierCasePriceReference=existing.supplierCasePriceReference??'';x.supplierCurrencyReference=existing.supplierCurrencyReference??'';}return x}
 function calcCaseVolume(){const v=num($('#i_caseLengthCm')?.value)*num($('#i_caseWidthCm')?.value)*num($('#i_caseHeightCm')?.value);if($('#i_calculatedCaseVolume'))$('#i_calculatedCaseVolume').value=v?v.toFixed(2):''}
 function calcPricePerSellingUnit(){const units=num($('#i_sellingUnitsPerShippingCase')?.value),quote=num($('#i_quotePerCase')?.value);if($('#i_calculatedPricePerSellingUnit'))$('#i_calculatedPricePerSellingUnit').value=units?(quote/units).toFixed(2):''}
-function syncLcboItemVisibility(){const input=$('#i_lcboItemNumber'),label=input?.closest('label'),show=$('#i_previouslyPurchased')?.value==='Yes';if(label)label.classList.toggle('field-hidden',!show);if(input){input.disabled=!show;if(!show)input.value='';}}
+function syncLcboItemVisibility(){const input=$('#i_lcboItemNumber');if(input){input.disabled=false;input.closest('label')?.classList.remove('field-hidden');}}
 function linkedSupplierItemForTenderItem(x){
  const supplier=(state.suppliers||[]).find(s=>s.id===x.sourceSupplierId)||(state.suppliers||[]).find(s=>(s.items||[]).some(i=>i.id===x.sourceSupplierItemId));
  if(supplier){
@@ -11087,6 +11088,38 @@ document.addEventListener('change',event=>{
  if(event.target.id!=='i_lcboSupplierNumber')return;
  clearTimeout(tenderVendorAutofillTimer);autofillTenderItemVendor(event.target);
 });
+
+</script>
+<script>
+function tenderItemNumberKey(value){const text=String(value??'').trim().replace(/\s+/g,'');return /^\d+$/.test(text)?text.replace(/^0+(?=\d)/,''):text.toUpperCase();}
+function autofillTenderItemByLcboNumber(input){
+ if(!input||input.id!=='i_lcboItemNumber')return;
+ let note=document.getElementById('tenderItemAutofillNote');
+ if(!note){note=document.createElement('small');note.id='tenderItemAutofillNote';note.setAttribute('aria-live','polite');input.closest('label')?.appendChild(note);}
+ const key=tenderItemNumberKey(input.value);if(!key){note.textContent='';return;}
+ const currentId=String(document.getElementById('itemRecordId')?.value||'');
+ const groups=itemGroups.filter(g=>['Origin and Product Details','Selling Unit Information','Case and Pallet Information'].includes(g.title));
+ const fields=groups.flatMap(g=>g.fields).filter(([k,,type])=>!['vintage','percentAlcohol'].includes(k)&&type!=='calculated');
+ const aliases={sellingUnitSizeMl:['bottleSizeMl','unitSizeMl'],unitsPerSellingPack:['unitsPerPack'],containerWeightG:['containerWeight'],packageWeightG:['packageWeight'],stopperWeightG:['stopperWeight']};
+ const value=(item,k)=>{if(item[k]!==undefined&&item[k]!==null)return item[k];for(const alias of aliases[k]||[])if(item[alias]!==undefined&&item[alias]!==null)return item[alias];return undefined;};
+ const sources=[...(state.items||[]).filter(i=>!currentId||String(i.id)!==currentId),...(state.countryCandidates||[]),...(state.suppliers||[]).flatMap(s=>s.items||[])];
+ const matches=sources.filter(i=>[i.lcboItemNumber,i.itemNumber,i.lcboNumber].some(n=>n!==undefined&&n!==null&&String(n).trim()&&tenderItemNumberKey(n)===key));
+ if(!matches.length){note.textContent='No other saved item matches this LCBO ITEM#.';return;}
+ // Prefer the record with the most relevant saved details; use the newest record on a tie.
+ const score=item=>fields.filter(([k])=>{const v=value(item,k);return v!==undefined&&v!==null&&v!=='';}).length;
+ matches.sort((a,b)=>score(b)-score(a)||(Date.parse(b.updatedAt||b.modifiedAt||b.createdAt||'')||0)-(Date.parse(a.updatedAt||a.modifiedAt||a.createdAt||'')||0));
+ const source=matches[0];
+ fields.forEach(([k,,type])=>{const el=document.getElementById('i_'+k),v=value(source,k);if(!el||el.disabled||el.readOnly||v===undefined||v===null)return;
+  if(el.tagName==='SELECT'&&v!==''&&!Array.from(el.options).some(o=>o.value===String(v))){const option=document.createElement('option');option.value=String(v);option.textContent=String(v);el.appendChild(option);}
+  el.value=v;
+ });
+ if(typeof calcCaseVolume==='function')calcCaseVolume();
+ const weight=document.getElementById('i_caseWeightKg');if(weight)weight.setCustomValidity(Number(weight.value)>18.9?'Case weight should not exceed 18.9 kg. Decrease item quantities.':'');
+ note.textContent='Details retrieved from '+(source.productDescription||source.description||source.brandName||'saved item')+'.';
+}
+let tenderItemAutofillTimer;
+document.addEventListener('input',event=>{if(event.target.id!=='i_lcboItemNumber')return;clearTimeout(tenderItemAutofillTimer);const input=event.target;tenderItemAutofillTimer=setTimeout(()=>{if(input.isConnected)autofillTenderItemByLcboNumber(input);},300);});
+document.addEventListener('change',event=>{if(event.target.id!=='i_lcboItemNumber')return;clearTimeout(tenderItemAutofillTimer);autofillTenderItemByLcboNumber(event.target);});
 
 </script>
 </body></html>
