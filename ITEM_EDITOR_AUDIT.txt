@@ -1,0 +1,10 @@
+Items Add New Item / Continue audit and fixes:
+- Add and Edit open a dedicated item-entry mode, without supplier detail tables.
+- PO-style wide scrolling window with fixed header and Save / Cancel actions.
+- All existing item fields, shipping options, attachments and certification options retained.
+- Selling Unit Information is visible in the standalone item editor.
+- Save and Cancel consistently return to Items.
+- Saving edits preserves existing metadata and replaces the same item instead of duplicating it.
+- Save validates the selected supplier, product name, numeric values, case-weight limit and Other product status.
+- Save waits for file uploads to finish reading. Stale file reads cannot overwrite a different item editor session.
+Validation: JavaScript syntax, add/edit save behavior, barcode leading zeros, attachment and metadata preservation, validation guards and completeness of item fields passed. Browser layout verification was unavailable in this environment.
