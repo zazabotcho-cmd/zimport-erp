@@ -2005,6 +2005,51 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 <div id="supplierItemInfoModal" class="modal hidden"><div class="modal-card item-info-page"><div class="modal-head"><div><h2 id="supplierItemInfoTitle">Item Information</h2><p>Complete supplier item information with copy options for every field.</p></div><button id="closeSupplierItemInfo" class="icon">×</button></div><div class="info-toolbar"><button id="copyAllSupplierItemInfo" type="button" class="secondary">Copy All Item Information</button></div><div id="supplierItemInfoContent"></div><div class="modal-actions"><span></span><button id="closeSupplierItemInfoBottom" type="button">Close</button></div></div></div>
 <script>
 var shippingCaseLabelSelection=new Set();
+// One ordering rule for record lists; positional PO lines and pallets are untouched.
+var programListOrderRegistry=new Map();
+var programListOrderClock=0;
+var programListOrderInitialized=false;
+function programListOrderTime(record){return Number(record?._listUpdatedAt)||Number(record?._listCreatedAt)||0;}
+function compareProgramNewestFirst(a,b){return programListOrderTime(b)-programListOrderTime(a);}
+function programRecordFingerprint(record){
+ return JSON.stringify(record,(key,value)=>{
+  if(key==='_listUpdatedAt'||key==='_listCreatedAt'||key==='items'||key==='workItems')return undefined;
+  return value;
+ });
+}
+function prepareProgramNewestFirst(){
+ const initializing=!programListOrderInitialized;
+ const collections=[];
+ Object.entries(state).forEach(([key,rows])=>{
+  if(Array.isArray(rows)&&rows.some(row=>row&&typeof row==='object'&&!Array.isArray(row)&&row.id!==undefined))collections.push({key,rows});
+ });
+ (state.suppliers||[]).forEach(s=>{if(Array.isArray(s.items))collections.push({key:'supplierItems:'+s.id,rows:s.items});});
+ (state.tenders||[]).forEach(t=>{if(Array.isArray(t.workItems))collections.push({key:'tenderWorkItems:'+t.id,rows:t.workItems});});
+ const nextTime=()=>{programListOrderClock=Math.max(Date.now(),programListOrderClock+1);return programListOrderClock;};
+ collections.forEach(({key,rows})=>{
+  rows.forEach((record,index)=>{
+   if(!record||typeof record!=='object'||record.id===undefined)return;
+   const registryKey=key+':'+record.id,old=programListOrderRegistry.get(registryKey);
+   const fingerprint=programRecordFingerprint(record);
+   if(old){
+    record._listCreatedAt=Number(record._listCreatedAt)||old.created;
+    record._listUpdatedAt=Number(record._listUpdatedAt)||old.updated;
+    if(fingerprint!==old.fingerprint)record._listUpdatedAt=nextTime();
+   }else{
+    const original=Date.parse(record.createdAt||record.submittedAt||record.deletedAt||'');
+    const modified=Date.parse(record.updatedAt||record.modifiedAt||'');
+    const legacyTime=Number.isFinite(original)?original:index+1;
+    record._listCreatedAt=Number(record._listCreatedAt)||(initializing?legacyTime:nextTime());
+    record._listUpdatedAt=Number(record._listUpdatedAt)||(initializing?(Number.isFinite(modified)?modified:record._listCreatedAt):record._listCreatedAt);
+   }
+   programListOrderClock=Math.max(programListOrderClock,record._listUpdatedAt);
+   programListOrderRegistry.set(registryKey,{created:record._listCreatedAt,updated:record._listUpdatedAt,fingerprint});
+  });
+  rows.sort(compareProgramNewestFirst);
+ });
+ programListOrderInitialized=true;
+}
+
 window.addEventListener("error", function(e){console.error(e.error||e.message);});
 const DATA_KEY='zimportSubmissionProgramV5', SETTINGS_KEY='zimportSubmissionSettingsV5';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -2123,6 +2168,7 @@ function safeRefreshCall(fn){
  try{if(typeof fn==='function')fn()}catch(err){console.error('View refresh failed:',err)}
 }
 function refreshProgramViews(){
+ prepareProgramNewestFirst();
  // Core program pages.
  safeRefreshCall(renderAll);
 
@@ -2170,6 +2216,7 @@ function syncWinnerPickedUpFromTransportation(){
 function save(){
  updateAutomaticTenderStatuses();
  syncWinnerPickedUpFromTransportation();
+ prepareProgramNewestFirst();
  safeStorage.setItem(DATA_KEY,JSON.stringify(state));
 
  // Refresh synchronously so Add/Edit/Delete/Save changes appear immediately.
@@ -2986,7 +3033,7 @@ function renderSettings(){
   if(defaultCurrency) defaultCurrency.value=settings.defaultCurrency || 'CAD';
   if(company) company.value=settings.company ?? '';
 }
-function getAllSupplierItems(){const out=[];(state.suppliers||[]).forEach(supplier=>(supplier.items||[]).forEach(item=>out.push({supplier,item})));return out}
+function getAllSupplierItems(){const out=[];(state.suppliers||[]).forEach(supplier=>(supplier.items||[]).forEach(item=>out.push({supplier,item})));return out.sort((a,b)=>compareProgramNewestFirst(a.item,b.item))}
 function openItemsNewItemSelector(){
   if(!state.suppliers.length){alert('Add a supplier before creating an item.');activate('calculator');return;}
   const select=$('#itemsNewItemSupplier');
@@ -4621,7 +4668,7 @@ function renderHeadsRecycleBin(){
  const q=String($('#headsRecycleSearch')?.value||'').trim().toLowerCase();
  const valid=new Set((state.headsRecycleBin||[]).map(x=>x.id));
  for(const id of selectedHeadsRecycleIds)if(!valid.has(id))selectedHeadsRecycleIds.delete(id);
- const rows=(state.headsRecycleBin||[]).filter(x=>!q||recycleSearchText(x).includes(q)).sort((a,b)=>new Date(b.movedToHeadsAt||b.deletedAt)-new Date(a.movedToHeadsAt||a.deletedAt));
+ const rows=(state.headsRecycleBin||[]).filter(x=>!q||recycleSearchText(x).includes(q)).sort(compareProgramNewestFirst);
  body.innerHTML=rows.map(x=>{const d=recycleDetails(x);return `<tr><td><input type="checkbox" class="recycle-row-check" aria-label="Select ${escapeHtml(x.label||'record')}" ${selectedHeadsRecycleIds.has(x.id)?'checked':''} onchange="toggleRecycleSelection(true,'${x.id}',this.checked)"></td><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(d.description)}</td><td>${escapeHtml(d.po)}</td><td>${escapeHtml(d.supplier)}</td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.movedToHeadsAt||x.deletedAt).toLocaleString())}</td></tr>`}).join('')||"<tr><td colspan='8' class='note'>Head's Recycling Bin is empty.</td></tr>";
  updateRecycleSelectionBars();
 }
@@ -4630,7 +4677,7 @@ function renderRecycleBin(){
  const q=String($('#recycleSearch')?.value||'').trim().toLowerCase(),canAdmin=isAdminUser();
  const valid=new Set((state.recycleBin||[]).map(x=>x.id));
  for(const id of selectedRecycleIds)if(!valid.has(id))selectedRecycleIds.delete(id);
- const rows=(state.recycleBin||[]).filter(x=>!q||recycleSearchText(x).includes(q)).sort((a,b)=>new Date(b.deletedAt)-new Date(a.deletedAt));
+ const rows=(state.recycleBin||[]).filter(x=>!q||recycleSearchText(x).includes(q)).sort(compareProgramNewestFirst);
  body.innerHTML=rows.map(x=>{const d=recycleDetails(x);return `<tr><td><input type="checkbox" class="recycle-row-check" aria-label="Select ${escapeHtml(x.label||'record')}" ${selectedRecycleIds.has(x.id)?'checked':''} onchange="toggleRecycleSelection(false,'${x.id}',this.checked)"></td><td>${escapeHtml(x.page||'—')}</td><td><b>${escapeHtml(x.label||'—')}</b></td><td>${escapeHtml(d.description)}</td><td>${escapeHtml(d.po)}</td><td>${escapeHtml(d.supplier)}</td><td>${escapeHtml(new Date(x.deletedAt).toLocaleString())}</td><td>${escapeHtml(new Date(x.deleteAfter).toLocaleDateString())}</td></tr>`}).join('')||'<tr><td colspan="8" class="note">Recycling Bin is empty.</td></tr>';
  const sel=$('#recycleRetention');if(sel)sel.value=String(state.recycleRetentionDays||90);
  document.querySelectorAll('.recycle-admin-only').forEach(el=>el.style.display=canAdmin?'':'none');
@@ -6265,7 +6312,7 @@ function renderMainInternalMail(selectedId=''){
  const list=document.getElementById('mainInternalMailList'),thread=document.getElementById('mainInternalMailThread');
  if(!list||!thread)return;
  const q=(document.getElementById('mainInternalMailSearch')?.value||'').trim().toLowerCase();
- const rows=state.internalMail.filter(m=>!q||[m.subject,m.body,m.supplierName,m.supplierCountry,m.fromType,m.toType].join(' ').toLowerCase().includes(q)).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+ const rows=state.internalMail.filter(m=>!q||[m.subject,m.body,m.supplierName,m.supplierCountry,m.fromType,m.toType].join(' ').toLowerCase().includes(q)).sort(compareProgramNewestFirst);
  list.innerHTML=rows.map(m=>`<button type="button" class="internal-mail-item ${m.toType==='main'&&!m.mainRead?'unread':''}" onclick="openInternalMailMessage('${m.id}','main')"><b>${esc(m.subject||'(No subject)')}</b><br><small>${esc(m.supplierName||'Supplier')} — ${esc(m.createdAt?new Date(m.createdAt).toLocaleString():'')}</small></button>`).join('')||'<div class="note" style="padding:12px">No internal messages match the search.</div>';
  if(selectedId)openInternalMailMessage(selectedId,'main',true);
  updateInternalMailBadges();
@@ -6277,7 +6324,7 @@ function renderSupplierInternalMail(selectedId=''){
  if(title)title.textContent=`${currentSourcingCountry} — ${currentSupplierMailboxName()} — Internal Mail`;
  if(!list||!thread)return;
  const key=currentSupplierMailboxKey();
- const q=(document.getElementById('supplierInternalMailSearch')?.value||'').trim().toLowerCase();const rows=state.internalMail.filter(m=>m.supplierKey===key&&(!q||JSON.stringify(m).toLowerCase().includes(q))).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+ const q=(document.getElementById('supplierInternalMailSearch')?.value||'').trim().toLowerCase();const rows=state.internalMail.filter(m=>m.supplierKey===key&&(!q||JSON.stringify(m).toLowerCase().includes(q))).sort(compareProgramNewestFirst);
  list.innerHTML=rows.map(m=>`<button type="button" class="internal-mail-item ${m.toType==='supplier'&&!m.supplierRead?'unread':''}" onclick="openInternalMailMessage('${m.id}','supplier')"><b>${esc(m.subject||'(No subject)')}</b><br><small>${esc(m.fromType==='main'?'Main Office':m.supplierName||'Supplier')} — ${esc(m.createdAt?new Date(m.createdAt).toLocaleString():'')}</small></button>`).join('')||'<div class="note" style="padding:12px">No messages for this supplier.</div>';
  if(selectedId)openInternalMailMessage(selectedId,'supplier',true);
  updateInternalMailBadges();
@@ -6364,7 +6411,7 @@ window.saveInternalMailDraft=async()=>{
 window.showInternalMailDrafts=(mode)=>{
  ensureInternalMailState();
  const key=currentSupplierMailboxKey();
- const drafts=state.internalMailDrafts.filter(d=>d.mode===mode&&(mode==='main'||d.supplierKey===key)).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
+ const drafts=state.internalMailDrafts.filter(d=>d.mode===mode&&(mode==='main'||d.supplierKey===key)).sort(compareProgramNewestFirst);
  const target=document.getElementById(mode==='main'?'mainInternalMailList':'supplierInternalMailList');
  const thread=document.getElementById(mode==='main'?'mainInternalMailThread':'supplierInternalMailThread');
  if(target)target.innerHTML=drafts.map(d=>`<button type="button" class="internal-mail-item" onclick="openInternalMailDraft('${d.id}','${mode}')"><b>DRAFT — ${esc(d.subject||'(No subject)')}</b><br><small>${esc(d.updatedAt?new Date(d.updatedAt).toLocaleString():'')}</small></button>`).join('')||'<div class="note" style="padding:12px">No drafts.</div>';
@@ -9344,7 +9391,7 @@ window.renderPortfolioManagerRecycleBin=()=>{
  if(!Array.isArray(state.portfolioManagerRecycleBin))state.portfolioManagerRecycleBin=[];
  const items=state.portfolioManagerRecycleBin
    .filter(x=>(x.country||'Italy')===currentSourcingCountry&&recordMatchesCurrentSupplier(x.record||x))
-   .sort((a,b)=>String(b.deletedAt||'').localeCompare(String(a.deletedAt||'')));
+   .sort(compareProgramNewestFirst);
  body.innerHTML=items.map(x=>`<tr>
    <td>${esc(x.deletedAt?new Date(x.deletedAt).toLocaleString():'—')}</td>
    <td>${esc(x.page||'—')}</td>
@@ -9382,7 +9429,7 @@ window.renderPortfolioManagerNotes=function(){
  const title=document.getElementById('portfolioManagerNotesTitle');if(title)title.textContent=currentSourcingCountry+' — '+(selectedSupplierName()||'Supplier')+' — My Working Notes';
  const rows=document.getElementById('portfolioManagerNotesRows');if(!rows)return;
  if(!Array.isArray(state.portfolioManagerNotes))state.portfolioManagerNotes=[];
- const nq=(document.getElementById('supplierWorkingNotesSearch')?.value||'').trim().toLowerCase();const notes=state.portfolioManagerNotes.filter(x=>(x.country||'Italy')===currentSourcingCountry&&recordMatchesCurrentSupplier(x)&&(!nq||JSON.stringify(x).toLowerCase().includes(nq))).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+ const nq=(document.getElementById('supplierWorkingNotesSearch')?.value||'').trim().toLowerCase();const notes=state.portfolioManagerNotes.filter(x=>(x.country||'Italy')===currentSourcingCountry&&recordMatchesCurrentSupplier(x)&&(!nq||JSON.stringify(x).toLowerCase().includes(nq))).sort(compareProgramNewestFirst);
  rows.innerHTML=notes.map(n=>`<tr><td>${esc(n.date||'—')}</td><td><b>${esc(n.title||'Untitled Note')}</b></td><td>${esc((n.note||'').length>180?(n.note||'').slice(0,180)+'…':(n.note||'—'))}${(n.files||[]).length?`<br><small>${n.files.length} attached file${n.files.length===1?'':'s'}</small>`:''}</td><td><button type="button" class="secondary small" onclick="openPortfolioManagerNote('${n.id}',true)">Open</button> <button type="button" class="secondary small" onclick="openPortfolioManagerNote('${n.id}',false)">Edit</button> <button type="button" class="danger small" onclick="deletePortfolioManagerNote('${n.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="4">No notes saved for this country.</td></tr>';
 };
 window.openPortfolioManagerNote=(id='',readOnly=false)=>{
@@ -9750,7 +9797,7 @@ function renderTenderSupplierItems(){
        tender?.name||'General Portfolio'
      ].join(' ').toLowerCase().includes(q);
    })
-   .sort((a,b)=>String(b.itemSubmittedAt||b.updatedAt||'').localeCompare(String(a.itemSubmittedAt||a.updatedAt||'')));
+   .sort(compareProgramNewestFirst);
 
  body.innerHTML=rows.map(x=>{
    const status=TENDER_SUPPLIER_ITEM_STATUSES.includes(x.itemApprovalStatus)?x.itemApprovalStatus:'Item Submitted';
@@ -10080,7 +10127,7 @@ function renderTenderSuppliers(){
        x.phone||''
      ].join(' ').toLowerCase().includes(q);
    })
-   .sort((a,b)=>String(b.submittedAt||b.updatedAt||'').localeCompare(String(a.submittedAt||a.updatedAt||'')));
+   .sort(compareProgramNewestFirst);
 
  body.innerHTML=rows.map(x=>{
    const status=TENDER_SUPPLIER_STATUSES.includes(x.supplierApprovalStatus)?x.supplierApprovalStatus:'Submitted Supplier';
