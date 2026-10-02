@@ -2010,18 +2010,12 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 <div id="supplierItemInfoModal" class="modal hidden"><div class="modal-card item-info-page"><div class="modal-head"><div><h2 id="supplierItemInfoTitle">Item Information</h2><p>Complete supplier item information with copy options for every field.</p></div><button id="closeSupplierItemInfo" class="icon">×</button></div><div class="info-toolbar"><button id="copyAllSupplierItemInfo" type="button" class="secondary">Copy All Item Information</button></div><div id="supplierItemInfoContent"></div><div class="modal-actions"><span></span><button id="closeSupplierItemInfoBottom" type="button">Close</button></div></div></div>
 <script>
 var shippingCaseLabelSelection=new Set();
-// One ordering rule for record lists; positional PO lines and pallets are untouched.
+// Record lists use creation order. Editing a record never changes its position.
 var programListOrderRegistry=new Map();
 var programListOrderClock=0;
 var programListOrderInitialized=false;
-function programListOrderTime(record){return Number(record?._listUpdatedAt)||Number(record?._listCreatedAt)||0;}
+function programListOrderTime(record){return Number(record?._listCreatedAt)||0;}
 function compareProgramNewestFirst(a,b){return programListOrderTime(b)-programListOrderTime(a);}
-function programRecordFingerprint(record){
- return JSON.stringify(record,(key,value)=>{
-  if(key==='_listUpdatedAt'||key==='_listCreatedAt'||key==='items'||key==='workItems')return undefined;
-  return value;
- });
-}
 function prepareProgramNewestFirst(){
  const initializing=!programListOrderInitialized;
  const collections=[];
@@ -2031,24 +2025,24 @@ function prepareProgramNewestFirst(){
  (state.suppliers||[]).forEach(s=>{if(Array.isArray(s.items))collections.push({key:'supplierItems:'+s.id,rows:s.items});});
  (state.tenders||[]).forEach(t=>{if(Array.isArray(t.workItems))collections.push({key:'tenderWorkItems:'+t.id,rows:t.workItems});});
  const nextTime=()=>{programListOrderClock=Math.max(Date.now(),programListOrderClock+1);return programListOrderClock;};
+ // Include every existing creation stamp before assigning stamps to new records.
+ collections.forEach(({rows})=>rows.forEach(record=>{
+  programListOrderClock=Math.max(programListOrderClock,Number(record?._listCreatedAt)||0);
+ }));
  collections.forEach(({key,rows})=>{
   rows.forEach((record,index)=>{
    if(!record||typeof record!=='object'||record.id===undefined)return;
    const registryKey=key+':'+record.id,old=programListOrderRegistry.get(registryKey);
-   const fingerprint=programRecordFingerprint(record);
    if(old){
-    record._listCreatedAt=Number(record._listCreatedAt)||old.created;
-    record._listUpdatedAt=Number(record._listUpdatedAt)||old.updated;
-    if(fingerprint!==old.fingerprint)record._listUpdatedAt=nextTime();
-   }else{
-    const original=Date.parse(record.createdAt||record.submittedAt||record.deletedAt||'');
-    const modified=Date.parse(record.updatedAt||record.modifiedAt||'');
-    const legacyTime=Number.isFinite(original)?original:index+1;
-    record._listCreatedAt=Number(record._listCreatedAt)||(initializing?legacyTime:nextTime());
-    record._listUpdatedAt=Number(record._listUpdatedAt)||(initializing?(Number.isFinite(modified)?modified:record._listCreatedAt):record._listCreatedAt);
+    record._listCreatedAt=old.created;
+   }else if(!Number(record._listCreatedAt)){
+    const original=Date.parse(record.createdAt||record._audit?.createdAt||record.submittedAt||record.deletedAt||'');
+    // Keep the current order for legacy records without a known creation date.
+    const legacyTime=Number.isFinite(original)?original:rows.length-index;
+    record._listCreatedAt=initializing?legacyTime:nextTime();
    }
-   programListOrderClock=Math.max(programListOrderClock,record._listUpdatedAt);
-   programListOrderRegistry.set(registryKey,{created:record._listCreatedAt,updated:record._listUpdatedAt,fingerprint});
+   programListOrderClock=Math.max(programListOrderClock,record._listCreatedAt);
+   programListOrderRegistry.set(registryKey,{created:record._listCreatedAt});
   });
   rows.sort(compareProgramNewestFirst);
  });
