@@ -849,7 +849,11 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 </style>
 
 <style>
-body{padding-bottom:24px}
+body{padding-bottom:24px;overflow-x:hidden}
+.panel{max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+.panel::-webkit-scrollbar:horizontal{height:0}
+.screen-horizontal-scroll-source::-webkit-scrollbar:horizontal{height:0!important}
+.screen-horizontal-scroll-only{scrollbar-width:none!important}
 #screen-bottom-scroll{position:fixed;bottom:0;left:0;right:0;height:24px;z-index:1100;overflow-x:scroll;overflow-y:hidden;background:#f1f1f1;border-top:1px solid #bdc9d6}
 #screen-bottom-scroll-track{height:1px;pointer-events:none}
 @media print{#screen-bottom-scroll{display:none!important}body{padding-bottom:0}}
@@ -11367,6 +11371,15 @@ document.addEventListener('change',event=>{const input=event.target;if(!input.ma
     return score(a)-score(b)||(b.scrollWidth-b.clientWidth)-(a.scrollWidth-a.clientWidth);
    });target=list[0]||null;
   }
+  // The bottom bar is the only visible horizontal scrollbar.
+  list.forEach(el=>{
+   if(el===document.scrollingElement)return;
+   if(!el.classList.contains('screen-horizontal-scroll-source'))el.classList.add('screen-horizontal-scroll-source');
+   const css=getComputedStyle(el);
+   const horizontalOnly=['hidden','visible','clip'].includes(css.overflowY)||el.scrollHeight<=el.clientHeight+1;
+   if(horizontalOnly&&!el.classList.contains('screen-horizontal-scroll-only'))el.classList.add('screen-horizontal-scroll-only');
+   if(!horizontalOnly&&el.classList.contains('screen-horizontal-scroll-only'))el.classList.remove('screen-horizontal-scroll-only');
+  });
   const max=target?Math.max(0,target.scrollWidth-target.clientWidth):0;
   track.style.width=String(dock.clientWidth+max)+'px';
   dock.scrollLeft=target?target.scrollLeft:0;
