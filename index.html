@@ -867,6 +867,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   <div class="header-actions"><div class="online-user-box"><span id="onlineStatus" class="online-status">Offline setup</span><span id="onlineUserLabel"></span><button id="onlineSignOut" class="secondary" type="button" style="display:none">Sign Out</button></div><button id="exportBtn" class="secondary">Export Backup</button><label class="button secondary">Import Backup<input id="importFile" type="file" accept="application/json" hidden></label></div>
 </header>
 <div class="main-sections" id="mainSections">
+  <button class="main-section-btn" data-section="invoice-calculator-section">INVOICE CALCULATOR</button>
   <button class="main-section-btn active" data-section="heads-page">HEAD'S PAGE</button>
   <button class="main-section-btn" data-section="tender-niss">TENDERS</button>
   <button class="main-section-btn" data-section="speciality-services">SPECIALITY SERVICES / PRIVATE ORDERS</button>
@@ -877,6 +878,7 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 <button class="main-section-btn" data-section="recycle-section">RECYCLING BIN</button>
   <button class="main-section-btn" data-section="setting-section">SETTING</button>
 </div>
+<nav class="subnav" data-section-nav="invoice-calculator-section"><button class="tab" data-tab="invoice-calculator">Invoice Calculator</button></nav>
 <nav class="subnav active" data-section-nav="heads-page">
   <button class="tab active" data-tab="dashboard">Dashboard</button>
   <button class="tab" data-tab="all-proposals">ALL PROPOSALS</button>
@@ -1382,6 +1384,20 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   <div class="table-wrap"><table class="items-table"><thead><tr><th>LCBO Item #</th><th>LCBO Supplier #</th><th>Brand</th><th>Item Description</th><th>Vintage</th><th>Country</th><th>Region</th><th>Score</th><th>Awards / Medals</th><th>Score Source</th><th>Offered Quote per case</th><th>Estimated Retail Price *</th><th>Selling Units Per Shipping Case *</th><th>Action</th></tr></thead><tbody id="itemRows"></tbody></table></div>
 </section>
 <section id="agencies" class="panel"><div class="box"><div class="section-head"><h2>Agency Management</h2><button id="addAgencyBtn">+ Add Agency</button></div><div id="agencyList"></div></div></section>
+
+<section id="invoice-calculator" class="panel"><div class="box">
+<h2>Invoice Calculator</h2>
+<label style="max-width:240px">Currency<select id="invoiceCalcCurrency"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></label>
+<p class="note">Price is per item. Row amount = items per case × case quantity × price per item.</p>
+<div class="table-wrap"><table><thead><tr><th>Item Description</th><th>Items per Case</th><th>Case Quantity</th><th>Price per Item</th><th>Amount</th><th></th></tr></thead><tbody id="invoiceCalcRows"></tbody></table></div>
+<button type="button" id="invoiceCalcAdd">+ Add Item</button>
+<h3>Final Amount: <output id="invoiceCalcTotal" aria-live="polite"></output></h3>
+<p class="note">Each percentage is calculated independently from the final amount.</p>
+<div style="display:grid;gap:12px;max-width:480px">
+<label>Percentage 1 (%)<input id="invoiceCalcPercent1" type="number" min="0" step="any" placeholder="Type percentage"><output id="invoiceCalcPercentAmount1" aria-live="polite"></output></label>
+<label>Percentage 2 (%)<input id="invoiceCalcPercent2" type="number" min="0" step="any" placeholder="Type percentage"><output id="invoiceCalcPercentAmount2" aria-live="polite"></output></label>
+</div></div></section>
+
 <section id="calculator" class="panel"><div class="box"><div class="section-head"><div><h2>Suppliers</h2><p class="note">Add suppliers, open a supplier to view or copy its information, and manage multiple items for each supplier.</p></div><button id="addSupplierBtn">+ Add Supplier</button></div><button type="button" class="secondary page-search-toggle" id="toggleSupplierSearch">Search</button><div class="page-search-panel" id="supplierSearchPanel"><label>Search Suppliers<input id="supplierPageSearch" type="search" placeholder="Supplier name, number, country, currency or agency"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearSupplierPageSearch">Clear Search</button></div></div><div id="supplierList"></div></div></section>
 <section id="supplier-items-page" class="panel"><div class="box"><div class="section-head"><div><h2>Items</h2><p class="note">Supplier items are managed separately from the Tender Item Database. Creating an item here will not create a Tender Item Database record.</p></div><button id="addSupplierItemFromItemsBtn" type="button">+ Add New Item</button></div><div class="toolbar"><input id="supplierItemsSearch" placeholder="Search product name, item number, supplier, UPC, SCC or year"></div><div class="table-wrap"><table class="supplier-all-items-table"><thead><tr><th>Product Name</th><th>Item #</th><th>Supplier</th><th>Product Type</th><th>Year</th><th>Currency</th><th>Supplier Case Price</th><th>Organic / Status</th><th>UPC Code</th><th>SCC Code</th><th>Action</th></tr></thead><tbody id="supplierAllItemRows"></tbody></table></div></div></section>
 <section id="transportation" class="panel"><div class="box"><div class="section-head"><div><h2>Active Transportation <span id="activeShipmentCount" aria-live="polite"></span></h2><p class="note">Create shipments, assign saved POs, and calculate transportation cost per bottle.</p></div><button id="addShipmentBtn" type="button">+ Create Shipment</button></div><button type="button" class="secondary page-search-toggle" id="toggleTransportationSearch">Search</button><div class="page-search-panel" id="transportationSearchPanel"><label>Search Transportation<input id="transportationPageSearch" type="search" placeholder="Type any letter to search shipments, company, PO, status or payment"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearTransportationPageSearch">Clear Search</button></div></div><div class="table-wrap active-transportation-scroll"><table><thead><tr><th>Shipment</th><th>Transport Company</th><th>POs</th><th>Total Bottles</th><th>Pallets</th><th>Transportation Cost</th><th>Cost / Bottle</th><th>CAD Currency Converter</th><th>Bottle Cost in CAD</th><th>REF # and Pallet Labels Requested</th><th>Approximate Pickup Date</th><th>Shipment Status</th><th>Delivery Date</th><th>Approximate Canada Delivery Date</th><th>Payment Status</th><th>Actions</th></tr></thead><tbody id="shipmentRows"></tbody></table></div></div></section>
@@ -3779,6 +3795,9 @@ button:disabled{
     <tfoot><tr><td class="total-cases">Total Cases: ${totalCases.toLocaleString()}</td><td colspan="3"></td><td class="total-bottles">Total Bottles: ${totalBottles.toLocaleString()}</td><td colspan="4"></td></tr></tfoot></table>
     <div class="bottom-warning">${warning}</div>
     <div class="instructions">${instructions}</div>
+
+
+
 
 
 
@@ -11266,5 +11285,48 @@ const poItemAutofillTimers=new WeakMap();
 document.addEventListener('input',event=>{const input=event.target;if(!input.matches('#poItemLines .po-item-no'))return;clearTimeout(poItemAutofillTimers.get(input));poItemAutofillTimers.set(input,setTimeout(()=>{if(input.isConnected)autofillPoLineFromPrivateOrderItem(input);},250));});
 document.addEventListener('change',event=>{const input=event.target;if(!input.matches('#poItemLines .po-item-no'))return;clearTimeout(poItemAutofillTimers.get(input));autofillPoLineFromPrivateOrderItem(input);});
 
+</script>
+<script>
+// Independent invoice worksheet: never creates or changes invoice/PO records.
+(()=>{
+ const root=document.getElementById('invoice-calculator');
+ const storageKey='winglobal_invoice_calculator_v1';
+ let worksheet={currency:'CAD',rows:[{description:'',items:6,cases:'',price:''}],percent1:'',percent2:''};
+ try{const saved=JSON.parse(localStorage.getItem(storageKey));if(saved&&Array.isArray(saved.rows))worksheet={...worksheet,...saved};}catch(e){}
+ const currencies=['CAD','USD','GBP','EUR'];
+ if(!currencies.includes(worksheet.currency))worksheet.currency='CAD';
+ const currency=root.querySelector('#invoiceCalcCurrency');currency.value=worksheet.currency;
+ const body=root.querySelector('#invoiceCalcRows');
+ const number=v=>{const n=Number(v);return Number.isFinite(n)&&n>=0?n:0;};
+ const amount=row=>number(row.items)*number(row.cases)*number(row.price);
+ const format=value=>new Intl.NumberFormat('en-CA',{style:'currency',currency:worksheet.currency}).format(value);
+ const persist=()=>{try{localStorage.setItem(storageKey,JSON.stringify(worksheet));}catch(e){}};
+ function calculate(){
+  let total=0;
+  worksheet.rows.forEach((row,i)=>{const value=amount(row);total+=value;body.children[i].querySelector('output').textContent=format(value);});
+  root.querySelector('#invoiceCalcTotal').textContent=format(total);
+  for(const n of [1,2])root.querySelector('#invoiceCalcPercentAmount'+n).textContent=' = '+format(total*number(worksheet['percent'+n])/100);
+  persist();
+ }
+ function render(){
+  body.replaceChildren();
+  worksheet.rows.forEach((row,i)=>{
+   const tr=document.createElement('tr');
+   for(const [key,label] of [['description','Item Description'],['items','Items per Case'],['cases','Case Quantity'],['price','Price per Item']]){
+    const td=document.createElement('td'),input=document.createElement('input');
+    input.type=key==='description'?'text':'number';input.value=row[key]??'';input.setAttribute('aria-label',label+' '+(i+1));
+    if(key!=='description'){input.min='0';input.step=key==='items'?'1':'any';input.style.minWidth='100px';}else input.style.minWidth='220px';
+    input.addEventListener('input',()=>{row[key]=input.value;calculate();});td.append(input);tr.append(td);
+   }
+   const td=document.createElement('td'),out=document.createElement('output');td.append(out);tr.append(td);
+   const actions=document.createElement('td'),remove=document.createElement('button');remove.type='button';remove.className='danger small';remove.textContent='Remove';remove.setAttribute('aria-label','Remove item '+(i+1));
+   remove.addEventListener('click',()=>{worksheet.rows.splice(i,1);render();});actions.append(remove);tr.append(actions);body.append(tr);
+  });calculate();
+ }
+ currency.addEventListener('change',()=>{worksheet.currency=currency.value;calculate();});
+ root.querySelector('#invoiceCalcAdd').addEventListener('click',()=>{worksheet.rows.push({description:'',items:6,cases:'',price:''});render();body.lastElementChild.querySelector('input').focus();});
+ for(const n of [1,2]){const input=root.querySelector('#invoiceCalcPercent'+n);input.value=worksheet['percent'+n];input.addEventListener('input',()=>{worksheet['percent'+n]=input.value;calculate();});}
+ render();
+})();
 </script>
 </body></html>
