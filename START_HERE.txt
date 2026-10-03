@@ -1,0 +1,2 @@
+WINDOWS: Extract all files into one folder, then double-click START_WINGLOBAL.bat. Keep the server window open. Python must be installed.
+HOSTED WEBSITE: Open your existing live program website address; the BAT starter is for running locally.
