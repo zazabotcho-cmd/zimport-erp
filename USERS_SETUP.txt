@@ -1,22 +1,26 @@
-USERS — CREATE NEW USER
+LIVE USER MANAGEMENT
 
+Database access rules and manage-users account service are active.
+The hosted website still needs the included web files uploaded to its existing repository/hosting location.
+Replace index.html, online-config.js, online-adapter.js, online-adapter-bulk-enabled.js, admin-management.js, user-permissions.js and supplier-workspaces.js together.
+Keep your current Supabase project configuration. Do not rerun old SQL setup scripts.
+
+Sign in with your existing administrator email and password.
 Open Settings > Users > Create New User.
-Enter the full name, username, email, password, role and permitted pages.
-Choose Send invitation to email to send a secure invitation link.
-Passwords are not sent by email or stored in program data/backups.
-The account can sign in with its email or username.
-Use Edit / Page Access to change pages or role, reset passwords, resend a sign-in invitation, and activate/deactivate users.
-Administrators always have full access. Users, currency/program settings and Head recycling administration are administrator-only.
-Existing accounts retain their existing access until an administrator assigns an explicit page list.
-Pages share underlying supplier, item, tender and order records; their dependencies are allowed together at the database level.
+Choose Worker, Manager, Read Only, Partner Supplier or Administrator.
+Assign pages and, for supplier accounts, registered countries and suppliers.
+You can edit access, activate/deactivate, reset passwords and delete users.
+Deletion removes account access while keeping business records. Your own account and the last active administrator cannot be deleted.
 
-ACTIVATION STATUS
-The local program and backend source are prepared and tested.
-Production schema changes and account-service deployment have NOT been applied: automatic approval review rejected both production actions pending explicit approval.
-No accounts have been created and no invitation emails have been sent.
-Before using this feature, activate the included USERS_PAGE_ACCESS.sql and deploy supabase/functions/manage-users, then upload all program web files.
-The manage-users service validates the current signed-in user on all administration operations. The public username-login action returns only a session after successful password authentication.
-Register the hosted program HTTPS URL in Supabase Authentication > URL Configuration (Site URL and allowed Redirect URLs).
-Configure the project's email delivery/SMTP and Invite/Magic Link/Reset Password templates.
-The Invite email contains a secure link. Resending an invitation to an existing account sends a secure Magic Link.
-Production account and email delivery testing is still required after approved activation.
+Leave Send invitation unchecked until email delivery is configured.
+Without an invitation, accounts sign in using their assigned username/email and password.
+Configure Supabase SMTP, Site URL and permitted HTTPS redirect URLs before inviting people.
+Passwords are not emailed or included in backups.
+
+Partners can access only assigned supplier workspaces and permitted sourcing pages.
+They cannot add suppliers, import/export program backups, read shared POs/invoices or manage users.
+The Italy Representative — Performance & Bonuses page is removed.
+
+Verified: existing administrator preserved; supplier database and file isolation; inactive-account denial; anonymous administration rejected. Temporary database test accounts were rolled back.
+Email delivery was not tested and no staff invitations were sent.
+Existing project warnings: leaked-password protection is disabled; legacy security-definer helper functions remain executable. Review Supabase security advisories separately.

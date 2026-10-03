@@ -1,6 +1,7 @@
 (function(){
   const cfg=window.ZIMPORT_ONLINE_CONFIG||{};
   const configured=()=>/^https:\/\/.+\.supabase\.co$/i.test(cfg.supabaseUrl||'')&&!String(cfg.supabaseAnonKey||'').includes('PASTE_');
+  const invitationLanding=/[&#]type=(invite|recovery)(?:&|$)/.test(location.hash);
   let client=null,user=null,profile=null,syncTimer=null,syncing=false,dirty=false,realtimeTimer=null;
   let loginInFlight=null,realtimeChannel=null,loadedUserId=null;
   let latestState=null,latestSettings=null,baseline=new Map();
@@ -53,20 +54,23 @@
   async function syncState(state,settings){if(!configured()||!user||syncing)return;
     if(!cloudLoadComplete){status('Sync blocked: cloud data has not finished loading','error');return;}
     if(profile?.role==='readonly'){status('Read-only account','error');return;}syncing=true;dirty=false;status('Saving changes…');try{
+    if(profile?.role==='partner_supplier'){await window.ZimportWorkspaces.save(state);status('Assigned supplier changes saved','connected');return;}
     const flat=flatten(state,settings);
     for(const table of Object.keys(flat)){
+      if(window.ZimportPermissions&&!window.ZimportPermissions.canTable(profile,table))continue;
       const rows=flat[table],current=new Map(rows.map(r=>[String(r.id),r]));
       for(const row of rows){const b=baseline.get(key(table,row.id));if(!b)await insertRow(table,row);else if(JSON.stringify(cleanData(row))!==JSON.stringify(b.data))await updateRow(table,row,b);}
       for(const [k,b] of [...baseline]){const [bt,id]=k.split(':');if(bt===table&&!current.has(id)){await deleteRow(table,id,b);}}
     }
     cloudShipmentIds=new Set((flat.shipments||[]).map(x=>String(x.id)));
+    await window.ZimportWorkspaces.save(state);
     status('All changes saved','connected');
   }catch(e){console.error(e);if(e.code==='CONFLICT'){status('Conflict detected — reloading latest data','error');alert('Another user changed the same record before your save. The latest cloud version will now load. Please review and enter your change again.');await loadState();}else if(String(e.code||'')==='23505'){status('Sync error: duplicate cloud record detected. Reloading shared data…','error');await loadState();}else status('Sync error: '+(e.message||'Unknown error'),'error');}finally{syncing=false;}
   }
   async function deleteShipmentRecord(id){
     if(!configured())return;
     if(!user||!cloudLoadComplete)throw new Error('Cloud data has not finished loading. Please sign in and retry.');
-    if(profile?.role==='readonly')throw new Error('This account cannot delete shipments.');
+    if(profile?.role==='readonly'||profile?.role==='partner_supplier')throw new Error('This account cannot delete shipments.');
     if(syncing)throw new Error('Cloud save is in progress. Please retry in a moment.');
     const shipmentId=String(id);
     let base=baseline.get(key('shipments',shipmentId));
@@ -81,6 +85,7 @@
     cloudShipmentIds.delete(shipmentId);
   }
   async function loadTable(table){
+    if(window.ZimportPermissions&&!window.ZimportPermissions.canTable(profile,table))return [];
     const rows=[];let offset=0;
     while(true){
       const r=await client.from(table).select('id,data,created_by,created_at,updated_by,updated_at,deleted_by,restore_date,version',{count:'exact'}).eq('organization_id',cfg.organizationId).order('id',{ascending:true}).range(offset,offset+999);
@@ -91,7 +96,10 @@
     }
     return rows.map(x=>{baseline.set(key(table,x.id),{data:x.data||{},version:x.version||1,updatedAt:x.updated_at});return {...x.data,id:x.id,_cloudVersion:x.version||1,_audit:{createdBy:x.created_by,createdAt:x.created_at,updatedBy:x.updated_by,updatedAt:x.updated_at,deletedBy:x.deleted_by,restoreDate:x.restore_date}};});
   }
-  async function loadState(){if(syncing)return;cloudLoadComplete=false;status('Loading shared data…');try{baseline=new Map();const out={};for(const [k,t] of Object.entries(collectionMap))out[k]=await loadTable(t);
+  async function loadState(){if(syncing)return;cloudLoadComplete=false;status('Loading shared data…');try{
+    if(profile?.role==='partner_supplier'){
+     const scoped=await window.ZimportWorkspaces.load();window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:scoped,replaceState:true,settings:{defaultCurrency:'CAD'}}}));cloudLoadComplete=true;status('Assigned supplier workspaces loaded','connected');window.ZimportPermissions.apply();return;
+    }baseline=new Map();const out={};for(const [k,t] of Object.entries(collectionMap))out[k]=await loadTable(t);
     out.archivedShipments=(out.shipments||[]).filter(x=>x.archived);out.shipments=(out.shipments||[]).filter(x=>!x.archived);
     // One-time cleanup of erroneous tender requested by Head Office: 2546 — Italy North.
     const badTenders=(out.tenders||[]).filter(t=>String(t.code||'').trim()==='2546' && String(t.name||'').trim().toLowerCase().includes('italy north'));
@@ -103,7 +111,7 @@
     // worker_submissions are already represented inside tender.workItems in the app state,
     // but their cloud rows must still be loaded so sync knows they already exist.
     await loadTable('worker_submissions');
-    const [a,w,ar,inv,rec,set]=await Promise.all([loadTable('submitted_items'),loadTable('winners'),loadTable('archived_tenders'),loadTable('supplier_invoices'),loadTable('recycle_bin'),loadTable('settings')]);out.records=[...a,...w,...ar];out.recycleBin=rec;out.financialInvoices=inv.filter(x=>x.invoice_group==='financialInvoices');out.supplierPaymentInvoices=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices');out.supplierPaymentInvoices2=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices2');out.otherInvoices=inv.filter(x=>x.invoice_group==='otherInvoices');const s=set.find(x=>x.id==='main')||{};out.recycleRetentionDays=s.recycleRetentionDays||90;if(Array.isArray(s.countrySourcingCountries))out.countrySourcingCountries=s.countrySourcingCountries;if(Array.isArray(s.countryPortfolioSuppliers))out.countryPortfolioSuppliers=s.countryPortfolioSuppliers;cloudShipmentIds=new Set([...(out.shipments||[]),...(out.archivedShipments||[])].map(x=>String(x.id)));window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:out,settings:s.settings||{}}}));cloudLoadComplete=true;status('Cloud connected · '+cloudShipmentIds.size+' shipment(s) loaded','connected');}catch(e){console.error(e);status('Load error: '+(e.message||'')+' — synchronization disabled','error');
+    const [a,w,ar,inv,rec,set]=await Promise.all([loadTable('submitted_items'),loadTable('winners'),loadTable('archived_tenders'),loadTable('supplier_invoices'),loadTable('recycle_bin'),loadTable('settings')]);const workspaces=await window.ZimportWorkspaces.load();for(const [k,v] of Object.entries(workspaces))if(!['countrySourcingCountries','countryPortfolioSuppliers','tenders'].includes(k)&&((Array.isArray(v)&&v.length)||(!Array.isArray(v)&&Object.keys(v).length)))out[k]=v;out.records=[...a,...w,...ar];out.recycleBin=rec;out.financialInvoices=inv.filter(x=>x.invoice_group==='financialInvoices');out.supplierPaymentInvoices=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices');out.supplierPaymentInvoices2=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices2');out.otherInvoices=inv.filter(x=>x.invoice_group==='otherInvoices');const s=set.find(x=>x.id==='main')||{};out.recycleRetentionDays=s.recycleRetentionDays||90;if(Array.isArray(s.countrySourcingCountries))out.countrySourcingCountries=s.countrySourcingCountries;if(Array.isArray(s.countryPortfolioSuppliers))out.countryPortfolioSuppliers=s.countryPortfolioSuppliers;cloudShipmentIds=new Set([...(out.shipments||[]),...(out.archivedShipments||[])].map(x=>String(x.id)));window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:out,settings:s.settings||{}}}));cloudLoadComplete=true;status('Cloud connected · '+cloudShipmentIds.size+' shipment(s) loaded','connected');}catch(e){console.error(e);status('Load error: '+(e.message||'')+' — synchronization disabled','error');
       // Recover the shipment list independently if another table prevents full startup.
       try{const recovered=await loadTable('shipments');cloudShipmentIds=new Set(recovered.map(x=>String(x.id)));if(recovered.length){window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:{shipments:recovered.filter(x=>!x.archived),archivedShipments:recovered.filter(x=>x.archived)},partialRecovery:true}}));status('Recovered '+recovered.length+' cloud shipment(s); other cloud data did not finish loading. Sync disabled.','error');}}catch(recoveryError){console.error('Shipment recovery failed',recoveryError);}
     }}
@@ -114,7 +122,7 @@
     allTables.forEach(t=>ch.on('postgres_changes',{event:'*',schema:'public',table:t,filter:`organization_id=eq.${cfg.organizationId}`},payload=>{if(payload.new?.updated_by===user?.id||payload.old?.updated_by===user?.id)return;scheduleRealtimeReload();}));
     realtimeChannel=ch;ch.subscribe();
   }
-  async function getProfile(){const r=await client.from('profiles').select('*').eq('id',user.id).maybeSingle();if(r.error)throw r.error;profile=r.data||{role:'readonly',full_name:user.email};window.ZIMPORT_CURRENT_ROLE=profile.role||'readonly';window.dispatchEvent(new CustomEvent('zimport-online-role',{detail:{role:window.ZIMPORT_CURRENT_ROLE}}));if($('onlineUserLabel'))$('onlineUserLabel').textContent=`${profile.full_name||user.email} · ${window.ZIMPORT_CURRENT_ROLE}`;}
+  async function getProfile(){const r=await client.from('profiles').select('*').eq('id',user.id).maybeSingle();if(r.error)throw r.error;profile=r.data||{role:'readonly',full_name:user.email,active:false};if(!profile.active){await client.auth.signOut();throw Error('This account is inactive. Contact your administrator.');}window.ZIMPORT_CURRENT_ROLE=profile.role||'readonly';window.dispatchEvent(new CustomEvent('zimport-online-role',{detail:{role:window.ZIMPORT_CURRENT_ROLE}}));if($('onlineUserLabel'))$('onlineUserLabel').textContent=`${profile.full_name||user.email} · ${window.ZIMPORT_CURRENT_ROLE}`;}
   async function afterLogin(session){
     const nextUser=session?.user||null;
     if(!nextUser)return showLogin();
@@ -127,6 +135,7 @@
     loginInFlight=(async()=>{
       user=nextUser;
       await getProfile();
+      if(invitationLanding)document.getElementById('accountPasswordPanel')?.classList.remove('hidden');
       $('onlineLoginGate')?.classList.add('hidden');
       if($('onlineSignOut'))$('onlineSignOut').style.display='';
       await loadState();
@@ -135,7 +144,7 @@
     })();
     try{return await loginInFlight;}finally{loginInFlight=null;}
   }
-  function showLogin(){user=null;profile=null;loadedUserId=null;$('onlineLoginGate')?.classList.remove('hidden');if($('onlineSignOut'))$('onlineSignOut').style.display='none';if($('onlineUserLabel'))$('onlineUserLabel').textContent='';status(configured()?'Sign in required':'Supabase not configured');}
+  function showLogin(){user=null;profile=null;loadedUserId=null;$('onlineLoginGate')?.classList.remove('hidden');if($('onlineSignOut'))$('onlineSignOut').style.display='none';if($('onlineUserLabel'))$('onlineUserLabel').textContent='';window.ZIMPORT_CURRENT_ROLE='readonly';window.ZimportPermissions?.apply();status(configured()?'Sign in required':'Supabase not configured');}
   function clearStaleLocalAuthSession(){
     try{
       const host=new URL(cfg.supabaseUrl).hostname;
@@ -166,7 +175,13 @@
       if(!client){$('onlineLoginError').textContent='Cloud connection is not ready. Check your internet connection, then click Retry connection or reload the page.';return;}
       const btn=e.target.querySelector('button[type=submit]');if(btn)btn.disabled=true;
       try{
-        const r=await client.auth.signInWithPassword({email:$('onlineEmail').value.trim(),password:$('onlinePassword').value});
+        const identity=$('onlineEmail').value.trim();let r;
+        if(identity.includes('@'))r=await client.auth.signInWithPassword({email:identity,password:$('onlinePassword').value});
+        else{
+          const response=await client.functions.invoke('manage-users',{body:{action:'login',username:identity,password:$('onlinePassword').value}});
+          if(response.error||response.data?.error){$('onlineLoginError').textContent='Invalid username or password.';return;}
+          r=await client.auth.setSession({access_token:response.data.access_token,refresh_token:response.data.refresh_token});
+        }
         if(r.error){$('onlineLoginError').textContent=r.error.message;return;}
         await afterLogin(r.data.session);
       }catch(e){
@@ -178,7 +193,7 @@
     });
     if($('onlineForgotPassword'))$('onlineForgotPassword').onclick=async()=>{
       if(!client){$('onlineLoginError').textContent='Cloud connection is not ready. Check your internet connection, then click Retry connection or reload the page.';return;}
-      const email=$('onlineEmail').value.trim();if(!email){$('onlineLoginError').textContent='Enter your email first.';return;}
+      const email=$('onlineEmail').value.trim();if(!email.includes('@')){$('onlineLoginError').textContent='Enter your email address to reset your password.';return;}
       try{
         const r=await client.auth.resetPasswordForEmail(email,{redirectTo:location.href});
         $('onlineLoginError').textContent=r.error?r.error.message:'Password reset email sent.';
@@ -212,15 +227,16 @@
       addRetryButton();
       return;
     }
-    if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Use your assigned email and password.';
+    if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Use your assigned email or username and password.';
     try{
       const {data,error}=await client.auth.getSession();
       if(error)throw error;
       if(data.session)await afterLogin(data.session);else showLogin();
       client.auth.onAuthStateChange((event,s)=>{
+        if(event==='PASSWORD_RECOVERY')document.getElementById('accountPasswordPanel')?.classList.remove('hidden');
         if(event==='SIGNED_OUT'||!s){showLogin();return;}
         // A token refresh is normal and must not trigger a full database reload.
-        if(event==='TOKEN_REFRESHED'){user=s.user||user;return;}
+        if(event==='TOKEN_REFRESHED'){user=s.user||user;setTimeout(()=>getProfile().then(loadState).catch(()=>showLogin()),0);return;}
         // Run outside the auth callback so auth-state notifications cannot
         // block other Supabase work, and afterLogin de-duplicates same-user events.
         setTimeout(()=>afterLogin(s).catch(err=>{console.error(err);showLogin();}),0);
@@ -239,7 +255,12 @@
       }
     }
   }
-  async function uploadFile(path,file){if(!client||!user)throw new Error('Not signed in');const clean=`${cfg.organizationId}/${path}`.replace(/[^a-zA-Z0-9._\/-]/g,'_');const r=await client.storage.from(cfg.storageBucket).upload(clean,file,{upsert:true});if(r.error)throw r.error;await log('UPLOAD_FILE','storage',clean,{name:file.name,size:file.size,type:file.type});return clean;}
+  async function uploadFile(path,file){if(!client||!user)throw new Error('Not signed in');let clean;
+    if(profile?.role==='partner_supplier'){
+     const scope=window.getCurrentSourcingScope?.();if(!scope?.supplier_id||!window.ZimportPermissions.canCountry(profile,scope.country)||!window.ZimportPermissions.canSupplier(profile,scope.supplier_id))throw Error('Supplier file access denied.');
+     if(scope.country.includes('/')||scope.supplier_id.includes('/'))throw Error('Invalid supplier file scope.');
+     clean=cfg.organizationId+'/partner/'+scope.supplier_id+'/'+scope.country+'/'+crypto.randomUUID()+'/'+String(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_');
+    }else clean=`${cfg.organizationId}/${path}`.replace(/[^a-zA-Z0-9._\/-]/g,'_');const r=await client.storage.from(cfg.storageBucket).upload(clean,file,{upsert:true});if(r.error)throw r.error;if(profile.role!=='partner_supplier')await log('UPLOAD_FILE','storage',clean,{name:file.name,size:file.size,type:file.type});return clean;}
   async function deleteFile(path){const r=await client.storage.from(cfg.storageBucket).remove([path]);if(r.error)throw r.error;await log('DELETE_FILE','storage',path);}
   async function signedFileUrl(path,seconds=600){const r=await client.storage.from(cfg.storageBucket).createSignedUrl(path,seconds);if(r.error)throw r.error;return r.data.signedUrl;}
   window.ZimportOnline={configured,init,deleteShipmentRecord,queueSync:(s,se)=>{latestState=s;latestSettings=se;dirty=true;clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncState(s,se),500);},syncNow:()=>latestState?syncState(latestState,latestSettings||{}):Promise.resolve(),loadNow:loadState,uploadFile,deleteFile,signedFileUrl,get client(){return client},get user(){return user},get profile(){return profile}};

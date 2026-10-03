@@ -295,6 +295,8 @@ label[data-retrieved-locked="1"] textarea{
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="online-config.js"></script>
 <script src="online-adapter-bulk-enabled.js"></script>
+<script src="user-permissions.js" defer></script>
+<script src="supplier-workspaces.js" defer></script>
 <script src="admin-management.js" defer></script>
 <style>
 #onlineLoginGate{position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#071d34,#123b60);display:flex;align-items:center;justify-content:center;padding:24px}
@@ -864,7 +866,7 @@ body{padding-bottom:24px;overflow-x:hidden}
   <form id="onlineLoginForm" class="login-card">
     <h2>ZIMPORT PROGRAM</h2>
     <p>Secure staff access</p>
-    <label>Email</label><input id="onlineEmail" type="email" autocomplete="username" required placeholder="name@company.com">
+    <label>Email or Username</label><input id="onlineEmail" type="text" autocomplete="username" required placeholder="Email or username">
     <label>Password</label><input id="onlinePassword" type="password" autocomplete="current-password" required placeholder="Password">
     <div class="login-actions"><button type="submit">Sign In</button><button id="onlineForgotPassword" type="button" class="secondary">Forgot Password</button></div>
     <div id="onlineLoginError" class="login-error"></div>
@@ -875,7 +877,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 
 <header>
   <div><h1>WINGLOBAL PROGRAM</h1><p>Internal multi-agency LCBO submission management and pricing calculator</p></div>
-  <div class="header-actions"><div class="online-user-box"><span id="onlineStatus" class="online-status">Offline setup</span><span id="onlineUserLabel"></span><button id="onlineSignOut" class="secondary" type="button" style="display:none">Sign Out</button></div><button id="exportBtn" class="secondary">Export Backup</button><label class="button secondary">Import Backup<input id="importFile" type="file" accept="application/json" hidden></label></div>
+  <div class="header-actions"><div class="online-user-box"><span id="onlineStatus" class="online-status">Offline setup</span><span id="onlineUserLabel"></span><button id="onlineSignOut" class="secondary" type="button" style="display:none">Sign Out</button></div><button id="exportBtn" class="secondary" style="display:none" disabled>Export Backup</button><label id="importBackupControl" class="button secondary" style="display:none">Import Backup<input id="importFile" disabled type="file" accept="application/json" hidden></label></div>
 </header>
 <div class="main-sections" id="mainSections">
   <button class="main-section-btn active" data-section="heads-page">HEAD'S PAGE</button>
@@ -934,7 +936,7 @@ body{padding-bottom:24px;overflow-x:hidden}
   <div class="country-sourcing-supplier-row">
     <span class="country-sourcing-level-label">Suppliers:</span>
     <span id="countrySourcingSupplierButtons" class="country-sourcing-supplier-buttons"></span>
-    <button id="addCountrySupplierBtn" class="secondary" type="button">+ Add Supplier</button>
+    <button id="addCountrySupplierBtn" class="secondary" type="button" style="display:none" disabled>+ Add Supplier</button>
     <button id="deleteSelectedCountrySupplierBtn" class="danger" type="button" style="display:none">Delete Supplier</button>
   </div>
   <div class="country-sourcing-page-row" id="countrySourcingPageRow">
@@ -955,6 +957,7 @@ body{padding-bottom:24px;overflow-x:hidden}
   <button class="tab" data-tab="recycle-bin">Recycling Bin</button>
 </nav>
 <nav class="subnav" data-section-nav="setting-section">
+  <button class="tab" data-tab="users">Users</button>
   <button class="tab" data-tab="settings">Currency Setting</button>
   <button class="tab" data-tab="program-settings">Program Setting</button>
   <button class="tab" data-tab="agencies">Agency Setting</button>
@@ -1852,8 +1855,33 @@ body{padding-bottom:24px;overflow-x:hidden}
 <section id="settings" class="panel"><div class="box narrow"><h2>Currency Setting</h2><h3>Currency Conversion Rates — Enter Manually</h3><p class="note">Enter each CAD conversion rate manually. These currency options are shared across the program.</p><div class="currency-settings-row"><label>1 CAD = USD<input id="setUsd" type="number" min="0.0000000001" step="any" value="0.7042253521126761"></label><label>1 CAD = EUR<input id="setEur" type="number" min="0.0000000001" step="any" value="0.6451612903225806"></label><label>1 CAD = GBP<input id="setGbp" type="number" min="0.0000000001" step="any" placeholder="Enter GBP rate"></label></div><div class="form-grid"><label>Default Currency<select id="setDefaultCurrency"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></label></div><button id="saveSettings">Save Currency Setting</button></div></section>
 <section id="program-settings" class="panel"><div class="box narrow"><h2>Program Setting</h2><div class="form-grid"><label>Program Name<input id="setCompany"></label></div><button id="saveProgramSettings">Save Program Setting</button><hr><h3>Data Management</h3><button id="csvBtn" class="secondary">Export Submission CSV</button> <button id="clearBtn" class="danger">Delete All Program Data</button></div>
 <div class="online-admin-card"><h3>Online Program Connection</h3><p><b>Status:</b> <span id="cloudSettingsStatus">Not configured</span></p><p><b>Current role:</b> <span id="cloudCurrentRole">—</span></p><button type="button" id="cloudForceSync" class="secondary">Sync Now</button> <button type="button" id="cloudDownloadMigration" class="secondary">Export Migration File</button><p class="note">Shared information is protected by Supabase authentication and database row-level security.</p></div>
-<div id="adminUserPanel" class="online-admin-card" style="display:none"><h3>Administrator User Management</h3><form id="createProgramUser" class="grid"><label>Full name<input id="newUserName" required></label><label>Email<input id="newUserEmail" type="email" required></label><label>Temporary password<input id="newUserPassword" type="password" minlength="10" required></label><label>Role<select id="newUserRole"><option value="worker">Worker</option><option value="manager">Manager</option><option value="readonly">Read only</option><option value="admin">Administrator</option></select></label><div class="full"><button type="submit">Create User</button> <button type="button" id="refreshProgramUsers" class="secondary">Refresh Users</button></div></form><p id="adminUserMessage" class="admin-user-message"></p><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Active</th><th>Actions</th></tr></thead><tbody id="adminUsersBody"></tbody></table></div></div>
+
 </section>
+
+<section id="users" class="panel"><div class="box">
+<div class="section-head"><h2>Users</h2><div><button type="button" id="openCreateUser">+ Create New User</button> <button type="button" class="secondary" id="refreshProgramUsers">Refresh Users</button></div></div>
+<p id="adminUserMessage" class="admin-user-message" role="status" aria-live="polite"></p>
+<div id="adminUserPanel" style="display:none">
+<div id="newUserFormPanel" class="online-admin-card hidden"><h3 id="userFormTitle">Create New User</h3>
+<form id="createProgramUser" novalidate><input type="hidden" id="editProgramUserId">
+<div class="form-grid three">
+<label>Full Name<input id="newUserName" required maxlength="120" autocomplete="off"></label>
+<label>Username<input id="newUserUsername" required minlength="3" maxlength="40" pattern="[A-Za-z0-9_.-]{3,40}" autocomplete="off" placeholder="e.g. john.smith"></label>
+<label>Email<input id="newUserEmail" type="email" required autocomplete="off"></label>
+<label>Password<input id="newUserPassword" type="password" minlength="10" autocomplete="new-password" required><span class="note" id="userPasswordHint">At least 10 characters. Passwords are never included in invitation emails.</span></label>
+<label>Role<select id="newUserRole"><option value="partner_supplier">Partner Supplier</option><option value="worker">Worker</option><option value="manager">Manager</option><option value="readonly">Read only</option><option value="admin">Administrator — all pages</option></select></label>
+<label style="display:flex;align-items:center;gap:8px"><input style="width:auto" id="newUserInvite" type="checkbox">Send invitation to email (requires configured email delivery)</label>
+</div>
+<h3>Pages This User Can Access</h3><p class="note">Check the pages to allow. Administrators have access to all pages. Partner Supplier accounts receive only assigned supplier workspaces. Staff pages may share related program records.</p>
+<button type="button" class="secondary small" id="selectAllUserPages">Select All Available Pages</button> <button type="button" class="secondary small" id="clearUserPages">Clear Selection</button>
+<div id="newUserPageAccess" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:16px 0"></div>
+<p id="userFormMessage" class="admin-user-message" role="status" aria-live="polite" style="position:sticky;bottom:24px;background:white;padding:12px;border-radius:6px;z-index:5"></p>
+<div class="modal-actions"><button type="button" class="secondary" id="cancelCreateUser">Cancel</button><span></span><button type="submit" id="saveProgramUser">Create New User</button></div>
+</form></div>
+<div class="table-wrap"><table style="min-width:1000px"><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Page Access</th><th>Active</th><th>Actions</th></tr></thead><tbody id="adminUsersBody"></tbody></table></div>
+</div></div></section>
+<section id="no-page-access" class="panel"><div class="box"><h2>No Pages Assigned</h2><p>Ask your administrator to assign page access to your account.</p></div></section>
+
 </main>
 <div id="shipmentInfoModal" class="modal hidden"><div class="modal-card item-info-page"><div class="modal-head"><div><h2 id="shipmentInfoTitle">Shipment Information</h2><p>Complete shipment information with copy options.</p></div><button id="closeShipmentInfo" class="icon">×</button></div><div class="info-toolbar"><button id="copyAllShipmentInfo" type="button" class="secondary">Copy All Shipment Information</button></div><div id="shipmentInfoContent"></div><div class="modal-actions"><span></span><button id="closeShipmentInfoBottom" type="button">Close</button></div></div></div>
 
@@ -2071,7 +2099,8 @@ function prepareProgramNewestFirst(){
 }
 
 window.addEventListener("error", function(e){console.error(e.error||e.message);});
-const DATA_KEY='zimportSubmissionProgramV5', SETTINGS_KEY='zimportSubmissionSettingsV5';
+const sessionCacheIdentity=(()=>{try{const ref=new URL(window.ZIMPORT_ONLINE_CONFIG.supabaseUrl).hostname.split('.')[0];const auth=JSON.parse(localStorage.getItem('sb-'+ref+'-auth-token')||'null');return auth?.user?.id||'signed-out';}catch{return 'signed-out';}})();
+let DATA_KEY='zimportSubmissionProgramV5:user:'+sessionCacheIdentity, SETTINGS_KEY='zimportSubmissionSettingsV5:user:'+sessionCacheIdentity;
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const memoryStorage={};
 const safeStorage={
@@ -2087,7 +2116,7 @@ if(settings.rateDirection!=='CAD_TO_FOREIGN'){settings.usd=settings.usd?1/num(se
 settings={usd:settings.usd??0.70,gbp:settings.gbp??0.54,eur:settings.eur??0.65,rateDirection:'CAD_TO_FOREIGN',defaultCurrency:['CAD','USD','GBP','EUR'].includes(settings.defaultCurrency)?settings.defaultCurrency:'CAD',company:settings.company||'WINGLOBAL PROGRAM',recycleBinClearOnce20260926:settings.recycleBinClearOnce20260926===true,targetShipmentRemovalComplete20260926:settings.targetShipmentRemovalComplete20260926===true};
 const defaultAgencies=[{id:'agency-zimport',name:'Zimport Global Corporation',short:'142858',notes:'Primary agency'},{id:'agency-golden',name:'Golden Maple Marketing Inc.',short:'',notes:'Additional agency'}];
 const seedRecord={id:'seed-old-marani',productNeeds:'VINTAGES',tenderId:'1001',tenderName:'Emerging Europe Tender',tenderDate:'2026-07-30',agencyId:'agency-zimport',supplier:'OLD MARANI',brand:'GURJAANI',itemName:'OLD MARANI KINDZMARAULI',registered:'Yes',year:2024,award1:'87 WA',link1:'',award2:'',link2:'',award3:'',link3:'',extraAwards:[],productType:'Wine',productSubtype:'Wine',caseKg:18.9,currency:'USD',exchangeRate:1.42,supplierPrice:2.88,bottles:12,offeredQuoteCurrency:settings.defaultCurrency||'CAD',offeredQuote:88.80,erpManual:18.60,transportExpense:.75,potentialCases:715,sampleProvideDate:'',stage1Decision:'Accepted',sampleStatus:'Requested to Supplier',documentsToProvideStatus:'Not Ready',finalDecision:'Declined',finalOrderedQty:0,comments:'Tenderistvis om kindzmaraulis fasi dasvi 18.5 rom iyos daxlebze'};
-let state=JSON.parse(safeStorage.getItem(DATA_KEY)||safeStorage.getItem('zimportSubmissionProgramV4')||'null')||{agencies:defaultAgencies,records:[seedRecord],items:[],tenders:[],suppliers:[]};
+let state=JSON.parse(safeStorage.getItem(DATA_KEY)||'null')||{agencies:defaultAgencies,records:[seedRecord],items:[],tenders:[],suppliers:[]};
 state.tenders=(state.tenders||[]).filter(t=>!(String(t.code||'').trim()==='2546' && String(t.name||'').trim().toLowerCase().includes('italy north'))).map(t=>({...t,workItems:(Array.isArray(t.workItems)?t.workItems:[]).map(w=>({...w,status:w.status==='Registered'?'Registered in LCBO NISS':(w.status==='Completed'?'In Progress':(w.status||'To Register'))}))}));
 state.records=(state.records||[]).map(r=>{const specific=r.productSubtype&&r.productSubtype!=='Wine'?r.productSubtype:r.productType;let migratedFinal=r.finalDecision==='Approved'?'Winner':r.finalDecision;const finalDecision=r.registered==='No'?'Not Registered':(['In Progress','Winner','Declined','Not Registered'].includes(migratedFinal)?migratedFinal:'In Progress');return {...r,ntpStatus:r.ntpStatus||'Not Issued',ntpFileName:r.ntpFileName||'',poStatus:r.poStatus||'Not Issued',poNumber:r.poNumber||'',poFileName:r.poFileName||'',submissionNumber:r.submissionNumber||'',productNeeds:r.productNeeds||'VINTAGES',tenderId:r.tenderId||'',productType:(['Red Wine','White Wine','Rosé Wine','Rose Wine','Wine'].includes(specific)?'Wine':(specific||'Wine')),offeredQuoteCurrency:r.offeredQuoteCurrency||'CAD',stage1Decision:r.stage1Decision||(r.sampleRequested==='Yes'?'Sample Requested':(r.stage1==='Declined'?'Declined':'Accepted')),finalDecision};});
 if(!Array.isArray(state.agencies)||!state.agencies.length)state.agencies=defaultAgencies;if(!Array.isArray(state.suppliers))state.suppliers=[];
@@ -4791,11 +4820,13 @@ function editAgency(id){openAgency(id)}
 function closeAgency(){$('#agencyModal').classList.add('hidden')}
 function renderCalculator(r=defaults()){const f=[['productType','Product Type','select','Wine|Sparkling Wine|Fortified Wine|Dessert Wine|Sake|Vodka|Whisky|Brandy|Gin|Rum|Liqueur|Tequila|Cooler RTD|Beer|Craft Beer|Keg Beer|Gift Pack Wine|Gift Pack Spirit|Other'],['offeredQuoteCurrency','Offered Quote Currency','select','CAD|USD|GBP|EUR'],['offeredQuote','Offered Quote / Case','number'],['bottles','Bottles in Case','number'],['unitLitres','Bottle Size Litres','number'],['freight','Transportation / Freight CAD per Case','number']];$('#calcForm').innerHTML=f.map(([k,l,t,o])=>`<label>${l}${t==='select'?`<select id="c_${k}">${o.split('|').map(v=>`<option ${v===r[k]?'selected':''}>${v}</option>`).join('')}</select>`:`<input id="c_${k}" type="number" step="any" value="${r[k]??0}">`}</label>`).join('');showCalc(r)}
 function showCalc(r){const x=calculateLCBO(r);$('#calcResults').innerHTML=[['Case Quote',x.quote],['Transportation / Freight',x.freight],['Landed Cost',x.landed],['LCBO Markup',x.markup],['Wine / Volume Levy',x.levy],['Basic Price / Bottle',x.basic],['HST',x.tax],['Container Deposit',x.deposit],['Estimated Final ERP',x.finalRetail]].map(([k,v],i)=>`<div class="row ${i===8?'total':''}"><span>${k}</span><b>${money(v)}</b></div>`).join('')}
-function isAdminOnlyTab(tab){return ['dashboard','all-proposals','all-invoices','financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices','head-performance-bonuses','heads-recycle-bin','settings','program-settings'].includes(tab)}
+function isAdminOnlyTab(tab){if(tab==='users')return true;if(window.ZimportOnline?.profile?.allowed_pages&&window.ZimportPermissions?.canPage(window.ZimportOnline.profile,tab))return false;return ['dashboard','all-proposals','all-invoices','financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices','head-performance-bonuses','heads-recycle-bin','settings','program-settings'].includes(tab)}
+function canManageProgramBackups(){const profile=window.ZimportOnline?.profile;return profile?.role==='admin'&&profile.active!==false;}
 function isAdminUser(){return (window.ZIMPORT_CURRENT_ROLE||'readonly')==='admin'}
 function activate(tab,preferredSection=''){
-  if(tab==='country-performance'){tab='country-dashboard';preferredSection='country-sourcing';}
+ if(tab==='country-performance')return;
   if(!tab)return;
+  if(window.ZimportPermissions&&window.ZimportOnline?.profile&&!window.ZimportPermissions.canPage(window.ZimportOnline.profile,tab)){alert('You do not have access to this page.');return;}
   if(!isAdminUser() && isAdminOnlyTab(tab)){
     alert('Administrator access only.');
     activateMainSection('tender-niss');
@@ -4832,6 +4863,7 @@ function activate(tab,preferredSection=''){
 }
 let currentPoContext='main';
 function openPoPage(section='po-section',title="ALL PO'S AND ORDER FORMS"){
+  if(window.ZimportPermissions&&window.ZimportOnline?.profile&&!window.ZimportPermissions.canPage(window.ZimportOnline.profile,'po-page')){alert('You do not have access to this page.');return;}
   currentPoContext=section;
   $$('.tab,.panel').forEach(x=>x.classList.remove('active'));
   $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
@@ -4844,15 +4876,15 @@ function openPoPage(section='po-section',title="ALL PO'S AND ORDER FORMS"){
   renderPurchaseOrders();
 }
 function activateMainSection(section){
-  if(!isAdminUser() && section==='heads-page'){
+  if(!isAdminUser() && section==='heads-page'&&!window.ZimportOnline?.profile?.allowed_pages){
     alert('Administrator access only.');
     section='tender-niss';
   }
-  if(section==='po-section'){openPoPage('po-section',"ALL PO'S AND ORDER FORMS");return;}
+  if(section==='po-section'&&(!window.ZimportOnline?.profile||!window.ZimportPermissions||window.ZimportPermissions.canPage(window.ZimportOnline.profile,'po-page'))){openPoPage('po-section',"ALL PO'S AND ORDER FORMS");return;}
   $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
   $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav===section));
   const tabs=[...document.querySelectorAll(`.subnav[data-section-nav="${section}"] .tab[data-tab]`)];
-  const first=tabs.find(el=>el.style.display!=='none' && el.dataset.tab && !(!isAdminUser() && isAdminOnlyTab(el.dataset.tab)));
+  const first=tabs.find(el=>el.style.display!=='none' && !el.classList.contains('permission-hidden') && el.dataset.tab && !(!isAdminUser() && isAdminOnlyTab(el.dataset.tab)));
   if(first){
     if(first.dataset.tab==='po-page')openPoPage(section,first.dataset.poTitle||"ALL PO'S AND ORDER FORMS");
     else{if(first.dataset.tab==='transportation'&&$('#transportationPageSearch'))$('#transportationPageSearch').value='';activate(first.dataset.tab,section);}
@@ -5090,8 +5122,16 @@ const initialArchiveChange=archiveRequestedTransportations();
 const initialShipmentRemoval=removeRequestedShipment();
 if(initialArchiveChange||initialShipmentRemoval)safeStorage.setItem(DATA_KEY,JSON.stringify(state));
 buildFields();buildItemFields();syncTenderItemCategoriesFromItems();
-window.addEventListener('zimport-online-state-loaded',e=>{if(e.detail?.state){const localCountrySourcingCountries=Array.isArray(state.countrySourcingCountries)?state.countrySourcingCountries:[];const localCountryPortfolioSuppliers=Array.isArray(state.countryPortfolioSuppliers)?state.countryPortfolioSuppliers:[];state={...state,...e.detail.state};if(!Array.isArray(e.detail.state.countrySourcingCountries)||!e.detail.state.countrySourcingCountries.length)state.countrySourcingCountries=localCountrySourcingCountries.length?localCountrySourcingCountries:['Italy','Portugal','Spain','France'];if(!Array.isArray(e.detail.state.countryPortfolioSuppliers)||(!e.detail.state.countryPortfolioSuppliers.length&&localCountryPortfolioSuppliers.length))state.countryPortfolioSuppliers=localCountryPortfolioSuppliers;if(!e.detail.partialRecovery)settings=e.detail.settings||settings;const archivedNow=archiveRequestedTransportations();const removedNow=removeRequestedShipment(!e.detail.partialRecovery);const clearedNow=!e.detail.partialRecovery&&clearMainRecycleBinOnce();safeStorage.setItem(DATA_KEY,JSON.stringify(state));safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));renderShipments();window.renderArchivedShipments?.();safeStartupRender();if(((archivedNow||removedNow||clearedNow)&&!e.detail.partialRecovery)||e.detail.repairSync)setTimeout(()=>window.ZimportOnline?.queueSync?.(state,settings),0);}});
-window.addEventListener('zimport-online-role',e=>{window.ZIMPORT_CURRENT_ROLE=e.detail?.role||'readonly';applyOnlinePermissions?.();});
+window.addEventListener('zimport-online-state-loaded',e=>{if(e.detail?.state){const localCountrySourcingCountries=Array.isArray(state.countrySourcingCountries)?state.countrySourcingCountries:[];const localCountryPortfolioSuppliers=Array.isArray(state.countryPortfolioSuppliers)?state.countryPortfolioSuppliers:[];state=e.detail.replaceState?{...e.detail.state}:{...state,...e.detail.state};if(!e.detail.replaceState&&(!Array.isArray(e.detail.state.countrySourcingCountries)||!e.detail.state.countrySourcingCountries.length))state.countrySourcingCountries=localCountrySourcingCountries.length?localCountrySourcingCountries:['Italy','Portugal','Spain','France'];if(!e.detail.replaceState&&(!Array.isArray(e.detail.state.countryPortfolioSuppliers)||(!e.detail.state.countryPortfolioSuppliers.length&&localCountryPortfolioSuppliers.length)))state.countryPortfolioSuppliers=localCountryPortfolioSuppliers;if(!e.detail.partialRecovery)settings=e.detail.settings||settings;const archivedNow=archiveRequestedTransportations();const removedNow=removeRequestedShipment(!e.detail.partialRecovery);const clearedNow=!e.detail.partialRecovery&&clearMainRecycleBinOnce();safeStorage.setItem(DATA_KEY,JSON.stringify(state));safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));renderShipments();window.renderArchivedShipments?.();safeStartupRender();if(((archivedNow||removedNow||clearedNow)&&!e.detail.partialRecovery)||e.detail.repairSync)setTimeout(()=>window.ZimportOnline?.queueSync?.(state,settings),0);}});
+window.addEventListener('zimport-online-role',e=>{
+ window.ZIMPORT_CURRENT_ROLE=e.detail?.role||'readonly';
+ const cacheUser=window.ZimportOnline?.profile?.id||'signed-out';DATA_KEY='zimportSubmissionProgramV5:user:'+cacheUser;SETTINGS_KEY='zimportSubmissionSettingsV5:user:'+cacheUser;
+ // Preserve unsynchronized country data in the existing administrator browser during migration.
+ if(window.ZimportOnline?.profile?.role==='admin'&&!safeStorage.getItem(DATA_KEY)){
+  try{const legacy=JSON.parse(safeStorage.getItem('zimportSubmissionProgramV5')||'null');if(legacy&&typeof legacy==='object'){state={...state,...legacy};safeStorage.setItem(DATA_KEY,JSON.stringify(state));}const legacySettings=JSON.parse(safeStorage.getItem('zimportSubmissionSettingsV5')||'null');if(legacySettings&&typeof legacySettings==='object'){settings={...settings,...legacySettings};safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));}}catch(error){console.warn('Administrator cache migration skipped:',error);}
+ }
+ applyOnlinePermissions?.();window.refreshCountryAccess?.();
+});
 if($('#closeGenericInvoiceDetails'))$('#closeGenericInvoiceDetails').onclick=closeGenericInvoiceDetails;
 if($('#closeGenericInvoiceDetailsBottom'))$('#closeGenericInvoiceDetailsBottom').onclick=closeGenericInvoiceDetails;
 if($('#copyAllGenericInvoiceDetails'))$('#copyAllGenericInvoiceDetails').onclick=copyAllGenericInvoiceDetails;
@@ -5334,7 +5374,7 @@ $('#addAgencyBtn').onclick=()=>openAgency();$('#closeAgency').onclick=$('#cancel
 
 $('#saveSettings').onclick=()=>{settings={usd:num($('#setUsd').value),gbp:num($('#setGbp').value),eur:num($('#setEur').value),defaultCurrency:$('#setDefaultCurrency').value||'CAD',company:$('#setCompany').value,recycleBinClearOnce20260926:settings.recycleBinClearOnce20260926===true,targetShipmentRemovalComplete20260926:settings.targetShipmentRemovalComplete20260926===true};safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));applySharedCurrencyOptions();window.ZimportOnline?.queueSync?.(state,settings);alert('Settings saved and currency options updated across the program.')};
 $('#saveProgramSettings').onclick=()=>$('#saveSettings').click();
-$('#exportBtn').onclick=()=>download('zimport-program-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({settings,...state},null,2),'application/json');$('#importFile').onchange=e=>{const file=e.target.files[0];if(!file)return;const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);if(!d||typeof d!=='object'||Array.isArray(d)||!['agencies','records','items','tenders','suppliers','purchaseOrders','shipments'].some(key=>Array.isArray(d[key])))throw new Error('Invalid program backup');const {settings:backupSettings,...backupData}=d;const safeData={};for(const [key,value] of Object.entries(backupData)){if(!Object.prototype.hasOwnProperty.call(state,key))continue;const current=state[key];if(Array.isArray(current)?Array.isArray(value):(current&&typeof current==='object'?value&&typeof value==='object'&&!Array.isArray(value):typeof value===typeof current))safeData[key]=value;}state={...state,...safeData};settings={...settings,...(backupSettings&&typeof backupSettings==='object'?backupSettings:{}),recycleBinClearOnce20260926:settings.recycleBinClearOnce20260926===true||backupSettings?.recycleBinClearOnce20260926===true,targetShipmentRemovalComplete20260926:settings.targetShipmentRemovalComplete20260926===true||backupSettings?.targetShipmentRemovalComplete20260926===true};safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));save();alert('Backup imported.')}catch{alert('Invalid backup file.')}};fr.readAsText(file)};
+$('#exportBtn').onclick=()=>{if(!canManageProgramBackups()){alert('Only administrators can export backups.');return false;}return download('zimport-program-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({settings,...state},null,2),'application/json');};$('#importFile').onchange=e=>{if(!canManageProgramBackups()){e.target.value='';alert('Only administrators can import backups.');return false;}const file=e.target.files[0];if(!file)return;const fr=new FileReader();fr.onload=()=>{if(!canManageProgramBackups()){alert('Only administrators can import backups.');return false;}try{const d=JSON.parse(fr.result);if(!d||typeof d!=='object'||Array.isArray(d)||!['agencies','records','items','tenders','suppliers','purchaseOrders','shipments'].some(key=>Array.isArray(d[key])))throw new Error('Invalid program backup');const {settings:backupSettings,...backupData}=d;const safeData={};for(const [key,value] of Object.entries(backupData)){if(!Object.prototype.hasOwnProperty.call(state,key))continue;const current=state[key];if(Array.isArray(current)?Array.isArray(value):(current&&typeof current==='object'?value&&typeof value==='object'&&!Array.isArray(value):typeof value===typeof current))safeData[key]=value;}state={...state,...safeData};settings={...settings,...(backupSettings&&typeof backupSettings==='object'?backupSettings:{}),recycleBinClearOnce20260926:settings.recycleBinClearOnce20260926===true||backupSettings?.recycleBinClearOnce20260926===true,targetShipmentRemovalComplete20260926:settings.targetShipmentRemovalComplete20260926===true||backupSettings?.targetShipmentRemovalComplete20260926===true};safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));save();alert('Backup imported.')}catch{alert('Invalid backup file.')}};fr.readAsText(file)};
 $('#csvBtn').onclick=()=>{const keys=['tenderName','tenderDate','agency','supplier','brand','itemName','registered','year','award1','link1','award2','link2','award3','link3','additionalAwards','productType','caseKg','currency','exchangeRate','supplierPrice','supplierCad','agencyFee','bottles','offeredQuoteCurrency','offeredQuote','offeredQuoteCad','erp','transportExpense','netProfit','potentialCases','potentialBottles','totalProfit','sampleProvideDate','sampleStatus','documentsToProvideStatus','sampleDocumentStatus','stage1Decision','finalDecision','finalOrderedQty','comments','ntpStatus','ntpFileName','poStatus','poNumber','poFileName','submissionNumber','poFileName','submissionNumber'];const rows=[keys,...state.records.map(x=>{const d=derive(x);const o={...d,agency:agencyName(x.agencyId),erp:num(x.erpManual)||d.estimatedErp,additionalAwards:(x.extraAwards||[]).map(a=>[a.award,a.link].filter(Boolean).join(' - ')).join(' | ')};return keys.map(k=>String(o[k]??'').replaceAll('"','""'))})];download('zimport-submissions.csv',rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n'),'text/csv')};
 $('#clearBtn').onclick=()=>{if(confirm('Move all program records to the Recycling Bin?')){const groups=[['agency','Agencies','agencies'],['record','Submissions','records'],['item','Tender Item Database','items'],['tender','Tenders','tenders'],['supplier','Suppliers','suppliers'],['purchaseOrder',"ALL PO'S AND ORDER FORMS",'purchaseOrders'],['shipment','Transportation','shipments'],['financialInvoice','LCBO to Agent Tender Invoices','financialInvoices'],['supplierPaymentInvoice','Paying to Suppliers Invoices','supplierPaymentInvoices'],['supplierPaymentInvoice2','Suppliers to Agent Fee Payment','supplierPaymentInvoices2'],['otherInvoice','SEAS/REGU/OTHER TO AGENT INVOICES','otherInvoices'],['otherNewInvoice','OTHER MIXED INVOICES','otherNewInvoices'],['archivedInvoice','Archived Invoices','archivedInvoices'],['archivedShipment','Archived Transportation','archivedShipments'],['archivedPo',"ARCHIVED PO'S",'manuallyArchivedPurchaseOrders'],['countryWinery','Winery Database','countryWineries'],['countryCandidate','Wine Candidates','countryCandidates'],['countryBonus','Performance & Bonuses','countryBonuses']];groups.forEach(([type,page,key])=>(state[key]||[]).forEach(r=>moveToRecycleBin(type,page,r,{collection:key})));groups.forEach(([, ,key])=>state[key]=[]);save()}};
 
@@ -5524,12 +5564,12 @@ new MutationObserver(mutations=>mutations.forEach(m=>m.addedNodes.forEach(n=>{if
 
 function applyOnlinePermissions(){
  const role=window.ZIMPORT_CURRENT_ROLE||'readonly';
- const canEdit=['admin','manager','worker'].includes(role), canAdmin=role==='admin', canManage=['admin','manager'].includes(role);
+ const canEdit=['admin','manager','worker','partner_supplier'].includes(role), canAdmin=role==='admin', canManage=['admin','manager'].includes(role);
  document.querySelectorAll('button.danger,#deleteRecord,#deleteTender,#deleteAgency,#deleteSupplier,#deleteItem,#clearBtn').forEach(el=>{if(el.classList.contains('recycle-permanent-delete'))return;el.disabled=!canManage;el.title=!canManage?'Your role cannot delete records.':''});
  document.querySelectorAll('.recycle-permanent-delete').forEach(el=>{el.disabled=!canAdmin;el.style.display=canAdmin?'':'none'});
  document.querySelectorAll('.recycle-admin-only').forEach(el=>el.style.display=canAdmin?'':'none');
  document.querySelectorAll('#addAgencyBtn,#addSupplierBtn,#addPoBtn,#addShipmentBtn,#createFinancialInvoiceBtn,#createOtherInvoiceBtn').forEach(el=>{if(el)el.disabled=!canManage});
- document.querySelectorAll('input,select,textarea').forEach(el=>{if(role==='readonly' && !['onlineEmail','onlinePassword'].includes(el.id))el.disabled=true});
+ document.querySelectorAll('input,select,textarea').forEach(el=>{if(role==='readonly' && !['onlineEmail','onlinePassword','accountNewPassword','accountConfirmPassword'].includes(el.id))el.disabled=true});
  const roleEl=document.getElementById('cloudCurrentRole');if(roleEl)roleEl.textContent=role;
  const headsBtn=document.querySelector('.main-section-btn[data-section="heads-page"]');if(headsBtn)headsBtn.style.display=canAdmin?'':'none';
  const currencyTab=document.querySelector('.subnav[data-section-nav="setting-section"] .tab[data-tab="settings"]');if(currencyTab)currencyTab.style.display=canAdmin?'':'none';
@@ -5540,6 +5580,8 @@ function applyOnlinePermissions(){
    if(activePanel && isAdminOnlyTab(activePanel.id)) activateMainSection('tender-niss');
  }
 }
+const originalApplyOnlinePermissions=applyOnlinePermissions;
+applyOnlinePermissions=function(){originalApplyOnlinePermissions();window.ZimportPermissions?.apply();};
 window.applyOnlinePermissions=applyOnlinePermissions;
 
 (function(){
@@ -6233,7 +6275,7 @@ setTimeout(applyGlobalClickableNames,0);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 let currentSourcingCountry='Italy';
 let currentCountrySupplierId='';
-const getCountrySuppliers=country=>(state.countryPortfolioSuppliers||[]).filter(s=>s.country===country);
+const getCountrySuppliers=country=>(!window.ZimportOnline?.profile||window.ZimportPermissions?.canCountry(window.ZimportOnline.profile,country))?(state.countryPortfolioSuppliers||[]).filter(s=>s.country===country&&(!window.ZimportOnline?.profile||window.ZimportPermissions?.canSupplier(window.ZimportOnline.profile,s.id))):[];
 const currentCountrySupplier=()=>getCountrySuppliers(currentSourcingCountry).find(s=>s.id===currentCountrySupplierId)||null;
 const selectedSupplierName=()=>currentCountrySupplier()?.name||'';
 const recordMatchesCurrentSupplier=record=>{
@@ -6241,7 +6283,12 @@ const recordMatchesCurrentSupplier=record=>{
  const sid=String(record?.portfolioSupplierId||'');
  return sid?sid===current.id:!!current.systemDefault;
 };
-const getSourcingCountries=()=>Array.isArray(state.countrySourcingCountries)&&state.countrySourcingCountries.length?state.countrySourcingCountries:['Italy','Portugal','Spain','France'];
+const registeredSourcingCountries=()=>Array.isArray(state.countrySourcingCountries)&&state.countrySourcingCountries.length?state.countrySourcingCountries:['Italy','Portugal','Spain','France'];
+window.getRegisteredSourcingCountries=()=>[...registeredSourcingCountries()];
+window.getRegisteredSourcingSuppliers=()=>structuredClone(state.countryPortfolioSuppliers||[]);
+window.getCurrentSourcingScope=()=>({country:currentSourcingCountry,supplier_id:currentCountrySupplierId});
+const getSourcingCountries=()=>registeredSourcingCountries().filter(country=>!window.ZimportOnline?.profile||!window.ZimportPermissions||window.ZimportPermissions.canCountry(window.ZimportOnline.profile,country));
+window.refreshCountryAccess=()=>{renderSourcingCountryControls();renderCountrySupplierControls();};
 const italyOnly=a=>(a||[]).filter(x=>(x.country||'Italy')===currentSourcingCountry);
 
 function ensureCountryDefaultSupplier(country){
@@ -6258,6 +6305,7 @@ function renderCountrySupplierControls(){
    box.innerHTML=suppliers.map(s=>`<button type="button" class="secondary country-source-supplier ${s.id===currentCountrySupplierId?'active':''}" data-supplier-id="${esc(s.id)}">${esc(s.name)}</button>`).join('');
    box.querySelectorAll('.country-source-supplier').forEach(btn=>btn.onclick=()=>window.setCountryPortfolioSupplier(btn.dataset.supplierId));
  }
+ const add=document.getElementById('addCountrySupplierBtn');if(add){add.style.display=admin?'inline-block':'none';add.disabled=!admin;}
  const del=document.getElementById('deleteSelectedCountrySupplierBtn');
  if(del){del.style.display=admin?'inline-block':'none';del.disabled=!admin||!currentCountrySupplierId}
  const pageRow=document.getElementById('countrySourcingPageRow');if(pageRow)pageRow.style.display=currentCountrySupplierId?'flex':'none';renderSupplierContactPersons();renderSupplierInternalMail();updateInternalMailBadges();
@@ -6268,6 +6316,7 @@ window.setCountryPortfolioSupplier=id=>{
  currentCountrySupplierId=id;renderCountrySupplierControls();renderItalySourcing();
 };
 window.openCountrySupplierModal=()=>{
+ if(!isAdminUser()){alert('Only administrators can add suppliers.');return false;}
  const l=document.getElementById('countrySupplierModalCountry');if(l)l.textContent='Country: '+currentSourcingCountry;
  const i=document.getElementById('newCountrySupplierName');if(i)i.value='';
  show('countrySupplierModal',true);setTimeout(()=>i?.focus(),0);
@@ -6297,6 +6346,7 @@ window.deleteSelectedCountryPortfolioSupplier=()=>{
  return window.deleteCountryPortfolioSupplier(currentCountrySupplierId);
 };
 window.saveCountryPortfolioSupplier=()=>{
+ if(!isAdminUser()){alert('Only administrators can add suppliers.');return false;}
  if(!Array.isArray(state.countryPortfolioSuppliers))state.countryPortfolioSuppliers=[];
  const input=document.getElementById('newCountrySupplierName');
  const name=String(input?.value||'').trim().replace(/\s+/g,' ');
@@ -6499,7 +6549,7 @@ window.updateInternalMailBadges=updateInternalMailBadges;
 
 function renderSourcingCountryControls(){
  const countries=getSourcingCountries();
- if(!countries.includes(currentSourcingCountry))currentSourcingCountry=countries[0]||'Italy';
+ if(!countries.includes(currentSourcingCountry))currentSourcingCountry=countries[0]||'';
  const box=document.getElementById('countrySourcingCountryButtons');
  if(box)box.innerHTML=countries.map(country=>`<button class="secondary country-source-country ${country===currentSourcingCountry?'active':''}" type="button" data-country="${esc(country)}">${esc(country)}</button>`).join('');
  if(box)box.querySelectorAll('.country-source-country').forEach(btn=>btn.onclick=()=>window.setSourcingCountry(btn.dataset.country));
@@ -11392,5 +11442,16 @@ document.addEventListener('change',event=>{const input=event.target;if(!input.ma
  if(typeof ResizeObserver!=='undefined')new ResizeObserver(schedule).observe(document.body);
  refresh();
 })();
+</script>
+
+<div id="accountPasswordPanel" class="modal hidden" style="z-index:100001"><div class="modal-card agency-modal"><h2>Set Your Password</h2>
+<form id="accountPasswordForm"><label>New Password<input id="accountNewPassword" type="password" minlength="10" autocomplete="new-password" required></label><label>Confirm Password<input id="accountConfirmPassword" type="password" minlength="10" autocomplete="new-password" required></label><p id="accountPasswordMessage" role="status"></p><button type="submit">Save Password</button></form></div></div>
+<script>
+document.getElementById('accountPasswordForm').addEventListener('submit',async event=>{
+ event.preventDefault();const password=document.getElementById('accountNewPassword').value;const message=document.getElementById('accountPasswordMessage');
+ if(password!==document.getElementById('accountConfirmPassword').value){message.textContent='Passwords do not match.';return;}
+ const button=event.target.querySelector('button');button.disabled=true;
+ try{const {error}=await window.ZimportOnline.client.auth.updateUser({password});if(error)throw error;event.target.reset();document.getElementById('accountPasswordPanel').classList.add('hidden');}catch(error){message.textContent=error.message;}finally{button.disabled=false;}
+});
 </script>
 </body></html>

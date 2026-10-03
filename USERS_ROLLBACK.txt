@@ -1,0 +1,6 @@
+-- Disable the new user system without deleting business records.
+-- Run only as part of a reviewed rollback. Do not run while Partner Supplier accounts are active.
+update public.profiles set active=false where role::text='partner_supplier';
+-- Re-upload the previous frontend package for existing staff.
+-- Retain the additive columns and scoped policies so disabled partner accounts cannot access shared data.
+-- Use database_access_backup.json to review the original profiles, settings and access configuration.
