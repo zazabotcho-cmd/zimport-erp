@@ -849,11 +849,9 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 </style>
 
 <style>
-body{padding-bottom:48px}
-#screen-bottom-scroll{position:fixed;bottom:0;left:0;right:0;height:44px;z-index:1100;display:flex;align-items:center;gap:12px;padding:4px 14px;background:#eef3f8;border-top:1px solid #bdc9d6;box-shadow:0 -2px 6px #0002}
-#screen-bottom-scroll button{padding:5px 12px;min-width:38px}
-#screen-bottom-scroll input{flex:1;min-width:0;margin:0;padding:0;accent-color:#1f4e78;cursor:ew-resize}
-#screen-bottom-scroll span{font-size:12px;color:#425466;white-space:nowrap}
+body{padding-bottom:24px}
+#screen-bottom-scroll{position:fixed;bottom:0;left:0;right:0;height:24px;z-index:1100;overflow-x:scroll;overflow-y:hidden;background:#f1f1f1;border-top:1px solid #bdc9d6}
+#screen-bottom-scroll-track{height:1px;pointer-events:none}
 @media print{#screen-bottom-scroll{display:none!important}body{padding-bottom:0}}
 </style>
 </head>
@@ -11339,18 +11337,12 @@ document.addEventListener('change',event=>{const input=event.target;if(!input.ma
 })();
 </script>
 
-<div id="screen-bottom-scroll" aria-label="Page horizontal scrolling">
-<button type="button" id="screen-scroll-left" aria-label="Scroll left">◀</button>
-<span>Left / Right</span>
-<input id="screen-scroll-range" type="range" min="0" max="0" value="0" step="1" aria-label="Move page left or right">
-<button type="button" id="screen-scroll-right" aria-label="Scroll right">▶</button>
-</div>
+<div id="screen-bottom-scroll" tabindex="0" aria-label="Scroll page left or right"><div id="screen-bottom-scroll-track"></div></div>
 <script>
 // A viewport-fixed horizontal control mirrors the current wide table or page.
 (()=>{
  const dock=document.getElementById('screen-bottom-scroll');
- const slider=document.getElementById('screen-scroll-range');
- const left=document.getElementById('screen-scroll-left'),right=document.getElementById('screen-scroll-right');
+ const track=document.getElementById('screen-bottom-scroll-track');
  let target=null,preferred=null,pending=false;
  const visible=el=>!!(el&&el.isConnected&&el.getClientRects().length&&el.clientWidth>0);
  const wide=el=>visible(el)&&el.scrollWidth>el.clientWidth+1;
@@ -11371,19 +11363,16 @@ document.addEventListener('change',event=>{const input=event.target;if(!input.ma
   else{
    // Prefer the table nearest the part of the page currently on screen.
    list.sort((a,b)=>{
-    const score=el=>{const r=el.getBoundingClientRect();return r.bottom>0&&r.top<innerHeight-44?0:Math.min(Math.abs(r.top),Math.abs(r.bottom));};
+    const score=el=>{const r=el.getBoundingClientRect();return r.bottom>0&&r.top<innerHeight-24?0:Math.min(Math.abs(r.top),Math.abs(r.bottom));};
     return score(a)-score(b)||(b.scrollWidth-b.clientWidth)-(a.scrollWidth-a.clientWidth);
    });target=list[0]||null;
   }
   const max=target?Math.max(0,target.scrollWidth-target.clientWidth):0;
-  slider.max=String(max);slider.value=String(target?target.scrollLeft:0);
-  slider.disabled=left.disabled=right.disabled=!max;
+  track.style.width=String(dock.clientWidth+max)+'px';
+  dock.scrollLeft=target?target.scrollLeft:0;
  }
  function schedule(){if(!pending){pending=true;requestAnimationFrame(refresh);}}
- function move(value){if(target){target.scrollLeft=value;slider.value=String(target.scrollLeft);}}
- slider.addEventListener('input',()=>move(Number(slider.value)));
- left.addEventListener('click',()=>move((target?.scrollLeft||0)-Math.max(100,(target?.clientWidth||0)*.7)));
- right.addEventListener('click',()=>move((target?.scrollLeft||0)+Math.max(100,(target?.clientWidth||0)*.7)));
+ dock.addEventListener('scroll',()=>{if(target&&Math.abs(target.scrollLeft-dock.scrollLeft)>1)target.scrollLeft=dock.scrollLeft;});
  document.addEventListener('pointerover',event=>{
   if(dock.contains(event.target))return;
   const list=candidates();let el=event.target;
