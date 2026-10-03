@@ -295,6 +295,7 @@ label[data-retrieved-locked="1"] textarea{
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="online-config.js"></script>
 <script src="online-adapter-bulk-enabled.js"></script>
+<script src="user-permissions.js" defer></script>
 <script src="admin-management.js" defer></script>
 <style>
 #onlineLoginGate{position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#071d34,#123b60);display:flex;align-items:center;justify-content:center;padding:24px}
@@ -864,7 +865,7 @@ body{padding-bottom:24px;overflow-x:hidden}
   <form id="onlineLoginForm" class="login-card">
     <h2>ZIMPORT PROGRAM</h2>
     <p>Secure staff access</p>
-    <label>Email</label><input id="onlineEmail" type="email" autocomplete="username" required placeholder="name@company.com">
+    <label>Email or Username</label><input id="onlineEmail" type="text" autocomplete="username" required placeholder="Email or username">
     <label>Password</label><input id="onlinePassword" type="password" autocomplete="current-password" required placeholder="Password">
     <div class="login-actions"><button type="submit">Sign In</button><button id="onlineForgotPassword" type="button" class="secondary">Forgot Password</button></div>
     <div id="onlineLoginError" class="login-error"></div>
@@ -955,6 +956,7 @@ body{padding-bottom:24px;overflow-x:hidden}
   <button class="tab" data-tab="recycle-bin">Recycling Bin</button>
 </nav>
 <nav class="subnav" data-section-nav="setting-section">
+  <button class="tab" data-tab="users">Users</button>
   <button class="tab" data-tab="settings">Currency Setting</button>
   <button class="tab" data-tab="program-settings">Program Setting</button>
   <button class="tab" data-tab="agencies">Agency Setting</button>
@@ -1858,8 +1860,32 @@ body{padding-bottom:24px;overflow-x:hidden}
 <section id="settings" class="panel"><div class="box narrow"><h2>Currency Setting</h2><h3>Currency Conversion Rates — Enter Manually</h3><p class="note">Enter each CAD conversion rate manually. These currency options are shared across the program.</p><div class="currency-settings-row"><label>1 CAD = USD<input id="setUsd" type="number" min="0.0000000001" step="any" value="0.7042253521126761"></label><label>1 CAD = EUR<input id="setEur" type="number" min="0.0000000001" step="any" value="0.6451612903225806"></label><label>1 CAD = GBP<input id="setGbp" type="number" min="0.0000000001" step="any" placeholder="Enter GBP rate"></label></div><div class="form-grid"><label>Default Currency<select id="setDefaultCurrency"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></label></div><button id="saveSettings">Save Currency Setting</button></div></section>
 <section id="program-settings" class="panel"><div class="box narrow"><h2>Program Setting</h2><div class="form-grid"><label>Program Name<input id="setCompany"></label></div><button id="saveProgramSettings">Save Program Setting</button><hr><h3>Data Management</h3><button id="csvBtn" class="secondary">Export Submission CSV</button> <button id="clearBtn" class="danger">Delete All Program Data</button></div>
 <div class="online-admin-card"><h3>Online Program Connection</h3><p><b>Status:</b> <span id="cloudSettingsStatus">Not configured</span></p><p><b>Current role:</b> <span id="cloudCurrentRole">—</span></p><button type="button" id="cloudForceSync" class="secondary">Sync Now</button> <button type="button" id="cloudDownloadMigration" class="secondary">Export Migration File</button><p class="note">Shared information is protected by Supabase authentication and database row-level security.</p></div>
-<div id="adminUserPanel" class="online-admin-card" style="display:none"><h3>Administrator User Management</h3><form id="createProgramUser" class="grid"><label>Full name<input id="newUserName" required></label><label>Email<input id="newUserEmail" type="email" required></label><label>Temporary password<input id="newUserPassword" type="password" minlength="10" required></label><label>Role<select id="newUserRole"><option value="worker">Worker</option><option value="manager">Manager</option><option value="readonly">Read only</option><option value="admin">Administrator</option></select></label><div class="full"><button type="submit">Create User</button> <button type="button" id="refreshProgramUsers" class="secondary">Refresh Users</button></div></form><p id="adminUserMessage" class="admin-user-message"></p><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Active</th><th>Actions</th></tr></thead><tbody id="adminUsersBody"></tbody></table></div></div>
+
 </section>
+
+<section id="users" class="panel"><div class="box">
+<div class="section-head"><h2>Users</h2><div><button type="button" id="openCreateUser">+ Create New User</button> <button type="button" class="secondary" id="refreshProgramUsers">Refresh Users</button></div></div>
+<p id="adminUserMessage" class="admin-user-message" role="status" aria-live="polite"></p>
+<div id="adminUserPanel" style="display:none">
+<div id="newUserFormPanel" class="online-admin-card hidden"><h3 id="userFormTitle">Create New User</h3>
+<form id="createProgramUser"><input type="hidden" id="editProgramUserId">
+<div class="form-grid three">
+<label>Full Name<input id="newUserName" required maxlength="120" autocomplete="off"></label>
+<label>Username<input id="newUserUsername" required minlength="3" maxlength="40" pattern="[A-Za-z0-9_.-]{3,40}" autocomplete="off" placeholder="e.g. john.smith"></label>
+<label>Email<input id="newUserEmail" type="email" required autocomplete="off"></label>
+<label>Password<input id="newUserPassword" type="password" minlength="10" autocomplete="new-password" required><span class="note" id="userPasswordHint">At least 10 characters. Passwords are never included in invitation emails.</span></label>
+<label>Role<select id="newUserRole"><option value="worker">Worker</option><option value="manager">Manager</option><option value="readonly">Read only</option><option value="admin">Administrator — all pages</option></select></label>
+<label style="display:flex;align-items:center;gap:8px"><input style="width:auto" id="newUserInvite" type="checkbox" checked>Send invitation to email</label>
+</div>
+<h3>Pages This User Can Access</h3><p class="note">Check the pages to allow. Administrators have access to all pages. Related pages may use the same supplier, item, or order records.</p>
+<button type="button" class="secondary small" id="selectAllUserPages">Select All Available Pages</button> <button type="button" class="secondary small" id="clearUserPages">Clear Selection</button>
+<div id="newUserPageAccess" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:16px 0"></div>
+<div class="modal-actions"><button type="button" class="secondary" id="cancelCreateUser">Cancel</button><span></span><button type="submit" id="saveProgramUser">Create New User</button></div>
+</form></div>
+<div class="table-wrap"><table style="min-width:1000px"><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Page Access</th><th>Active</th><th>Actions</th></tr></thead><tbody id="adminUsersBody"></tbody></table></div>
+</div></div></section>
+<section id="no-page-access" class="panel"><div class="box"><h2>No Pages Assigned</h2><p>Ask your administrator to assign page access to your account.</p></div></section>
+
 </main>
 <div id="shipmentInfoModal" class="modal hidden"><div class="modal-card item-info-page"><div class="modal-head"><div><h2 id="shipmentInfoTitle">Shipment Information</h2><p>Complete shipment information with copy options.</p></div><button id="closeShipmentInfo" class="icon">×</button></div><div class="info-toolbar"><button id="copyAllShipmentInfo" type="button" class="secondary">Copy All Shipment Information</button></div><div id="shipmentInfoContent"></div><div class="modal-actions"><span></span><button id="closeShipmentInfoBottom" type="button">Close</button></div></div></div>
 
@@ -4797,10 +4823,11 @@ function editAgency(id){openAgency(id)}
 function closeAgency(){$('#agencyModal').classList.add('hidden')}
 function renderCalculator(r=defaults()){const f=[['productType','Product Type','select','Wine|Sparkling Wine|Fortified Wine|Dessert Wine|Sake|Vodka|Whisky|Brandy|Gin|Rum|Liqueur|Tequila|Cooler RTD|Beer|Craft Beer|Keg Beer|Gift Pack Wine|Gift Pack Spirit|Other'],['offeredQuoteCurrency','Offered Quote Currency','select','CAD|USD|GBP|EUR'],['offeredQuote','Offered Quote / Case','number'],['bottles','Bottles in Case','number'],['unitLitres','Bottle Size Litres','number'],['freight','Transportation / Freight CAD per Case','number']];$('#calcForm').innerHTML=f.map(([k,l,t,o])=>`<label>${l}${t==='select'?`<select id="c_${k}">${o.split('|').map(v=>`<option ${v===r[k]?'selected':''}>${v}</option>`).join('')}</select>`:`<input id="c_${k}" type="number" step="any" value="${r[k]??0}">`}</label>`).join('');showCalc(r)}
 function showCalc(r){const x=calculateLCBO(r);$('#calcResults').innerHTML=[['Case Quote',x.quote],['Transportation / Freight',x.freight],['Landed Cost',x.landed],['LCBO Markup',x.markup],['Wine / Volume Levy',x.levy],['Basic Price / Bottle',x.basic],['HST',x.tax],['Container Deposit',x.deposit],['Estimated Final ERP',x.finalRetail]].map(([k,v],i)=>`<div class="row ${i===8?'total':''}"><span>${k}</span><b>${money(v)}</b></div>`).join('')}
-function isAdminOnlyTab(tab){return ['dashboard','all-proposals','all-invoices','financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices','head-performance-bonuses','heads-recycle-bin','settings','program-settings'].includes(tab)}
+function isAdminOnlyTab(tab){if(tab==='users')return true;if(window.ZimportOnline?.profile?.allowed_pages&&window.ZimportPermissions?.canPage(window.ZimportOnline.profile,tab))return false;return ['dashboard','all-proposals','all-invoices','financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices','head-performance-bonuses','heads-recycle-bin','settings','program-settings'].includes(tab)}
 function isAdminUser(){return (window.ZIMPORT_CURRENT_ROLE||'readonly')==='admin'}
 function activate(tab,preferredSection=''){
   if(!tab)return;
+  if(window.ZimportPermissions&&window.ZimportOnline?.profile&&!window.ZimportPermissions.canPage(window.ZimportOnline.profile,tab)){alert('You do not have access to this page.');return;}
   if(!isAdminUser() && isAdminOnlyTab(tab)){
     alert('Administrator access only.');
     activateMainSection('tender-niss');
@@ -4837,6 +4864,7 @@ function activate(tab,preferredSection=''){
 }
 let currentPoContext='main';
 function openPoPage(section='po-section',title="ALL PO'S AND ORDER FORMS"){
+  if(window.ZimportPermissions&&window.ZimportOnline?.profile&&!window.ZimportPermissions.canPage(window.ZimportOnline.profile,'po-page')){alert('You do not have access to this page.');return;}
   currentPoContext=section;
   $$('.tab,.panel').forEach(x=>x.classList.remove('active'));
   $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
@@ -4849,15 +4877,15 @@ function openPoPage(section='po-section',title="ALL PO'S AND ORDER FORMS"){
   renderPurchaseOrders();
 }
 function activateMainSection(section){
-  if(!isAdminUser() && section==='heads-page'){
+  if(!isAdminUser() && section==='heads-page'&&!window.ZimportOnline?.profile?.allowed_pages){
     alert('Administrator access only.');
     section='tender-niss';
   }
-  if(section==='po-section'){openPoPage('po-section',"ALL PO'S AND ORDER FORMS");return;}
+  if(section==='po-section'&&(!window.ZimportOnline?.profile||!window.ZimportPermissions||window.ZimportPermissions.canPage(window.ZimportOnline.profile,'po-page'))){openPoPage('po-section',"ALL PO'S AND ORDER FORMS");return;}
   $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
   $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav===section));
   const tabs=[...document.querySelectorAll(`.subnav[data-section-nav="${section}"] .tab[data-tab]`)];
-  const first=tabs.find(el=>el.style.display!=='none' && el.dataset.tab && !(!isAdminUser() && isAdminOnlyTab(el.dataset.tab)));
+  const first=tabs.find(el=>el.style.display!=='none' && !el.classList.contains('permission-hidden') && el.dataset.tab && !(!isAdminUser() && isAdminOnlyTab(el.dataset.tab)));
   if(first){
     if(first.dataset.tab==='po-page')openPoPage(section,first.dataset.poTitle||"ALL PO'S AND ORDER FORMS");
     else{if(first.dataset.tab==='transportation'&&$('#transportationPageSearch'))$('#transportationPageSearch').value='';activate(first.dataset.tab,section);}
@@ -5534,7 +5562,7 @@ function applyOnlinePermissions(){
  document.querySelectorAll('.recycle-permanent-delete').forEach(el=>{el.disabled=!canAdmin;el.style.display=canAdmin?'':'none'});
  document.querySelectorAll('.recycle-admin-only').forEach(el=>el.style.display=canAdmin?'':'none');
  document.querySelectorAll('#addAgencyBtn,#addSupplierBtn,#addPoBtn,#addShipmentBtn,#createFinancialInvoiceBtn,#createOtherInvoiceBtn').forEach(el=>{if(el)el.disabled=!canManage});
- document.querySelectorAll('input,select,textarea').forEach(el=>{if(role==='readonly' && !['onlineEmail','onlinePassword'].includes(el.id))el.disabled=true});
+ document.querySelectorAll('input,select,textarea').forEach(el=>{if(role==='readonly' && !['onlineEmail','onlinePassword','accountNewPassword','accountConfirmPassword'].includes(el.id))el.disabled=true});
  const roleEl=document.getElementById('cloudCurrentRole');if(roleEl)roleEl.textContent=role;
  const headsBtn=document.querySelector('.main-section-btn[data-section="heads-page"]');if(headsBtn)headsBtn.style.display=canAdmin?'':'none';
  const currencyTab=document.querySelector('.subnav[data-section-nav="setting-section"] .tab[data-tab="settings"]');if(currencyTab)currencyTab.style.display=canAdmin?'':'none';
@@ -5545,6 +5573,8 @@ function applyOnlinePermissions(){
    if(activePanel && isAdminOnlyTab(activePanel.id)) activateMainSection('tender-niss');
  }
 }
+const originalApplyOnlinePermissions=applyOnlinePermissions;
+applyOnlinePermissions=function(){originalApplyOnlinePermissions();window.ZimportPermissions?.apply();};
 window.applyOnlinePermissions=applyOnlinePermissions;
 
 (function(){
@@ -11397,5 +11427,16 @@ document.addEventListener('change',event=>{const input=event.target;if(!input.ma
  if(typeof ResizeObserver!=='undefined')new ResizeObserver(schedule).observe(document.body);
  refresh();
 })();
+</script>
+
+<div id="accountPasswordPanel" class="modal hidden" style="z-index:100001"><div class="modal-card agency-modal"><h2>Set Your Password</h2>
+<form id="accountPasswordForm"><label>New Password<input id="accountNewPassword" type="password" minlength="10" autocomplete="new-password" required></label><label>Confirm Password<input id="accountConfirmPassword" type="password" minlength="10" autocomplete="new-password" required></label><p id="accountPasswordMessage" role="status"></p><button type="submit">Save Password</button></form></div></div>
+<script>
+document.getElementById('accountPasswordForm').addEventListener('submit',async event=>{
+ event.preventDefault();const password=document.getElementById('accountNewPassword').value;const message=document.getElementById('accountPasswordMessage');
+ if(password!==document.getElementById('accountConfirmPassword').value){message.textContent='Passwords do not match.';return;}
+ const button=event.target.querySelector('button');button.disabled=true;
+ try{const {error}=await window.ZimportOnline.client.auth.updateUser({password});if(error)throw error;event.target.reset();document.getElementById('accountPasswordPanel').classList.add('hidden');}catch(error){message.textContent=error.message;}finally{button.disabled=false;}
+});
 </script>
 </body></html>

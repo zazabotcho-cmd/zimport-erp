@@ -1,0 +1,22 @@
+USERS — CREATE NEW USER
+
+Open Settings > Users > Create New User.
+Enter the full name, username, email, password, role and permitted pages.
+Choose Send invitation to email to send a secure invitation link.
+Passwords are not sent by email or stored in program data/backups.
+The account can sign in with its email or username.
+Use Edit / Page Access to change pages or role, reset passwords, resend a sign-in invitation, and activate/deactivate users.
+Administrators always have full access. Users, currency/program settings and Head recycling administration are administrator-only.
+Existing accounts retain their existing access until an administrator assigns an explicit page list.
+Pages share underlying supplier, item, tender and order records; their dependencies are allowed together at the database level.
+
+ACTIVATION STATUS
+The local program and backend source are prepared and tested.
+Production schema changes and account-service deployment have NOT been applied: automatic approval review rejected both production actions pending explicit approval.
+No accounts have been created and no invitation emails have been sent.
+Before using this feature, activate the included USERS_PAGE_ACCESS.sql and deploy supabase/functions/manage-users, then upload all program web files.
+The manage-users service validates the current signed-in user on all administration operations. The public username-login action returns only a session after successful password authentication.
+Register the hosted program HTTPS URL in Supabase Authentication > URL Configuration (Site URL and allowed Redirect URLs).
+Configure the project's email delivery/SMTP and Invite/Magic Link/Reset Password templates.
+The Invite email contains a secure link. Resending an invitation to an existing account sends a secure Magic Link.
+Production account and email delivery testing is still required after approved activation.
