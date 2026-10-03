@@ -1,7 +1,6 @@
 (function(){
   const cfg=window.ZIMPORT_ONLINE_CONFIG||{};
   const configured=()=>/^https:\/\/.+\.supabase\.co$/i.test(cfg.supabaseUrl||'')&&!String(cfg.supabaseAnonKey||'').includes('PASTE_');
-  const invitationLanding=/[&#]type=(invite|recovery)(?:&|$)/.test(location.hash);
   let client=null,user=null,profile=null,syncTimer=null,syncing=false,dirty=false,realtimeTimer=null;
   let loginInFlight=null,realtimeChannel=null,loadedUserId=null;
   let latestState=null,latestSettings=null,baseline=new Map();
@@ -56,7 +55,6 @@
     if(profile?.role==='readonly'){status('Read-only account','error');return;}syncing=true;dirty=false;status('Saving changes…');try{
     const flat=flatten(state,settings);
     for(const table of Object.keys(flat)){
-      if(window.ZimportPermissions&&!window.ZimportPermissions.canTable(profile,table))continue;
       const rows=flat[table],current=new Map(rows.map(r=>[String(r.id),r]));
       for(const row of rows){const b=baseline.get(key(table,row.id));if(!b)await insertRow(table,row);else if(JSON.stringify(cleanData(row))!==JSON.stringify(b.data))await updateRow(table,row,b);}
       for(const [k,b] of [...baseline]){const [bt,id]=k.split(':');if(bt===table&&!current.has(id)){await deleteRow(table,id,b);}}
@@ -83,7 +81,6 @@
     cloudShipmentIds.delete(shipmentId);
   }
   async function loadTable(table){
-    if(window.ZimportPermissions&&!window.ZimportPermissions.canTable(profile,table))return [];
     const rows=[];let offset=0;
     while(true){
       const r=await client.from(table).select('id,data,created_by,created_at,updated_by,updated_at,deleted_by,restore_date,version',{count:'exact'}).eq('organization_id',cfg.organizationId).order('id',{ascending:true}).range(offset,offset+999);
@@ -117,7 +114,7 @@
     allTables.forEach(t=>ch.on('postgres_changes',{event:'*',schema:'public',table:t,filter:`organization_id=eq.${cfg.organizationId}`},payload=>{if(payload.new?.updated_by===user?.id||payload.old?.updated_by===user?.id)return;scheduleRealtimeReload();}));
     realtimeChannel=ch;ch.subscribe();
   }
-  async function getProfile(){const r=await client.from('profiles').select('*').eq('id',user.id).maybeSingle();if(r.error)throw r.error;profile=r.data||{role:'readonly',full_name:user.email,active:false};if(!profile.active){await client.auth.signOut();throw Error('This account is inactive. Contact your administrator.');}window.ZIMPORT_CURRENT_ROLE=profile.role||'readonly';window.dispatchEvent(new CustomEvent('zimport-online-role',{detail:{role:window.ZIMPORT_CURRENT_ROLE}}));if($('onlineUserLabel'))$('onlineUserLabel').textContent=`${profile.full_name||user.email} · ${window.ZIMPORT_CURRENT_ROLE}`;}
+  async function getProfile(){const r=await client.from('profiles').select('*').eq('id',user.id).maybeSingle();if(r.error)throw r.error;profile=r.data||{role:'readonly',full_name:user.email};window.ZIMPORT_CURRENT_ROLE=profile.role||'readonly';window.dispatchEvent(new CustomEvent('zimport-online-role',{detail:{role:window.ZIMPORT_CURRENT_ROLE}}));if($('onlineUserLabel'))$('onlineUserLabel').textContent=`${profile.full_name||user.email} · ${window.ZIMPORT_CURRENT_ROLE}`;}
   async function afterLogin(session){
     const nextUser=session?.user||null;
     if(!nextUser)return showLogin();
@@ -130,7 +127,6 @@
     loginInFlight=(async()=>{
       user=nextUser;
       await getProfile();
-      if(invitationLanding)document.getElementById('accountPasswordPanel')?.classList.remove('hidden');
       $('onlineLoginGate')?.classList.add('hidden');
       if($('onlineSignOut'))$('onlineSignOut').style.display='';
       await loadState();
@@ -170,13 +166,7 @@
       if(!client){$('onlineLoginError').textContent='Cloud connection is not ready. Check your internet connection, then click Retry connection or reload the page.';return;}
       const btn=e.target.querySelector('button[type=submit]');if(btn)btn.disabled=true;
       try{
-        const identity=$('onlineEmail').value.trim();let r;
-        if(identity.includes('@'))r=await client.auth.signInWithPassword({email:identity,password:$('onlinePassword').value});
-        else{
-          const response=await client.functions.invoke('manage-users',{body:{action:'login',username:identity,password:$('onlinePassword').value}});
-          if(response.error||response.data?.error){$('onlineLoginError').textContent='Invalid username or password.';return;}
-          r=await client.auth.setSession({access_token:response.data.access_token,refresh_token:response.data.refresh_token});
-        }
+        const r=await client.auth.signInWithPassword({email:$('onlineEmail').value.trim(),password:$('onlinePassword').value});
         if(r.error){$('onlineLoginError').textContent=r.error.message;return;}
         await afterLogin(r.data.session);
       }catch(e){
@@ -188,7 +178,7 @@
     });
     if($('onlineForgotPassword'))$('onlineForgotPassword').onclick=async()=>{
       if(!client){$('onlineLoginError').textContent='Cloud connection is not ready. Check your internet connection, then click Retry connection or reload the page.';return;}
-      const email=$('onlineEmail').value.trim();if(!email.includes('@')){$('onlineLoginError').textContent='Enter your email address to reset your password.';return;}
+      const email=$('onlineEmail').value.trim();if(!email){$('onlineLoginError').textContent='Enter your email first.';return;}
       try{
         const r=await client.auth.resetPasswordForEmail(email,{redirectTo:location.href});
         $('onlineLoginError').textContent=r.error?r.error.message:'Password reset email sent.';
@@ -222,16 +212,15 @@
       addRetryButton();
       return;
     }
-    if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Use your assigned email or username and password.';
+    if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Use your assigned email and password.';
     try{
       const {data,error}=await client.auth.getSession();
       if(error)throw error;
       if(data.session)await afterLogin(data.session);else showLogin();
       client.auth.onAuthStateChange((event,s)=>{
-        if(event==='PASSWORD_RECOVERY')document.getElementById('accountPasswordPanel')?.classList.remove('hidden');
         if(event==='SIGNED_OUT'||!s){showLogin();return;}
         // A token refresh is normal and must not trigger a full database reload.
-        if(event==='TOKEN_REFRESHED'){user=s.user||user;setTimeout(()=>getProfile().then(loadState).catch(()=>showLogin()),0);return;}
+        if(event==='TOKEN_REFRESHED'){user=s.user||user;return;}
         // Run outside the auth callback so auth-state notifications cannot
         // block other Supabase work, and afterLogin de-duplicates same-user events.
         setTimeout(()=>afterLogin(s).catch(err=>{console.error(err);showLogin();}),0);
