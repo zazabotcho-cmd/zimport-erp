@@ -847,6 +847,15 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 @media(max-width:900px){#supplierInfoModal.standalone-item-editor .supplier-item-form,#supplierInfoModal.standalone-item-editor .commercial-row-one,#supplierInfoModal.standalone-item-editor .commercial-row-two,#supplierInfoModal.standalone-item-editor .shipping-terms-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){#supplierInfoModal.standalone-item-editor .supplier-item-form,#supplierInfoModal.standalone-item-editor .commercial-row-one,#supplierInfoModal.standalone-item-editor .commercial-row-two,#supplierInfoModal.standalone-item-editor .shipping-terms-grid{grid-template-columns:1fr}}
 </style>
+
+<style>
+body{padding-bottom:48px}
+#screen-bottom-scroll{position:fixed;bottom:0;left:0;right:0;height:44px;z-index:1100;display:flex;align-items:center;gap:12px;padding:4px 14px;background:#eef3f8;border-top:1px solid #bdc9d6;box-shadow:0 -2px 6px #0002}
+#screen-bottom-scroll button{padding:5px 12px;min-width:38px}
+#screen-bottom-scroll input{flex:1;min-width:0;margin:0;padding:0;accent-color:#1f4e78;cursor:ew-resize}
+#screen-bottom-scroll span{font-size:12px;color:#425466;white-space:nowrap}
+@media print{#screen-bottom-scroll{display:none!important}body{padding-bottom:0}}
+</style>
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -867,13 +876,13 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
   <div class="header-actions"><div class="online-user-box"><span id="onlineStatus" class="online-status">Offline setup</span><span id="onlineUserLabel"></span><button id="onlineSignOut" class="secondary" type="button" style="display:none">Sign Out</button></div><button id="exportBtn" class="secondary">Export Backup</button><label class="button secondary">Import Backup<input id="importFile" type="file" accept="application/json" hidden></label></div>
 </header>
 <div class="main-sections" id="mainSections">
-  <button class="main-section-btn" data-section="invoice-calculator-section">INVOICE CALCULATOR</button>
   <button class="main-section-btn active" data-section="heads-page">HEAD'S PAGE</button>
   <button class="main-section-btn" data-section="tender-niss">TENDERS</button>
   <button class="main-section-btn" data-section="speciality-services">SPECIALITY SERVICES / PRIVATE ORDERS</button>
   <button class="main-section-btn" data-section="transportations">TRANSPORTATIONS</button>
   <button class="main-section-btn" data-section="po-section">ALL PO'S AND ORDER FORMS</button>
   <button class="main-section-btn" data-section="country-sourcing">COUNTRY SOURCING</button>
+  <button class="main-section-btn" data-section="invoice-calculator-section">INVOICE CALCULATOR</button>
   <button class="main-section-btn" data-section="internal-mail-section">INTERNAL MAIL <span id="mainInternalMailBadge" class="internal-mail-badge" style="display:none">0</span></button>
 <button class="main-section-btn" data-section="recycle-section">RECYCLING BIN</button>
   <button class="main-section-btn" data-section="setting-section">SETTING</button>
@@ -11327,6 +11336,64 @@ document.addEventListener('change',event=>{const input=event.target;if(!input.ma
  root.querySelector('#invoiceCalcAdd').addEventListener('click',()=>{worksheet.rows.push({description:'',items:6,cases:'',price:''});render();body.lastElementChild.querySelector('input').focus();});
  for(const n of [1,2]){const input=root.querySelector('#invoiceCalcPercent'+n);input.value=worksheet['percent'+n];input.addEventListener('input',()=>{worksheet['percent'+n]=input.value;calculate();});}
  render();
+})();
+</script>
+
+<div id="screen-bottom-scroll" aria-label="Page horizontal scrolling">
+<button type="button" id="screen-scroll-left" aria-label="Scroll left">◀</button>
+<span>Left / Right</span>
+<input id="screen-scroll-range" type="range" min="0" max="0" value="0" step="1" aria-label="Move page left or right">
+<button type="button" id="screen-scroll-right" aria-label="Scroll right">▶</button>
+</div>
+<script>
+// A viewport-fixed horizontal control mirrors the current wide table or page.
+(()=>{
+ const dock=document.getElementById('screen-bottom-scroll');
+ const slider=document.getElementById('screen-scroll-range');
+ const left=document.getElementById('screen-scroll-left'),right=document.getElementById('screen-scroll-right');
+ let target=null,preferred=null,pending=false;
+ const visible=el=>!!(el&&el.isConnected&&el.getClientRects().length&&el.clientWidth>0);
+ const wide=el=>visible(el)&&el.scrollWidth>el.clientWidth+1;
+ function candidates(){
+  const modals=[...document.querySelectorAll('.modal')].filter(visible);
+  const scope=modals.at(-1)||document.querySelector('.panel.active')||document.body;
+  const list=[scope,...scope.querySelectorAll('*')].filter(el=>{
+   if(dock.contains(el)||!wide(el))return false;
+   return /auto|scroll/.test(getComputedStyle(el).overflowX);
+  });
+  if(!modals.length&&wide(document.scrollingElement))list.push(document.scrollingElement);
+  return list;
+ }
+ function refresh(){
+  pending=false;
+  const list=candidates();
+  if(list.includes(preferred))target=preferred;
+  else{
+   // Prefer the table nearest the part of the page currently on screen.
+   list.sort((a,b)=>{
+    const score=el=>{const r=el.getBoundingClientRect();return r.bottom>0&&r.top<innerHeight-44?0:Math.min(Math.abs(r.top),Math.abs(r.bottom));};
+    return score(a)-score(b)||(b.scrollWidth-b.clientWidth)-(a.scrollWidth-a.clientWidth);
+   });target=list[0]||null;
+  }
+  const max=target?Math.max(0,target.scrollWidth-target.clientWidth):0;
+  slider.max=String(max);slider.value=String(target?target.scrollLeft:0);
+  slider.disabled=left.disabled=right.disabled=!max;
+ }
+ function schedule(){if(!pending){pending=true;requestAnimationFrame(refresh);}}
+ function move(value){if(target){target.scrollLeft=value;slider.value=String(target.scrollLeft);}}
+ slider.addEventListener('input',()=>move(Number(slider.value)));
+ left.addEventListener('click',()=>move((target?.scrollLeft||0)-Math.max(100,(target?.clientWidth||0)*.7)));
+ right.addEventListener('click',()=>move((target?.scrollLeft||0)+Math.max(100,(target?.clientWidth||0)*.7)));
+ document.addEventListener('pointerover',event=>{
+  if(dock.contains(event.target))return;
+  const list=candidates();let el=event.target;
+  while(el&&el!==document.body){if(list.includes(el)){preferred=el;schedule();return;}el=el.parentElement;}
+ });
+ document.addEventListener('scroll',schedule,true);
+ window.addEventListener('resize',schedule);
+ new MutationObserver(records=>{if(records.some(r=>!dock.contains(r.target)))schedule();}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden']});
+ if(typeof ResizeObserver!=='undefined')new ResizeObserver(schedule).observe(document.body);
+ refresh();
 })();
 </script>
 </body></html>
