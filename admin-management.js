@@ -1,7 +1,7 @@
 (function(){
  const $=id=>document.getElementById(id);
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const groupNames={'heads-page':"Head's Page",'tender-niss':'Tenders','speciality-services':'Speciality Services / Private Orders',transportations:'Cargo/Transportation','po-section':"POs and Order Forms",'country-sourcing':'Country Sourcing','invoice-calculator-section':'Invoice Calculator','internal-mail-section':'Internal Mail','recycle-section':'Recycling Bin','setting-section':'Settings'};
+ const groupNames={'heads-page':"Head's Page",'tender-niss':'Tenders','speciality-services':'Speciality Services / Private Orders',transportations:"ALL PO'S/CARGO/TRANSPORTATION",'country-sourcing':'Country Sourcing','invoice-calculator-section':'Invoice Calculator','internal-mail-section':'Internal Mail','recycle-section':'Recycling Bin','setting-section':'Settings'};
  let users=[],busy=false;
  function msg(text,kind=''){for(const id of ['adminUserMessage','userFormMessage']){const el=$(id);if(el){el.textContent=text;el.className='admin-user-message '+kind;}}if(kind==='error'&&!$('newUserFormPanel').classList.contains('hidden'))$('userFormMessage')?.scrollIntoView?.({block:'nearest',behavior:'smooth'});}
  function isAdmin(){return window.ZimportOnline?.profile?.role==='admin'&&window.ZimportOnline.profile.active!==false;}
