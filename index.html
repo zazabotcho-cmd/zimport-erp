@@ -3187,11 +3187,17 @@ function showTransportationCargoUsage(){
  const id=$('#transportationCargoSelect')?.value||'',used=transportationCargoUsage(id);
  $('#transportationCargoUsageWarning').textContent=used.length?'Already used in another transportation: '+used.map(sh=>sh.name||'Unnamed Transportation').join(', '):'';
 }
+function cargoVendorProducerNames(cargo){
+ return [...new Set((cargo.poLinks||[]).map(link=>{
+  const po=(state.purchaseOrders||[]).find(po=>po.id===link.poId);
+  return po?poVendorProducerPlain(po):'';
+ }).filter(name=>name&&name!=='—'))].join('; ')||'—';
+}
 function renderTransportationCargoSelector(){
  const selected=new Set(transportationSelectedCargoLinks.map(link=>link.cargoId));
  $('#transportationCargoSelect').innerHTML='<option value="">Select Cargo Name (Invoice #)</option>'+registeredCargoRecords().filter(cargo=>!selected.has(cargo.id)).map(cargo=>{
-  const used=transportationCargoUsage(cargo.id),warning=used.length?' — ALREADY USED IN: '+used.map(sh=>sh.name||'Unnamed Transportation').join(', '):'';
-  return `<option value="${escapeHtml(cargo.id)}">${escapeHtml(cargo.name||'Unnamed Cargo')} — ${num(cargo.palletQty)} pallets${cargo.archived?' (Archived)':''}${escapeHtml(warning)}</option>`;
+  const used=transportationCargoUsage(cargo.id),warning=used.length?' (ALREADY USED IN TRANSPORTATION: '+used.map(sh=>sh.name||'Unnamed Transportation').join(', ')+')':'';
+  return `<option value="${escapeHtml(cargo.id)}">${escapeHtml(cargo.name||'Unnamed Cargo')} — ${escapeHtml(cargoVendorProducerNames(cargo))} — ${num(cargo.palletQty)} pallets${cargo.archived?' (Archived)':''}${escapeHtml(warning)}</option>`;
  }).join('');
  showTransportationCargoUsage();renderTransportationCargoRows();
 }
@@ -3355,34 +3361,25 @@ function poClassificationLabel(po={}){const program=String(po.program||'OTHER').
 function renderShipmentPoSelector(){
  if(shipmentEditorKind==='transportation'){renderTransportationCargoSelector();return}
  const select=$('#shipmentPoSelect');if(!select)return;
- const currentShipmentId=$('#shipmentRecordId')?.value||'';
- select.innerHTML='<option value="">Select PO</option>'+(state.purchaseOrders||[])
-   .filter(po=>!shipmentSelectedPos.some(x=>x.poId===po.id))
-   .map(po=>{
-     const usedIn=(state.shipments||[]).filter(sh=>sh.id!==currentShipmentId&&(sh.poLinks||[]).some(link=>link.poId===po.id));
-     const suffix=usedIn.length
-       ? ` — ALREADY USED IN ANOTHER TRANSPORTATION: ${usedIn.map(sh=>sh.name||'Unnamed Transportation').join(', ')}`
-       : '';
-     return `<option value="${po.id}">${escapeHtml(poClassificationLabel(po))} — ${poBottleCount(po).toLocaleString()} bottles${escapeHtml(suffix)}</option>`;
-   }).join('');
+ select.innerHTML='<option value="">Select available PO</option>'+(state.purchaseOrders||[])
+   .filter(po=>!shipmentSelectedPos.some(x=>x.poId===po.id)&&!shipmentPoUsageInfo(po.id).length)
+   .map(po=>`<option value="${escapeHtml(po.id)}">${escapeHtml(poClassificationLabel(po))} — ${escapeHtml(poVendorProducerPlain(po))} — ${poBottleCount(po).toLocaleString()} bottles</option>`).join('');
+ const warning=$('#shipmentPoUsageWarning');if(warning)warning.textContent='';
  renderShipmentPoRows();
 }
 function renderShipmentPoRows(){const body=$('#shipmentPoRows');if(!body)return;body.innerHTML=shipmentSelectedPos.map(link=>{const po=(state.purchaseOrders||[]).find(x=>x.id===link.poId),poNo=po?.number||'—',suppliers=po?poVendorProducerPlain(po):'—',bottles=poBottleCount(po).toLocaleString();return `<tr><td><b>${escapeHtml(poNo)}</b><button type="button" class="secondary copy-mini" onclick="copyText('${escapeHtml(poNo).replace(/'/g,"\\'")}')">Copy</button></td><td><div style="display:flex;align-items:center;gap:4px"><input value="${escapeHtml(link.ref||'')}" oninput="updateShipmentRef('${link.poId}',this.value)" placeholder="Ref #"><button type="button" class="secondary copy-mini" onclick="copyShipmentRef('${link.poId}')">Copy</button></div></td><td>${escapeHtml(suppliers)}</td><td>${bottles}</td><td><button type="button" class="danger small" onclick="removeShipmentPo('${link.poId}')">Remove</button></td></tr>`}).join('')||'<tr><td colspan="5">No POs added.</td></tr>';updateShipmentCalculations()}
 function updateShipmentCalculations(resetRate=false){if(shipmentEditorKind==='transportation'){shipmentSelectedPos=cargoLinksPoLinks(transportationSelectedCargoLinks);$('#shipmentPalletQtyInput').value=cargoLinksPalletQuantity(transportationSelectedCargoLinks)}const totalBottles=shipmentEditorKind==='transportation'?cargoLinksBottleQuantity(transportationSelectedCargoLinks):shipmentSelectedPos.reduce((sum,link)=>sum+poBottleCount((state.purchaseOrders||[]).find(x=>x.id===link.poId)),0),cost=num($('#shipmentCostInput')?.value),currency=$('#shipmentCurrencyInput')?.value||'CAD',rateInput=$('#shipmentExchangeRateInput');if(resetRate&&rateInput)rateInput.value=currency==='CAD'?'1':'';const exchangeRate=currency==='CAD'?1:num(rateInput?.value),cadRate=currency==='CAD'?1:(exchangeRate>0?1/exchangeRate:0),costPerBottle=totalBottles?cost/totalBottles:0,costPerBottleCad=costPerBottle*cadRate;$('#shipmentTotalBottles').textContent=totalBottles.toLocaleString();$('#transportationBottleQtyInput').value=totalBottles;$('#shipmentCostDisplay').textContent=currency+' '+cost.toFixed(2);$('#shipmentCostPerBottle').textContent=currency+' '+costPerBottle.toFixed(4);if(rateInput){rateInput.disabled=currency==='CAD';if(currency==='CAD')rateInput.value='1'}$('#shipmentConverterCurrency').textContent=currency;$('#shipmentConverterLabel').textContent='Transportation CAD Converter — Enter Manually';$('#shipmentCostPerBottleCad').textContent='CAD '+costPerBottleCad.toFixed(4)}
 function shipmentPoUsageInfo(poId){
  const currentShipmentId=$('#shipmentRecordId')?.value||'';
- return (state.shipments||[]).filter(sh=>sh.id!==currentShipmentId&&(sh.poLinks||[]).some(link=>link.poId===poId));
+ return allTransportationRecords().filter(sh=>sh.id!==currentShipmentId&&!(sh.recordKind==='transportation'&&(sh.cargoLinks||[]).some(link=>link.cargoId===currentShipmentId))&&(sh.poLinks||[]).some(link=>link.poId===poId));
 }
 window.shipmentPoUsageInfo=shipmentPoUsageInfo;
 
 function addShipmentPo(){
  const poId=$('#shipmentPoSelect').value;if(!poId)return;
  const usedIn=shipmentPoUsageInfo(poId);
- if(usedIn.length){
-   const names=usedIn.map(sh=>sh.name||'Unnamed Transportation').join(', ');
-   const ok=confirm(`This PO is already used in another Transportation: ${names}.\n\nDo you still want to add this PO to the current Transportation?`);
-   if(!ok)return;
- }
+ if(usedIn.length){renderShipmentPoSelector();return}
+ if(shipmentSelectedPos.some(link=>link.poId===poId))return;
  shipmentSelectedPos.push({poId,ref:$('#shipmentRefInput').value.trim()});
  $('#shipmentRefInput').value='';
  renderShipmentPoSelector();
