@@ -1426,8 +1426,8 @@ body{padding-bottom:24px;overflow-x:hidden}
 <div class="section-head"><h2>Price List</h2><button type="button" onclick="openPriceListEditor()">+ Add Item</button></div>
 <div class="page-search-panel open"><label>Search Price List<input id="priceListSearch" type="search" placeholder="Search description, type, size, bottles or price" oninput="renderPriceList()"></label><div class="page-search-actions"><button type="button" class="secondary" onclick="document.getElementById('priceListSearch').value='';renderPriceList()">Clear Search</button></div></div>
 <form id="priceListForm" class="hidden" onsubmit="savePriceListItem(event)"><input id="priceListId" type="hidden"><div class="form-grid three">
-<label>Item Description<input id="priceListDescription" required></label><label>Type<input id="priceListType" required placeholder="Wine, spirit, etc."></label><label>Size in ml<input id="priceListSize" type="number" min="1" step="1" required></label><label>Bottles in Case<input id="priceListBottles" type="number" min="1" step="1" required></label><label>Bottle Price<input id="priceListPrice" type="number" min="0" step="0.01" required></label></div><div class="action-buttons"><button type="submit">Save Item</button><button type="button" class="secondary" onclick="document.getElementById('priceListForm').classList.add('hidden')">Cancel</button></div></form>
-<div class="table-wrap"><table><thead><tr><th>Item Description</th><th>Type</th><th>Size in ml</th><th>Bottles in Case</th><th>Bottle Price</th><th>Actions</th></tr></thead><tbody id="priceListRows"></tbody></table></div>
+<label>Vendor/Producer<input id="priceListVendor" required placeholder="Vendor/producer name"></label><label>Item Description<input id="priceListDescription" required></label><label>Type<input id="priceListType" required placeholder="Wine, spirit, etc."></label><label>Size in ml<input id="priceListSize" type="number" min="1" step="1" required></label><label>Bottles in Case<input id="priceListBottles" oninput="updatePriceListCasePrice()" type="number" min="1" step="1" required></label><label>Bottle Price<input id="priceListPrice" oninput="updatePriceListCasePrice()" type="number" min="0" step="0.01" required></label><label>Supplier Currency<select id="priceListCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option><option>GEL</option></select></label><label>Case Price<input id="priceListCasePrice" type="text" readonly title="Bottles in Case × Bottle Price"></label></div><div class="action-buttons"><button type="submit">Save Item</button><button type="button" class="secondary" onclick="document.getElementById('priceListForm').classList.add('hidden')">Cancel</button></div></form>
+<div class="table-wrap"><table><thead><tr><th>Vendor/Producer</th><th>Item Description</th><th>Type</th><th>Size in ml</th><th>Bottles in Case</th><th>Bottle Price</th><th>Supplier Currency</th><th>Case Price</th><th>Actions</th></tr></thead><tbody id="priceListRows"></tbody></table></div>
 </div></section>
 <section id="archived-transportation" class="panel"><div class="box">
   <div class="section-head"><div><h2>Archived Cargo</h2><p class="note">Shipments moved from the active Transportation page.</p></div></div>
@@ -5037,21 +5037,24 @@ function openPoPage(section='transportations',title="All PO's"){
   if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
   renderPurchaseOrders();
 }
+function priceListCasePrice(item){return Math.round(Number(item.bottlesPerCase)*Number(item.bottlePrice)*100)/100}
+function updatePriceListCasePrice(){const bottles=Number($('#priceListBottles').value),price=Number($('#priceListPrice').value);$('#priceListCasePrice').value=priceListCasePrice({bottlesPerCase:bottles,bottlePrice:price}).toFixed(2)}
 function priceListItems(){return Array.isArray(settings.priceListItems)?settings.priceListItems:[]}
 function renderPriceList(){
  const body=$('#priceListRows');if(!body)return;
  const query=String($('#priceListSearch')?.value||'').trim().toLowerCase();
- body.innerHTML=priceListItems().filter(item=>[item.description,item.type,item.sizeMl,item.bottlesPerCase,item.bottlePrice].join(' ').toLowerCase().includes(query)).map(item=>`<tr><td>${escapeHtml(item.description)}</td><td>${escapeHtml(item.type)}</td><td>${item.sizeMl}</td><td>${item.bottlesPerCase}</td><td>${Number(item.bottlePrice).toFixed(2)}</td><td><button type="button" class="secondary small" onclick="openPriceListEditor('${escapeHtml(item.id)}')">Edit</button> <button type="button" class="danger small" onclick="removePriceListItem('${escapeHtml(item.id)}')">Remove</button></td></tr>`).join('')||'<tr><td colspan="6">'+(query?'No items match your search.':'No price list items yet.')+'</td></tr>';
+ body.innerHTML=priceListItems().filter(item=>[item.vendorProducer,item.description,item.type,item.sizeMl,item.bottlesPerCase,item.bottlePrice,item.supplierCurrency,priceListCasePrice(item).toFixed(2)].join(' ').toLowerCase().includes(query)).map(item=>`<tr><td>${escapeHtml(item.vendorProducer||'—')}</td><td>${escapeHtml(item.description)}</td><td>${escapeHtml(item.type)}</td><td>${item.sizeMl}</td><td>${item.bottlesPerCase}</td><td>${Number(item.bottlePrice).toFixed(2)}</td><td>${escapeHtml(item.supplierCurrency||'CAD')}</td><td>${priceListCasePrice(item).toFixed(2)}</td><td><button type="button" class="secondary small" onclick="openPriceListEditor('${escapeHtml(item.id)}')">Edit</button> <button type="button" class="danger small" onclick="removePriceListItem('${escapeHtml(item.id)}')">Remove</button></td></tr>`).join('')||'<tr><td colspan="9">'+(query?'No items match your search.':'No price list items yet.')+'</td></tr>';
 }
 function openPriceListEditor(id=''){
  const item=priceListItems().find(item=>item.id===id)||{};
- for(const [field,key] of [['Id','id'],['Description','description'],['Type','type'],['Size','sizeMl'],['Bottles','bottlesPerCase'],['Price','bottlePrice']])$('#priceList'+field).value=item[key]??'';
- $('#priceListForm').classList.remove('hidden');$('#priceListDescription').focus();
+ for(const [field,key] of [['Id','id'],['Vendor','vendorProducer'],['Description','description'],['Type','type'],['Size','sizeMl'],['Bottles','bottlesPerCase'],['Price','bottlePrice']])$('#priceList'+field).value=item[key]??'';
+ $('#priceListCurrency').value=item.supplierCurrency||'CAD';updatePriceListCasePrice();
+ $('#priceListForm').classList.remove('hidden');$('#priceListVendor').focus();
 }
 function savePriceListItem(event){
  event.preventDefault();if(!$('#priceListForm').reportValidity())return;
- const item={id:$('#priceListId').value||uid(),description:$('#priceListDescription').value.trim(),type:$('#priceListType').value.trim(),sizeMl:Number($('#priceListSize').value),bottlesPerCase:Number($('#priceListBottles').value),bottlePrice:Number($('#priceListPrice').value)};
- if(!item.description||!item.type)return;
+ const item={id:$('#priceListId').value||uid(),vendorProducer:$('#priceListVendor').value.trim(),description:$('#priceListDescription').value.trim(),type:$('#priceListType').value.trim(),sizeMl:Number($('#priceListSize').value),bottlesPerCase:Number($('#priceListBottles').value),bottlePrice:Number($('#priceListPrice').value),supplierCurrency:$('#priceListCurrency').value};
+ if(!item.vendorProducer||!item.description||!item.type)return;
  settings.priceListItems=priceListItems().slice();const index=settings.priceListItems.findIndex(x=>x.id===item.id);
  if(index>=0)settings.priceListItems[index]=item;else settings.priceListItems.unshift(item);
  safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));save();$('#priceListForm').classList.add('hidden');renderPriceList();
