@@ -4,6 +4,7 @@
  const restrictedAdmin=new Set(['users','settings','program-settings','heads-recycle-bin']);
  function canPage(profile,id){
   if(id==='transportation-records')id='transportation';
+  if(id==='price-list')id='po-page';
   if(!profile||profile.active===false)return false;
   if(profile.role==='admin')return true;
   if(id==='users')return false;
