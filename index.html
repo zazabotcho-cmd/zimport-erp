@@ -297,6 +297,16 @@ label[data-retrieved-locked="1"] textarea{
 
 #shipmentModal.cargo-editor .cargo-transport-only{display:none!important}
 #shipmentModal.cargo-editor .calculation-strip>div:not(:first-child){display:none!important}
+
+.subnav[data-section-nav="transportations"] .tab[data-tab="price-list"]{margin-left:auto}
+.subnav[data-section-nav="transportations"] .transportation-archive-separator{margin-left:18px}
+
+#priceListForm{margin-bottom:18px}
+.price-list-editor-table{min-width:1150px;width:100%}
+.price-list-editor-table td{vertical-align:middle}
+.price-list-editor-table input,.price-list-editor-table select{width:100%;min-width:85px}
+.price-list-editor-table td:nth-child(1),.price-list-editor-table td:nth-child(2){min-width:190px}
+.price-list-editor-table td:last-child{min-width:160px}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1425,8 +1435,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 <section id="price-list" class="panel"><div class="box">
 <div class="section-head"><h2>Price List</h2><button type="button" onclick="openPriceListEditor()">+ Add Item</button></div>
 <div class="page-search-panel open"><label>Search Price List<input id="priceListSearch" type="search" placeholder="Search description, type, size, bottles or price" oninput="renderPriceList()"></label><div class="page-search-actions"><button type="button" class="secondary" onclick="document.getElementById('priceListSearch').value='';renderPriceList()">Clear Search</button></div></div>
-<form id="priceListForm" class="hidden" onsubmit="savePriceListItem(event)"><input id="priceListId" type="hidden"><div class="form-grid three">
-<label>Vendor/Producer<input id="priceListVendor" required placeholder="Vendor/producer name"></label><label>Item Description<input id="priceListDescription" required></label><label>Type<input id="priceListType" required placeholder="Wine, spirit, etc."></label><label>Size in ml<input id="priceListSize" type="number" min="1" step="1" required></label><label>Bottles in Case<input id="priceListBottles" oninput="updatePriceListCasePrice()" type="number" min="1" step="1" required></label><label>Bottle Price<input id="priceListPrice" oninput="updatePriceListCasePrice()" type="number" min="0" step="0.01" required></label><label>Supplier Currency<select id="priceListCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option><option>GEL</option></select></label><label>Case Price<input id="priceListCasePrice" type="text" readonly title="Bottles in Case × Bottle Price"></label></div><div class="action-buttons"><button type="submit">Save Item</button><button type="button" class="secondary" onclick="document.getElementById('priceListForm').classList.add('hidden')">Cancel</button></div></form>
+<form id="priceListForm" class="hidden" onsubmit="savePriceListItem(event)"><input id="priceListId" type="hidden"><div class="table-wrap"><table class="price-list-editor-table"><thead><tr><th>Vendor/Producer</th><th>Item Description</th><th>Type</th><th>Size in ml</th><th>Bottles in Case</th><th>Bottle Price</th><th>Supplier Currency</th><th>Case Price</th><th>Actions</th></tr></thead><tbody><tr><td><input aria-label="Vendor/Producer" id="priceListVendor" required placeholder="Vendor/producer name"></td><td><input aria-label="Item Description" id="priceListDescription" required></td><td><input aria-label="Type" id="priceListType" required placeholder="Wine, spirit, etc."></td><td><input aria-label="Size in ml" id="priceListSize" type="number" min="1" step="1" required></td><td><input aria-label="Bottles in Case" id="priceListBottles" oninput="updatePriceListCasePrice()" type="number" min="1" step="1" required></td><td><input aria-label="Bottle Price" id="priceListPrice" oninput="updatePriceListCasePrice()" type="number" min="0" step="0.01" required></td><td><select aria-label="Supplier Currency" id="priceListCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option><option>GEL</option></select></td><td><input aria-label="Case Price" id="priceListCasePrice" type="text" readonly title="Bottles in Case × Bottle Price"></td><td><div class="inline-actions"><button type="submit">Save</button><button type="button" class="secondary" onclick="document.getElementById('priceListForm').classList.add('hidden')">Cancel</button></div></td></tr></tbody></table></div></form>
 <div class="table-wrap"><table><thead><tr><th>Vendor/Producer</th><th>Item Description</th><th>Type</th><th>Size in ml</th><th>Bottles in Case</th><th>Bottle Price</th><th>Supplier Currency</th><th>Case Price</th><th>Actions</th></tr></thead><tbody id="priceListRows"></tbody></table></div>
 </div></section>
 <section id="archived-transportation" class="panel"><div class="box">
