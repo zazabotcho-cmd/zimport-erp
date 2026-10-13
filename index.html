@@ -1212,7 +1212,7 @@ body{padding-bottom:24px;overflow-x:hidden}
   <div class="box dashboard-detail">
     <div class="section-head"><h2>Winner Items Financial Dashboard</h2><span class="note">Each winner item is shown on its own row.</span></div>
     <div class="table-wrap"><table class="dashboard-table"><thead><tr>
-      <th>Tender Name & Date</th><th>Agency</th><th>Brand Name</th><th>Product Description</th><th>WINNER CASE ORDER QTY</th>
+      <th>Tender Name & Date</th><th>Agency</th><th>Product Description</th><th>WINNER CASE ORDER QTY</th>
       <th title="(LCBO offered case price − supplier case price − transportation per bottle × items per case) ÷ items per case, converted to CAD. Complete supplier pricing and enter 0 transportation if the supplier delivers.">Agency Fee CAD / Btl</th><th>Bottles / Case</th><th>Offered Quote / Case</th><th>ERP CAD / Btl</th><th>Net Profit / Btl</th>
       <th>Winner Cases</th><th>Winner Bottles</th><th>Net Profit Total</th><th>Advertising Budget CAD</th><th>Date</th>
     </tr></thead><tbody id="dashboardRows"></tbody></table></div>
@@ -2754,9 +2754,9 @@ function renderDashboardRows(){
     const erp=num(merged.erpManual)||d.estimatedErp;
     const description=descriptionWithItemSize(merged.itemName||item.productDescription||'—',item,r);
     const date=merged.tenderDate||r.storeReleaseDate||'—';
-    return `<tr data-record-id="${escapeHtml(r.id)}"><td><b>${escapeHtml(merged.tenderName||'—')}</b><br><small>${escapeHtml(date)}</small></td><td>${escapeHtml(agencyName(r.agencyId)||'—')}</td><td>${escapeHtml(merged.brand||'—')}</td><td><b>${escapeHtml(description)}</b>${merged.supplier?`<br><small>${escapeHtml(merged.supplier)}</small>`:''}</td><td>${finalCases.toLocaleString()}</td><td class="${d.agencyFee>=0?'positive':'negative'}">${d.agencyFee===null?'—':money(d.agencyFee)}</td><td>${num(merged.bottles).toLocaleString()}</td><td><span class="currency-tag">${escapeHtml(merged.offeredQuoteCurrency||'CAD')}</span> ${num(merged.offeredQuote).toFixed(2)}<br><small>${money(d.offeredQuoteCad)} CAD</small></td><td>${money(erp)}</td><td class="${d.netProfit>=0?'positive':'negative'}">${d.netProfit===null?'—':money(d.netProfit)}</td><td>${finalCases.toLocaleString()}</td><td>${winnerBottles.toLocaleString()}</td><td class="${totalProfit>=0?'positive':'negative'}">${totalProfit===null?'—':money(totalProfit)}</td><td><input class="advertising-budget-input" type="number" min="0" step="0.01" value="${advertisingBudget||''}" placeholder="0.00" onchange="updateWinnerAdvertisingBudget('${r.id}',this.value)"></td><td>${escapeHtml(date)}</td></tr>`;
+    return `<tr data-record-id="${escapeHtml(r.id)}"><td><b>${escapeHtml(merged.tenderName||'—')}</b><br><small>${escapeHtml(date)}</small></td><td>${escapeHtml(agencyName(r.agencyId)||'—')}</td><td><b>${escapeHtml(description)}</b>${merged.supplier?`<br><small>${escapeHtml(merged.supplier)}</small>`:''}</td><td>${finalCases.toLocaleString()}</td><td class="${d.agencyFee>=0?'positive':'negative'}">${d.agencyFee===null?'—':money(d.agencyFee)}</td><td>${num(merged.bottles).toLocaleString()}</td><td><span class="currency-tag">${escapeHtml(merged.offeredQuoteCurrency||'CAD')}</span> ${num(merged.offeredQuote).toFixed(2)}<br><small>${money(d.offeredQuoteCad)} CAD</small></td><td>${money(erp)}</td><td class="${d.netProfit>=0?'positive':'negative'}">${d.netProfit===null?'—':money(d.netProfit)}</td><td>${finalCases.toLocaleString()}</td><td>${winnerBottles.toLocaleString()}</td><td class="${totalProfit>=0?'positive':'negative'}">${totalProfit===null?'—':money(totalProfit)}</td><td><input class="advertising-budget-input" type="number" min="0" step="0.01" value="${advertisingBudget||''}" placeholder="0.00" onchange="updateWinnerAdvertisingBudget('${r.id}',this.value)"></td><td>${escapeHtml(date)}</td></tr>`;
   }).join('');
-  $('#dashboardRows').innerHTML=rows||'<tr><td colspan="15">No winner items found.</td></tr>';
+  $('#dashboardRows').innerHTML=rows||'<tr><td colspan="14">No winner items found.</td></tr>';
 }
 function updateWinnerAdvertisingBudget(recordId,value){
   const r=state.records.find(x=>x.id===recordId);if(!r)return;
