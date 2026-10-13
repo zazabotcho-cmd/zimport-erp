@@ -893,6 +893,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 #transportation-records .transportation-po-vendor-table td{width:50%!important;min-width:0!important;padding:10px!important;vertical-align:top!important;white-space:normal!important;border-bottom:1px solid #e2e8f0;overflow-wrap:anywhere;}
 #transportation-records .transportation-po-vendor-table tr:last-child td{border-bottom:0;}
 </style>
+<style>.supplier-transport-pricing-row{display:grid;grid-template-columns:minmax(0,3fr) minmax(120px,1fr);gap:14px;margin-top:14px;}@media(max-width:600px){.supplier-transport-pricing-row{grid-template-columns:1fr;}}</style>
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -1212,7 +1213,7 @@ body{padding-bottom:24px;overflow-x:hidden}
     <div class="section-head"><h2>Winner Items Financial Dashboard</h2><span class="note">Each winner item is shown on its own row.</span></div>
     <div class="table-wrap"><table class="dashboard-table"><thead><tr>
       <th>Tender Name & Date</th><th>Agency</th><th>Brand Name</th><th>Product Description</th><th>WINNER CASE ORDER QTY</th>
-      <th>Agency Fee CAD / Btl</th><th>Bottles / Case</th><th>Offered Quote / Case</th><th>ERP CAD / Btl</th><th>Net Profit / Btl</th>
+      <th title="(LCBO offered case price − supplier case price − transportation per bottle × items per case) ÷ items per case, converted to CAD. Complete supplier pricing and enter 0 transportation if the supplier delivers.">Agency Fee CAD / Btl</th><th>Bottles / Case</th><th>Offered Quote / Case</th><th>ERP CAD / Btl</th><th>Net Profit / Btl</th>
       <th>Winner Cases</th><th>Winner Bottles</th><th>Net Profit Total</th><th>Advertising Budget CAD</th><th>Date</th>
     </tr></thead><tbody id="dashboardRows"></tbody></table></div>
   </div>
@@ -1234,7 +1235,7 @@ body{padding-bottom:24px;overflow-x:hidden}
   </div>
 </section>
 <section id="submissions" class="panel">
-  <div class="section-head"><div><h2>All Submitted Items</h2><p class="note">All items submitted through tenders.</p></div></div>
+  <div class="section-head"><div><h2>All Submitted Items <span id="pageRecordCount-submitted" aria-live="polite">(0)</span></h2><p class="note">All items submitted through tenders.</p></div></div>
   <div class="submission-search-toggle"><button type="button" id="toggleSubmittedSearch" class="secondary">Search</button></div>
   <div id="submittedSearchPanel" class="filters submitted-search-filters hidden">
     <label>Tender Name<input id="submittedTenderNameSearch" type="search" placeholder="Type tender name"></label>
@@ -1276,7 +1277,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 </section>
 
 <section id="tender-winners" class="panel">
-  <div class="section-head"><div><h2>TENDER WINNERS</h2><p class="note">Submissions automatically moved here when the Final Decision is Winner. Cargo/Transportation status and Ref # are imported from the shipment containing the submission PO.</p></div></div>
+  <div class="section-head"><div><h2>TENDER WINNERS <span id="pageRecordCount-winner" aria-live="polite">(0)</span></h2><p class="note">Submissions automatically moved here when the Final Decision is Winner. Cargo/Transportation status and Ref # are imported from the shipment containing the submission PO.</p></div></div>
   <div class="winner-create-toolbar" style="display:flex;justify-content:flex-end;margin:12px 0"><button type="button" class="success" onclick="openWinnerEditor()">Create Tender Winner</button></div> <button type="button" class="secondary winner-search-toggle" id="toggleWinnerSearch">Search</button>
   <div class="winner-search-wrap" id="winnerSearchOptions">
     <label>Supplier Name<input id="winnerSupplierSearch" type="search" placeholder="Type supplier name"></label>
@@ -1295,7 +1296,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 
 <div id="winnerEditorOverlay" class="hidden" style="position:fixed;inset:0;z-index:2100;background:#0009;overflow:auto;padding:22px"><div style="max-width:1050px;margin:auto;background:white;border-radius:12px;padding:24px"><h2 id="winnerEditorTitle">Create Tender Winner</h2><form id="winnerEditorForm" onsubmit="saveWinnerEditor(event)"><input id="weId" type="hidden"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px"><label style="display:grid;gap:5px">Tender ID<input id="weTenderId" type="text"  ></label><input id="weDate" type="hidden"><label style="display:grid;gap:5px">Tender Name<input id="weTenderName" type="text"  ></label><label style="display:grid;gap:5px">Agency<select id="weAgency" required></select></label><label style="display:grid;gap:5px">Supplier<select id="weSupplier"><option value="">Select supplier</option></select></label><label style="display:grid;gap:5px">Item Description<select id="weBrand" required><option value="">Select item from Tender Item Database</option></select></label><label style="display:grid;gap:5px">ITEM LCBO#<input id="weLcboItemNumber" type="text" placeholder="Enter LCBO #"></label><label style="display:grid;gap:5px">Product / Submission #<input id="weSubmission" type="text"  ></label><label style="display:grid;gap:5px">NTP Status<select id="weNtp"><option>Not Issued</option><option>Issued</option></select></label><label style="display:grid;gap:5px">STORE RELEASE DATE<input id="weRelease" type="date"></label><label style="display:grid;gap:5px">Comments<textarea id="weComments" rows="3"></textarea></label><label style="display:grid;gap:5px">WINNER CASE ORDER QTY<input id="weQty" type="number" min="0" step="1"><span style="display:flex;gap:8px;align-items:end;margin-top:5px"><label style="display:grid;gap:2px;font-size:11px">Items Per Case<input id="weItemsPerCase" type="number" min="0" step="1" style="width:82px;padding:5px 6px"></label><label style="display:grid;gap:2px;font-size:11px">Pallet QTY<input id="wePalletQty" type="number" min="0" step="1" style="width:82px;padding:5px 6px"></label></span></label><label style="display:grid;gap:5px">PO # FILE<select id="wePoStatus"><option>Not Issued</option><option>Issued</option></select></label><label style="display:grid;gap:5px">PO PREPARATION STATUS<select id="wePoPreparationStatus"><option value="">Select status</option><option>PO Sent to the Supplier</option><option>PO Ready for Pick Up</option><option>Picked Up</option></select><input id="wePoPreparationDate" type="date" title="Status date"></label><label style="display:grid;gap:5px">PO Number<input id="wePoNumber" type="text"  ></label><label style="display:grid;gap:5px">PO Cargo/Transportation status<input id="weTransport" type="text" readonly ></label><label style="display:grid;gap:5px">Tracking Number (Imported Ref #)<input id="weRef" type="text" readonly ></label><label style="display:grid;gap:5px">Tracking Link (Paste / Copy)<input id="weTracking" type="url"  ></label></div><p class="note">Cargo/Transportation status and imported reference are read-only and come from the PO's linked transportation shipment.</p><div class="action-buttons" style="margin-top:18px"><button type="submit" class="success">Save Tender Winner</button><button type="button" class="secondary" onclick="closeWinnerEditor()">Cancel</button></div></form></div></div>
 <section id="worker-list" class="panel">
-  <div class="box worker-list"><div class="section-head"><div><h2>LCBO SUBMISSIONS LIST</h2><p class="note">All products approved by Head Office for LCBO Submission appear here automatically. Additional items can still be added manually when needed.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>Submitted</option><option>Updated Proposal to Head Office</option><option>Approved for LCBO Submission</option><option>Submitted to the LCBO</option><option>Registered in LCBO</option><option value="Additional Information Required">Additional Information Requested</option><option>Declined</option><option>To Register</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Item</button></div></div>
+  <div class="box worker-list"><div class="section-head"><div><h2>LCBO SUBMISSIONS LIST <span id="pageRecordCount-worker" aria-live="polite">(0)</span></h2><p class="note">All products approved by Head Office for LCBO Submission appear here automatically. Additional items can still be added manually when needed.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>Submitted</option><option>Updated Proposal to Head Office</option><option>Approved for LCBO Submission</option><option>Submitted to the LCBO</option><option>Registered in LCBO</option><option value="Additional Information Required">Additional Information Requested</option><option>Declined</option><option>To Register</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Item</button></div></div>
 </section>
 
 <section id="tender-suppliers" class="panel">
@@ -1394,7 +1395,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 
 
 <section id="tenders" class="panel">
-  <div class="section-head"><div><h2>Tenders</h2></div><button id="addTenderBtn">+ Create a Tender</button></div>
+  <div class="section-head"><div><h2>Tenders <span id="pageRecordCount-tenders" aria-live="polite">(0)</span></h2></div><button id="addTenderBtn">+ Create a Tender</button></div>
   <button type="button" class="secondary page-search-toggle" id="toggleTenderSearch">Search</button>
   <div class="page-search-panel" id="tenderSearchPanel">
     <label>Tender ID<input id="tenderIdSearch" type="search" placeholder="Type tender ID"></label>
@@ -1409,7 +1410,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 </section>
 
 <section id="items" class="panel">
-  <div class="section-head"><div><h2>Tender Item Database</h2></div><button id="addItemBtn">+ Add Item</button></div>
+  <div class="section-head"><div><h2>Tender Item Database <span id="pageRecordCount-items" aria-live="polite">(0)</span></h2></div><button id="addItemBtn">+ Add Item</button></div>
   <button type="button" class="secondary page-search-toggle" id="toggleItemSearch">Search</button>
   <div class="page-search-panel" id="itemSearchPanel">
     <label>LCBO Item #<input id="itemLcboNumberSearch" type="search" placeholder="Type LCBO item #"></label>
@@ -2559,6 +2560,20 @@ function renderSubmissionTable(targetId='submissionRows',mode='active',useFilter
 }
 function renderTable(){const productEl=$('#submittedProductSearch');if(productEl){const current=productEl.value;const products=[...new Set(state.records.map(r=>r.productType||r.productNeeds).filter(Boolean))].sort();productEl.innerHTML='<option value="">All products</option>'+products.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');productEl.value=current;}renderSubmissionTable('submissionRows','active',true);renderSubmissionTable('archivedSubmissionRows','archived',false);renderSubmissionTable('winnerSubmissionRows','winner',false);}
 function awardLink(link,label='Open Link'){return link?`<a href="${escapeHtml(link)}" target="_blank" rel="noopener">${escapeHtml(label)}</a>`:'<span class="muted">—</span>'}
+function winnerTenderAgencyFee(item,bottlesPerCase){
+ const valid=value=>value!==undefined&&value!==null&&String(value).trim()!==''&&Number.isFinite(Number(value));
+ const supplier=item.supplierPricePerOfferedCase;
+ const transport=item.supplierConsolidationTransportCostPerBottle;
+ const units=num(bottlesPerCase);
+ if(!valid(item.quotePerCase)||!valid(supplier)||!valid(transport)||units<=0)return null;
+ const currency=item.quotationCurrency||'CAD';
+ const transportCurrency=item.supplierConsolidationTransportCurrency||currency;
+ const offeredCaseCad=num(item.quotePerCase)*currencyToCadRate(currency);
+ const supplierCaseCad=num(supplier)*currencyToCadRate(currency);
+ const transportationCaseCad=num(transport)*units*currencyToCadRate(transportCurrency);
+ return (offeredCaseCad-supplierCaseCad-transportationCaseCad)/units;
+}
+
 function winnerDashboardItem(r){
   const item=state.items.find(i=>i.id===r.itemId)||{};
   const tender=currentTenderForRecord(r)||{};
@@ -2567,18 +2582,20 @@ function winnerDashboardItem(r){
     brand:r.brand||item.brandName||item.brand||'',
     itemName:r.itemName||item.productDescription||'',
     supplier:r.supplier||item.supplierName||item.supplier||'',
-    bottles:num(r.bottles)||num(item.sellingUnitsPerShippingCase)||num(item.bottlesPerCase),
-    offeredQuote:num(r.offeredQuote)||num(item.quotePerCase),
-    offeredQuoteCurrency:r.offeredQuoteCurrency||item.quotationCurrency||'CAD',
+    bottles:num(item.supplierItemsPerCase)||num(item.sellingUnitsPerShippingCase)||num(r.bottles)||num(item.bottlesPerCase),
+    offeredQuote:item.quotePerCase!==undefined&&item.quotePerCase!==''?num(item.quotePerCase):num(r.offeredQuote),
+    offeredQuoteCurrency:item.quotationCurrency||r.offeredQuoteCurrency||'CAD',
     erpManual:num(r.erpManual)||num(item.estimatedRetailPrice),
     potentialCases:num(r.potentialCases)||num(item.limitedCaseQty),
     tenderName:r.tenderName||tender.name||'',
     tenderDate:r.tenderDate||tender.presubDate||tender.tastingDate||''
   };
   const d=derive(merged);
+  const fee=winnerTenderAgencyFee(item,merged.bottles);
+  d.agencyFee=fee;d.netProfit=fee;d.offeredQuoteCad=num(merged.offeredQuote)*currencyToCadRate(merged.offeredQuoteCurrency);
   const finalCases=num(r.finalOrderedQty)||num(r.finalCaseOrderQuantity)||num(merged.potentialCases);
   const winnerBottles=finalCases*num(merged.bottles);
-  return {r,item,tender,merged,d,finalCases,winnerBottles,totalProfit:d.netProfit*winnerBottles,advertisingBudget:num(r.advertisingBudget)||num(item.advertisingBudget)};
+  return {r,item,tender,merged,d,finalCases,winnerBottles,totalProfit:d.netProfit===null?null:d.netProfit*winnerBottles,advertisingBudget:num(r.advertisingBudget)||num(item.advertisingBudget)};
 }
 function renderDashboardRows(){
   const winnerItems=state.records.filter(r=>String(r.finalDecision||'').trim().toLowerCase()==='winner').map(winnerDashboardItem);
@@ -2587,7 +2604,7 @@ function renderDashboardRows(){
     const erp=num(merged.erpManual)||d.estimatedErp;
     const description=descriptionWithItemSize(merged.itemName||item.productDescription||'—',item,r);
     const date=merged.tenderDate||r.storeReleaseDate||'—';
-    return `<tr data-record-id="${escapeHtml(r.id)}"><td><b>${escapeHtml(merged.tenderName||'—')}</b><br><small>${escapeHtml(date)}</small></td><td>${escapeHtml(agencyName(r.agencyId)||'—')}</td><td>${escapeHtml(merged.brand||'—')}</td><td><b>${escapeHtml(description)}</b>${merged.supplier?`<br><small>${escapeHtml(merged.supplier)}</small>`:''}</td><td>${finalCases.toLocaleString()}</td><td class="${d.agencyFee>=0?'positive':'negative'}">${money(d.agencyFee)}</td><td>${num(merged.bottles).toLocaleString()}</td><td><span class="currency-tag">${escapeHtml(merged.offeredQuoteCurrency||'CAD')}</span> ${num(merged.offeredQuote).toFixed(2)}<br><small>${money(d.offeredQuoteCad)} CAD</small></td><td>${money(erp)}</td><td class="${d.netProfit>=0?'positive':'negative'}">${money(d.netProfit)}</td><td>${finalCases.toLocaleString()}</td><td>${winnerBottles.toLocaleString()}</td><td class="${totalProfit>=0?'positive':'negative'}">${money(totalProfit)}</td><td><input class="advertising-budget-input" type="number" min="0" step="0.01" value="${advertisingBudget||''}" placeholder="0.00" onchange="updateWinnerAdvertisingBudget('${r.id}',this.value)"></td><td>${escapeHtml(date)}</td></tr>`;
+    return `<tr data-record-id="${escapeHtml(r.id)}"><td><b>${escapeHtml(merged.tenderName||'—')}</b><br><small>${escapeHtml(date)}</small></td><td>${escapeHtml(agencyName(r.agencyId)||'—')}</td><td>${escapeHtml(merged.brand||'—')}</td><td><b>${escapeHtml(description)}</b>${merged.supplier?`<br><small>${escapeHtml(merged.supplier)}</small>`:''}</td><td>${finalCases.toLocaleString()}</td><td class="${d.agencyFee>=0?'positive':'negative'}">${d.agencyFee===null?'—':money(d.agencyFee)}</td><td>${num(merged.bottles).toLocaleString()}</td><td><span class="currency-tag">${escapeHtml(merged.offeredQuoteCurrency||'CAD')}</span> ${num(merged.offeredQuote).toFixed(2)}<br><small>${money(d.offeredQuoteCad)} CAD</small></td><td>${money(erp)}</td><td class="${d.netProfit>=0?'positive':'negative'}">${d.netProfit===null?'—':money(d.netProfit)}</td><td>${finalCases.toLocaleString()}</td><td>${winnerBottles.toLocaleString()}</td><td class="${totalProfit>=0?'positive':'negative'}">${totalProfit===null?'—':money(totalProfit)}</td><td><input class="advertising-budget-input" type="number" min="0" step="0.01" value="${advertisingBudget||''}" placeholder="0.00" onchange="updateWinnerAdvertisingBudget('${r.id}',this.value)"></td><td>${escapeHtml(date)}</td></tr>`;
   }).join('');
   $('#dashboardRows').innerHTML=rows||'<tr><td colspan="15">No winner items found.</td></tr>';
 }
@@ -5142,6 +5159,10 @@ const scoreSourceOptions=[
 const PRODUCT_TYPES='Wine|Sparkling Wine|Fortified Wine|Dessert Wine|Gift Pack Wine|Bag in Box Wine|Spirit|Liqueur|Cooler RTD|Ready to Drink|Gift Pack Spirit|Beer|Craft Beer|Keg Beer|Cider|Mead|Sake|Non-Alcoholic Wine|Non-Alcoholic Beer|Other';
 const PRODUCT_CATEGORIES='WINE (Fortified, Sparkling, Sake, Cream Flavoured)::Wine|SPIRITS (Vodka, Brandy, Liqueur, Whiskey, Tequila, Gin, Rum, Other)::Spirits|COOLER / RTD / CIDER (Spirit Cooler, Wine Cooler, Still Cider, Sparkling Cider)::Cooler RTD Cider|BEER (Keg Beer)::Beer|GIFT PACK (Gift Spirits, Gift Wines, Gift Cooler / RTD / Cider, Gift Beer)::Gift Pack|KEG BEER / CIDER::Keg Beer/Cider';
 const itemGroups=[
+ {title:'Supplier Pricing',layout:'supplierPricing',fields:[
+  ['supplierPricePerOfferedCase','Supplier Price Per Offered Case','number'],['supplierItemsPerCase','Items Per Case','number'],['supplierBottlePrice','Calculated Bottle Price','calculated'],['quotationCurrency','Quotation Currency *','select','CAD|USD|GBP|EUR'],
+  ['supplierConsolidationTransportCostPerBottle','Approximate Transportation Cost per Bottle to the Consolidation Warehouse (Enter 0 if the supplier delivers)','number'],['supplierConsolidationTransportCurrency','Transportation Currency','select','CAD|USD|GBP|EUR']
+ ]},
  {title:'Identification',fields:[
   ['productCategory','Product Category *','select',PRODUCT_CATEGORIES],['previousSubmissionNumber','Previous Submission Number','text','full'],['lcboItemNumber','LCBO Item Number','text'],['productDescription','Product Description *','text','full'],['previouslyPurchased','Has the product ever been previously purchased by the LCBO? *','select','Yes|No'],['upcNumber','UPC Number','text'],['sccNumber','SCC Number','text']
  ]},
@@ -5159,7 +5180,7 @@ const itemGroups=[
   ['pickupPoint','Pickup Point *','textarea','pickup'],['pickupPhone','Pickup consolidation warehouse phone number in your area','text'],['leadTimeDays','Lead-time (days) to prepare PO','number'],['limitedCaseQty','Limited Case Quantity / Allotment','number'],['listedElsewhere','Is this product or previous vintage listed in Ontario or another province?','textarea','full'],['score','Offered vintage score only','text'],['scoreSource','Score Source — ★ indicates LCBO preferred source','scoreSelect'],['scoreSourceOther','Other Score Source','text'],['awards','Awards / Medals','textarea','full'],['pressCoverage','Press Coverage / Other Information (maximum 400 characters)','textarea','full'],['websites','Websites related to the submission','websites','full'],['attachments','Supporting Photos / Documents','attachments','full']
  ]},
  {title:'Pricing Information',layout:'pricing',fields:[
-  ['quotePerCase','Offered Quote per case (supplier + agency + other) *','number'],['quotationCurrency','Quotation Currency * (enter manually)','select','CAD|USD|GBP|EUR'],['sellingUnitsPerShippingCase','Selling Units Per Shipping Case *','number'],['estimatedRetailPrice','Estimated Retail Price *','number'],['quoteType','OFFERED QUOTE TYPE','select','FOB|EX-CELLAR'],['calculatedPricePerSellingUnit','Calculated Price Per Selling Unit','calculated']
+  ['quotePerCase','LCBO Offered Quote per case (supplier + agency + other) *','number'],['sellingUnitsPerShippingCase','Selling Units Per Shipping Case *','number'],['estimatedRetailPrice','Estimated Retail Price *','number'],['quoteType','OFFERED QUOTE TYPE','select','FOB|EX-CELLAR'],['calculatedPricePerSellingUnit','Calculated Price Per Selling Unit','calculated']
  ]},
  {title:'Selling Unit Information',fields:[
   ['sellingUnitSizeMl','Selling Unit Size (ml.) *','number'],['unitsPerSellingPack','# Units per Selling Pack *','number'],['containerType','Container Type *','select','BTL CLEAR|CANS-ALUMINUM|CERAMIC|GIFT - COLLECTORS ITEM|GLASS - COLOUR|PET(BAG IN BOX)|PET BOTTLE|PORCELAIN|STEEL|TETRA PACK'],['containerWeightG','Container Weight excluding liquid (gm.) *','number'],['packageMaterial','Package Material','select','ALUMINUM|BOXBOARD|CORRUGATED (BAG IN BOX)|GIFT - COLLECTORS ITEM|MULTIPLE MATERIALS|PET|STEEL'],['packageWeightG','Package Weight (gm.)','number'],['stopperType','Stopper Type *','text'],['stopperWeightG','Stopper Weight (gm.) *','number']
@@ -5211,6 +5232,7 @@ function buildItemFields(){
  const supplierIds=['lcboSupplierNumber','supplierName','supplierAddress1','supplierAddress2','supplierCity','supplierRegionCountry','supplierPostalCode','phoneNumber','faxNumber','emailAddress','paymentTerms'];
  const producerIds=['producerSameAsSupplier','producerName','producerAddress1','producerAddress2','producerCity','producerRegionCountry','producerPostalCode'];
  document.querySelector('#itemFields').innerHTML=itemGroups.map(g=>{
+  if(g.layout==='supplierPricing')return `<fieldset class="item-group"><legend>${g.title}</legend><div class="supplier-pricing-row">${g.fields.slice(0,4).map(itemFieldHtml).join('')}</div><div class="supplier-transport-pricing-row">${g.fields.slice(4).map(itemFieldHtml).join('')}</div></fieldset>`;
   if(g.title==='Identification'){
    const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
    return `<fieldset class="item-group"><legend>${g.title}</legend><div class="form-grid">
@@ -5229,7 +5251,7 @@ function buildItemFields(){
   }
   if(g.layout==='pricing'){
    const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
-   return `<fieldset class="item-group"><legend>${g.title}</legend><div class="pricing-layout"><div class="pricing-left">${['quotePerCase','quotationCurrency','sellingUnitsPerShippingCase','estimatedRetailPrice'].map(id=>itemFieldHtml(byId[id])).join('')}</div><div class="pricing-right">${['quoteType','calculatedPricePerSellingUnit'].map(id=>itemFieldHtml(byId[id])).join('')}</div></div></fieldset>`;
+   return `<fieldset class="item-group"><legend>${g.title}</legend><div class="pricing-layout"><div class="pricing-left">${['quotePerCase','sellingUnitsPerShippingCase','estimatedRetailPrice'].map(id=>itemFieldHtml(byId[id])).join('')}</div><div class="pricing-right">${['quoteType','calculatedPricePerSellingUnit'].map(id=>itemFieldHtml(byId[id])).join('')}</div></div></fieldset>`;
   }
   if(g.layout==='caseInfo'){
    const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
@@ -5248,9 +5270,9 @@ function buildItemFields(){
  $('#addWebsiteBtn')?.addEventListener('click',()=>addWebsiteRow());$('#attachmentInput')?.addEventListener('change',handleAttachments)
 }
 function handleAttachments(e){const files=[...e.target.files];for(const file of files){if(currentAttachments.length>=10){alert('Maximum 10 attachments are allowed.');break}if(!['application/pdf','image/jpeg'].includes(file.type)&&!file.name.toLowerCase().match(/\.(pdf|jpe?g)$/)){alert(`${file.name}: only PDF, JPG and JPEG files are allowed.`);continue}if(file.size>5*1024*1024){alert(`${file.name}: maximum file size is 5 MB.`);continue}currentAttachments.push({id:uid(),name:file.name,size:file.size,type:file.type,lastModified:file.lastModified,blob:file})}e.target.value='';renderAttachments(currentAttachments)}
-function itemFromForm(){const x={};itemGroups.forEach(g=>g.fields.forEach(([k,,t])=>{if(t==='calculated'||t==='websites'||t==='attachments')return;const el=$('#i_'+k);x[k]=t==='number'?num(el.value):(k==='productCategory'?normalizeProductCategory(el.value):el.value)}));x.websites=[...document.querySelectorAll('.website-url')].map(el=>el.value.trim()).filter(Boolean);x.attachments=currentAttachments.map(({id,name,size,type,lastModified})=>({id,name,size,type,lastModified}));x.id=$('#itemRecordId').value||'';const existing=state.items.find(i=>i.id===x.id);if(existing){x.sourceSupplierId=existing.sourceSupplierId||'';x.sourceSupplierItemId=existing.sourceSupplierItemId||'';x.supplierCasePriceReference=existing.supplierCasePriceReference??'';x.supplierCurrencyReference=existing.supplierCurrencyReference??'';}return x}
+function itemFromForm(){calcSupplierBottlePrice();const x={};itemGroups.forEach(g=>g.fields.forEach(([k,,t])=>{if(t==='calculated'||t==='websites'||t==='attachments')return;const el=$('#i_'+k);x[k]=t==='number'?num(el.value):(k==='productCategory'?normalizeProductCategory(el.value):el.value)}));x.supplierBottlePrice=calculateSupplierBottlePrice(x.supplierPricePerOfferedCase,x.supplierItemsPerCase);x.websites=[...document.querySelectorAll('.website-url')].map(el=>el.value.trim()).filter(Boolean);x.attachments=currentAttachments.map(({id,name,size,type,lastModified})=>({id,name,size,type,lastModified}));x.id=$('#itemRecordId').value||'';const existing=state.items.find(i=>i.id===x.id);if(existing){x.sourceSupplierId=existing.sourceSupplierId||'';x.sourceSupplierItemId=existing.sourceSupplierItemId||'';x.supplierCasePriceReference=existing.supplierCasePriceReference??'';x.supplierCurrencyReference=existing.supplierCurrencyReference??'';}return x}
 function calcCaseVolume(){const v=num($('#i_caseLengthCm')?.value)*num($('#i_caseWidthCm')?.value)*num($('#i_caseHeightCm')?.value);if($('#i_calculatedCaseVolume'))$('#i_calculatedCaseVolume').value=v?v.toFixed(2):''}
-function calcPricePerSellingUnit(){const units=num($('#i_sellingUnitsPerShippingCase')?.value),quote=num($('#i_quotePerCase')?.value);if($('#i_calculatedPricePerSellingUnit'))$('#i_calculatedPricePerSellingUnit').value=units?(quote/units).toFixed(2):''}
+function calcPricePerSellingUnit(){calcSupplierBottlePrice();const units=num($('#i_sellingUnitsPerShippingCase')?.value),quote=num($('#i_quotePerCase')?.value);if($('#i_calculatedPricePerSellingUnit'))$('#i_calculatedPricePerSellingUnit').value=units?(quote/units).toFixed(2):''}
 function syncLcboItemVisibility(){const input=$('#i_lcboItemNumber');if(input){input.disabled=false;input.closest('label')?.classList.remove('field-hidden');}}
 function linkedSupplierItemForTenderItem(x){
  const supplier=(state.suppliers||[]).find(s=>s.id===x.sourceSupplierId)||(state.suppliers||[]).find(s=>(s.items||[]).some(i=>i.id===x.sourceSupplierItemId));
@@ -5264,7 +5286,7 @@ function linkedSupplierItemForTenderItem(x){
  }
  return null;
 }
-async function editItem(id=''){buildItemFields();const x=state.items.find(i=>i.id===id)||itemDefaults();const linkedItem=linkedSupplierItemForTenderItem(x);if(linkedItem){x.productCategory=normalizeProductCategory(linkedItem.productCategory||linkedItem.productType||x.productCategory||'Wine');if(id){const saved=state.items.find(i=>i.id===id);if(saved)saved.productCategory=x.productCategory;}}if(!x.lcboSupplierNumber&&x.supplierNumber)x.lcboSupplierNumber=x.supplierNumber;$('#itemRecordId').value=x.id;itemGroups.forEach(g=>g.fields.forEach(([k,,t])=>{if(['calculated','websites','attachments'].includes(t))return;const el=$('#i_'+k);if(el)el.value=k==='productCategory'?normalizeProductCategory(x[k]??'Wine'):(x[k]??'')}));$('#websiteRows').innerHTML='';(x.websites||[]).forEach(addWebsiteRow);currentAttachments=x.id?await loadItemAttachments(x.id):[];renderAttachments(currentAttachments);calcCaseVolume();calcPricePerSellingUnit();syncProducerVisibility();syncLcboItemVisibility();if(x.quoteType==='EX CELLARS'||x.quoteType==='Ex-cellars'||x.quoteType==='EX-CELLARS')x.quoteType='EX-CELLAR';if(!x.quoteType)x.quoteType='FOB';const qt=$('#i_quoteType');if(qt)qt.value=x.quoteType;$('#itemModalTitle').textContent=x.id?'EDIT TENDER ITEM':'Add Tender Item';$('#deleteItem').style.visibility=x.id?'visible':'hidden';$('#itemModal').classList.remove('hidden')}
+async function editItem(id=''){buildItemFields();const x={...(state.items.find(i=>i.id===id)||itemDefaults())};x.supplierPricePerOfferedCase=x.supplierPricePerOfferedCase??x.supplierCasePriceReference??'';x.supplierItemsPerCase=x.supplierItemsPerCase??x.sellingUnitsPerShippingCase??'';x.supplierConsolidationTransportCurrency=x.supplierConsolidationTransportCurrency||x.quotationCurrency||'CAD';const linkedItem=linkedSupplierItemForTenderItem(x);if(linkedItem){x.productCategory=normalizeProductCategory(linkedItem.productCategory||linkedItem.productType||x.productCategory||'Wine');if(id){const saved=state.items.find(i=>i.id===id);if(saved)saved.productCategory=x.productCategory;}}if(!x.lcboSupplierNumber&&x.supplierNumber)x.lcboSupplierNumber=x.supplierNumber;$('#itemRecordId').value=x.id;itemGroups.forEach(g=>g.fields.forEach(([k,,t])=>{if(['calculated','websites','attachments'].includes(t))return;const el=$('#i_'+k);if(el)el.value=k==='productCategory'?normalizeProductCategory(x[k]??'Wine'):(x[k]??'')}));$('#websiteRows').innerHTML='';(x.websites||[]).forEach(addWebsiteRow);currentAttachments=x.id?await loadItemAttachments(x.id):[];renderAttachments(currentAttachments);calcCaseVolume();calcPricePerSellingUnit();syncProducerVisibility();syncLcboItemVisibility();if(x.quoteType==='EX CELLARS'||x.quoteType==='Ex-cellars'||x.quoteType==='EX-CELLARS')x.quoteType='EX-CELLAR';if(!x.quoteType)x.quoteType='FOB';const qt=$('#i_quoteType');if(qt)qt.value=x.quoteType;$('#itemModalTitle').textContent=x.id?'EDIT TENDER ITEM':'Add Tender Item';$('#deleteItem').style.visibility=x.id?'visible':'hidden';$('#itemModal').classList.remove('hidden')}
 function syncProducerFromSupplier(){if($('#i_producerSameAsSupplier')?.value!=='Yes')return;const pairs=[['supplierName','producerName'],['supplierAddress1','producerAddress1'],['supplierAddress2','producerAddress2'],['supplierCity','producerCity'],['supplierRegionCountry','producerRegionCountry'],['supplierPostalCode','producerPostalCode']];pairs.forEach(([s,p])=>{const source=$('#i_'+s),target=$('#i_'+p);if(source&&target)target.value=source.value;});}
 function syncProducerVisibility(){const same=$('#i_producerSameAsSupplier')?.value==='Yes';['producerName','producerAddress1','producerAddress2','producerCity','producerRegionCountry','producerPostalCode'].forEach(k=>{const el=$('#i_'+k);if(el){el.readOnly=same;el.closest('label')?.classList.toggle('copied-field',same)}});if(same)syncProducerFromSupplier();}
 function closeItemModal(){$('#itemModal').classList.add('hidden')}
@@ -11734,5 +11756,34 @@ function persistMixedInvoiceFile(){const id=document.getElementById('otherNewInv
 function readMixedInvoiceFile(file){if(!file)return;if(file.size>10*1024*1024){alert('Maximum invoice file size is 10 MB.');return;}const reader=new FileReader();reader.onload=()=>{mixedInvoicePendingFile={name:file.name,type:file.type||'application/octet-stream',data:reader.result};persistMixedInvoiceFile();};reader.readAsDataURL(file);}
 function openMixedInvoiceFile(){openShipmentAttachmentBlob(mixedInvoicePendingFile,'invoice-file');}
 function removeMixedInvoiceFile(){mixedInvoicePendingFile=null;persistMixedInvoiceFile();}
+</script>
+
+<script>
+function programPageRecordTotals(){
+ const records=(state.records||[]).filter(r=>r.registered==='Yes');
+ const active=records.filter(r=>r.stage1Decision!=='Declined'&&r.finalDecision!=='Declined'&&r.completedPO!==true);
+ return {winner:active.filter(r=>r.finalDecision==='Winner').length,submitted:active.filter(r=>r.finalDecision!=='Winner').length,
+ tenders:(state.tenders||[]).length,worker:(state.tenders||[]).reduce((sum,t)=>sum+(t.workItems||[]).length,0),items:(state.items||[]).length,
+ tenderPos:(state.purchaseOrders||[]).filter(po=>String(po.program||'').toUpperCase()==='TENDER'&&(po.poStatus||'')!=='LCBO PAYED').length};
+}
+function updateProgramPageRecordCounts(){
+ const totals=programPageRecordTotals();
+ for(const key of ['winner','submitted','tenders','worker','items']){const el=document.getElementById('pageRecordCount-'+key),text='('+totals[key]+')';if(el&&el.textContent!==text)el.textContent=text;}
+ const heading=document.getElementById('poPageTitle');
+ if(heading){const base=heading.textContent.replace(/\s*\(\d+\)\s*$/,'').trim();if(base==="TENDER PO's"){const text=base+' ('+totals.tenderPos+')';if(heading.textContent!==text)heading.textContent=text;}}
+}
+(()=>{
+ const observer=new MutationObserver(()=>updateProgramPageRecordCounts());
+ for(const id of ['winnerSubmissionRows','submissionRows','tenderRows','workerRows','itemRows','poRows','poPageTitle']){const el=document.getElementById(id);if(el)observer.observe(el,{childList:true,subtree:true});}
+ updateProgramPageRecordCounts();
+ window.addEventListener('zimport-online-state-loaded',updateProgramPageRecordCounts);
+})();
+</script>
+
+<style>.supplier-pricing-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;}@media(max-width:750px){.supplier-pricing-row{grid-template-columns:repeat(2,minmax(0,1fr));}}</style>
+<script>
+function calculateSupplierBottlePrice(casePrice,itemsPerCase){const price=Number(casePrice),qty=Number(itemsPerCase);return String(casePrice).trim()!==''&&Number.isFinite(price)&&price>=0&&Number.isFinite(qty)&&qty>0?price/qty:null;}
+function calcSupplierBottlePrice(){const price=document.getElementById('i_supplierPricePerOfferedCase'),qty=document.getElementById('i_supplierItemsPerCase'),out=document.getElementById('i_supplierBottlePrice');if(!out)return;const value=calculateSupplierBottlePrice(price?.value??'',qty?.value??'');out.value=value===null?'':value.toFixed(2);if(qty){qty.min='1';qty.step='1';}if(price)price.min='0';const transport=document.getElementById('i_supplierConsolidationTransportCostPerBottle');if(transport){transport.min='0';transport.step='0.0001';transport.placeholder='Enter 0 if the supplier delivers';}}
+document.getElementById('itemFields').addEventListener('input',e=>{if(['i_supplierPricePerOfferedCase','i_supplierItemsPerCase'].includes(e.target.id))calcSupplierBottlePrice();});
 </script>
 </body></html>
