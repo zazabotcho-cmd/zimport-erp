@@ -2357,27 +2357,102 @@ function removeRequestedOxxSupplierAndItem(){
  return changed;
 }
 
-function removeRequestedGeorgiaWineCandidate(){
- const removedOxx=removeRequestedOxxSupplierAndItem();
- const normalize=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
- const deleted=new Set(state.requestedGeorgiaCandidateDeletionIds||[]);
- const matches=(state.countryCandidates||[]).filter(x=>{
-  const tender=(state.tenders||[]).find(t=>String(t.id)===String(x.opportunityId||''));
-  return deleted.has(String(x.id))||(normalize(x.country)==='georgia'&&normalize(x.productDescription||x.name)==='tsolikouris mtsvane'&&(!tender||normalize(tender.name)==='general portfolio'));
- });
- if(!matches.length)return removedOxx;
- if(!Array.isArray(state.headsRecycleBin))state.headsRecycleBin=[];
- for(const record of matches){
-  deleted.add(String(record.id));
-  if(!state.headsRecycleBin.some(x=>x.type==='countryCandidate'&&String(x.record?.id)===String(record.id))){
-   state.headsRecycleBin.push({id:uid(),type:'countryCandidate',source:'ALL PROPOSALS',record:JSON.parse(JSON.stringify(record)),deletedAt:new Date().toISOString(),restoreMeta:{collection:'countryCandidates'}});
-  }
+function removeRequestedTender5566(){
+ const norm=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+ const ids=new Set(state.permanentlyRemovedTender5566Ids||[]);
+ const match=record=>ids.has(String(record.id))||([record.code,record.tenderId,record.tenderNumber].some(value=>String(value||'').trim()==='5566')&&norm(record.name||record.tenderName)==='eastern europe');
+ const bins=['headsRecycleBin','recycleBin','portfolioManagerRecycleBin','countryRecycleBin'];
+ for(const tender of state.tenders||[])if(match(tender))ids.add(String(tender.id));
+ for(const bin of bins)for(const entry of state[bin]||[]){const record=entry.record||entry.data||entry;if((entry.type==='tender'||entry.restoreMeta?.collection==='tenders')&&match(record))ids.add(String(record.id));}
+ let changed=false;
+ const before=(state.tenders||[]).length;state.tenders=(state.tenders||[]).filter(tender=>!match(tender));if(before!==state.tenders.length)changed=true;
+ for(const bin of bins){if(!Array.isArray(state[bin]))continue;const before=state[bin].length;state[bin]=state[bin].filter(entry=>{const record=entry.record||entry.data||entry;return !((entry.type==='tender'||entry.restoreMeta?.collection==='tenders')&&match(record));});if(before!==state[bin].length)changed=true;}
+ state.permanentlyRemovedTender5566Ids=[...ids];
+ return changed;
+}
+
+function permanentlyRemoveRequestedSixRecords(){
+ const norm=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+ const names=new Set(['rkawiteli gvino','kharistvala','wyali','kindmarauli 750ml']);
+ const blocked=state.permanentlyRemovedSixRecordIds||{};
+ const matches=(collection,record)=>{
+  if((blocked[collection]||[]).includes(String(record.id)))return true;
+  if(collection==='tenders')return norm(record.name||record.tenderName)==='emerging europe 1';
+  if(collection==='records')return [record.itemName,record.productDescription,record.description,record.name,record.brand].some(name=>names.has(norm(name)));
+  if(['purchaseOrders','manuallyArchivedPurchaseOrders'].includes(collection))return String(record.number||record.poNumber||'').trim()==='7007';
+  return false;
+ };
+ const collectionFor=entry=>entry.restoreMeta?.collection||({tender:'tenders',record:'records',purchaseOrder:'purchaseOrders',archivedPo:'manuallyArchivedPurchaseOrders'}[entry.type]);
+ const bins=['recycleBin','headsRecycleBin','portfolioManagerRecycleBin','countryRecycleBin'];
+ let changed=false;
+ for(const collection of ['tenders','records','purchaseOrders','manuallyArchivedPurchaseOrders']){
+  const ids=new Set(blocked[collection]||[]);
+  for(const record of state[collection]||[])if(matches(collection,record))ids.add(String(record.id));
+  for(const bin of bins)for(const entry of state[bin]||[]){const record=entry.record||entry.data||entry;if(collectionFor(entry)===collection&&(matches(collection,record)||names.has(norm(entry.label))&&collection==='records'||norm(entry.label)==='emerging europe 1'&&collection==='tenders'||String(entry.label||'').trim()==='7007'&&['purchaseOrders','manuallyArchivedPurchaseOrders'].includes(collection)))ids.add(String(record.id));}
+  blocked[collection]=[...ids];
  }
+ for(const collection of Object.keys(blocked)){
+  if(!Array.isArray(state[collection]))continue;const before=state[collection].length;state[collection]=state[collection].filter(record=>!matches(collection,record));if(before!==state[collection].length)changed=true;
+ }
+ for(const bin of bins){if(!Array.isArray(state[bin]))continue;const before=state[bin].length;state[bin]=state[bin].filter(entry=>!matches(collectionFor(entry),entry.record||entry.data||entry));if(before!==state[bin].length)changed=true;}
+ const removedRecords=new Set(blocked.records||[]);
+ for(const tender of state.tenders||[])tender.workItems=(tender.workItems||[]).filter(w=>!removedRecords.has(String(w.submissionId||'')));
+ state.permanentlyRemovedSixRecordIds=blocked;
+ return changed;
+}
+
+function permanentlyRemoveListedHeadsRecords(){
+ const norm=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+ const itemNames=new Set(['italian wines','tsolikouru','tvera','vinha red','wyali','mukuzani','dugladze saperavi reserve','rkawiteli gvino','kindmarauli 750ml','kharistvala','qartuli gvino','zaza']);
+ const blocked=state.permanentlyRemovedListedHeadsIds||{};
+ const infer=entry=>entry.restoreMeta?.collection||({item:'items',record:'records',purchaseOrder:'purchaseOrders',archivedPo:'manuallyArchivedPurchaseOrders',otherInvoice:'otherInvoices'}[entry.type])||({'tender item database':'items','archived tender winners':'records',"all po's and order forms":'purchaseOrders','seas/regu/other to agent invoices':'otherInvoices'}[norm(entry.page||entry.source)]);
+ const matches=(collection,entry)=>{
+  const record=entry.record||entry.data||entry;
+  if((blocked[collection]||[]).includes(String(record.id)))return true;
+  const labels=[entry.label,record.itemName,record.productDescription,record.name,record.description,record.number,record.poNumber].map(norm);
+  if(collection==='items')return labels.some(label=>itemNames.has(label));
+  if(collection==='records')return labels.includes('dugladze kindzmarauli 2024');
+  if(['purchaseOrders','manuallyArchivedPurchaseOrders'].includes(collection))return labels.includes('8000008');
+  if(collection==='otherInvoices')return labels.includes('regu po 00000');
+  return false;
+ };
+ const bins=['headsRecycleBin','recycleBin','portfolioManagerRecycleBin','countryRecycleBin'];
+ for(const bin of bins)for(const entry of state[bin]||[]){const collection=infer(entry);if(collection&&matches(collection,entry)){const ids=new Set(blocked[collection]||[]);ids.add(String((entry.record||entry.data||entry).id));blocked[collection]=[...ids];}}
+ let changed=false;
+ for(const bin of bins){if(!Array.isArray(state[bin]))continue;const before=state[bin].length;state[bin]=state[bin].filter(entry=>!matches(infer(entry),entry));if(before!==state[bin].length)changed=true;}
+ // Remove only the identified deleted records if a stale import or restore puts their IDs back into active collections.
+ for(const collection of Object.keys(blocked)){if(!Array.isArray(state[collection]))continue;const ids=new Set(blocked[collection]);const before=state[collection].length;state[collection]=state[collection].filter(record=>!ids.has(String(record.id)));if(before!==state[collection].length)changed=true;}
+ state.permanentlyRemovedListedHeadsIds=blocked;
+ return changed;
+}
+
+function removeRequestedGeorgiaWineCandidate(){
+ let changed=removeRequestedOxxSupplierAndItem();
+ const norm=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+ const deleted=new Set(state.requestedGeorgiaCandidateDeletionIds||[]);
+ const matches=record=>{
+  if(deleted.has(String(record.id)))return true;
+  if(![record.country,record.producingCountry].some(c=>norm(c)==='georgia'))return false;
+  const name=norm(record.productDescription||record.name||record.itemName||record.description);
+  const tender=(state.tenders||[]).find(t=>String(t.id)===String(record.opportunityId||record.tenderRecordId||''));
+  const tenderName=norm(tender?.name||record.tenderName||'');
+  if(name==='tsolikouris mtsvane')return ['', 'general','general portfolio'].includes(tenderName);
+  const needs=norm(tender?.productNeeds||record.productNeeds||'');
+  return name==='tvera'&&tenderName==='eastern europe'&&(!needs||needs==='beer');
+ };
+ // Collect identities before purging, including records already in recycling bins.
+ const collections=['countryCandidates','archivedCountryCandidates','items'];
+ const bins=['headsRecycleBin','recycleBin','portfolioManagerRecycleBin','countryRecycleBin'];
+ for(const key of collections)for(const record of state[key]||[])if(matches(record))deleted.add(String(record.id));
+ for(const key of bins)for(const entry of state[key]||[]){const record=entry.record||entry.data||entry;if(matches(record))deleted.add(String(record.id));}
+ for(const key of collections){if(!Array.isArray(state[key]))continue;const before=state[key].length;state[key]=state[key].filter(record=>!matches(record));if(before!==state[key].length)changed=true;}
+ for(const key of bins){if(!Array.isArray(state[key]))continue;const before=state[key].length;state[key]=state[key].filter(entry=>!matches(entry.record||entry.data||entry));if(before!==state[key].length)changed=true;}
+ for(const tender of state.tenders||[]){const before=(tender.workItems||[]).length;tender.workItems=(tender.workItems||[]).filter(w=>!deleted.has(String(w.sourceCandidateId||'')));if(before!==tender.workItems.length)changed=true;}
  state.requestedGeorgiaCandidateDeletionIds=[...deleted];
- state.countryCandidates=(state.countryCandidates||[]).filter(x=>!deleted.has(String(x.id)));
- // Remove derived submission-list rows so a deleted proposal cannot leave a ghost entry.
- (state.tenders||[]).forEach(t=>{t.workItems=(t.workItems||[]).filter(w=>!deleted.has(String(w.sourceCandidateId||'')));});
- return true;
+ const removedTender=removeRequestedTender5566();
+ const removedSix=permanentlyRemoveRequestedSixRecords();
+ const removedListedHeads=permanentlyRemoveListedHeadsRecords();
+ return changed||removedTender||removedSix||removedListedHeads;
 }
 
 function save(){
