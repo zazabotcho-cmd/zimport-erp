@@ -2306,7 +2306,65 @@ function syncWinnerPickedUpFromTransportation(){
     }
   });
 }
+function removeRequestedOxxSupplierAndItem(){
+ const norm=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+ const tombstones=state.requestedOxxDeletionIds||{};
+ let changed=false;
+ const supplierIds=new Set([...(tombstones.countryWineries||[]),...(tombstones.countryPortfolioSuppliers||[]),...(tombstones.suppliers||[])]);
+ const recycle=(collection,record,type)=>{
+  if(!Array.isArray(state.headsRecycleBin))state.headsRecycleBin=[];
+  if(!state.headsRecycleBin.some(x=>x.restoreMeta?.collection===collection&&String(x.record?.id)===String(record.id)))state.headsRecycleBin.push({id:uid(),type,source:'Requested cleanup',record:JSON.parse(JSON.stringify(record)),deletedAt:new Date().toISOString(),restoreMeta:{collection}});
+ };
+ for(const collection of ['countryWineries','countryPortfolioSuppliers','suppliers']){
+  const ids=new Set(tombstones[collection]||[]);
+  state[collection]=(state[collection]||[]).filter(record=>{
+   const match=ids.has(String(record.id))||(norm(record.supplierCountry||record.country)==='georgia'&&norm(record.supplierLegalFullName||record.name)==='oxx');
+   if(!match)return true;
+   ids.add(String(record.id));supplierIds.add(String(record.id));recycle(collection,record,collection==='countryWineries'?'countryWinery':'supplier');changed=true;return false;
+  });
+  tombstones[collection]=[...ids];
+ }
+ const candidateIds=new Set(tombstones.countryCandidates||[]);
+ for(const collection of ['countryCandidates','items']){
+  const ids=new Set(tombstones[collection]||[]);
+  state[collection]=(state[collection]||[]).filter(record=>{
+   const linked=[record.portfolioSupplierId,record.wineryId,record.supplierId,record.sourceSupplierId].some(id=>supplierIds.has(String(id||'')));
+   const named=norm(record.supplierName||record.producerName)==='oxx'&&norm(record.country||record.producingCountry||record.supplierCountry)==='georgia';
+   const match=ids.has(String(record.id))||(norm(record.productDescription||record.name||record.description)==='kargi itemia'&&(linked||named));
+   if(!match)return true;
+   ids.add(String(record.id));if(collection==='countryCandidates')candidateIds.add(String(record.id));recycle(collection,record,collection==='items'?'item':'countryCandidate');changed=true;return false;
+  });tombstones[collection]=[...ids];
+ }
+ (state.tenders||[]).forEach(t=>{t.workItems=(t.workItems||[]).filter(w=>!candidateIds.has(String(w.sourceCandidateId||'')));});
+ state.requestedOxxDeletionIds=tombstones;
+ return changed;
+}
+
+function removeRequestedGeorgiaWineCandidate(){
+ const removedOxx=removeRequestedOxxSupplierAndItem();
+ const normalize=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+ const deleted=new Set(state.requestedGeorgiaCandidateDeletionIds||[]);
+ const matches=(state.countryCandidates||[]).filter(x=>{
+  const tender=(state.tenders||[]).find(t=>String(t.id)===String(x.opportunityId||''));
+  return deleted.has(String(x.id))||(normalize(x.country)==='georgia'&&normalize(x.productDescription||x.name)==='tsolikouris mtsvane'&&(!tender||normalize(tender.name)==='general portfolio'));
+ });
+ if(!matches.length)return removedOxx;
+ if(!Array.isArray(state.headsRecycleBin))state.headsRecycleBin=[];
+ for(const record of matches){
+  deleted.add(String(record.id));
+  if(!state.headsRecycleBin.some(x=>x.type==='countryCandidate'&&String(x.record?.id)===String(record.id))){
+   state.headsRecycleBin.push({id:uid(),type:'countryCandidate',source:'ALL PROPOSALS',record:JSON.parse(JSON.stringify(record)),deletedAt:new Date().toISOString(),restoreMeta:{collection:'countryCandidates'}});
+  }
+ }
+ state.requestedGeorgiaCandidateDeletionIds=[...deleted];
+ state.countryCandidates=(state.countryCandidates||[]).filter(x=>!deleted.has(String(x.id)));
+ // Remove derived submission-list rows so a deleted proposal cannot leave a ghost entry.
+ (state.tenders||[]).forEach(t=>{t.workItems=(t.workItems||[]).filter(w=>!deleted.has(String(w.sourceCandidateId||'')));});
+ return true;
+}
+
 function save(){
+ removeRequestedGeorgiaWineCandidate();
  syncTransportationCargoRecords();
  renderPriceList();
  updateAutomaticTenderStatuses();
@@ -5385,9 +5443,11 @@ function clearMainRecycleBinOnce(){
 }
 const initialArchiveChange=archiveRequestedTransportations();
 const initialShipmentRemoval=removeRequestedShipment();
+const initialRequestedWineRemoval=removeRequestedGeorgiaWineCandidate();
+if(initialRequestedWineRemoval)safeStorage.setItem(DATA_KEY,JSON.stringify(state));
 if(initialArchiveChange||initialShipmentRemoval)safeStorage.setItem(DATA_KEY,JSON.stringify(state));
 buildFields();buildItemFields();syncTenderItemCategoriesFromItems();
-window.addEventListener('zimport-online-state-loaded',e=>{if(e.detail?.state){const localCountrySourcingCountries=Array.isArray(state.countrySourcingCountries)?state.countrySourcingCountries:[];const localCountryPortfolioSuppliers=Array.isArray(state.countryPortfolioSuppliers)?state.countryPortfolioSuppliers:[];state=e.detail.replaceState?{...e.detail.state}:{...state,...e.detail.state};if(!e.detail.replaceState&&(!Array.isArray(e.detail.state.countrySourcingCountries)||!e.detail.state.countrySourcingCountries.length))state.countrySourcingCountries=localCountrySourcingCountries.length?localCountrySourcingCountries:['Italy','Portugal','Spain','France'];if(!e.detail.replaceState&&(!Array.isArray(e.detail.state.countryPortfolioSuppliers)||(!e.detail.state.countryPortfolioSuppliers.length&&localCountryPortfolioSuppliers.length)))state.countryPortfolioSuppliers=localCountryPortfolioSuppliers;if(!e.detail.partialRecovery)settings=e.detail.settings||settings;const archivedNow=archiveRequestedTransportations();const removedNow=removeRequestedShipment(!e.detail.partialRecovery);const clearedNow=!e.detail.partialRecovery&&clearMainRecycleBinOnce();safeStorage.setItem(DATA_KEY,JSON.stringify(state));safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));renderShipments();window.renderArchivedShipments?.();safeStartupRender();if(((archivedNow||removedNow||clearedNow)&&!e.detail.partialRecovery)||e.detail.repairSync)setTimeout(()=>window.ZimportOnline?.queueSync?.(state,settings),0);}});
+window.addEventListener('zimport-online-state-loaded',e=>{if(e.detail?.state){const localCountrySourcingCountries=Array.isArray(state.countrySourcingCountries)?state.countrySourcingCountries:[];const localCountryPortfolioSuppliers=Array.isArray(state.countryPortfolioSuppliers)?state.countryPortfolioSuppliers:[];state=e.detail.replaceState?{...e.detail.state}:{...state,...e.detail.state};if(!e.detail.replaceState&&(!Array.isArray(e.detail.state.countrySourcingCountries)||!e.detail.state.countrySourcingCountries.length))state.countrySourcingCountries=localCountrySourcingCountries.length?localCountrySourcingCountries:['Italy','Portugal','Spain','France'];if(!e.detail.replaceState&&(!Array.isArray(e.detail.state.countryPortfolioSuppliers)||(!e.detail.state.countryPortfolioSuppliers.length&&localCountryPortfolioSuppliers.length)))state.countryPortfolioSuppliers=localCountryPortfolioSuppliers;if(!e.detail.partialRecovery)settings=e.detail.settings||settings;const archivedNow=archiveRequestedTransportations();const removedShipmentNow=removeRequestedShipment(!e.detail.partialRecovery);const removedWineNow=removeRequestedGeorgiaWineCandidate();const removedNow=removedShipmentNow||removedWineNow;const clearedNow=!e.detail.partialRecovery&&clearMainRecycleBinOnce();safeStorage.setItem(DATA_KEY,JSON.stringify(state));safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));renderShipments();window.renderArchivedShipments?.();safeStartupRender();if(((archivedNow||removedNow||clearedNow)&&!e.detail.partialRecovery)||e.detail.repairSync)setTimeout(()=>window.ZimportOnline?.queueSync?.(state,settings),0);}});
 window.addEventListener('zimport-online-role',e=>{
  window.ZIMPORT_CURRENT_ROLE=e.detail?.role||'readonly';
  const cacheUser=window.ZimportOnline?.profile?.id||'signed-out';DATA_KEY='zimportSubmissionProgramV5:user:'+cacheUser;SETTINGS_KEY='zimportSubmissionSettingsV5:user:'+cacheUser;
@@ -6974,7 +7034,7 @@ window.openItalyWineryForm=(id='')=>{
   }
   const title=document.getElementById('itWinFormTitle');if(title)title.textContent='Edit Supplier Information';
   const saveBtn=document.getElementById('itWinSaveBtn');
-  const approvedLocked=window.supplierInformationIsLocked?window.supplierInformationIsLocked(x):x.supplierApprovalStatus==='Approved Supplier';
+  const approvedLocked=String(tenderSupplierEditModeId)!==String(x.id)&&(window.supplierInformationIsLocked?window.supplierInformationIsLocked(x):x.supplierApprovalStatus==='Approved Supplier');
   const form=document.getElementById('italyWineryForm');
   if(approvedLocked){
     if(title)title.textContent='Supplier Information — Approved & Locked';
@@ -7835,7 +7895,7 @@ window.saveItalyWinery=()=>{
  const classifiedAs=producerSize==='Small'?'Winery with < 375,000 litres wine sales in the last 12 months':producerSize==='N/A'?'Winery with >= 375,000 litres wine sales in the last 12 months':'';
  const existing=recordId?state.countryWineries.find(x=>x.id===recordId&&x.country===currentSourcingCountry&&x.portfolioSupplierId===currentCountrySupplierId):null;
  const isTenderSupplierEdit=!!(existing&&String(tenderSupplierEditModeId)===String(existing.id));
- if(existing && (window.supplierInformationIsLocked?window.supplierInformationIsLocked(existing):existing.supplierApprovalStatus==='Approved Supplier')){
+ if(existing && !isTenderSupplierEdit && (window.supplierInformationIsLocked?window.supplierInformationIsLocked(existing):existing.supplierApprovalStatus==='Approved Supplier')){
    alert('Supplier Information is locked. To unlock it, change the supplier status to More Information Requested in Tenders → Tender Suppliers.');
    return false;
  }
@@ -10500,9 +10560,7 @@ function renderTenderSuppliers(){
        </select>
      </td>
      <td style="white-space:nowrap">
-       ${(window.supplierInformationIsLocked?window.supplierInformationIsLocked(x):status==='Approved Supplier')
-         ? `<button type="button" class="secondary small" disabled title="Locked. Change status to More Information Requested to unlock.">Supplier Information — Locked</button>`
-         : `<button type="button" class="secondary small" onclick="openTenderSupplierEdit('${x.id}')">Edit Supplier Information</button>`}
+       <button type="button" class="secondary small" onclick="openTenderSupplierEdit('${x.id}')">Edit Supplier Information</button>
        <button type="button" class="danger small" onclick="deleteTenderSupplier('${x.id}')">Delete Supplier</button>
      </td>
    </tr>`;
@@ -10639,10 +10697,7 @@ let tenderSupplierEditModeId='';
 window.openTenderSupplierEdit=id=>{
  const x=(state.countryWineries||[]).find(v=>String(v.id)===String(id));
  if(!x){alert('Supplier information was not found.');return false}
- if(window.supplierInformationIsLocked?window.supplierInformationIsLocked(x):x.supplierApprovalStatus==='Approved Supplier'){
-   alert('Supplier Information is locked. Change Submission Status to More Information Requested in Tenders → Tender Suppliers to unlock editing.');
-   return false;
- }
+
 
  // Open the exact Supplier Information record in its Country Sourcing context.
  currentSourcingCountry=x.country||currentSourcingCountry;
@@ -10650,11 +10705,10 @@ window.openTenderSupplierEdit=id=>{
  if(typeof renderSourcingCountryControls==='function')renderSourcingCountryControls();
  if(typeof renderCountrySupplierControls==='function')renderCountrySupplierControls();
 
- if(!window.openItalyWineryForm(id))return false;
  tenderSupplierEditModeId=String(id);
+ if(!window.openItalyWineryForm(id)){tenderSupplierEditModeId='';return false;}
 
- // Editing is permitted here only while the supplier is not locked.
- // After approval, More Information Requested is the only status that unlocks it.
+ // Tender Suppliers can edit supplier information in every approval status.
  const title=document.getElementById('itWinFormTitle');
  if(title)title.textContent='Edit Supplier Information — Tender Suppliers';
  const saveBtn=document.getElementById('itWinSaveBtn');
@@ -10669,7 +10723,7 @@ window.openTenderSupplierEdit=id=>{
 window.deleteTenderSupplier=id=>{
  const x=(state.countryWineries||[]).find(v=>String(v.id)===String(id));
  if(!x){alert('Supplier information was not found.');renderTenderSuppliers();return false}
- if(x.supplierEverApproved||String(x.supplierApprovalStatus||'').trim()==='Approved Supplier'){alert('Delete is locked. Once a supplier has been approved, Supplier Information cannot be deleted.');return false;}
+
  const name=x.supplierLegalFullName||x.name||'this supplier';
  if(!confirm(`Delete supplier "${name}" from Tender Suppliers? The Supplier Information record will be moved to the Portfolio Manager Recycling Bin.`))return false;
 
@@ -10694,10 +10748,7 @@ window.updateTenderSupplierStatus=(id,status)=>{
 
  // Approval locks Supplier Information everywhere. After approval, only
  // More Information Requested unlocks it for Country Sourcing / Tender editing.
- if(status==='Approved Supplier' && String(tenderSupplierEditModeId)===String(id)){
-   tenderSupplierEditModeId='';
-   if(typeof closeItalyWineryForm==='function')closeItalyWineryForm();
- }
+
  save();
  renderTenderSuppliers();
  if(typeof renderItalySourcing==='function')renderItalySourcing();
