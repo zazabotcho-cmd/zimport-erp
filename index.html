@@ -2309,34 +2309,50 @@ function syncWinnerPickedUpFromTransportation(){
 }
 function removeRequestedOxxSupplierAndItem(){
  const norm=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+ const supplierName=record=>norm(record.supplierLegalFullName||record.name||record.supplierName).replace(/^(supplier|suplier)\s*:\s*/,'');
+ const isGeorgia=record=>[record.country,record.supplierCountry,record.producingCountry].some(country=>norm(country)==='georgia');
  const tombstones=state.requestedOxxDeletionIds||{};
  let changed=false;
  const supplierIds=new Set([...(tombstones.countryWineries||[]),...(tombstones.countryPortfolioSuppliers||[]),...(tombstones.suppliers||[])]);
- const recycle=(collection,record,type)=>{
-  if(!Array.isArray(state.headsRecycleBin))state.headsRecycleBin=[];
-  if(!state.headsRecycleBin.some(x=>x.restoreMeta?.collection===collection&&String(x.record?.id)===String(record.id)))state.headsRecycleBin.push({id:uid(),type,source:'Requested cleanup',record:JSON.parse(JSON.stringify(record)),deletedAt:new Date().toISOString(),restoreMeta:{collection}});
- };
+ const recycle=()=>{}; // OXX removal is permanent at the user's request.
+ for(const collection of ['countryWineries','countryPortfolioSuppliers','suppliers']){
+  for(const record of state[collection]||[])if(isGeorgia(record)&&supplierName(record)==='oxx')supplierIds.add(String(record.id));
+ }
  for(const collection of ['countryWineries','countryPortfolioSuppliers','suppliers']){
   const ids=new Set(tombstones[collection]||[]);
   state[collection]=(state[collection]||[]).filter(record=>{
-   const match=ids.has(String(record.id))||(norm(record.supplierCountry||record.country)==='georgia'&&norm(record.supplierLegalFullName||record.name)==='oxx');
+   const match=ids.has(String(record.id))||(isGeorgia(record)&&supplierName(record)==='oxx')||(supplierIds.has(String(record.portfolioSupplierId||''))&&isGeorgia(record));
    if(!match)return true;
    ids.add(String(record.id));supplierIds.add(String(record.id));recycle(collection,record,collection==='countryWineries'?'countryWinery':'supplier');changed=true;return false;
   });
   tombstones[collection]=[...ids];
  }
  const candidateIds=new Set(tombstones.countryCandidates||[]);
- for(const collection of ['countryCandidates','items']){
+ for(const collection of ['countryCandidates','archivedCountryCandidates','items']){
   const ids=new Set(tombstones[collection]||[]);
   state[collection]=(state[collection]||[]).filter(record=>{
    const linked=[record.portfolioSupplierId,record.wineryId,record.supplierId,record.sourceSupplierId].some(id=>supplierIds.has(String(id||'')));
-   const named=norm(record.supplierName||record.producerName)==='oxx'&&norm(record.country||record.producingCountry||record.supplierCountry)==='georgia';
+   const named=norm(record.supplierName||record.producerName).replace(/^(supplier|suplier)\s*:\s*/,'')==='oxx'&&isGeorgia(record);
    const match=ids.has(String(record.id))||(norm(record.productDescription||record.name||record.description)==='kargi itemia'&&(linked||named));
    if(!match)return true;
-   ids.add(String(record.id));if(collection==='countryCandidates')candidateIds.add(String(record.id));recycle(collection,record,collection==='items'?'item':'countryCandidate');changed=true;return false;
+   ids.add(String(record.id));if(collection!=='items')candidateIds.add(String(record.id));recycle(collection,record,collection==='items'?'item':'countryCandidate');changed=true;return false;
   });tombstones[collection]=[...ids];
  }
  (state.tenders||[]).forEach(t=>{t.workItems=(t.workItems||[]).filter(w=>!candidateIds.has(String(w.sourceCandidateId||'')));});
+ const blockedIds=new Set(Object.values(tombstones).flat().map(String));
+ for(const bin of ['headsRecycleBin','recycleBin','portfolioManagerRecycleBin','countryRecycleBin']){
+  if(!Array.isArray(state[bin]))continue;
+  const before=state[bin].length;
+  state[bin]=state[bin].filter(entry=>{
+   const record=entry.record||entry.data||entry;
+   if(blockedIds.has(String(record.id)))return false;
+   if(isGeorgia(record)&&supplierName(record)==='oxx')return false;
+   const linked=[record.portfolioSupplierId,record.wineryId,record.supplierId,record.sourceSupplierId].some(id=>supplierIds.has(String(id||'')));
+   const named=norm(record.supplierName||record.producerName)==='oxx'&&isGeorgia(record);
+   return !(norm(record.productDescription||record.name||record.description)==='kargi itemia'&&(linked||named));
+  });
+  if(state[bin].length!==before)changed=true;
+ }
  state.requestedOxxDeletionIds=tombstones;
  return changed;
 }
