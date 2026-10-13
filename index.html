@@ -894,6 +894,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 #transportation-records .transportation-po-vendor-table tr:last-child td{border-bottom:0;}
 </style>
 <style>.supplier-transport-pricing-row{display:grid;grid-template-columns:minmax(0,3fr) minmax(120px,1fr);gap:14px;margin-top:14px;}@media(max-width:600px){.supplier-transport-pricing-row{grid-template-columns:1fr;}}</style>
+<style>.statistics-status-grid{display:flex;flex-wrap:wrap;gap:12px 22px;margin-top:14px;}.statistics-status-option{display:flex;align-items:center;gap:8px;}.statistics-status-option input{width:auto;}.statistics-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:20px 0;}.statistics-breakdowns{display:grid;grid-template-columns:1fr 1fr;gap:20px;}@media(max-width:800px){.statistics-cards,.statistics-breakdowns{grid-template-columns:1fr 1fr;}}@media(max-width:500px){.statistics-cards,.statistics-breakdowns{grid-template-columns:1fr;}}</style>
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -927,6 +928,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 <nav class="subnav" data-section-nav="invoice-calculator-section"><button class="tab" data-tab="invoice-calculator">Invoice Calculator</button></nav>
 <nav class="subnav active" data-section-nav="heads-page">
   <button class="tab active" data-tab="dashboard">Dashboard</button>
+  <button class="tab" data-tab="entire-statistics">Entire Statistics</button>
   <button class="tab" data-tab="all-proposals">ALL PROPOSALS</button>
   <button class="tab" data-tab="all-invoices">ALL INVOICES</button>
   <button class="tab" data-tab="inventory-stock">Inventory Stock</button>
@@ -998,6 +1000,15 @@ body{padding-bottom:24px;overflow-x:hidden}
   <button class="tab" data-tab="agencies">Agency Setting</button>
 </nav>
 <main>
+
+<section id="entire-statistics" class="panel"><div class="box"><div class="section-head"><div><h2>Entire Statistics</h2><p class="note">Bottle imports and transportation payments across active and archived records.</p></div></div>
+<div class="form-grid three"><label>From date<input id="statisticsFrom" type="date" onchange="renderEntireStatistics()"></label><label>To date<input id="statisticsTo" type="date" onchange="renderEntireStatistics()"></label><label>Bottle statistics date<select id="statisticsDateBasis" onchange="renderEntireStatistics()"><option value="delivery">Delivery / Canada arrival date</option><option value="pickup">Pickup date</option><option value="status">Status date</option></select></label></div>
+<fieldset class="item-group" style="margin-top:16px"><legend>Mark transportation statuses to include</legend><div class="inline-actions"><button type="button" class="secondary small" onclick="markStatisticsStatuses(true)">Mark All</button><button type="button" class="secondary small" onclick="markStatisticsStatuses(false)">Clear All</button><button type="button" class="secondary small" onclick="resetEntireStatistics()">Reset Filters</button></div><div id="statisticsStatusOptions" class="statistics-status-grid"></div></fieldset>
+<p class="note">Both dates are included. Leave dates blank for all time. Payment totals use <b>PAY DATE</b> and the same marked statuses, independently of the bottle date filter. Imported bottles are those with status Arrived in Canada, Cleared Out from the Warehouse, or LCBO Paid.</p><p id="statisticsNotice" role="status" class="note" style="color:#9a3412"></p>
+<div id="statisticsResults"><div class="statistics-cards"><div class="card"><span>Imported bottles</span><strong id="statisticsImportedTotal">0</strong></div><div class="card"><span>Bottles in selected statuses</span><strong id="statisticsBottleTotal">0</strong></div><div class="card"><span>Transportations in bottle period</span><strong id="statisticsTransportTotal">0</strong></div><div class="card"><span>Transportation amount paid</span><strong id="statisticsPaidTotal">CAD 0.00</strong></div></div>
+<div class="statistics-breakdowns"><div><h3>Bottles by transportation status</h3><div class="table-wrap"><table><thead><tr><th>Status</th><th>Bottles</th></tr></thead><tbody id="statisticsStatusRows"></tbody></table></div></div><div><h3>Bottles by vendor/producer</h3><div class="table-wrap"><table><thead><tr><th>Vendor/Producer</th><th>Bottles</th></tr></thead><tbody id="statisticsVendorRows"></tbody></table></div></div></div>
+<h3>Transportations included in bottle statistics</h3><div class="table-wrap"><table><thead><tr><th>Transportation</th><th>Selected date</th><th>Status</th><th>POs</th><th>Bottles</th><th>Pallets</th><th>Payment status</th></tr></thead><tbody id="statisticsTransportRows"></tbody></table></div>
+<h3>Transportation payments in the selected dates</h3><p id="statisticsCurrencyTotals" class="note"></p><p class="note">Paid invoice amounts come from the transportation’s Cost of Shipment. Records marked Other or Not Paid are excluded. CAD conversion uses each transportation’s saved exchange rate.</p><div class="table-wrap"><table><thead><tr><th>Transportation</th><th>Transport company</th><th>Pay date</th><th>Amount paid</th><th>Amount in CAD</th></tr></thead><tbody id="statisticsPaymentRows"></tbody></table></div></div></div></section>
 <section id="country-dashboard" class="panel"><div class="box">
   <div class="section-head">
     <div><h2>Country Supplier Dashboard</h2><p class="note">Supplier sourcing and submission overview.</p></div>
@@ -2262,6 +2273,7 @@ function safeRefreshCall(fn){
  try{if(typeof fn==='function')fn()}catch(err){console.error('View refresh failed:',err)}
 }
 function refreshProgramViews(){
+ if(typeof renderEntireStatistics==='function')safeRefreshCall(renderEntireStatistics);
  prepareProgramNewestFirst();
  // Core program pages.
  safeRefreshCall(renderAll);
@@ -5210,7 +5222,7 @@ function editAgency(id){openAgency(id)}
 function closeAgency(){$('#agencyModal').classList.add('hidden')}
 function renderCalculator(r=defaults()){const f=[['productType','Product Type','select','Wine|Sparkling Wine|Fortified Wine|Dessert Wine|Sake|Vodka|Whisky|Brandy|Gin|Rum|Liqueur|Tequila|Cooler RTD|Beer|Craft Beer|Keg Beer|Gift Pack Wine|Gift Pack Spirit|Other'],['offeredQuoteCurrency','Offered Quote Currency','select','CAD|USD|GBP|EUR'],['offeredQuote','Offered Quote / Case','number'],['bottles','Bottles in Case','number'],['unitLitres','Bottle Size Litres','number'],['freight','Transportation / Freight CAD per Case','number']];$('#calcForm').innerHTML=f.map(([k,l,t,o])=>`<label>${l}${t==='select'?`<select id="c_${k}">${o.split('|').map(v=>`<option ${v===r[k]?'selected':''}>${v}</option>`).join('')}</select>`:`<input id="c_${k}" type="number" step="any" value="${r[k]??0}">`}</label>`).join('');showCalc(r)}
 function showCalc(r){const x=calculateLCBO(r);$('#calcResults').innerHTML=[['Case Quote',x.quote],['Transportation / Freight',x.freight],['Landed Cost',x.landed],['LCBO Markup',x.markup],['Wine / Volume Levy',x.levy],['Basic Price / Bottle',x.basic],['HST',x.tax],['Container Deposit',x.deposit],['Estimated Final ERP',x.finalRetail]].map(([k,v],i)=>`<div class="row ${i===8?'total':''}"><span>${k}</span><b>${money(v)}</b></div>`).join('')}
-function isAdminOnlyTab(tab){if(tab==='users')return true;if(window.ZimportOnline?.profile?.allowed_pages&&window.ZimportPermissions?.canPage(window.ZimportOnline.profile,tab))return false;return ['dashboard','all-proposals','all-invoices','financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices','head-performance-bonuses','heads-recycle-bin','settings','program-settings'].includes(tab)}
+function isAdminOnlyTab(tab){if(tab==='users')return true;if(window.ZimportOnline?.profile?.allowed_pages&&window.ZimportPermissions?.canPage(window.ZimportOnline.profile,tab))return false;return ['entire-statistics','dashboard','all-proposals','all-invoices','financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices','head-performance-bonuses','heads-recycle-bin','settings','program-settings'].includes(tab)}
 function canManageProgramBackups(){const profile=window.ZimportOnline?.profile;return profile?.role==='admin'&&profile.active!==false;}
 function isAdminUser(){return (window.ZIMPORT_CURRENT_ROLE||'readonly')==='admin'}
 function activate(tab,preferredSection=''){
@@ -5238,7 +5250,7 @@ function activate(tab,preferredSection=''){
       $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
     }
   }
-  const panel=$('#'+tab);if(panel)panel.classList.add('active');if(tab==='price-list')renderPriceList();if(tab==='transportation'||tab==='transportation-records')renderShipments();
+  const panel=$('#'+tab);if(panel)panel.classList.add('active');if(tab==='entire-statistics'&&typeof renderEntireStatistics==='function')renderEntireStatistics();if(tab==='price-list')renderPriceList();if(tab==='transportation'||tab==='transportation-records')renderShipments();
   if(preferredSection==='heads-page' && (['inventory-in-stock','inventory-in-stock-office','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
     $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav==='heads-page'));
     $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section==='heads-page'));
@@ -11959,4 +11971,5 @@ function deleteTenderSupplierItem(id){
  state.archivedCountryCandidates=state.archivedCountryCandidates.filter(x=>String(x.id)!==String(id));save();renderTenderSupplierItems();return true;
 }
 </script>
+<script src="entire-statistics.js"></script>
 </body></html>
