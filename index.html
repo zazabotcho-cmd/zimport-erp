@@ -1006,7 +1006,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 <section id="entire-statistics" class="panel"><div class="box"><div class="section-head"><div><h2>Entire Statistics</h2><p class="note">Bottle imports and transportation payments across active and archived records.</p></div></div>
 <div class="form-grid three"><label>From date<input id="statisticsFrom" type="date" onchange="renderEntireStatistics()"></label><label>To date<input id="statisticsTo" type="date" onchange="renderEntireStatistics()"></label><label>Bottle statistics date<select id="statisticsDateBasis" onchange="renderEntireStatistics()"><option value="delivery">Delivery / Canada arrival date</option><option value="pickup">Pickup date</option><option value="status">Status date</option></select></label></div>
 <fieldset class="item-group" style="margin-top:16px"><legend>Mark transportation statuses to include</legend><div class="inline-actions"><button type="button" class="secondary small" onclick="markStatisticsStatuses(true)">Mark All</button><button type="button" class="secondary small" onclick="markStatisticsStatuses(false)">Clear All</button><button type="button" class="secondary small" onclick="resetEntireStatistics()">Reset Filters</button></div><div id="statisticsStatusOptions" class="statistics-status-grid"></div></fieldset>
-<p class="note">Both dates are included. Leave dates blank for all time. Payment totals use <b>PAY DATE</b> and the same marked statuses, independently of the bottle date filter. Imported bottles are those with status Arrived in Canada, Cleared Out from the Warehouse, or LCBO Paid.</p><p id="statisticsNotice" role="status" class="note" style="color:#9a3412"></p>
+<p class="note">Both dates are included. Leave dates blank for all time. Payment totals use <b>PAY DATE</b> and the same marked statuses, independently of the bottle date filter. Imported bottles are those with status LCBO Received, Cleared Out from the Warehouse, or LCBO Paid.</p><p id="statisticsNotice" role="status" class="note" style="color:#9a3412"></p>
 <div class="inline-actions" style="margin:12px 0"><button type="button" class="secondary" onclick="statisticsYearToDate()">This Year to Today</button></div>
 <div id="statisticsResults"><h3>Earned Profit — LCBO Arrival Date</h3><p class="note">Sales are included when goods arrive at and are accepted by LCBO. Supplier and transportation costs for those goods are deducted regardless of payment date. Profit always uses the LCBO arrival date and marked arrived statuses, independently of the bottle date selector. All amounts below are CAD. This is order profit before income tax and any business overhead not entered in the invoices.</p>
 <div class="statistics-cards"><div class="card"><span>LCBO revenue earned</span><strong id="statisticsRevenue">CAD 0.00</strong></div><div class="card"><span>Supplier cost</span><strong id="statisticsSupplier">CAD 0.00</strong></div><div class="card"><span>Related transportation cost</span><strong id="statisticsRelatedTransport">CAD 0.00</strong></div><div class="card"><span>Other recorded order expenses</span><strong id="statisticsExpenses">CAD 0.00</strong></div><div class="card"><span>Earned order profit before tax</span><strong id="statisticsProfit">CAD 0.00</strong></div></div><p id="statisticsProfitNotice" class="note" role="status"></p>
@@ -1305,7 +1305,7 @@ body{padding-bottom:24px;overflow-x:hidden}
     <label>Product Name<input id="winnerProductSearch" type="search" placeholder="Type product name"></label>
     <label>NTP Status<select id="winnerNtpStatusSearch"><option value="">All NTP statuses</option><option>Issued</option><option>Not Issued</option></select></label>
     <label>Cargo/Transportation status<select id="winnerPoStatusSearch"><option value="">All PO statuses</option><option>Issued</option><option>Not Issued</option></select></label>
-    <label>PO Cargo/Transportation status<select id="winnerTransportStatusSearch"><option value="">All transportation statuses</option><option>Not Contacted to Transporter</option><option>Scheduled and Confirmed Transport</option><option>On the Way to Consolidation</option><option>Arrived in Canada</option><option value="Delivered to Consolidation">Delivered to LCBO Office</option><option>Not Assigned to Shipment</option><option>No PO Number</option><option>PO Not Found</option></select></label>
+    <label>PO Cargo/Transportation status<select id="winnerTransportStatusSearch"><option value="">All transportation statuses</option><option>Not Contacted to Transporter</option><option>Scheduled and Confirmed Transport</option><option>Picked up and on way to consolidation</option><option>LCBO Received</option><option value="Delivered to Consolidation">Delivered to LCBO Office</option><option>Not Assigned to Shipment</option><option>No PO Number</option><option>PO Not Found</option></select></label>
     <button type="button" class="secondary" id="clearWinnerSubmissionSearch">Clear Search</button>
   </div>
   <div class="table-wrap"><table class="completed-submissions-table winner-table"><thead><tr><th>Tender ID</th><th>Tender Name</th><th>Agency</th><th>Supplier</th><th>Item Description</th><th>Product / Submission #</th><th>NTP Status</th><th>Comments</th><th>WINNER CASE ORDER QTY</th><th>PO # FILE</th><th>PO PREPARATION STATUS</th><th>PO Cargo/Transportation status</th><th>Action</th></tr></thead><tbody id="winnerSubmissionRows"></tbody></table></div>
@@ -1461,8 +1461,8 @@ body{padding-bottom:24px;overflow-x:hidden}
 
 <section id="calculator" class="panel"><div class="box"><div class="section-head"><div><h2>Suppliers</h2><p class="note">Add suppliers, open a supplier to view or copy its information, and manage multiple items for each supplier.</p></div><button id="addSupplierBtn">+ Add Supplier</button></div><button type="button" class="secondary page-search-toggle" id="toggleSupplierSearch">Search</button><div class="page-search-panel" id="supplierSearchPanel"><label>Search Suppliers<input id="supplierPageSearch" type="search" placeholder="Supplier name, number, country, currency or agency"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearSupplierPageSearch">Clear Search</button></div></div><div id="supplierList"></div></div></section>
 <section id="supplier-items-page" class="panel"><div class="box"><div class="section-head"><div><h2>Items</h2><p class="note">Supplier items are managed separately from the Tender Item Database. Creating an item here will not create a Tender Item Database record.</p></div><button id="addSupplierItemFromItemsBtn" type="button">+ Add New Item</button></div><div class="toolbar"><input id="supplierItemsSearch" placeholder="Search product name, item number, supplier, UPC, SCC or year"></div><div class="table-wrap"><table class="supplier-all-items-table"><thead><tr><th>Product Name</th><th>Item #</th><th>Supplier</th><th>Product Type</th><th>Year</th><th>Currency</th><th>Supplier Case Price</th><th>Organic / Status</th><th>UPC Code</th><th>SCC Code</th><th>Action</th></tr></thead><tbody id="supplierAllItemRows"></tbody></table></div></div></section>
-<section id="transportation" class="panel"><div class="box"><div class="section-head"><div><h2>Cargo <span id="activeShipmentCount" aria-live="polite"></span></h2><p class="note">Create cargo, assign saved POs, and calculate transportation cost per bottle.</p></div><button id="addShipmentBtn" type="button">+ Create Cargo</button></div><button type="button" class="secondary page-search-toggle" id="toggleTransportationSearch">Search</button><div class="page-search-panel" id="transportationSearchPanel"><label>PO #<input id="cargoPoNumberSearch" type="search" placeholder="Type PO number"></label><label>PO Program<input id="cargoPoProgramSearch" type="search" placeholder="TENDER, REGU, SEAS or OTHER"></label><label>Vendor/Producer<input id="cargoPoSupplierSearch" type="search" placeholder="Type vendor/producer name"></label><label>Item Description<input id="cargoPoItemSearch" type="search" placeholder="Type item description"></label><label>Cargo/Transportation status<select id="cargoPoStatusSearch"><option value="">All statuses</option><option>Not Contacted to Transporter</option><option>Scheduled and Confirmed Transport</option><option>On the Way to Consolidation</option><option>Delivered to Consolidation</option><option>Arrived in Canada</option><option>CLEARED OUT FROM THE WAREHOUSE</option><option>LCBO PAYED</option></select></label><label>Search Cargo<input id="transportationPageSearch" type="search" placeholder="Type any letter to search cargo, company, PO, status or payment"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearTransportationPageSearch">Clear Search</button></div></div><div class="table-wrap active-transportation-scroll"><table><thead><tr><th>Cargo Name (Invoice #)</th><th>Transport Company</th><th>POs</th><th>Vendor/Producer</th><th>Case Quantity</th><th>Total Bottles</th><th>Pallets</th><th>Transportation Cost per Bottle</th><th>Transportation Cost per Bottle in CAD</th><th>REF # and Pallet Labels Requested</th><th>Approximate Pickup Date</th><th>Cargo/Transportation status</th><th>Delivery Date</th><th>Approximate Canada Delivery Date</th><th>Attached Supplier Invoices and Export Files</th><th>Actions</th></tr></thead><tbody id="shipmentRows"></tbody></table></div></div></section>
-<section id="transportation-records" class="panel"><div class="box"><div class="section-head"><div><h2>Transportation <span id="activeTransportationCount" aria-live="polite"></span></h2><p class="note">Create transportation, assign registered cargo, and calculate transportation cost per bottle.</p></div><button id="addTransportationBtn" type="button">+ Create Transportation</button></div><button type="button" class="secondary page-search-toggle" id="toggleTransportationRecordsSearch">Search</button><div class="page-search-panel" id="transportationRecordsSearchPanel"><label>PO #<input id="transportPoNumberSearch" type="search" placeholder="Type PO number"></label><label>PO Program<input id="transportPoProgramSearch" type="search" placeholder="TENDER, REGU, SEAS or OTHER"></label><label>Vendor/Producer<input id="transportPoSupplierSearch" type="search" placeholder="Type vendor/producer name"></label><label>Item Description<input id="transportPoItemSearch" type="search" placeholder="Type item description"></label><label>Cargo/Transportation status<select id="transportPoStatusSearch"><option value="">All statuses</option><option>Not Contacted to Transporter</option><option>Scheduled and Confirmed Transport</option><option>On the Way to Consolidation</option><option>Delivered to Consolidation</option><option>Arrived in Canada</option><option>CLEARED OUT FROM THE WAREHOUSE</option><option>LCBO PAYED</option></select></label><label>Search Transportation<input id="transportationRecordsPageSearch" type="search" placeholder="Type any letter to search transportation, company, PO, status or payment"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearTransportationRecordsSearch">Clear Search</button></div></div><div class="table-wrap active-transportation-scroll"><table><thead><tr><th>Transportation Name (TR order number)</th><th>Transport Company</th><th>Cargo Name (Invoice #)</th><th>POs</th><th>Vendor/Producer</th><th>Pallets</th><th>Case Quantity</th><th>Total Bottles</th><th>Transportation Cost</th><th>Transportation Cost per Bottle</th><th>CAD Currency Converter</th><th>Transportation Cost per Bottle in CAD</th><th>Approx. Transportation Pickup Date</th><th>Cargo/Transportation status</th><th>Delivery Date</th><th>Approximate Canada Delivery Date</th><th>Transportation Invoice Payment Status</th><th>Attached Transportation Invoice and Files</th><th>Actions</th></tr></thead><tbody id="transportationRecordRows"></tbody></table></div></div></section>
+<section id="transportation" class="panel"><div class="box"><div class="section-head"><div><h2>Cargo <span id="activeShipmentCount" aria-live="polite"></span></h2><p class="note">Create cargo, assign saved POs, and calculate transportation cost per bottle.</p></div><button id="addShipmentBtn" type="button">+ Create Cargo</button></div><button type="button" class="secondary page-search-toggle" id="toggleTransportationSearch">Search</button><div class="page-search-panel" id="transportationSearchPanel"><label>PO #<input id="cargoPoNumberSearch" type="search" placeholder="Type PO number"></label><label>PO Program<input id="cargoPoProgramSearch" type="search" placeholder="TENDER, REGU, SEAS or OTHER"></label><label>Vendor/Producer<input id="cargoPoSupplierSearch" type="search" placeholder="Type vendor/producer name"></label><label>Item Description<input id="cargoPoItemSearch" type="search" placeholder="Type item description"></label><label>Cargo/Transportation status<select id="cargoPoStatusSearch"><option value="">All statuses</option><option>Not Contacted to Transporter</option><option>Scheduled and Confirmed Transport</option><option>Picked up and on way to consolidation</option><option>Delivered to Consolidation</option><option>LCBO Received</option><option>CLEARED OUT FROM THE WAREHOUSE</option><option>LCBO PAYED</option></select></label><label>Search Cargo<input id="transportationPageSearch" type="search" placeholder="Type any letter to search cargo, company, PO, status or payment"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearTransportationPageSearch">Clear Search</button></div></div><div class="table-wrap active-transportation-scroll"><table><thead><tr><th>Cargo Name (Invoice #)</th><th>Transport Company</th><th>POs</th><th>Vendor/Producer</th><th>Case Quantity</th><th>Total Bottles</th><th>Pallets</th><th>Transportation Cost per Bottle</th><th>Transportation Cost per Bottle in CAD</th><th>REF # and Pallet Labels Requested</th><th>Approximate Pickup Date</th><th>Cargo/Transportation status</th><th>Delivery Date</th><th>Approximate Canada Delivery Date</th><th>Attached Supplier Invoices and Export Files</th><th>Actions</th></tr></thead><tbody id="shipmentRows"></tbody></table></div></div></section>
+<section id="transportation-records" class="panel"><div class="box"><div class="section-head"><div><h2>Transportation <span id="activeTransportationCount" aria-live="polite"></span></h2><p class="note">Create transportation, assign registered cargo, and calculate transportation cost per bottle.</p></div><button id="addTransportationBtn" type="button">+ Create Transportation</button></div><button type="button" class="secondary page-search-toggle" id="toggleTransportationRecordsSearch">Search</button><div class="page-search-panel" id="transportationRecordsSearchPanel"><label>PO #<input id="transportPoNumberSearch" type="search" placeholder="Type PO number"></label><label>PO Program<input id="transportPoProgramSearch" type="search" placeholder="TENDER, REGU, SEAS or OTHER"></label><label>Vendor/Producer<input id="transportPoSupplierSearch" type="search" placeholder="Type vendor/producer name"></label><label>Item Description<input id="transportPoItemSearch" type="search" placeholder="Type item description"></label><label>Cargo/Transportation status<select id="transportPoStatusSearch"><option value="">All statuses</option><option>Not Contacted to Transporter</option><option>Scheduled and Confirmed Transport</option><option>Picked up and on way to consolidation</option><option>Delivered to Consolidation</option><option>LCBO Received</option><option>CLEARED OUT FROM THE WAREHOUSE</option><option>LCBO PAYED</option></select></label><label>Search Transportation<input id="transportationRecordsPageSearch" type="search" placeholder="Type any letter to search transportation, company, PO, status or payment"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearTransportationRecordsSearch">Clear Search</button></div></div><div class="table-wrap active-transportation-scroll"><table><thead><tr><th>Transportation Name (TR order number)</th><th>Transport Company</th><th>Cargo Name (Invoice #)</th><th>POs</th><th>Vendor/Producer</th><th>Pallets</th><th>Case Quantity</th><th>Total Bottles</th><th>Transportation Cost</th><th>Transportation Cost per Bottle</th><th>CAD Currency Converter</th><th>Transportation Cost per Bottle in CAD</th><th>Approx. Transportation Pickup Date</th><th>Cargo/Transportation status</th><th>Delivery Date</th><th>Approximate Canada Delivery Date</th><th>Transportation Invoice Payment Status</th><th>Attached Transportation Invoice and Files</th><th>Actions</th></tr></thead><tbody id="transportationRecordRows"></tbody></table></div></div></section>
 
 <section id="price-list" class="panel"><div class="box">
 <div class="section-head"><h2>Price List</h2><button type="button" onclick="openPriceListEditor()">+ Add Item</button></div>
@@ -1481,7 +1481,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 </div></section>
 
 <section id="po-page" class="panel"><div class="box"><div class="section-head"><div><h2 id="poPageTitle">All PO's</h2><p class="note">Create and manage active purchase-order records. POs with status LCBO PAYED automatically move to Archived PO'S.</p></div><button id="addPoBtn" type="button">+ Create New PO</button></div>
-<button type="button" class="secondary page-search-toggle" id="togglePoSearch">Search</button><div class="page-search-panel" id="poSearchPanel"><label>PO #<input id="poNumberSearch" type="search" placeholder="Type PO number"></label><label>PO Program<input id="poProgramSearch" type="search" placeholder="TENDER, REGU, SEAS or OTHER"></label><label>Vendor/Producer<input id="poSupplierSearch" type="search" placeholder="Type vendor/producer name"></label><label>Item Description<input id="poItemSearch" type="search" placeholder="Type item description"></label><label>Cargo/Transportation status<select id="poStatusSearch"><option value="">All statuses</option><option>Not Contacted to Transporter</option><option>Scheduled and Confirmed Transport</option><option>On the Way to Consolidation</option><option>Delivered to Consolidation</option><option>Arrived in Canada</option><option>CLEARED OUT FROM THE WAREHOUSE</option><option>LCBO PAYED</option></select></label><div class="page-search-actions"><button type="button" class="secondary" id="clearPoSearch">Clear Search</button></div></div><div class="table-wrap po-list-scroll"><table><thead><tr><th>PO #</th><th>PO Program</th><th>Vendor/Producer</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>PO PREPARATION STATUS</th><th>Cargo/Transportation status</th><th>Generate Shipping Case Label</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="poRows"></tbody></table></div></div></section>
+<button type="button" class="secondary page-search-toggle" id="togglePoSearch">Search</button><div class="page-search-panel" id="poSearchPanel"><label>PO #<input id="poNumberSearch" type="search" placeholder="Type PO number"></label><label>PO Program<input id="poProgramSearch" type="search" placeholder="TENDER, REGU, SEAS or OTHER"></label><label>Vendor/Producer<input id="poSupplierSearch" type="search" placeholder="Type vendor/producer name"></label><label>Item Description<input id="poItemSearch" type="search" placeholder="Type item description"></label><label>Cargo/Transportation status<select id="poStatusSearch"><option value="">All statuses</option><option>Not Contacted to Transporter</option><option>Scheduled and Confirmed Transport</option><option>Picked up and on way to consolidation</option><option>Delivered to Consolidation</option><option>LCBO Received</option><option>CLEARED OUT FROM THE WAREHOUSE</option><option>LCBO PAYED</option></select></label><div class="page-search-actions"><button type="button" class="secondary" id="clearPoSearch">Clear Search</button></div></div><div class="table-wrap po-list-scroll"><table><thead><tr><th>PO #</th><th>PO Program</th><th>Vendor/Producer</th><th>Item Description</th><th>Case Quantity</th><th>Bottles QTY</th><th>PO PREPARATION STATUS</th><th>Cargo/Transportation status</th><th>Generate Shipping Case Label</th><th>Total Quoted Value</th><th>File</th><th>Actions</th></tr></thead><tbody id="poRows"></tbody></table></div></div></section>
 
 <section id="proformas" class="panel"><div class="box">
   <div class="section-head">
@@ -1568,7 +1568,7 @@ body{padding-bottom:24px;overflow-x:hidden}
  <div class="section-head">
   <div>
    <h2>Inventory in stock LCBO</h2>
-   <p class="note">Automatically includes every non-TENDER PO that is marked <b>Arrived in Canada</b>, including POs whose Transportation shipment is marked Arrived in Canada.</p>
+   <p class="note">Automatically includes every non-TENDER PO that is marked <b>LCBO Received</b>, including POs whose Transportation shipment is marked LCBO Received.</p>
   </div>
  </div>
  <div class="toolbar">
@@ -1654,7 +1654,7 @@ body{padding-bottom:24px;overflow-x:hidden}
     <label>LCBO Invoice Approximate Date<input id="finLcboApproxDate" type="text" placeholder="Example: March/April 2027 or End of March 2028"></label>
     <label>LCBO Invoice Pay Date Confirmed<input id="finLcboPayDate" type="date"></label>
     <label>LCBO PAYMENT STATUS<select id="finLcboPaidStatus" class="tender-payment-select status-notpaid"><option value="Not Paid">Not Paid</option><option value="Next 60 Days Upcoming Payment">Next 60 Days Upcoming Payment</option><option value="Fully Paid">Fully Paid</option></select></label>
-    <label>Arrived in Canada Date<input id="finArrivedInCanadaDate" type="date" readonly></label>
+    <label>LCBO Received Date<input id="finArrivedInCanadaDate" type="date" readonly></label>
     <label>Invoice Must Be Paid By<input id="finNext60DaysPaymentDate" type="date" readonly></label>
   </div>
   <div class="financial-group"><h3>Transportation Invoice</h3>
@@ -1988,7 +1988,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 </div></fieldset>
 <div class="calculation-strip"><div><span>Total Bottles</span><b id="shipmentTotalBottles">0</b></div><div><span>Transportation Cost</span><b id="shipmentCostDisplay">CAD 0.00</b></div><div><span>Cost / Bottle</span><b id="shipmentCostPerBottle">CAD 0.00</b></div><div><span>Bottle Cost in CAD</span><b id="shipmentCostPerBottleCad">CAD 0.00</b></div></div>
 <label class="full">Notes<textarea id="shipmentNotesInput" rows="4"></textarea></label>
-<div class="form-grid two"><label>Cargo/Transportation status<select id="shipmentStatusInput"><option value="Not Contacted to Transporter">Not Contacted to Transporter</option><option value="Scheduled and Confirmed Transport">Scheduled and Confirmed Transport</option><option value="On the Way to Consolidation">On the Way to Consolidation</option><option value="Delivered to Consolidation">Delivered to Consolidation</option><option value="Arrived in Canada">Arrived in Canada</option></select></label></div><div id="shipmentStatusExtra" class="form-grid two shipment-status-extra"><label>Approximate Pickup Date<input id="shipmentPickupDateInput" type="date"></label><label><span id="shipmentDeliveryDateLabel">Approximate Delivery Date</span><input id="shipmentDeliveryDateInput" type="date"></label><div class="shipment-canada-fields"><label>Approximate Canada Delivery Date<input id="shipmentCanadaDeliveryDateInput" type="date" data-native-shipment-date="1"></label><label>Transport Link<input id="shipmentTransportLinkInput" placeholder="Paste transport link"></label></div></div>
+<div class="form-grid two"><label>Cargo/Transportation status<select id="shipmentStatusInput"><option value="Not Contacted to Transporter">Not Contacted to Transporter</option><option value="Scheduled and Confirmed Transport">Scheduled and Confirmed Transport</option><option value="Picked up and on way to consolidation">Picked up and on way to consolidation</option><option value="Delivered to Consolidation">Delivered to Consolidation</option><option value="LCBO Received">LCBO Received</option></select><span id="shipmentStatusDateLabel" style="display:block;margin-top:8px"></span><input id="shipmentStatusDateInput" type="date" aria-label="Cargo/Transportation status date"></label></div><div id="shipmentStatusExtra" class="form-grid two shipment-status-extra"><label>Approximate Pickup Date<input id="shipmentPickupDateInput" type="date"></label><label><span id="shipmentDeliveryDateLabel">Approximate Delivery Date</span><input id="shipmentDeliveryDateInput" type="date"></label><div class="shipment-canada-fields"><label>Approximate Canada Delivery Date<input id="shipmentCanadaDeliveryDateInput" type="date" data-native-shipment-date="1"></label><label>Transport Link<input id="shipmentTransportLinkInput" placeholder="Paste transport link"></label></div></div>
 <fieldset id="shipmentConsolidationWarehouseFieldset" class="item-group"><legend>Consolidation Warehouse Status</legend><div class="form-grid two"><label>REF # and Pallet Labels Requested<select id="shipmentRefPalletStatusInput"><option value="No">No</option><option value="Yes">Yes</option></select></label><label>Export Files Sent<select id="shipmentExportFilesStatusInput"><option value="No">No</option><option value="Yes">Yes</option></select></label></div></fieldset>
 <div class="form-grid two shipment-bottom-row"><label>Cost of Shipment<div style="display:flex;gap:6px;align-items:center"><input id="shipmentCostInput" type="number" min="0" step="0.01" style="flex:1"><select id="shipmentCurrencyInput" style="width:82px"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></div></label><label>Transportation Invoice Payment Status<select id="shipmentPaymentStatusInput"><option value="Not Paid">Not Paid</option><option value="Paid">Paid</option><option value="Other">Other</option></select></label><label>PAY DATE<input id="shipmentPayDateInput" type="date"></label><label><span id="shipmentConverterLabel">Transportation CAD Converter — Enter Manually</span><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span>1 CAD =</span><input id="shipmentExchangeRateInput" type="number" min="0.0001" step="0.0001" style="width:90px" aria-label="Manual transportation exchange rate"><b id="shipmentConverterCurrency">CAD</b></div></label><label id="shipmentPaymentOtherWrap" class="hidden">Other Payment Status<input id="shipmentPaymentOtherInput" maxlength="50" placeholder="Type payment status"></label></div>
 <div class="modal-actions"><button id="deleteShipmentBtn" type="button" class="danger">Delete Shipment</button><span></span><button id="cancelShipmentBtn" type="button" class="secondary">Cancel</button><button id="saveShipmentBtn" type="button">Save Shipment</button></div></div></div>
@@ -2209,10 +2209,10 @@ if(!state.profitItemCalculator||typeof state.profitItemCalculator!=='object')sta
 if(!Array.isArray(state.financialProfitPages))state.financialProfitPages=[];
 if(!state.financialProfitPageData||typeof state.financialProfitPageData!=='object')state.financialProfitPageData={};
 if(!Array.isArray(state.deletedProfitItems))state.deletedProfitItems=[];
-state.purchaseOrders.forEach(po=>{if(String(po.poStatus||'').toUpperCase()==='ARRIVED IN CANADA')po.poStatus='Arrived in Canada'});
+state.purchaseOrders.forEach(po=>{if(['ARRIVED IN CANADA','LCBO RECEIVED'].includes(String(po.poStatus||'').toUpperCase()))po.poStatus='LCBO Received'});
 if(!Array.isArray(state.manuallyArchivedPurchaseOrders))state.manuallyArchivedPurchaseOrders=[];
 if(!Array.isArray(state.shipments))state.shipments=[];
-state.shipments.forEach(sh=>{if(['CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED'].includes(normalizeSharedShipmentStatus(sh.status||'')))sh.status='Arrived in Canada'});
+state.shipments.forEach(sh=>{if(['CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED'].includes(normalizeSharedShipmentStatus(sh.status||'')))sh.status='LCBO Received'});
 if(!Array.isArray(state.archivedShipments))state.archivedShipments=[];
 if(!Array.isArray(state.financialInvoices))state.financialInvoices=[];if(!Array.isArray(state.suppressedTenderInvoicePoIds))state.suppressedTenderInvoicePoIds=[];
 if(!Array.isArray(state.supplierPaymentInvoices))state.supplierPaymentInvoices=[];
@@ -2318,7 +2318,7 @@ function syncWinnerPickedUpFromTransportation(){
   (state.records||[]).forEach(r=>{
     if(!r || r.completedPO)return;
     const transport=winnerTransportationInfo(r);
-    if(['On the Way to Consolidation','Delivered to Consolidation','Arrived in Canada'].includes(normalizeSharedShipmentStatus(transport.status||''))){
+    if(['Picked up and on way to consolidation','Delivered to Consolidation','LCBO Received'].includes(normalizeSharedShipmentStatus(transport.status||''))){
       r.poPreparationStatus='Picked Up';
       // Prefer the transportation status date; if unavailable, use pickup date, then today.
       r.poPreparationDate=transport.statusDate||transport.shipment?.pickupDate||r.poPreparationDate||today;
@@ -2515,7 +2515,7 @@ function selectOptions(options,current){return options.map(o=>`<option value="${
 function selectLabeledOptions(options,current){return options.map(o=>`<option value="${escapeHtml(o.value)}" ${o.value===current?'selected':''}>${escapeHtml(o.label)}</option>`).join('')}
 function updateSubmissionField(id,field,value){const r=state.records.find(x=>x.id===id);if(!r)return;r[field]=field==='finalOrderedQty'?num(value):value;if(field==='stage1Decision'){if(value==='In Progress')r.finalDecision='In Progress';if(value==='Declined')r.finalDecision='Declined';}if(field==='finalDecision'&&r.stage1Decision==='Declined'&&value==='Winner')r.finalDecision='Declined';if(field==='ntpStatus'&&value!=='Issued'){r.ntpFileName='';deleteNtpAttachment(id);}if(field==='poStatus'&&value!=='Issued'){r.poNumber='';r.poFileName='';deletePoAttachment(id);}save()}
 function updatePoPreparationStatus(id,value){const r=state.records.find(x=>x.id===id);if(!r)return;const old=r.poPreparationStatus||'';r.poPreparationStatus=value;if(value&&value!==old){r.poPreparationDate=new Date().toISOString().slice(0,10);}if(!value)r.poPreparationDate='';save()}
-function poPreparationVisual(r){const autoTransport=winnerTransportationInfo(r);const autoPicked=['On the Way to Consolidation','Delivered to Consolidation','Arrived in Canada'].includes(normalizeSharedShipmentStatus(autoTransport.status||''));const status=autoPicked?'Picked Up':(r.poPreparationStatus||(r.poReadyPickupDate?'PO Ready for Pick Up':(r.poSentSupplierDate?'PO Sent to the Supplier':'')));const date=autoPicked?(autoTransport.statusDate||autoTransport.shipment?.pickupDate||r.poPreparationDate||''):(r.poPreparationDate||r.poReadyPickupDate||r.poSentSupplierDate||'');let bg='#fff9c4',border='#e5c84b',color='#5d4b00',shadow='none',warning='';if(status==='PO Ready for Pick Up'){bg='#ffe66d';border='#d6ad00';color='#4d3d00';}if(status==='Picked Up'){bg='#c8e6c9';border='#57a85a';color='#174d1a';}if(status==='PO Sent to the Supplier'&&date){const start=new Date(date+'T00:00:00');const today=new Date();today.setHours(0,0,0,0);const days=Math.floor((today-start)/86400000);if(days>=20){bg='#ffcdd2';border='#d32f2f';color='#8b0000';shadow='0 0 0 3px rgba(211,47,47,.18),0 3px 10px rgba(211,47,47,.32)';warning='<div style="margin-top:5px;padding:5px 7px;border-radius:6px;background:#d32f2f;color:#fff;font-size:10px;font-weight:800;text-align:center;box-shadow:0 2px 7px rgba(211,47,47,.38)">ASAP — Contact the Supplier</div>';}}return {status,date,bg,border,color,shadow,warning};}
+function poPreparationVisual(r){const autoTransport=winnerTransportationInfo(r);const autoPicked=['Picked up and on way to consolidation','Delivered to Consolidation','LCBO Received'].includes(normalizeSharedShipmentStatus(autoTransport.status||''));const status=autoPicked?'Picked Up':(r.poPreparationStatus||(r.poReadyPickupDate?'PO Ready for Pick Up':(r.poSentSupplierDate?'PO Sent to the Supplier':'')));const date=autoPicked?(autoTransport.statusDate||autoTransport.shipment?.pickupDate||r.poPreparationDate||''):(r.poPreparationDate||r.poReadyPickupDate||r.poSentSupplierDate||'');let bg='#fff9c4',border='#e5c84b',color='#5d4b00',shadow='none',warning='';if(status==='PO Ready for Pick Up'){bg='#ffe66d';border='#d6ad00';color='#4d3d00';}if(status==='Picked Up'){bg='#c8e6c9';border='#57a85a';color='#174d1a';}if(status==='PO Sent to the Supplier'&&date){const start=new Date(date+'T00:00:00');const today=new Date();today.setHours(0,0,0,0);const days=Math.floor((today-start)/86400000);if(days>=20){bg='#ffcdd2';border='#d32f2f';color='#8b0000';shadow='0 0 0 3px rgba(211,47,47,.18),0 3px 10px rgba(211,47,47,.32)';warning='<div style="margin-top:5px;padding:5px 7px;border-radius:6px;background:#d32f2f;color:#fff;font-size:10px;font-weight:800;text-align:center;box-shadow:0 2px 7px rgba(211,47,47,.38)">ASAP — Contact the Supplier</div>';}}return {status,date,bg,border,color,shadow,warning};}
 
 function saveSubmittedReminderComment(id){
   const r=state.records.find(x=>x.id===id);if(!r)return;
@@ -2552,7 +2552,7 @@ function refreshWinnerEditorTransportation(){
  status.value=result.status;
  ref.value=result.ref||'';
 }
-function shipmentDeliveryLabel(status=''){return status==='Delivered to Consolidation'?'Delivery Date':status==='Arrived in Canada'?'Canada Delivery Date':'Approximate Delivery Date'}
+function shipmentDeliveryLabel(status=''){return status==='Delivered to Consolidation'?'Delivery Date':status==='LCBO Received'?'LCBO Received Date':'Approximate Delivery Date'}
 function formatTransportationDate(value){const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return value||'';const months=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];return `${Number(m[3])}.${months[Number(m[2])-1]}${m[1]}`}
 function completeWinnerPO(id){const r=state.records.find(x=>x.id===id);if(!r)return;if(!confirm('Move this Tender Winner into Archived Tender Winners?'))return;r.completedPO=true;r.completedPODate=new Date().toISOString().slice(0,10);const linkedWork=(state.tenders||[]).flatMap(t=>t.workItems||[]).find(w=>String(w.submissionId||'')===String(r.id));if(linkedWork?.sourceCandidateId){const candidate=(state.countryCandidates||[]).find(c=>String(c.id)===String(linkedWork.sourceCandidateId));if(candidate){candidate.headOfficeActionStatus='Tender Winner';candidate.status='Tender Winner';candidate.archivedTenderWinner=true;candidate.archivedTenderWinnerDate=r.completedPODate;}}save()}
 function deleteArchivedSubmission(id){const r=state.records.find(x=>x.id===id);if(!r||!confirm('Move this archived submission to the Recycling Bin?'))return;moveToRecycleBin('record','Archived Tender Winners',r);deleteNtpAttachment(id);deletePoAttachment(id);state.records=state.records.filter(x=>x.id!==id);state.tenders.forEach(t=>(t.workItems||[]).forEach(w=>{if(w.submissionId===id){w.submissionId='';w.status='Submitted'}}));save()}
@@ -3443,13 +3443,14 @@ function currencyToCadRate(currency='CAD',manualRate=0){if(currency==='CAD')retu
 function shipmentCadToForeignRate(shipment={}){const c=shipment.currency||'CAD';return c==='CAD'?1:num(shipment.exchangeRate)}
 function shipmentTotals(shipment={}){const totalBottles=shipment.recordKind==='transportation'&&shipment.cargoLinks?.length?cargoLinksBottleQuantity(shipment.cargoLinks):(shipment.poLinks||[]).reduce((sum,link)=>{const po=(state.purchaseOrders||[]).find(x=>x.id===link?.poId);return sum+poBottleCount(po)},0);const cost=num(shipment.cost),currency=shipment.currency||'CAD',exchangeRate=shipmentCadToForeignRate(shipment),cadRate=currency==='CAD'?1:(exchangeRate>0?1/exchangeRate:0),costCad=cost*cadRate,costPerBottle=totalBottles?cost/totalBottles:0,costPerBottleCad=totalBottles?costCad/totalBottles:0;return {totalBottles,cost,currency,exchangeRate,cadRate,costCad,costPerBottle,costPerBottleCad}}
 function yesNoBadge(value='No'){return `<span class="${value==='Yes'?'status-green':'status-yellow'}">${escapeHtml(value)}</span>`}
-function shipmentStatusBadge(status='Not Contacted to Transporter'){const cls=status==='Not Contacted to Transporter'?'status-yellow':(['On the Way to Consolidation','Delivered to Consolidation','Arrived in Canada'].includes(status))?'status-green':'status-blue';return `<span class="${cls}">${escapeHtml(status)}</span>`}
-function shipmentStatusClass(status='Not Contacted to Transporter'){return status==='Not Contacted to Transporter'?'status-yellow':(['On the Way to Consolidation','Delivered to Consolidation','Arrived in Canada'].includes(status))?'status-green':'status-blue'}
+function shipmentStatusBadge(status='Not Contacted to Transporter'){const cls=status==='Not Contacted to Transporter'?'status-yellow':(['Picked up and on way to consolidation','Delivered to Consolidation','LCBO Received'].includes(status))?'status-green':'status-blue';return `<span class="${cls}">${escapeHtml(status)}</span>`}
+function shipmentStatusClass(status='Not Contacted to Transporter'){return status==='Not Contacted to Transporter'?'status-yellow':(['Picked up and on way to consolidation','Delivered to Consolidation','LCBO Received'].includes(status))?'status-green':'status-blue'}
 function transportationStatusOptions(status=''){
   const current=normalizeSharedShipmentStatus(status);
   return TRANSPORT_SYNC_STATUSES.map(v=>`<option value="${escapeHtml(v)}" ${current===v?'selected':''}>${escapeHtml(v)}</option>`).join('');
 }
-function shipmentStatusSelect(sh){const status=normalizeSharedShipmentStatus(sh.status||'Not Contacted to Transporter');return `<select class="shipment-inline-status ${shipmentStatusClass(status)}" onchange="updateShipmentStatusFromRow('${sh.id}',this.value)">${transportationStatusOptions(status)}</select>`}
+function shipmentStatusSelect(sh){const status=normalizeSharedShipmentStatus(sh.status||'Not Contacted to Transporter');return `<select class="shipment-inline-status ${shipmentStatusClass(status)}" onchange="updateShipmentStatusFromRow('${sh.id}',this.value)">${transportationStatusOptions(status)}</select><label style="display:block;margin-top:8px;font-size:12px">(${escapeHtml(status)})<input type="date" aria-label="${escapeHtml(status)} status date" value="${escapeHtml(sh.statusDate||'')}" onchange="updateShipmentStatusFromRow('${sh.id}','${escapeHtml(status)}',this.value)" style="display:block;margin-top:4px;max-width:170px"></label>`}
+
 function updateIncludedPoStatusesForShipment(sh,status){
   const shared=normalizeSharedShipmentStatus(status);
   if(!TRANSPORT_SYNC_STATUSES.includes(shared))return;
@@ -3458,26 +3459,27 @@ function updateIncludedPoStatusesForShipment(sh,status){
   (state.purchaseOrders||[]).forEach(po=>{
     if(!ids.has(po.id)||PO_ONLY_STATUSES.includes(normalizeSharedShipmentStatus(po.poStatus||'')))return;
 
-    if(shared==='Arrived in Canada'){
+    if(shared==='LCBO Received'){
       po.inventoryArrivalSource='shipment';
       po.inventoryArrivalShipmentId=sh.id;
       po.inventoryArrivalShipmentName=sh.name||'';
-      po.inventoryArrivalStatusDate=sh.statusDate||new Date().toISOString().slice(0,10);
+      po.inventoryArrivalStatusDate=sh.statusDate||'';
       delete po.inventoryRemovedByShipment;
     }
 
     refreshSplitPoStatus(po.id);
   });
 }
-function updateShipmentStatusFromRow(id,status){
-  const sh=(state.shipments||[]).find(x=>x.id===id);if(!sh)return;
+function updateShipmentStatusFromRow(id,status,statusDate){
+  let sh=(state.shipments||[]).find(x=>x.id===id);if(!sh)return;
+  if((sh.recordKind||'cargo')==='cargo')sh=cargoDateSourceTransportation(sh)||sh;
   const shared=normalizeSharedShipmentStatus(status);
   if(!TRANSPORT_SYNC_STATUSES.includes(shared))return;
-  sh.status=shared;sh.statusDate=new Date().toISOString().slice(0,10);
+  sh.status=shared;sh.statusDate=statusDate===undefined?'':statusDate;
   syncTransportationCargoRecords();
   updateIncludedPoStatusesForShipment(sh,shared);
   (sh.poLinks||[]).forEach(link=>refreshSplitPoStatus(link.poId));
-  if(shared==='Arrived in Canada'){
+  if(shared==='LCBO Received'){
     (sh.poLinks||[]).forEach(link=>{
       const po=(state.purchaseOrders||[]).find(p=>p.id===link.poId);
       if(po&&String(po.program||'').toUpperCase()==='TENDER')syncArrivedTenderPoInvoice(po);
@@ -3680,19 +3682,19 @@ function openShipmentFile(slot){openShipmentAttachmentBlob(shipmentPendingFiles[
 function removeShipmentFile(slot){shipmentPendingFiles[slot]=null;const input=$('#shipmentFile'+(slot+1));if(input)input.value='';renderShipmentFiles()}
 
 function syncShipmentPaymentOther(){$('#shipmentPaymentOtherWrap').classList.toggle('hidden',$('#shipmentPaymentStatusInput').value!=='Other')}
-function syncShipmentStatusFields(){const status=$('#shipmentStatusInput')?.value||'Not Contacted to Transporter',wrap=$('#shipmentStatusExtra');if(wrap)wrap.classList.remove('hidden');const label=$('#shipmentDeliveryDateLabel');if(label)label.textContent=shipmentDeliveryLabel(status);const sel=$('#shipmentStatusInput');if(sel){sel.classList.remove('status-select-yellow','status-select-green');sel.classList.add(['Not Contacted to Transporter','Scheduled and Confirmed Transport','On the Way to Consolidation'].includes(status)?'status-select-yellow':'status-select-green')}syncShipmentYesNoColors()}
+function syncShipmentStatusFields(){const status=$('#shipmentStatusInput')?.value||'Not Contacted to Transporter',wrap=$('#shipmentStatusExtra');if(wrap)wrap.classList.remove('hidden');const statusDateLabel=$('#shipmentStatusDateLabel');if(statusDateLabel)statusDateLabel.textContent='('+status+')';const label=$('#shipmentDeliveryDateLabel');if(label)label.textContent=shipmentDeliveryLabel(status);const sel=$('#shipmentStatusInput');if(sel){sel.classList.remove('status-select-yellow','status-select-green');sel.classList.add(['Not Contacted to Transporter','Scheduled and Confirmed Transport','Picked up and on way to consolidation'].includes(status)?'status-select-yellow':'status-select-green')}syncShipmentYesNoColors()}
 function syncShipmentYesNoColors(){['shipmentRefPalletStatusInput','shipmentExportFilesStatusInput'].forEach(id=>{const el=$('#'+id);if(!el)return;el.classList.remove('yesno-yellow','yesno-green');el.classList.add(el.value==='Yes'?'yesno-green':'yesno-yellow')})}
 let shipmentEditorKind='cargo';
 function syncCargoEditorFields(){
  const modal=$('#shipmentModal');
  modal.classList.toggle('cargo-editor',shipmentEditorKind==='cargo');
- const transportIds=['shipmentCompanyInput','shipmentPhoneInput','shipmentEmail1Input','shipmentEmail2Input','shipmentFromInput','shipmentToInput','shipmentStatusInput','shipmentPickupDateInput','shipmentDeliveryDateInput','shipmentCanadaDeliveryDateInput','shipmentTransportLinkInput','shipmentCostInput','shipmentPaymentStatusInput','shipmentPayDateInput','shipmentExchangeRateInput','shipmentPaymentOtherInput'];
+ const transportIds=['shipmentCompanyInput','shipmentPhoneInput','shipmentEmail1Input','shipmentEmail2Input','shipmentFromInput','shipmentToInput','shipmentPickupDateInput','shipmentDeliveryDateInput','shipmentCanadaDeliveryDateInput','shipmentTransportLinkInput','shipmentCostInput','shipmentPaymentStatusInput','shipmentPayDateInput','shipmentExchangeRateInput','shipmentPaymentOtherInput'];
  transportIds.forEach(id=>{const field=$('#'+id);if(field)field.closest('label')?.classList.add('cargo-transport-only')});
  ['.shipment-compact-grid','.shipment-address-row','#shipmentStatusExtra','.shipment-bottom-row'].forEach(selector=>modal.querySelector(selector)?.classList.add('cargo-transport-only'));
  $('#shipmentCompanyInput').closest('.form-grid')?.classList.add('cargo-transport-only');
- $('#shipmentStatusInput').closest('.form-grid')?.classList.add('cargo-transport-only');
+ $('#shipmentStatusInput').closest('.form-grid')?.classList.remove('cargo-transport-only');
 }
-function openShipmentEditor(id='',kind='cargo'){const sh=(state.shipments||[]).find(x=>x.id===id)||null;shipmentEditorKind=sh?.recordKind||kind;transportationSelectedCargoLinks=(sh?.cargoLinks||[]).map(link=>({...link}));const editorLabel=shipmentEditorKind==='transportation'?'Transportation':'Cargo';$('#shipmentRecordId').value=sh?.id||'';$('#shipmentNameInput').value=sh?.name||'';$('#shipmentCompanyInput').value=sh?.company||'';$('#shipmentPalletQtyInput').value=sh?.palletQty??'';$('#shipmentPhoneInput').value=sh?.phone||'';$('#shipmentEmail1Input').value=sh?.email1||'';$('#shipmentEmail2Input').value=sh?.email2||'';$('#shipmentCurrencyInput').value=sh?.currency||'CAD';$('#shipmentExchangeRateInput').value=sh?(sh.currency==='CAD'?'1':(sh.exchangeRate||'')):'1';$('#shipmentFromInput').value=sh?.from||'';$('#shipmentToInput').value=sh?.to||'';$('#shipmentCostInput').value=sh?.cost??'';$('#shipmentNotesInput').value=sh?.notes||'';$('#shipmentStatusInput').value=sh?.status||'Not Contacted to Transporter';$('#shipmentPaymentStatusInput').value=sh?.paymentStatus||'Not Paid';$('#shipmentPaymentOtherInput').value=sh?.paymentOther||'';$('#shipmentPayDateInput').value=sh?.payDate||'';$('#shipmentPickupDateInput').value=sh?.pickupDate||'';$('#shipmentDeliveryDateInput').value=sh?.deliveryDate||'';$('#shipmentCanadaDeliveryDateInput').value=sh?.canadaDeliveryDate||'';$('#shipmentTransportLinkInput').value=sh?.transportLink||'';$('#shipmentRefPalletStatusInput').value=sh?.refPalletStatus||'No';$('#shipmentExportFilesStatusInput').value=sh?.exportFilesStatus||'No';syncShipmentPaymentOther();syncShipmentStatusFields();shipmentSelectedPos=(sh?.poLinks||[]).map(x=>({...x}));shipmentPendingFiles=[sh?.attachment1||null,sh?.attachment2||null,sh?.attachment3||null,sh?.attachment4||null,sh?.attachment5||null,sh?.attachment6||null];renderShipmentFiles();$('#shipmentModalTitle').textContent=(sh?'Edit ':'Create ')+editorLabel;$('#shipmentModal .modal-head p').textContent=shipmentEditorKind==='transportation'?'Create the transportation and add registered cargo.':'Create the cargo and assign POs from both Tender and Private Order POs.';$('#shipmentPoFieldset').classList.toggle('hidden',shipmentEditorKind==='transportation');$('#shipmentConsolidationWarehouseFieldset').classList.toggle('hidden',shipmentEditorKind==='transportation');$('#transportationCargoFieldset').classList.toggle('hidden',shipmentEditorKind!=='transportation');$('#shipmentAttachmentsLegend').textContent=shipmentEditorKind==='transportation'?'Attached Transportation Invoice and Files':'Attached Supplier Invoices and Export Files';$('#shipmentPalletQtyInput').readOnly=shipmentEditorKind==='transportation';$('#transportationBottleQtyWrap').classList.toggle('hidden',shipmentEditorKind!=='transportation');const nameInput=$('#shipmentNameInput');nameInput.parentElement.firstChild.textContent=shipmentEditorKind==='transportation'?'Transportation Name (TR order number)':'Cargo Name (Invoice #)';$('#shipmentPickupDateInput').parentElement.firstChild.textContent=shipmentEditorKind==='transportation'?'Approx. Transportation Pickup Date':'Approximate Pickup Date';$('#shipmentCostPerBottleCad').previousElementSibling.textContent=shipmentEditorKind==='transportation'?'Transportation Bottle Cost in CAD':'Bottle Cost in CAD';nameInput.placeholder=shipmentEditorKind==='transportation'?'Example: Germany Transportation / TR order number':'Example: Germany Consolidation Cargo / Invoice #';$('#saveShipmentBtn').textContent='Save '+editorLabel;$('#deleteShipmentBtn').textContent='Delete '+editorLabel;$('#deleteShipmentBtn').style.visibility=sh?'visible':'hidden';renderShipmentPoSelector();syncCargoEditorFields();$('#shipmentModal').classList.remove('hidden')}
+function openShipmentEditor(id='',kind='cargo'){const sh=(state.shipments||[]).find(x=>x.id===id)||null;shipmentEditorKind=sh?.recordKind||kind;transportationSelectedCargoLinks=(sh?.cargoLinks||[]).map(link=>({...link}));const editorLabel=shipmentEditorKind==='transportation'?'Transportation':'Cargo';$('#shipmentRecordId').value=sh?.id||'';$('#shipmentNameInput').value=sh?.name||'';$('#shipmentCompanyInput').value=sh?.company||'';$('#shipmentPalletQtyInput').value=sh?.palletQty??'';$('#shipmentPhoneInput').value=sh?.phone||'';$('#shipmentEmail1Input').value=sh?.email1||'';$('#shipmentEmail2Input').value=sh?.email2||'';$('#shipmentCurrencyInput').value=sh?.currency||'CAD';$('#shipmentExchangeRateInput').value=sh?(sh.currency==='CAD'?'1':(sh.exchangeRate||'')):'1';$('#shipmentFromInput').value=sh?.from||'';$('#shipmentToInput').value=sh?.to||'';$('#shipmentCostInput').value=sh?.cost??'';$('#shipmentNotesInput').value=sh?.notes||'';$('#shipmentStatusInput').value=normalizeSharedShipmentStatus(sh?.status||'Not Contacted to Transporter');$('#shipmentStatusDateInput').value=sh?.statusDate||'';$('#shipmentPaymentStatusInput').value=sh?.paymentStatus||'Not Paid';$('#shipmentPaymentOtherInput').value=sh?.paymentOther||'';$('#shipmentPayDateInput').value=sh?.payDate||'';$('#shipmentPickupDateInput').value=sh?.pickupDate||'';$('#shipmentDeliveryDateInput').value=sh?.deliveryDate||'';$('#shipmentCanadaDeliveryDateInput').value=sh?.canadaDeliveryDate||'';$('#shipmentTransportLinkInput').value=sh?.transportLink||'';$('#shipmentRefPalletStatusInput').value=sh?.refPalletStatus||'No';$('#shipmentExportFilesStatusInput').value=sh?.exportFilesStatus||'No';syncShipmentPaymentOther();syncShipmentStatusFields();shipmentSelectedPos=(sh?.poLinks||[]).map(x=>({...x}));shipmentPendingFiles=[sh?.attachment1||null,sh?.attachment2||null,sh?.attachment3||null,sh?.attachment4||null,sh?.attachment5||null,sh?.attachment6||null];renderShipmentFiles();$('#shipmentModalTitle').textContent=(sh?'Edit ':'Create ')+editorLabel;$('#shipmentModal .modal-head p').textContent=shipmentEditorKind==='transportation'?'Create the transportation and add registered cargo.':'Create the cargo and assign POs from both Tender and Private Order POs.';$('#shipmentPoFieldset').classList.toggle('hidden',shipmentEditorKind==='transportation');$('#shipmentConsolidationWarehouseFieldset').classList.toggle('hidden',shipmentEditorKind==='transportation');$('#transportationCargoFieldset').classList.toggle('hidden',shipmentEditorKind!=='transportation');$('#shipmentAttachmentsLegend').textContent=shipmentEditorKind==='transportation'?'Attached Transportation Invoice and Files':'Attached Supplier Invoices and Export Files';$('#shipmentPalletQtyInput').readOnly=shipmentEditorKind==='transportation';$('#transportationBottleQtyWrap').classList.toggle('hidden',shipmentEditorKind!=='transportation');const nameInput=$('#shipmentNameInput');nameInput.parentElement.firstChild.textContent=shipmentEditorKind==='transportation'?'Transportation Name (TR order number)':'Cargo Name (Invoice #)';$('#shipmentPickupDateInput').parentElement.firstChild.textContent=shipmentEditorKind==='transportation'?'Approx. Transportation Pickup Date':'Approximate Pickup Date';$('#shipmentCostPerBottleCad').previousElementSibling.textContent=shipmentEditorKind==='transportation'?'Transportation Bottle Cost in CAD':'Bottle Cost in CAD';nameInput.placeholder=shipmentEditorKind==='transportation'?'Example: Germany Transportation / TR order number':'Example: Germany Consolidation Cargo / Invoice #';$('#saveShipmentBtn').textContent='Save '+editorLabel;$('#deleteShipmentBtn').textContent='Delete '+editorLabel;$('#deleteShipmentBtn').style.visibility=sh?'visible':'hidden';renderShipmentPoSelector();syncCargoEditorFields();$('#shipmentModal').classList.remove('hidden')}
 function closeShipmentEditor(){$('#shipmentModal').classList.add('hidden');shipmentSelectedPos=[];shipmentPendingFiles=[null,null,null,null,null,null]}
 function saveShipment(){
  if(shipmentFilesReading){alert('Please wait for the attached files to finish loading before saving.');return}
@@ -3705,7 +3707,7 @@ function saveShipment(){
  if(shipmentEditorKind==='transportation'&&shipmentCurrency!=='CAD'&&manualExchangeRate<=0){alert('Enter the Transportation CAD converter manually, for example: 1 CAD = 0.8 '+shipmentCurrency+'.');$('#shipmentExchangeRateInput').focus();return}
  const id=$('#shipmentRecordId').value||uid();
  const previousShipment=(state.shipments||[]).find(x=>x.id===id)||null;
- const sh={...(previousShipment||{}),recordKind:previousShipment?.recordKind||shipmentEditorKind,cargoLinks:shipmentEditorKind==='transportation'?transportationSelectedCargoLinks.map(link=>({...link})):undefined,id,name,company,palletQty:Math.max(0,Math.round(num($('#shipmentPalletQtyInput').value))),phone,email1:$('#shipmentEmail1Input').value.trim(),email2:$('#shipmentEmail2Input').value.trim(),from,to,cost:num(cost),currency:shipmentCurrency,exchangeRate:manualExchangeRate,poLinks:shipmentSelectedPos.map(x=>({...x})),notes:$('#shipmentNotesInput').value.trim(),status:normalizeSharedShipmentStatus($('#shipmentStatusInput').value),paymentStatus,paymentOther:paymentStatus==='Other'?paymentOther:'',payDate:$('#shipmentPayDateInput').value||'',pickupDate:$('#shipmentPickupDateInput').value||'',deliveryDate:$('#shipmentDeliveryDateInput').value||'',canadaDeliveryDate:$('#shipmentCanadaDeliveryDateInput').value||'',transportLink:$('#shipmentTransportLinkInput').value.trim(),refPalletStatus:$('#shipmentRefPalletStatusInput').value||'No',exportFilesStatus:$('#shipmentExportFilesStatusInput').value||'No',attachment1:shipmentPendingFiles[0]||null,attachment2:shipmentPendingFiles[1]||null,attachment3:shipmentPendingFiles[2]||null,attachment4:shipmentPendingFiles[3]||null,attachment5:shipmentPendingFiles[4]||null,attachment6:shipmentPendingFiles[5]||null};
+ const sh={...(previousShipment||{}),recordKind:previousShipment?.recordKind||shipmentEditorKind,cargoLinks:shipmentEditorKind==='transportation'?transportationSelectedCargoLinks.map(link=>({...link})):undefined,id,name,company,palletQty:Math.max(0,Math.round(num($('#shipmentPalletQtyInput').value))),phone,email1:$('#shipmentEmail1Input').value.trim(),email2:$('#shipmentEmail2Input').value.trim(),from,to,cost:num(cost),currency:shipmentCurrency,exchangeRate:manualExchangeRate,poLinks:shipmentSelectedPos.map(x=>({...x})),notes:$('#shipmentNotesInput').value.trim(),status:normalizeSharedShipmentStatus($('#shipmentStatusInput').value),statusDate:$('#shipmentStatusDateInput').value||'',paymentStatus,paymentOther:paymentStatus==='Other'?paymentOther:'',payDate:$('#shipmentPayDateInput').value||'',pickupDate:$('#shipmentPickupDateInput').value||'',deliveryDate:$('#shipmentDeliveryDateInput').value||'',canadaDeliveryDate:$('#shipmentCanadaDeliveryDateInput').value||'',transportLink:$('#shipmentTransportLinkInput').value.trim(),refPalletStatus:$('#shipmentRefPalletStatusInput').value||'No',exportFilesStatus:$('#shipmentExportFilesStatusInput').value||'No',attachment1:shipmentPendingFiles[0]||null,attachment2:shipmentPendingFiles[1]||null,attachment3:shipmentPendingFiles[2]||null,attachment4:shipmentPendingFiles[3]||null,attachment5:shipmentPendingFiles[4]||null,attachment6:shipmentPendingFiles[5]||null};
 
  const oldPoIds=new Set((previousShipment?.poLinks||[]).map(x=>x.poId).filter(Boolean));
  const newPoIds=new Set((sh.poLinks||[]).map(x=>x.poId).filter(Boolean));
@@ -3713,7 +3715,7 @@ function saveShipment(){
    if(newPoIds.has(poId))return;
    const po=(state.purchaseOrders||[]).find(x=>x.id===poId);
    if(!po)return;
-   const anotherArrived=(state.shipments||[]).some(other=>other.id!==id&&normalizeSharedShipmentStatus(other.status||'')==='Arrived in Canada'&&(other.poLinks||[]).some(link=>link.poId===poId));
+   const anotherArrived=(state.shipments||[]).some(other=>other.id!==id&&normalizeSharedShipmentStatus(other.status||'')==='LCBO Received'&&(other.poLinks||[]).some(link=>link.poId===poId));
    if(!anotherArrived){
      po.inventoryRemovedByShipment=true;
      po.inventoryArrivalSource='removed-shipment';
@@ -3723,9 +3725,10 @@ function saveShipment(){
 
  const i=state.shipments.findIndex(x=>x.id===id);
  if(i>=0)state.shipments[i]=sh;else state.shipments.push(sh);
+ if(sh.recordKind==='cargo'){const source=cargoDateSourceTransportation(sh);if(source){source.status=sh.status;source.statusDate=sh.statusDate;updateIncludedPoStatusesForShipment(source,source.status);}}
  syncTransportationCargoRecords();
  updateIncludedPoStatusesForShipment(sh,sh.status);
- if(normalizeSharedShipmentStatus(sh.status||'')==='Arrived in Canada'){
+ if(normalizeSharedShipmentStatus(sh.status||'')==='LCBO Received'){
    (sh.poLinks||[]).forEach(link=>{
      const po=(state.purchaseOrders||[]).find(p=>p.id===link.poId);
      if(po&&String(po.program||'').toUpperCase()==='TENDER')syncArrivedTenderPoInvoice(po);
@@ -3778,11 +3781,11 @@ function poCaseQuantityWithBottlesPerCase(po){
   }).join(' / ');
 }
 function poBottleQuantity(po){return (po.lines||[]).reduce((sum,line)=>sum+(line.bottleQuantity!==''&&line.bottleQuantity!=null?num(line.bottleQuantity):num(line.totalQuantity)*num(line.unitsPerCase)),0)}
-const TRANSPORT_SYNC_STATUSES=['Not Contacted to Transporter','Scheduled and Confirmed Transport','On the Way to Consolidation','Delivered to Consolidation','Arrived in Canada'];
+const TRANSPORT_SYNC_STATUSES=['Not Contacted to Transporter','Scheduled and Confirmed Transport','Picked up and on way to consolidation','Delivered to Consolidation','LCBO Received'];
 const PO_ONLY_STATUSES=['CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED'];
 const SHARED_SHIPMENT_STATUSES=[...TRANSPORT_SYNC_STATUSES,...PO_ONLY_STATUSES];
 
-const SPLIT_PO_STATUS_ORDER=['Not Contacted to Transporter','Scheduled and Confirmed Transport','On the Way to Consolidation','Delivered to Consolidation','Arrived in Canada'];
+const SPLIT_PO_STATUS_ORDER=['Not Contacted to Transporter','Scheduled and Confirmed Transport','Picked up and on way to consolidation','Delivered to Consolidation','LCBO Received'];
 
 function splitPoLinkedShipments(poId){
   return allTransportationRecords().filter(sh=>(sh.poLinks||[]).some(link=>link.poId===poId));
@@ -3831,15 +3834,17 @@ window.refreshAllSplitPoStatuses=refreshAllSplitPoStatuses;
 
 function normalizeSharedShipmentStatus(status=''){
   let s=String(status||'').trim();
-  const legacy={'NOT CONTACTED':'Not Contacted to Transporter','SCHEDULED & CONFIRMED':'Scheduled and Confirmed Transport','ON THE WAY':'On the Way to Consolidation'};
+  s=s.replace(/^Arrived in Canada(?= \(PARTIALLY\)$|$)/i,'LCBO Received')
+     .replace(/^On the Way to Consolidation(?= \(PARTIALLY\)$|$)/i,'Picked up and on way to consolidation');
+  const legacy={'NOT CONTACTED':'Not Contacted to Transporter','SCHEDULED & CONFIRMED':'Scheduled and Confirmed Transport','ON THE WAY':'Picked up and on way to consolidation'};
   const base=s.replace(/ \(PARTIALLY\)$/i,'');
   if(legacy[base.toUpperCase()])s=legacy[base.toUpperCase()]+(/ \(PARTIALLY\)$/i.test(s)?' (PARTIALLY)':'');
   const upper=s.toUpperCase();
   if(upper==='SCHEDULED AND CONFIRMED TRANSPORT (PARTIALLY)')return 'Scheduled and Confirmed Transport (PARTIALLY)';
-  if(upper==='ON THE WAY TO CONSOLIDATION (PARTIALLY)')return 'On the Way to Consolidation (PARTIALLY)';
+  if(upper==='PICKED UP AND ON WAY TO CONSOLIDATION (PARTIALLY)')return 'Picked up and on way to consolidation (PARTIALLY)';
   if(upper==='DELIVERED TO CONSOLIDATION (PARTIALLY)')return 'Delivered to Consolidation (PARTIALLY)';
-  if(upper==='ARRIVED IN CANADA (PARTIALLY)')return 'Arrived in Canada (PARTIALLY)';
-  if(upper==='ARRIVED IN CANADA')return 'Arrived in Canada';
+  if(upper==='LCBO RECEIVED (PARTIALLY)')return 'LCBO Received (PARTIALLY)';
+  if(upper==='LCBO RECEIVED')return 'LCBO Received';
   if(s.toLowerCase()==='delivered')return 'Delivered to Consolidation';
   return s;
 }
@@ -3847,12 +3852,12 @@ function sharedShipmentStatusOptions(status=''){
   const current=normalizeSharedShipmentStatus(status);
   return '<option value="">Select Cargo/Transportation status</option>'+SHARED_SHIPMENT_STATUSES.map(v=>`<option value="${escapeHtml(v)}" ${current===v?'selected':''}>${escapeHtml(v)}</option>`).join('');
 }
-function poStatusBadge(status=''){const value=normalizeSharedShipmentStatus(status)||'—';const cls=value==='LCBO PAYED'?'status-green':value==='CLEARED OUT FROM THE WAREHOUSE'?'status-blue':(['Delivered to Consolidation','Arrived in Canada'].includes(value)?'status-green':'status-yellow');return `<span class="${cls}">${escapeHtml(value)}</span>`}
+function poStatusBadge(status=''){const value=normalizeSharedShipmentStatus(status)||'—';const cls=value==='LCBO PAYED'?'status-green':value==='CLEARED OUT FROM THE WAREHOUSE'?'status-blue':(['Delivered to Consolidation','LCBO Received'].includes(value)?'status-green':'status-yellow');return `<span class="${cls}">${escapeHtml(value)}</span>`}
 function poStatusSelect(po){
   const linked=splitPoLinkedShipments(po.id);
   if(!linked.length)return '<span class="status-yellow">Not Assigned to Shipment</span>';
   const value=splitPoAggregateStatus(po)||'Not Contacted to Transporter';
-  const cls=value.includes('(PARTIALLY)')?'status-yellow':(['Delivered to Consolidation','Arrived in Canada'].includes(value)?'status-green':'status-yellow');
+  const cls=value.includes('(PARTIALLY)')?'status-yellow':(['Delivered to Consolidation','LCBO Received'].includes(value)?'status-green':'status-yellow');
   return `<span class="${cls}">${escapeHtml(value)}</span>${linked.length>1?`<br><small>Split across ${linked.length} Transportation records</small>`:''}`;
 }
 function poAgencyDisplayName(po){
@@ -3861,10 +3866,10 @@ function poAgencyDisplayName(po){
 }
 function purchaseOrderPreparationVisual(po){
   const transportStatus=splitPoAggregateStatus(po)||'';
-  const autoPicked=['On the Way to Consolidation','Delivered to Consolidation','Arrived in Canada'].includes(normalizeSharedShipmentStatus(transportStatus));
+  const autoPicked=['Picked up and on way to consolidation','Delivered to Consolidation','LCBO Received'].includes(normalizeSharedShipmentStatus(transportStatus));
   if(autoPicked && po.poPreparationStatus!=='Picked Up'){
     po.poPreparationStatus='Picked Up';
-    const linked=splitPoLinkedShipments(po.id);const pickedShipment=linked.find(sh=>['On the Way to Consolidation','Delivered to Consolidation','Arrived in Canada'].includes(normalizeSharedShipmentStatus(sh.status)));
+    const linked=splitPoLinkedShipments(po.id);const pickedShipment=linked.find(sh=>['Picked up and on way to consolidation','Delivered to Consolidation','LCBO Received'].includes(normalizeSharedShipmentStatus(sh.status)));
     po.poPreparationDate=(pickedShipment&&(pickedShipment.pickupDate||pickedShipment.statusDate))||po.poPreparationDate||new Date().toISOString().slice(0,10);
     save();
   }
@@ -3889,7 +3894,7 @@ function updatePoStatusFromRow(id,status){
   const po=(state.purchaseOrders||[]).find(x=>x.id===id);if(!po)return;
   const shared=normalizeSharedShipmentStatus(status);
   po.poStatus=shared;
-  if(shared==='Arrived in Canada'){
+  if(shared==='LCBO Received'){
     po.inventoryArrivalSource='po';
     delete po.inventoryRemovedByShipment;
     delete po.inventoryArrivalShipmentId;
@@ -4508,9 +4513,9 @@ function linkedSubmissionForPo(poNo){
 function tenderPoArrivedInCanada(po){
   if(!po||String(po.program||'').toUpperCase()!=='TENDER')return false;
   const poStatus=normalizeSharedShipmentStatus(po.poStatus||'');
-  if(poStatus==='Arrived in Canada')return true;
+  if(poStatus==='LCBO Received')return true;
   return allTransportationRecords().some(sh=>
-    normalizeSharedShipmentStatus(sh.status||'')==='Arrived in Canada' &&
+    normalizeSharedShipmentStatus(sh.status||'')==='LCBO Received' &&
     (sh.poLinks||[]).some(link=>link.poId===po.id)
   );
 }
@@ -4534,7 +4539,7 @@ function tenderPoAutoInvoiceValues(po,existing={}){
     lcboPaidStatus:normalizeTenderInvoicePaymentStatus(existing.lcboPaidStatus||'Not Paid'),
     transportInvoiceName:existing.transportInvoiceName||(
       allTransportationRecords().find(sh=>
-        normalizeSharedShipmentStatus(sh.status||'')==='Arrived in Canada' &&
+        normalizeSharedShipmentStatus(sh.status||'')==='LCBO Received' &&
         (sh.poLinks||[]).some(link=>link.poId===po.id)
       )?.name||''
     ),
@@ -4544,25 +4549,25 @@ function tenderPoAutoInvoiceValues(po,existing={}){
     supplierCurrency:existing.supplierCurrency||po.currency||'CAD',
     supplierItemsInCase:existing.supplierItemsInCase!==undefined&&existing.supplierItemsInCase!==''?existing.supplierItemsInCase:firstUnits,
     supplierRate:existing.supplierRate||'',
-    notes:existing.notes||'Automatically created when Tender PO Transportation arrived in Canada.',
+    notes:existing.notes||'Automatically created when Tender PO Transportation received by LCBO.',
     autoCreatedFromTenderPo:true,
     autoCreatedOnArrival:true,
     sourcePoId:po.id,
     poProgram:'TENDER',
-    poStatus:'Arrived in Canada',
+    poStatus:'LCBO Received',
     totalPoQuotedValue:(po.lines||[]).reduce((sum,line)=>sum+(num(line.totalQuantity)*num(line.quotedPricePerCase)),0),
     poCurrency:po.currency||'CAD',
     supplierNames:(po.supplierNames||po.vendors||[]).join(', '),
     itemDescription:lines.map(line=>line.yearProductName||line.itemNo||'').filter(Boolean).join(' / '),
     arrivedInCanadaDate:(
       allTransportationRecords().find(sh=>
-        normalizeSharedShipmentStatus(sh.status||'')==='Arrived in Canada' &&
+        normalizeSharedShipmentStatus(sh.status||'')==='LCBO Received' &&
         (sh.poLinks||[]).some(link=>link.poId===po.id)
       )?.statusDate||po.inventoryArrivalStatusDate||''
     ),
     next60DaysPaymentDate:tenderInvoiceDatePlusDays(
       allTransportationRecords().find(sh=>
-        normalizeSharedShipmentStatus(sh.status||'')==='Arrived in Canada' &&
+        normalizeSharedShipmentStatus(sh.status||'')==='LCBO Received' &&
         (sh.poLinks||[]).some(link=>link.poId===po.id)
       )?.statusDate||po.inventoryArrivalStatusDate||'',
       60
@@ -4841,7 +4846,7 @@ function renderFinancial(){syncAllArrivedTenderPoInvoices();(state.financialInvo
 let currentFinancialDetailId='';
 function financialDetailField(label,value){const text=value===undefined||value===null||value===''?'—':String(value);return `<div class="detail-row"><span>${escapeHtml(label)}</span><b>${escapeHtml(text)}</b><button type="button" class="secondary small" onclick='copyText(${JSON.stringify(text)})'>Copy</button></div>`}
 function financialDetailSections(x){const c=financialCalculations(x),currency=x.lcboCurrency||'CAD',supplierCurrency=x.supplierCurrency||'CAD';return [
- ['Invoice Identification',[['PO #',x.poNumber],['Invoice Number',x.invoiceNumber],['Arrived in Canada Date',x.arrivedInCanadaDate],['Invoice Must Be Paid By',x.next60DaysPaymentDate],['Submission #',x.submissionNumber]]],
+ ['Invoice Identification',[['PO #',x.poNumber],['Invoice Number',x.invoiceNumber],['LCBO Received Date',x.arrivedInCanadaDate],['Invoice Must Be Paid By',x.next60DaysPaymentDate],['Submission #',x.submissionNumber]]],
  ['LCBO Invoice',[['Total PO Quoted Value *',`${currency} ${num(x.lcboInvoiceCad).toFixed(2)}`],['LCBO Invoice Approximate Date',x.lcboApproxDate],['LCBO Invoice Pay Date Confirmed',x.lcboPayDate],['LCBO PAYMENT STATUS',x.lcboPaidStatus||'No']]],
  ['Transportation Invoice',[['PO Transportation Invoice Name',x.transportInvoiceName],['Total Transported Bottles',c.totalBottles],['Cost per Bottle CAD',`CAD ${c.costPerBottle.toFixed(4)}`],['PO Bottle Quantity',c.poBottles],['PO Transportation Cost CAD',money(c.transportCad)]]],
  ['Supplier Payment',[['Supplier Item Price',`${supplierCurrency} ${num(x.supplierItemPrice).toFixed(4)}`],['Items in Case',num(x.supplierItemsInCase)],['Supplier Case Price',`${supplierCurrency} ${c.supplierCasePrice.toFixed(4)}`],['CAD to Supplier Currency',`1 CAD = ${supplierCurrency==='CAD'?'1':num(x.supplierRate)} ${supplierCurrency}`],['Supplier Item Price CAD',`CAD ${c.supplierItemCad.toFixed(4)}`],['Total Supplier Payment Amount',money(c.supplierTotalCad)]]],
@@ -5581,7 +5586,7 @@ $$('.tab').forEach(b=>b.onclick=()=>{const section=b.closest('.subnav')?.dataset
 $('#submissionForm').onsubmit=e=>{e.preventDefault();const r=formRecord();if(r.registered==='No')r.finalDecision='Not Registered';if(r.caseKg>18.9){alert('Case KG cannot exceed 18.9 KG.');return}r.id=r.id||uid();const i=state.records.findIndex(x=>x.id===r.id);if(i>=0)state.records[i]=r;else state.records.push(r);const t=state.tenders.find(x=>x.id===r.tenderRecordId),w=t?.workItems?.find(x=>x.itemId===r.itemId&&(!x.agencyId||x.agencyId===r.agencyId));if(w&&r.registered==='Yes')w.status='Registered in LCBO NISS';else if(w&&w.status==='Registered in LCBO NISS'&&r.registered!=='Yes')w.status='Submitted';save();closeModal()};
 $('#deleteRecord').onclick=()=>{const id=$('#recordId').value,r=state.records.find(x=>x.id===id);if(r&&confirm('Move this submission to the Recycling Bin?')){moveToRecycleBin('record','All Submitted Items',r);deleteNtpAttachment(id);deletePoAttachment(id);state.records=state.records.filter(x=>x.id!==id);save();closeModal()}};
 $('#addPoBtn').onclick=()=>openPoEditor();$('#closePoModal').onclick=$('#cancelPoBtn').onclick=closePoEditor;$('#savePoBtn').onclick=savePoRecord;$('#deletePoBtn').onclick=deletePoFromEditor;$('#poProgramInput').onchange=syncPoProgramOther;
-$('#closeShipmentInfo').onclick=$('#closeShipmentInfoBottom').onclick=closeShipmentInfo;$('#addShipmentBtn').onclick=()=>openShipmentEditor();$('#addTransportationBtn').onclick=()=>openShipmentEditor('','transportation');$('#toggleTransportationRecordsSearch').onclick=()=>$('#transportationRecordsSearchPanel').classList.toggle('open');$('#transportationRecordsPageSearch').oninput=renderShipments;$('#clearTransportationRecordsSearch').onclick=()=>{$('#transportationRecordsPageSearch').value='';renderShipments()};$('#closeShipmentModal').onclick=$('#cancelShipmentBtn').onclick=closeShipmentEditor;$('#saveShipmentBtn').onclick=saveShipment;$('#deleteShipmentBtn').onclick=()=>deleteShipment($('#shipmentRecordId').value);$('#addShipmentPoBtn').onclick=addShipmentPo;$('#shipmentCostInput').oninput=updateShipmentCalculations;$('#shipmentCurrencyInput').onchange=()=>updateShipmentCalculations(true);$('#shipmentExchangeRateInput').oninput=()=>updateShipmentCalculations(false);$('#shipmentPaymentStatusInput').onchange=syncShipmentPaymentOther;$('#shipmentStatusInput').onchange=syncShipmentStatusFields;$('#shipmentRefPalletStatusInput').onchange=syncShipmentYesNoColors;$('#shipmentExportFilesStatusInput').onchange=syncShipmentYesNoColors;const archivedFilterIds=['archivedTenderSearch','archivedYearSearch','archivedItemSearch','archivedAgencySearch','archivedProductSearch','archivedStageSearch','archivedFinalSearch','archivedQuoteFrom','archivedQuoteTo','archivedCurrencySearch','archivedErpFrom','archivedErpTo'];archivedFilterIds.forEach(id=>{const el=$('#'+id);if(el){el.oninput=()=>renderSubmissionTable('archivedSubmissionRows','archived',false);el.onchange=()=>renderSubmissionTable('archivedSubmissionRows','archived',false)}});const archivedAgency=$('#archivedAgencySearch');if(archivedAgency){archivedAgency.innerHTML='<option value="">All agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('')}const archivedProduct=$('#archivedProductSearch');if(archivedProduct){const products=[...new Set(state.records.map(r=>r.productType).filter(Boolean))].sort();archivedProduct.innerHTML='<option value="">All products</option>'+products.map(v=>`<option>${escapeHtml(v)}</option>`).join('')}const clearArchived=$('#clearArchivedSearch');if(clearArchived)clearArchived.onclick=()=>{archivedFilterIds.forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderSubmissionTable('archivedSubmissionRows','archived',false)};[1,2,3,4,5,6].forEach(n=>{$('#shipmentFile'+n).onchange=e=>{readShipmentFile(e.target.files[0],n-1);e.target.value=''};$('#openShipmentFile'+n).onclick=()=>openShipmentFile(n-1);$('#removeShipmentFile'+n).onclick=()=>removeShipmentFile(n-1)});
+$('#closeShipmentInfo').onclick=$('#closeShipmentInfoBottom').onclick=closeShipmentInfo;$('#addShipmentBtn').onclick=()=>openShipmentEditor();$('#addTransportationBtn').onclick=()=>openShipmentEditor('','transportation');$('#toggleTransportationRecordsSearch').onclick=()=>$('#transportationRecordsSearchPanel').classList.toggle('open');$('#transportationRecordsPageSearch').oninput=renderShipments;$('#clearTransportationRecordsSearch').onclick=()=>{$('#transportationRecordsPageSearch').value='';renderShipments()};$('#closeShipmentModal').onclick=$('#cancelShipmentBtn').onclick=closeShipmentEditor;$('#saveShipmentBtn').onclick=saveShipment;$('#deleteShipmentBtn').onclick=()=>deleteShipment($('#shipmentRecordId').value);$('#addShipmentPoBtn').onclick=addShipmentPo;$('#shipmentCostInput').oninput=updateShipmentCalculations;$('#shipmentCurrencyInput').onchange=()=>updateShipmentCalculations(true);$('#shipmentExchangeRateInput').oninput=()=>updateShipmentCalculations(false);$('#shipmentPaymentStatusInput').onchange=syncShipmentPaymentOther;$('#shipmentStatusInput').onchange=()=>{$('#shipmentStatusDateInput').value='';syncShipmentStatusFields()};$('#shipmentRefPalletStatusInput').onchange=syncShipmentYesNoColors;$('#shipmentExportFilesStatusInput').onchange=syncShipmentYesNoColors;const archivedFilterIds=['archivedTenderSearch','archivedYearSearch','archivedItemSearch','archivedAgencySearch','archivedProductSearch','archivedStageSearch','archivedFinalSearch','archivedQuoteFrom','archivedQuoteTo','archivedCurrencySearch','archivedErpFrom','archivedErpTo'];archivedFilterIds.forEach(id=>{const el=$('#'+id);if(el){el.oninput=()=>renderSubmissionTable('archivedSubmissionRows','archived',false);el.onchange=()=>renderSubmissionTable('archivedSubmissionRows','archived',false)}});const archivedAgency=$('#archivedAgencySearch');if(archivedAgency){archivedAgency.innerHTML='<option value="">All agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('')}const archivedProduct=$('#archivedProductSearch');if(archivedProduct){const products=[...new Set(state.records.map(r=>r.productType).filter(Boolean))].sort();archivedProduct.innerHTML='<option value="">All products</option>'+products.map(v=>`<option>${escapeHtml(v)}</option>`).join('')}const clearArchived=$('#clearArchivedSearch');if(clearArchived)clearArchived.onclick=()=>{archivedFilterIds.forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderSubmissionTable('archivedSubmissionRows','archived',false)};[1,2,3,4,5,6].forEach(n=>{$('#shipmentFile'+n).onchange=e=>{readShipmentFile(e.target.files[0],n-1);e.target.value=''};$('#openShipmentFile'+n).onclick=()=>openShipmentFile(n-1);$('#removeShipmentFile'+n).onclick=()=>removeShipmentFile(n-1)});
 if($('#addPoSupplierBtn'))$('#addPoSupplierBtn').onclick=addPoSupplierChoice;if($('#addPoVendorBtn'))$('#addPoVendorBtn').onclick=addPoVendorChoice;if($('#poSupplierSelect'))$('#poSupplierSelect').onchange=syncPoOtherSupplier;if($('#poSameProducerSelect'))$('#poSameProducerSelect').onchange=syncPoProducerControls;
 $('#addPoLineBtn').onclick=()=>addPoLine();$('#poItemLines').addEventListener('input',calculatePoTotals);$('#poItemLines').addEventListener('click',e=>{if(e.target.classList.contains('po-remove-line')){e.target.closest('tr').remove();if(!$('#poItemLines').children.length)addPoLine();calculatePoTotals();}});$('#poFileInput').onchange=e=>{poPendingFile=e.target.files[0]||null;renderPoFileStatus(poPendingFile?.name||'');e.target.value='';};$('#openPoRecordFileBtn').onclick=()=>{if(poPendingFile){const url=URL.createObjectURL(poPendingFile);window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000)}else{const id=$('#poRecordId').value;if(id)openPoRecordFile(id)}};$('#removePoRecordFileBtn').onclick=removeCurrentPoRecordFile;$('#tenderCode').addEventListener('input',autofillTenderById);$('#tenderCode').addEventListener('change',autofillTenderById);$('#closeItemInfo').onclick=$('#closeItemInfoBottom').onclick=closeItemInfo;$('#copyAllItemInfo').onclick=copyAllItemInformation;$('#editItemFromInfo').onclick=()=>{const id=currentInfoItemId;closeItemInfo();activate('items');editItem(id)};$('#addTenderBtn').onclick=()=>openTender();$('#tenderProductNeeds').onchange=syncTenderOtherNeed;$('#workerTenderFilter').onchange=renderWorkerList;const workerSearchIds=['workerTenderIdSearch','workerTenderNameDateSearch','workerSupplierSearch','workerItemSearch','workerOfferedPriceSearch'];workerSearchIds.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderWorkerList});['workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.onchange=renderWorkerList});if($('#toggleWorkerSearch'))$('#toggleWorkerSearch').onclick=()=>{const panel=$('#workerSearchPanel');panel.classList.toggle('open');$('#toggleWorkerSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearWorkerSearch'))$('#clearWorkerSearch').onclick=()=>{[...workerSearchIds,'workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderWorkerList()};const workerAgency=$('#workerAgencySearch');if(workerAgency)workerAgency.innerHTML='<option value="">All agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');$('#closeWorkerItemModal').onclick=$('#cancelWorkerItem').onclick=closeWorkerItemEditor;$('#saveWorkerItem').onclick=saveWorkerListItem;$('#removeWorkerItem').onclick=removeWorkerItemFromEditor;$('#closeTender').onclick=$('#cancelTender').onclick=closeTender;const tenderSearchInputs=['tenderIdSearch','tenderNameSearch','tenderProductNeedsSearch','tenderPresubDateSearch','tenderTastingDateSearch'];tenderSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderTenders});if($('#tenderStatusSearch'))$('#tenderStatusSearch').onchange=renderTenders;if($('#toggleTenderSearch'))$('#toggleTenderSearch').onclick=()=>{const panel=$('#tenderSearchPanel');panel.classList.toggle('open');$('#toggleTenderSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearTenderSearch'))$('#clearTenderSearch').onclick=()=>{[...tenderSearchInputs,'tenderStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderTenders()};
 function tenderSupplierKey(country,id){return `${country}::${id}`;}
@@ -8429,16 +8434,16 @@ function inventoryShipmentForPo(po){
    return {
      id:shipmentId,
      name:po.sourceShipmentName||po.inventoryArrivalShipmentName||'Deleted Transportation',
-     status:'Arrived in Canada',
+     status:'LCBO Received',
      statusDate:po.sourceShipmentStatusDate||po.inventoryArrivalStatusDate||''
    };
  }
  return allTransportationRecords().find(sh=>(sh.poLinks||[]).some(link=>link.poId===po.id))||null;
 }
 function inventoryPoIsArrived(po){
- const activeArrivedShipment=allTransportationRecords().some(sh=>normalizeSharedShipmentStatus(sh.status||'')==='Arrived in Canada'&&(sh.poLinks||[]).some(link=>link.poId===po.id));
+ const activeArrivedShipment=allTransportationRecords().some(sh=>normalizeSharedShipmentStatus(sh.status||'')==='LCBO Received'&&(sh.poLinks||[]).some(link=>link.poId===po.id));
  if(activeArrivedShipment)return true;
- const poArrived=normalizeSharedShipmentStatus(po?.poStatus||'')==='Arrived in Canada';
+ const poArrived=normalizeSharedShipmentStatus(po?.poStatus||'')==='LCBO Received';
  if(!poArrived)return false;
  return !(po.inventoryRemovedByShipment||po.inventoryArrivalSource==='removed-shipment');
 }
@@ -9356,9 +9361,9 @@ window.renderHeadInventory=()=>{
     <td><b>${r.bottles.toLocaleString()}</b></td>
     <td>${escapeHtml(r.shipment)}</td>
     <td>${escapeHtml(r.arrivalDate)}</td>
-    <td><span class="badge">Arrived in Canada</span></td>
+    <td><span class="badge">LCBO Received</span></td>
    </tr>`;
- }).join('')||'<tr><td colspan="12">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
+ }).join('')||'<tr><td colspan="12">No non-TENDER POs are currently marked LCBO Received.</td></tr>';
 
  if(k){
    let totalCases=0,totalBottles=0;
@@ -10968,7 +10973,7 @@ function globalStatusDisplayText(value){
    'REGISTERED IN LCBO NISS':'Registered in LCBO NISS',
    'NOT CONTACTED TO TRANSPORTER':'Not Contacted to Transporter',
    'SCHEDULED AND CONFIRMED TRANSPORT':'Scheduled and Confirmed Transport',
-   'ON THE WAY TO CONSOLIDATION':'On the Way to Consolidation',
+   'PICKED UP AND ON WAY TO CONSOLIDATION':'Picked up and on way to consolidation',
    'DELIVERED TO CONSOLIDATION':'Delivered to Consolidation',
    'NOT PAID':'Not Paid',
    'PARTIALLY PAID':'Partially Paid',
@@ -11030,9 +11035,9 @@ function exactWorkflowStatusTone(value){
  const s=String(value??'').trim().toUpperCase();
  if(s==='NOT CONTACTED TO TRANSPORTER')return 'not-contacted';
  if(s==='SCHEDULED AND CONFIRMED TRANSPORT'||s==='SCHEDULED AND CONFIRMED TRANSPORT (PARTIALLY)')return 'scheduled-confirmed';
- if(s==='ON THE WAY TO CONSOLIDATION'||s==='ON THE WAY TO CONSOLIDATION (PARTIALLY)')return 'on-the-way';
+ if(s==='PICKED UP AND ON WAY TO CONSOLIDATION'||s==='PICKED UP AND ON WAY TO CONSOLIDATION (PARTIALLY)')return 'on-the-way';
  if(s==='DELIVERED TO CONSOLIDATION'||s==='DELIVERED TO CONSOLIDATION (PARTIALLY)')return 'delivered-consolidation';
- if(s==='ARRIVED IN CANADA'||s==='ARRIVED IN CANADA (PARTIALLY)')return 'arrived-canada';
+ if(s==='LCBO RECEIVED'||s==='LCBO RECEIVED (PARTIALLY)')return 'arrived-canada';
  if(s==='CLEARED OUT FROM THE WAREHOUSE')return 'cleared-warehouse';
  if(s==='LCBO PAYED'||s==='LCBO PAID')return 'lcbo-payed';
  return '';
@@ -11171,12 +11176,12 @@ function isKnownShipmentStatusValue(value){
    'NOT CONTACTED TO TRANSPORTER',
    'SCHEDULED AND CONFIRMED TRANSPORT',
    'SCHEDULED AND CONFIRMED TRANSPORT (PARTIALLY)',
-   'ON THE WAY TO CONSOLIDATION',
-   'ON THE WAY TO CONSOLIDATION (PARTIALLY)',
+   'PICKED UP AND ON WAY TO CONSOLIDATION',
+   'PICKED UP AND ON WAY TO CONSOLIDATION (PARTIALLY)',
    'DELIVERED TO CONSOLIDATION',
    'DELIVERED TO CONSOLIDATION (PARTIALLY)',
-   'ARRIVED IN CANADA',
-   'ARRIVED IN CANADA (PARTIALLY)',
+   'LCBO RECEIVED',
+   'LCBO RECEIVED (PARTIALLY)',
    'CLEARED OUT FROM THE WAREHOUSE',
    'LCBO PAYED',
    'LCBO PAID'
