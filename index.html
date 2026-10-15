@@ -3525,6 +3525,15 @@ function transportationPoDisplay(link){
   return `<div class="transport-po-item" style="margin-bottom:8px">${po?`<button type="button" class="shipment-name-link" onclick="openPoDetails('${escapeHtml(String(link.poId||''))}')">${escapeHtml(poNumber)}</button>`:`<b>${escapeHtml(poNumber)}</b>`}<div class="transport-po-ref" style="margin-top:3px;font-size:12px;line-height:1.35">Ref #: ${escapeHtml(String(link.ref??'').trim()||'—')}</div>${itemHtml}${descHtml}</div>`;
 }
 
+function shipmentPoCasePackQuantity(po){
+ const packs=new Map();
+ for(const line of po.lines||[]){
+  const pack=num(line.unitsPerCase);
+  packs.set(pack,(packs.get(pack)||0)+num(line.totalQuantity));
+ }
+ return [...packs].map(([pack,cases])=>`${cases}x${pack}`).join(' + ')||'0x0';
+}
+
 function shipmentPoQuantityRows(sh,rowHtml){
  const links=sh.cargoLinks?.length?cargoLinksPoLinks(sh.cargoLinks):(sh.poLinks||[]);
  const rows=links.map(link=>{
@@ -3535,7 +3544,7 @@ function shipmentPoQuantityRows(sh,rowHtml){
  // Actual table cells keep quantities directly under their column heading and on the same row as each PO.
  rowHtml=rowHtml.replace(/<td(?=[ >])/g,`<td rowspan="${rows.length+1}"`);
  rowHtml=rowHtml.replace('<!--PO_QUANTITY_CELLS-->',`<td class="shipment-po-cell"></td><td class="shipment-vendor-cell"></td><td class="shipment-quantity-cell"><b>Total<br>${cases}/${bottles}</b></td>`);
- return rowHtml+rows.map(row=>`<tr class="shipment-po-detail-row"><td class="shipment-po-cell">${transportationPoDisplay(row.link)}</td><td class="shipment-vendor-cell">${poVendorProducerHtml(row.po)}</td><td class="shipment-quantity-cell">${row.cases}/${row.bottles}</td></tr>`).join('');
+ return rowHtml+rows.map(row=>`<tr class="shipment-po-detail-row"><td class="shipment-po-cell">${transportationPoDisplay(row.link)}</td><td class="shipment-vendor-cell">${poVendorProducerHtml(row.po)}</td><td class="shipment-quantity-cell">${shipmentPoCasePackQuantity(row.po)}/${row.bottles}</td></tr>`).join('');
 }
 
 function transportationVendorProducerDisplay(sh){
