@@ -19,7 +19,7 @@ function statisticsPoLines(data,sh){
  });
 }
 function calculateEntireStatistics(data,filters){
- const arrived=new Set(['LCBO Received','CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED']);
+ const arrived=new Set(['Arrived in Canada','CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED']);
  const statuses=new Set(filters.statuses),records=statisticsTransportationRecords(data);
  const statusOf=sh=>normalizeSharedShipmentStatus(sh.status||'Not Contacted to Transporter');
  const eligible=records.filter(sh=>statuses.has(statusOf(sh)));
@@ -42,7 +42,7 @@ function renderEntireStatistics(){
  const statusesBox=document.getElementById('statisticsStatusOptions');
  const known=[...new Set([...TRANSPORT_SYNC_STATUSES,'CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED',...statisticsTransportationRecords(state).map(sh=>normalizeSharedShipmentStatus(sh.status||'Not Contacted to Transporter'))])];
  const old=new Map([...statusesBox.querySelectorAll('input')].map(el=>[el.value,el.checked]));
- if(known.some(status=>!old.has(status))||old.size!==known.length)statusesBox.innerHTML=known.map(status=>`<label class="statistics-status-option"><input type="checkbox" value="${escapeHtml(status)}" ${old.has(status)?(old.get(status)?'checked':''):(['LCBO Received','CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED'].includes(status)?'checked':'')} onchange="renderEntireStatistics()">${escapeHtml(status)}</label>`).join('');
+ if(known.some(status=>!old.has(status))||old.size!==known.length)statusesBox.innerHTML=known.map(status=>`<label class="statistics-status-option"><input type="checkbox" value="${escapeHtml(status)}" ${old.has(status)?(old.get(status)?'checked':''):(['Arrived in Canada','CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED'].includes(status)?'checked':'')} onchange="renderEntireStatistics()">${escapeHtml(status)}</label>`).join('');
  const from=document.getElementById('statisticsFrom').value,to=document.getElementById('statisticsTo').value,notice=document.getElementById('statisticsNotice');
  if(from&&to&&from>to){notice.textContent='From date must be on or before To date.';document.getElementById('statisticsResults').hidden=true;return;}
  document.getElementById('statisticsResults').hidden=false;
@@ -57,17 +57,17 @@ function renderEntireStatistics(){
  document.getElementById('statisticsPaymentRows').innerHTML=result.payments.map(p=>`<tr><td>${escapeHtml(p.sh.name||'—')}</td><td>${escapeHtml(p.sh.company||'—')}</td><td>${escapeHtml(p.date||'No pay date')}</td><td>${escapeHtml(p.currency)} ${p.amount.toFixed(2)}</td><td>${p.cad===null?'Exchange rate needed':'CAD '+p.cad.toFixed(2)}</td></tr>`).join('')||'<tr><td colspan="5">No paid transportation invoices in this period.</td></tr>';
 }
 function markStatisticsStatuses(checked){document.querySelectorAll('#statisticsStatusOptions input').forEach(el=>el.checked=checked);renderEntireStatistics();}
-function resetEntireStatistics(){document.getElementById('statisticsFrom').value='';document.getElementById('statisticsTo').value='';document.getElementById('statisticsDateBasis').value='delivery';document.querySelectorAll('#statisticsStatusOptions input').forEach(el=>el.checked=['LCBO Received','CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED'].includes(el.value));renderEntireStatistics();}
+function resetEntireStatistics(){document.getElementById('statisticsFrom').value='';document.getElementById('statisticsTo').value='';document.getElementById('statisticsDateBasis').value='delivery';document.querySelectorAll('#statisticsStatusOptions input').forEach(el=>el.checked=['Arrived in Canada','CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED'].includes(el.value));renderEntireStatistics();}
 renderEntireStatistics();
 
 function statisticsYearToDate(){
  const now=new Date(),today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
  document.getElementById('statisticsFrom').value=now.getFullYear()+'-01-01';document.getElementById('statisticsTo').value=today;
  document.getElementById('statisticsDateBasis').value='delivery';
- document.querySelectorAll('#statisticsStatusOptions input').forEach(el=>el.checked=['LCBO Received','CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED'].includes(el.value));renderEntireStatistics();
+ document.querySelectorAll('#statisticsStatusOptions input').forEach(el=>el.checked=['Arrived in Canada','CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED'].includes(el.value));renderEntireStatistics();
 }
 function calculateStatisticsProfit(data,filters){
- const arrived=new Set(['LCBO Received','CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED']),selected=new Set(filters.statuses);
+ const arrived=new Set(['Arrived in Canada','CLEARED OUT FROM THE WAREHOUSE','LCBO PAYED']),selected=new Set(filters.statuses);
  const invoices=[...(data.financialInvoices||[]),...(data.archivedInvoices||[]).filter(x=>x.sourceType==='Tender').map(x=>x.data).filter(Boolean)];
  const present=v=>v!==undefined&&v!==null&&v!==''&&Number.isFinite(Number(v));
  const cad=(amount,currency,rate)=>!present(amount)?null:(!currency||currency==='CAD'?num(amount):(num(rate)>0?num(amount)/num(rate):null));
@@ -79,7 +79,7 @@ function calculateStatisticsProfit(data,filters){
   for(const entry of pos){const po=entry.po;
    const inv=invoices.find(x=>String(x.sourcePoId||'')===String(po.id)&&po.id)||invoices.find(x=>String(x.poNumber||'').trim()===String(po.number||'').trim()&&po.number);
    // Status date is the actual arrival date in this program. Never use an approximate Canada date.
-   const date=statisticsDate(inv?.arrivedInCanadaDate||po.inventoryArrivalStatusDate||po.arrivedInCanadaDate||(status==='LCBO Received'?sh.statusDate:'')||sh.arrivedInCanadaDate);
+   const date=statisticsDate(inv?.arrivedInCanadaDate||po.inventoryArrivalStatusDate||po.arrivedInCanadaDate||(status==='Arrived in Canada'?sh.statusDate:'')||sh.arrivedInCanadaDate);
    candidates.push({entry,po,inv,sh,date,transport,denominator});
   }
  }
