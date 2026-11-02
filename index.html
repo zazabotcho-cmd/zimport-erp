@@ -11995,6 +11995,7 @@ document.addEventListener('change',event=>{const input=event.target;if(!input.ma
  const visible=el=>!!(el&&el.isConnected&&el.getClientRects().length&&el.clientWidth>0);
  const wide=el=>visible(el)&&el.scrollWidth>el.clientWidth+1;
  function candidates(){
+  if(document.querySelector('#profit-each-project.active'))return [];
   const modals=[...document.querySelectorAll('.modal')].filter(visible);
   const scope=modals.at(-1)||document.querySelector('.panel.active')||document.body;
   const list=[scope,...scope.querySelectorAll('*')].filter(el=>{
