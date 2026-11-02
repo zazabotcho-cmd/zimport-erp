@@ -1,8 +1,8 @@
 Profit Each Project
 
-Open HEAD'S PAGE > Profit Each Project. Enter a project name and click Create New Project.
-Each project contains a separate editable copy of only the Rcved June and august worksheet, including its original data and formulas.
-Green cells contain formulas. Select a cell to view/edit the formula. All columns A-Z and rows 1-26 are included.
-Original totals retain their source ranges; added rows must be included manually in relevant total formulas.
-Projects save separately in this browser, not to the online database. Use Export All Projects for backups and Import Projects on another browser. General program backups do not include these projects.
-Zero/blank divisor month fields display a dash until entered. Source calculations are preserved exactly.
+Open HEAD'S PAGE > Profit Each Project. Create or select a named project.
+Project pages use the supplied headings, MAX MONTH / REAL MAX MONTH labels and a highlighted totals row.
+Use Add Item Row to add products; Remove Item deletes the selected item after confirmation. All totals include all current items automatically.
+Green cells calculate automatically. Enter editable costs, quantities, exchange rate and months. Actual monthly profit shows a dash until actual months are entered.
+Existing browser projects and older exported project backups are converted automatically.
+Projects save in this browser. Use Export All Projects and Import Projects for backups and transfer. Online database and general program backups do not include these projects.
