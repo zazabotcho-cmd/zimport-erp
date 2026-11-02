@@ -10,3 +10,5 @@ Projects save in this browser. Use Export All Projects and Import Projects for b
 Layout update: POS RECIVED IN and TRANSPORT COST PER BOTTLE CAD columns removed. Exchange rate is now above PRODUCT DESCRIPTION in the top-left header.
 
 LAST YEAR PRODUCT MONTHLY SALES STATISTICS: automatically estimated from each project item's total cases and availability/sold-out dates. Total cases are allocated evenly per day across the inclusive date interval, grouped by wine and bottles per case. Only the prior calendar year is shown. Date edits and case edits refresh the statistics automatically. Missing or invalid sale dates are excluded with a notice. Monthly values are estimates, not recorded transactions. Export Estimated Sales CSV is available.
+
+Proforma price: enter the pre-tax price and TAX HST %. PROFORMA PRICE PER BOTTLE + hst TOTAL is calculated as price x (1 + tax/100) and feeds the existing cost/profit formulas. Existing saved prices default to 0% to preserve prior totals; replace with the pre-tax price and enter the tax rate when needed.
