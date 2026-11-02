@@ -6,3 +6,5 @@ Use Add Item Row to add products; Remove Item deletes the selected item after co
 Green cells calculate automatically. Enter editable costs, quantities, exchange rate and months. Actual monthly profit shows a dash until actual months are entered.
 Existing browser projects and older exported project backups are converted automatically.
 Projects save in this browser. Use Export All Projects and Import Projects for backups and transfer. Online database and general program backups do not include these projects.
+
+Layout update: POS RECIVED IN and TRANSPORT COST PER BOTTLE CAD columns removed. Exchange rate is now above PRODUCT DESCRIPTION in the top-left header.
