@@ -940,6 +940,7 @@ body{padding-bottom:24px;overflow-x:hidden}
   <button class="tab" data-tab="inventory-stock">Inventory Stock</button>
   
   <button class="tab" data-tab="entire-statistics">Entire Statistics</button>
+<button class="tab" data-tab="profit-each-project">Profit Each Project</button>
   <span class="heads-nav-separator" aria-hidden="true"></span>
   <button class="tab" data-tab="heads-recycle-bin">Head's Recycling Bin</button>
 </nav>
@@ -1009,6 +1010,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 </nav>
 <main>
 
+<section id="profit-each-project" class="panel"><div class="box"><h2>Profit Each Project</h2><div id="profitProjectsApp"></div></div></section>
 <section id="entire-statistics" class="panel"><div class="box"><div class="section-head"><div><h2>Entire Statistics</h2><p class="note">Bottle imports and transportation payments across active and archived records.</p></div></div>
 <div class="form-grid three"><label>From date<input id="statisticsFrom" type="date" onchange="renderEntireStatistics()"></label><label>To date<input id="statisticsTo" type="date" onchange="renderEntireStatistics()"></label><label>Bottle statistics date<select id="statisticsDateBasis" onchange="renderEntireStatistics()"><option value="delivery">Delivery / Canada arrival date</option><option value="pickup">Pickup date</option><option value="status">Status date</option></select></label></div>
 <fieldset class="item-group" style="margin-top:16px"><legend>Mark transportation statuses to include</legend><div class="inline-actions"><button type="button" class="secondary small" onclick="markStatisticsStatuses(true)">Mark All</button><button type="button" class="secondary small" onclick="markStatisticsStatuses(false)">Clear All</button><button type="button" class="secondary small" onclick="resetEntireStatistics()">Reset Filters</button></div><div id="statisticsStatusOptions" class="statistics-status-grid"></div></fieldset>
@@ -12136,4 +12138,6 @@ function deleteTenderSupplierItem(id){
 }
 </script>
 <script src="entire-statistics.js"></script>
+<script src="profit-project-template.js"></script>
+<script src="profit-projects.js"></script>
 </body></html>
