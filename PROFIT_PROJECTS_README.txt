@@ -9,4 +9,4 @@ Projects save in this browser. Use Export All Projects and Import Projects for b
 
 Layout update: POS RECIVED IN and TRANSPORT COST PER BOTTLE CAD columns removed. Exchange rate is now above PRODUCT DESCRIPTION in the top-left header.
 
-LAST YEAR PRODUCT MONTHLY SALES STATISTICS: below projects, shows prior calendar year January-December. Wine names and bottles per case are prefilled. Enter actual cases sold each month; blank means unknown, zero means no sales. Sales data is browser-local and separate from project backups; use Export Sales Backup / Import Sales Backup. CSV export is available. The prior year updates automatically using Toronto time.
+LAST YEAR PRODUCT MONTHLY SALES STATISTICS: automatically estimated from each project item's total cases and availability/sold-out dates. Total cases are allocated evenly per day across the inclusive date interval, grouped by wine and bottles per case. Only the prior calendar year is shown. Date edits and case edits refresh the statistics automatically. Missing or invalid sale dates are excluded with a notice. Monthly values are estimates, not recorded transactions. Export Estimated Sales CSV is available.
