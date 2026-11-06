@@ -1596,7 +1596,7 @@ body{padding-bottom:24px;overflow-x:hidden}
  <div class="table-wrap"><table>
   <thead><tr>
    <th>PO #</th><th>PO Program</th><th>Vendor/Producer</th><th>LCBO Item #</th><th>Product Name</th>
-   <th>Total PO Quoted Value</th><th>Cases in Stock</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Arrived Date</th><th>Status</th>
+   <th>Total PO Quoted Value</th><th>Cases in Stock</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Arrived Date</th><th>Cargo/Transportation status</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -8750,6 +8750,20 @@ window.saveInventoryStockOutDate=()=>{
   }
 })();
 
+window.sellInventoryToCustomer=(encodedKey,availableCases)=>{
+  const key=decodeURIComponent(String(encodedKey||''));
+  const current=Number(state.inventoryCaseOverrides?.[key]??availableCases);
+  const entered=prompt('Cases sold to the customer:', '');
+  if(entered===null)return;
+  const qty=Number(entered);
+  if(!Number.isFinite(qty)||qty<=0){alert('Enter a valid quantity greater than 0.');return;}
+  if(!Number.isFinite(current)||qty>current){alert('Sold quantity cannot be greater than Cases in Stock.');return;}
+  if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};
+  state.inventoryCaseOverrides[key]=Math.max(0,current-qty);
+  save();
+  renderHeadInventory();
+};
+
 window.moveInventoryToOffice=(encodedKey,availableCases,encodedMeta)=>{
   const key=decodeURIComponent(String(encodedKey||''));
   let meta={};
@@ -9518,7 +9532,7 @@ window.renderHeadInventory=()=>{
     <td>${escapeHtml(r.itemNo)}</td>
     <td><b>${escapeHtml(r.product)}</b></td>
     <td><b>${r.totalQuotedValue?escapeHtml((r.quoteCurrency?r.quoteCurrency+' ':'')+r.totalQuotedValue.toFixed(2)):'—'}</b></td>
-    <td><b>${r.cases.toLocaleString()}</b> <button type="button" class="secondary small" onclick="updateInventoryCases('${keyArg}',${r.cases})">Update</button> <button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${encodeURIComponent(JSON.stringify({poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${r.cases<=0?'disabled':''}>Move to Inventory in stock office</button>${zeroControls}</td>
+    <td><b>${r.cases.toLocaleString()}</b> <button type="button" class="secondary small" onclick="updateInventoryCases('${keyArg}',${r.cases})">Update</button> <button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${encodeURIComponent(JSON.stringify({poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${r.cases<=0?'disabled':''}>Move to Inventory in stock office</button> <button type="button" class="secondary small" onclick="sellInventoryToCustomer('${keyArg}',${r.cases})" ${r.cases<=0?'disabled':''}>Sold to the Customer</button>${zeroControls}</td>
     <td>${r.bpc.toLocaleString()}</td>
     <td><b>${r.bottles.toLocaleString()}</b></td>
     <td>${escapeHtml(r.shipment)}</td>
