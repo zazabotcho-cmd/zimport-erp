@@ -1604,7 +1604,7 @@ body{padding-bottom:24px;overflow-x:hidden}
  <div class="table-wrap"><table>
   <thead><tr>
    <th>PO #</th><th>Vendor/Producer</th><th>LCBO Item #</th><th>Product Name</th>
-   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Arrived Date</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th>
+   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Arrived Date</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th style="border-left:3px solid #64748b">Final Retail Price per Bottle (TAX/HST Included)</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -9544,7 +9544,7 @@ function inventoryProformaPo(poId){
  return [...(state.purchaseOrders||[]),...(state.manuallyArchivedPurchaseOrders||[]),...(state.inventoryDeletedPoSnapshots||[])].find(po=>String(po.originalPoId||po.id)===String(poId));
 }
 window.updateInventoryProformaPrice=(encodedPoId,field,input)=>{
- const fields=['nonLicensedBottle','licensedBottle','hstPercent'];
+ const fields=['nonLicensedBottle','licensedBottle','hstPercent','finalRetailBottle'];
  if(!fields.includes(field))return;
  const poId=decodeURIComponent(encodedPoId),po=inventoryProformaPo(poId);if(!po)return;
  const raw=input.value.trim(),value=raw===''?(field==='hstPercent'?13:''):Number(raw);
@@ -9668,8 +9668,9 @@ window.renderHeadInventory=()=>{
     <td><div style="display:flex;align-items:center;gap:5px;min-width:110px"><input type="number" min="0" step="0.01" inputmode="decimal" style="width:85px" aria-label="TAX/HST percentage" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.hstPercent??13))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="hstPercent" onchange="updateInventoryProformaPrice('${poIdArg}','hstPercent',this)"><span>%</span></div></td>
     <td><b>${inventoryPriceMoney(inventoryProformaBalanceOwing(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc))}</b></td>
     <td>${inventoryProformaCaseSellingPrice(inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc)}</td>
+    <td style="border-left:3px solid #64748b"><label style="display:flex;align-items:center;gap:5px;min-width:155px"><span>$</span><input type="number" min="0" step="0.01" inputmode="decimal" aria-label="Final retail price per bottle including TAX/HST" placeholder="Enter retail price" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.finalRetailBottle??''))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="finalRetailBottle" onchange="updateInventoryProformaPrice('${poIdArg}','finalRetailBottle',this)"></label></td>
    </tr>`;
- }).join('')||'<tr><td colspan="16">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
+ }).join('')||'<tr><td colspan="17">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
 
  if(k){
    let totalCases=0,totalBottles=0;
