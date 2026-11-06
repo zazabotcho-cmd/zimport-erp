@@ -1604,7 +1604,7 @@ body{padding-bottom:24px;overflow-x:hidden}
  <div class="table-wrap"><table>
   <thead><tr>
    <th>PO #</th><th>Vendor/Producer</th><th>LCBO Item #</th><th>Product Name</th>
-   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Arrived Date</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th>
+   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Arrived Date</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -9544,7 +9544,7 @@ function inventoryProformaPo(poId){
  return [...(state.purchaseOrders||[]),...(state.manuallyArchivedPurchaseOrders||[]),...(state.inventoryDeletedPoSnapshots||[])].find(po=>String(po.originalPoId||po.id)===String(poId));
 }
 window.updateInventoryProformaPrice=(encodedPoId,field,input)=>{
- const fields=['nonLicensedBottle','licensedBottle','totalPoNet','hstPercent'];
+ const fields=['nonLicensedBottle','licensedBottle','hstPercent'];
  if(!fields.includes(field))return;
  const poId=decodeURIComponent(encodedPoId),po=inventoryProformaPo(poId);if(!po)return;
  const raw=input.value.trim(),value=raw===''?(field==='hstPercent'?13:''):Number(raw);
@@ -9556,10 +9556,19 @@ window.updateInventoryProformaPrice=(encodedPoId,field,input)=>{
  // Keep repeated rows for the same PO consistent without interrupting keyboard entry.
  document.querySelectorAll('[data-inventory-price-po]').forEach(el=>{if(el.dataset.inventoryPricePo===encodedPoId&&el.dataset.inventoryPriceField===field)el.value=value;});
  save();
+ if(field==='nonLicensedBottle'||field==='hstPercent')renderHeadInventory();
 };
+function inventoryProformaTotal(cases,pricing){
+ const price=pricing?.nonLicensedBottle;
+ return price===undefined||price===null||price===''?'—':(num(cases)*num(price)).toFixed(2);
+}
+function inventoryProformaBalanceOwing(cases,pricing){
+ const total=inventoryProformaTotal(cases,pricing);
+ return total==='—'?'—':(Number(total)*num(pricing?.hstPercent??13)/100).toFixed(2);
+}
 function inventoryProformaPriceCell(poId,pricing,total=false){
  const encoded=encodeURIComponent(poId||'');
- if(total)return `<input type="number" min="0" step="0.01" inputmode="decimal" aria-label="Proforma total PO net price" placeholder="Enter total PO net price" value="${escapeHtml(String(pricing?.totalPoNet??pricing?.nonLicensedTotal??pricing?.licensedTotal??''))}" data-inventory-price-po="${escapeHtml(encoded)}" data-inventory-price-field="totalPoNet" onchange="updateInventoryProformaPrice('${encoded}','totalPoNet',this)">`;
+
  return ['nonLicensed','licensed'].map(type=>{const field=type+(total?'Total':'Bottle'),label=type==='licensed'?'Licensed customer':'Non-licensed customer';
  return `<label style="display:block;min-width:170px;margin:6px 0">${label}<input type="number" min="0" step="0.01" inputmode="decimal" aria-label="${label} proforma ${total?'total PO':'bottle'} net price" placeholder="Enter net price" value="${escapeHtml(String(pricing?.[field]??''))}" data-inventory-price-po="${escapeHtml(encoded)}" data-inventory-price-field="${field}" onchange="updateInventoryProformaPrice('${encoded}','${field}',this)"></label>`;}).join('');
 }
@@ -9646,10 +9655,11 @@ window.renderHeadInventory=()=>{
     <td><span class="badge">${escapeHtml(r.transportStatus)}</span></td>
     <td><b>${r.cases.toLocaleString()}</b> <button type="button" class="secondary small" onclick="updateInventoryCases('${keyArg}',${r.cases})">Update</button><div style="margin:8px 0"><b>Available for Sale: ${saleAvailable.toLocaleString()}</b><br><small>${saleAvailable>0?'Available for sale':'Not available for sale'}</small> <button type="button" class="secondary small" onclick="markInventoryAvailableForSale('${keyArg}',${r.cases})">Set Available for Sale</button></div> <button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${encodeURIComponent(JSON.stringify({poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${saleAvailable<=0?'disabled':''}>Move to Inventory in stock office/warehouse</button> <button type="button" class="secondary small" onclick="sellInventoryToCustomer('${keyArg}',${r.cases})" ${saleAvailable<=0?'disabled':''}>Sold to the Customer</button> <button type="button" class="secondary small" onclick="archiveLcboInventory('${encodeURIComponent(JSON.stringify(r))}')">Archive</button>${zeroControls}</td>
     <td>${inventoryProformaPriceCell(r.poId,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)}</td>
-    <td>${inventoryProformaPriceCell(r.poId,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,true)}</td>
+    <td><b>${inventoryProformaTotal(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)}</b></td>
     <td><div style="display:flex;align-items:center;gap:5px;min-width:110px"><input type="number" min="0" step="0.01" inputmode="decimal" style="width:85px" aria-label="TAX/HST percentage" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.hstPercent??13))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="hstPercent" onchange="updateInventoryProformaPrice('${poIdArg}','hstPercent',this)"><span>%</span></div></td>
+    <td><b>${inventoryProformaBalanceOwing(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)}</b></td>
    </tr>`;
- }).join('')||'<tr><td colspan="14">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
+ }).join('')||'<tr><td colspan="15">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
 
  if(k){
    let totalCases=0,totalBottles=0;
