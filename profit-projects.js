@@ -29,7 +29,7 @@ const name=el('input');name.placeholder='New project name';name.setAttribute('ar
 const status=el('p',loadFailed?'Saved data could not be read. No data has been overwritten.':'Projects save in this browser. Export All Projects to keep a backup.');
 function save(){if(loadFailed)return;try{localStorage.setItem(key,JSON.stringify(projects));if(window.dispatchEvent)window.dispatchEvent(new Event('winglobal-profit-projects-saved'));status.textContent='Saved in this browser.';}catch{status.textContent='Save failed. Export a backup before closing.';}}
 function download(name,body,type){const u=URL.createObjectURL(new Blob([body],{type}));const a=el('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);}
-button('Create New Project',()=>{if(!name.value.trim()||loadFailed)return;active={id:crypto.randomUUID(),name:name.value.trim(),cells:structuredClone(template.cells),rows:26};upgrade(active);projects.push(active);name.value='';save();render();});
+button('Create New Project',()=>{if(!name.value.trim()||loadFailed)return;active={id:crypto.randomUUID(),name:name.value.trim(),rate:'',transport:'',maxMonths:'',realMonths:'',items:[]};projects.push(active);name.value='';save();render();});
 button('Export All Projects',()=>download('profit-projects-backup.json',JSON.stringify({version:2,projects},null,2),'application/json'));
 const file=el('input');file.type='file';file.accept='.json';file.hidden=true;root.append(file);button('Import Projects',()=>file.click());file.onchange=async()=>{try{const data=JSON.parse(await file.files[0].text());if(loadFailed||![1,2].includes(data.version)||!Array.isArray(data.projects))throw Error();const incoming=data.projects.map(p=>{if(typeof p.name!=='string'||(!p.cells&&!Array.isArray(p.items)))throw Error();upgrade(p);if(p.items.length>1000||p.items.some(i=>!i||typeof i!=='object'||Object.values(i).some(v=>!['number','string'].includes(typeof v))))throw Error();return {...p,id:crypto.randomUUID()};});projects.push(...incoming);save();render();}catch{alert('Could not import the backup. Existing projects were kept.');}file.value='';};root.append(status);
 const list=el('div'),detail=el('div');detail.className='pp-detail';root.append(list,detail);
@@ -47,10 +47,45 @@ function openProjectCalendar(input,commit){
  }draw();document.body.append(dialog);if(dialog.showModal)dialog.showModal();else dialog.setAttribute('open','');
  dialog.onclick=e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)close();}};dialog.oncancel=()=>dialog.remove();
 }
+function transportationProjectItems(sh,data){
+ const all=[...(data.shipments||[]),...(data.archivedShipments||[])];
+ const links=sh.cargoLinks?.length?sh.cargoLinks.flatMap(link=>(all.find(c=>String(c.id)===String(link.cargoId))||link.snapshot)?.poLinks||[]):sh.poLinks||[];
+ const seen=new Set(),items=[];
+ for(const link of links){
+  if(seen.has(String(link.poId)))continue;seen.add(String(link.poId));
+  const po=[...(data.purchaseOrders||[]),...(data.manuallyArchivedPurchaseOrders||[]),...(data.inventoryDeletedPoSnapshots||[])].find(p=>String(p.originalPoId||p.id)===String(link.poId))||link.snapshot;
+  if(!po||String(po.program||'OTHER').trim().toUpperCase()==='TENDER')continue;
+  let cost='';try{cost=shipmentTotals(sh).costPerBottleCad;}catch(e){}
+  (po.lines||[]).forEach((line,index)=>{
+   const pricing=po.inventoryProformaPricing||{};
+   const item={A:line.yearProductName||line.productDescription||line.itemNo||'',B:po.number||'',F:'',H:'',I:cost,J:line.unitsPerCase??'',K:'',M:'',Q:line.totalQuantity??'',S:'',T:'',X:'',Y:'',proformaBase:pricing.nonLicensedBottle??'',hstPercent:pricing.hstPercent??'',sourceTransportationId:String(sh.id),sourcePoId:String(po.originalPoId||po.id),sourcePoLineId:String(line.id||index)};
+   const currency=String(po.currency||po.quotationCurrency||po.supplierCurrency||'').toUpperCase();
+   if(currency==='USD'&&Number(line.unitsPerCase)>0&&line.quotedPricePerCase!==''&&line.quotedPricePerCase!=null)item.F=Number(line.quotedPricePerCase)/Number(line.unitsPerCase);
+   items.push(item);
+  });
+ }
+ return items;
+}
+function importTransportationControls(actions){
+ const label=el('label','Import from Transportation'),select=el('select');select.setAttribute('aria-label','Select transportation to import');
+ const empty=el('option','Select Transportation');empty.value='';select.append(empty);
+ const records=typeof allTransportationRecords==='function'?allTransportationRecords().filter(sh=>sh.recordKind==='transportation'):[];
+ records.forEach(sh=>{const option=el('option',sh.name||sh.id);option.value=sh.id;select.append(option);});label.append(select);actions.append(label);
+ button('Import from Transportation',()=>{
+  const sh=records.find(x=>String(x.id)===select.value);if(!sh){alert('Select a transportation record first.');return;}
+  const imported=transportationProjectItems(sh,state);
+  const existing=new Set(active.items.map(i=>[i.sourceTransportationId,i.sourcePoId,i.sourcePoLineId].join('::')));
+  const added=imported.filter(i=>!existing.has([i.sourceTransportationId,i.sourcePoId,i.sourcePoLineId].join('::')));
+  if(!added.length){alert(imported.length?'These orders have already been imported.':'No non-TENDER PO items were found in this transportation.');return;}
+  active.items.push(...added);save();render();
+ },actions);
+}
+window.ProfitProjectTransportationItems=transportationProjectItems;
 function render(){list.replaceChildren();detail.replaceChildren();const bar=el('div');bar.className='pp-tools';list.append(bar);projects.forEach(p=>button(p.name,()=>{active=p;render();},bar));if(!projects.length)list.append(el('p','Enter a name to create your first project.'));if(!active){if(window.dispatchEvent)window.dispatchEvent(new Event('winglobal-profit-projects-saved'));return;}detail.append(el('h3',active.name));const actions=el('div');actions.className='pp-tools';detail.append(actions);
 button('Rename Project',()=>{const n=prompt('Project name',active.name);if(n?.trim()){active.name=n.trim();save();render();}},actions);
 button('Delete Project',()=>{if(confirm('Delete project “'+active.name+'”?')){projects=projects.filter(p=>p!==active);active=null;save();render();}},actions);
-button('Add Item Row',()=>{active.items.push({A:'',B:'',F:'',H:'',I:active.transport,J:12,K:'',M:0,Q:0,S:0,T:'',V:'',X:''});save();render();},actions);
+importTransportationControls(actions);
+button('Add Item Row',()=>{active.items.push({A:'',B:'',F:'',H:'',I:'',J:'',K:'',M:'',Q:'',S:'',T:'',V:'',X:'',Y:'',hstPercent:''});save();render();},actions);
 button('Export Worksheet CSV',()=>{const cells=materialize(active),get=evaluator(cells);const rows=[visibleColumns.map(({c})=>c===0?'1 USD TO CAD EXCH RATE: '+active.rate:''),visibleColumns.map(({label})=>label),visibleColumns.map(({c})=>({19:'APROX. MAX MONT',21:'REAL MAX MONTH',23:''}[c]||''))];for(let r=3;r<active.items.length+4;r++)rows.push(visibleColumns.map(({c})=>{const k=col(c),item=active.items[r-4],raw=c===10&&item?(item.proformaBase??item.K??''):cells[k+r]??'';return typeof raw==='string'&&raw.startsWith('=')?get(k+r):raw;}));download('project-worksheet.csv','\ufeff'+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n'),'text/csv;charset=utf-8');},actions);
 detail.append(el('p','Add or remove item rows below. Green cells calculate automatically; yellow cells show project totals. Enter the proforma price and TAX HST %; the calculated HST-inclusive total feeds all existing cost and profit formulas. Saved prices default to 0% tax until you enter a percentage. Actual months calculate automatically from availability and sold-out dates (elapsed days ÷ 30.4375). Actual monthly profit uses this unrounded duration.'));
 const wrap=el('div');wrap.className='table-wrap pp-grid';const table=el('table'),thead=el('thead'),head=el('tr');const outputs=[];
