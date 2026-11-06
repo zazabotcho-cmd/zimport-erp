@@ -2020,7 +2020,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 <div class="form-grid two shipment-bottom-row"><label>Cost of Shipment<div style="display:flex;gap:6px;align-items:center"><input id="shipmentCostInput" type="number" min="0" step="0.01" style="flex:1"><select id="shipmentCurrencyInput" style="width:82px"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></div></label><label>Transportation Invoice Payment Status<select id="shipmentPaymentStatusInput"><option value="Not Paid">Not Paid</option><option value="Paid">Paid</option><option value="Other">Other</option></select></label><label>PAY DATE<input id="shipmentPayDateInput" type="date"></label><label><span id="shipmentConverterLabel">Transportation CAD Converter — Enter Manually</span><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span>1 CAD =</span><input id="shipmentExchangeRateInput" type="number" min="0.0001" step="0.0001" style="width:90px" aria-label="Manual transportation exchange rate"><b id="shipmentConverterCurrency">CAD</b></div></label><label id="shipmentPaymentOtherWrap" class="hidden">Other Payment Status<input id="shipmentPaymentOtherInput" maxlength="50" placeholder="Type payment status"></label></div>
 <div class="modal-actions"><button id="deleteShipmentBtn" type="button" class="danger">Delete Shipment</button><span></span><button id="cancelShipmentBtn" type="button" class="secondary">Cancel</button><button id="saveShipmentBtn" type="button">Save Shipment</button></div></div></div>
 <div id="financialTransportImportModal" class="modal hidden financial-transport-import-modal"><div class="modal-card financial-transport-import-card">
-  <div class="modal-head"><div><h2>Import from Transportation</h2><p>Select one Transportation containing REGU / SEAS / OTHER POs.</p></div><button type="button" class="icon" onclick="closeFinancialTransportImport()">×</button></div>
+  <div class="modal-head"><div><h2>Import from Transportation</h2><p>Mark all Transportations to import their REGU / SEAS / OTHER POs.</p></div><button type="button" class="icon" onclick="closeFinancialTransportImport()">×</button></div>
   <input type="hidden" id="financialTransportImportPageId">
   <div class="financial-import-top">
     <label>Transportation
@@ -2036,7 +2036,7 @@ body{padding-bottom:24px;overflow-x:hidden}
     <thead><tr><th>Transportation</th><th>POs</th><th>Items</th><th>Status</th><th>Status Date</th><th>Action</th></tr></thead>
     <tbody id="financialTransportImportRows"></tbody>
   </table></div>
-  <div class="modal-actions"><span></span><button type="button" class="secondary" onclick="closeFinancialTransportImport()">Cancel</button><button type="button" onclick="importSelectedTransportationToFinancialPage()">Import Selected</button></div>
+  <div class="modal-actions"><span></span><button type="button" class="secondary" onclick="closeFinancialTransportImport()">Cancel</button><button type="button" onclick="importSelectedTransportationToFinancialPage()">Import Marked</button></div>
 </div></div>
 <div id="poDetailsModal" class="modal hidden"><div class="modal-card item-info-page">
   <div class="modal-head"><div><h2 id="poDetailsTitle">PO Details</h2><p>Complete purchase order information.</p></div><button id="closePoDetails" class="icon" onclick="closePoDetails()">×</button></div>
@@ -9102,12 +9102,12 @@ function financialProfitPageRows(p){
   const pageData=state.financialProfitPageData[p.id];
   const store=pageData.rows;
   let sourceRows=[];
-  if(pageData.transportationId){
-    const sh=(state.shipments||[]).find(x=>String(x.id)===String(pageData.transportationId));
-    sourceRows=financialImportEligibleRows(sh);
-  }else{
-    sourceRows=financialProfitSourceRows();
-  }
+  if(pageData.transportationIds?.length||pageData.transportationId){
+    const ids=pageData.transportationIds||[pageData.transportationId];
+    const unique=new Map();
+    ids.forEach(id=>financialImportEligibleRows((state.shipments||[]).find(x=>String(x.id)===String(id))).forEach(row=>unique.set(row.key,row)));
+    sourceRows=[...unique.values()];
+  }else{sourceRows=financialProfitSourceRows();}
   return sourceRows.map(src=>{
     if(!store[src.key])store[src.key]=financialProfitEmptyRecord();
     return {source:src,key:src.key,data:store[src.key]};
@@ -9172,6 +9172,7 @@ function financialProfitCopyInput(pageId,key,field,value){
 
 
 let selectedFinancialTransportImportId='';
+const markedFinancialTransportImportIds=new Set();
 
 
 function ensureFinancialProfitPageForTransportation(sh){
@@ -9251,7 +9252,7 @@ function financialImportShipments(currentPageId=''){
   const usedByOtherPages=new Set();
   Object.entries(state.financialProfitPageData||{}).forEach(([pageId,data])=>{
     if(String(pageId)===String(currentPageId))return;
-    if(data?.transportationId)usedByOtherPages.add(String(data.transportationId));
+    (data?.transportationIds||[data?.transportationId]).filter(Boolean).forEach(id=>usedByOtherPages.add(String(id)));
   });
   return (state.shipments||[]).filter(sh=>{
     if(!financialImportEligibleRows(sh).length)return false;
@@ -9269,23 +9270,17 @@ window.openFinancialTransportImport=(pageId)=>{
   if(search)search.value='';
   const current=state.financialProfitPageData?.[pageId]?.transportationId||'';
   selectedFinancialTransportImportId=String(current||'');
+  markedFinancialTransportImportIds.clear();
+  (state.financialProfitPageData?.[pageId]?.transportationIds||[current]).filter(Boolean).forEach(id=>markedFinancialTransportImportIds.add(String(id)));
   renderFinancialTransportImportList();
   modal.classList.remove('hidden');
 };
 window.closeFinancialTransportImport=()=>{
   document.getElementById('financialTransportImportModal')?.classList.add('hidden');
 };
-window.selectFinancialTransportImport=(id)=>{
-  selectedFinancialTransportImportId=String(id||'');
-  const sel=document.getElementById('financialTransportImportSelect');
-  if(sel&&sel.value!==selectedFinancialTransportImportId)sel.value=selectedFinancialTransportImportId;
-  const sh=(state.shipments||[]).find(x=>String(x.id)===selectedFinancialTransportImportId);
-  const summary=document.getElementById('financialTransportImportSelected');
-  if(summary){
-    summary.textContent=sh
-      ? `Selected: ${sh.name||'Cargo'} | Status: ${sh.status||'—'} | Status Date: ${sh.statusDate||'—'}`
-      : 'No Transportation selected.';
-  }
+window.selectFinancialTransportImport=(id,checked)=>{
+ if(checked)markedFinancialTransportImportIds.add(String(id));else markedFinancialTransportImportIds.delete(String(id));
+ renderFinancialTransportImportList();
 };
 window.renderFinancialTransportImportList=()=>{
   const select=document.getElementById('financialTransportImportSelect');
@@ -9305,36 +9300,26 @@ window.renderFinancialTransportImportList=()=>{
     return !q||hay.includes(q);
   });
 
-  const previous=selectedFinancialTransportImportId;
-  select.innerHTML='<option value="">Select Transportation</option>'+all.map(sh=>{
-    const rows=financialImportEligibleRows(sh);
-    return `<option value="${escapeHtml(String(sh.id))}">${escapeHtml(sh.name||'Cargo')} — ${rows.length} item${rows.length===1?'':'s'}</option>`;
-  }).join('');
-  if(previous && all.some(sh=>String(sh.id)===String(previous))){
-    select.value=String(previous);
-  }else{
-    selectedFinancialTransportImportId='';
-    select.value='';
-  }
+  select.style.display='none';
+  if(select.parentElement?.tagName==='LABEL')select.parentElement.style.display='none';
+  const eligibleIds=new Set(all.map(sh=>String(sh.id)));
+  for(const id of markedFinancialTransportImportIds)if(!eligibleIds.has(id))markedFinancialTransportImportIds.delete(id);
   const selectedSummary=document.getElementById('financialTransportImportSelected');
-  const selectedSh=all.find(sh=>String(sh.id)===String(selectedFinancialTransportImportId));
-  if(selectedSummary)selectedSummary.textContent=selectedSh
-    ? `Selected: ${selectedSh.name||'Cargo'} | Status: ${selectedSh.status||'—'} | Status Date: ${selectedSh.statusDate||'—'}`
-    : 'No Transportation selected.';
+  if(selectedSummary)selectedSummary.textContent=markedFinancialTransportImportIds.size+' Transportation(s) marked.';
 
   body.innerHTML=filtered.map(sh=>{
     const rows=financialImportEligibleRows(sh);
     const pos=financialImportEligiblePos(sh);
     const poText=pos.map(po=>`${po.number||'—'} (${profitCalcPoProgram(po)})`).join(', ');
     const itemText=rows.map(r=>r.line.yearProductName||r.line.productDescription||r.line.description||r.line.productName||'Item').join(', ');
-    const selected=String(selectedFinancialTransportImportId)===String(sh.id);
+    const selected=markedFinancialTransportImportIds.has(String(sh.id));
     return `<tr class="${selected?'financial-import-row-selected':''}">
       <td><b>${escapeHtml(sh.name||'—')}</b></td>
       <td>${escapeHtml(poText||'—')}</td>
       <td>${escapeHtml(itemText||'—')}</td>
       <td>${escapeHtml(sh.status||'—')}</td>
       <td>${escapeHtml(sh.statusDate||'—')}</td>
-      <td><button type="button" class="${selected?'':'secondary'} small" onclick="selectFinancialTransportImport('${escapeHtml(String(sh.id))}');renderFinancialTransportImportList()">${selected?'Selected':'Select'}</button></td>
+      <td><label><input type="checkbox" ${selected?'checked':''} onchange="selectFinancialTransportImport('${escapeHtml(String(sh.id))}',this.checked)"> Mark</label></td>
     </tr>`;
   }).join('')||'<tr><td colspan="6">No Transportation with REGU / SEAS / OTHER POs found.</td></tr>';
 };
@@ -9363,29 +9348,17 @@ window.importSelectedTransportationToFinancialPage=()=>{
   const page=(state.financialProfitPages||[]).find(p=>String(p.id)===pageId);
   if(!page){alert('Calculator page not found.');return;}
 
-  const select=document.getElementById('financialTransportImportSelect');
-  const transportId=String(select?.value||selectedFinancialTransportImportId||'');
-  if(!transportId){alert('Select a Transportation first.');return;}
-
-  const sh=(state.shipments||[]).find(x=>String(x.id)===transportId);
-  if(!sh){alert('Selected Transportation no longer exists.');return;}
-
-  const eligibleRows=financialImportEligibleRows(sh);
-  if(!eligibleRows.length){alert('This Transportation has no REGU / SEAS / OTHER PO items.');return;}
-
+  const ids=[...markedFinancialTransportImportIds];
+  if(!ids.length){alert('Mark at least one Transportation first.');return;}
+  const ships=financialImportShipments(pageId).filter(sh=>ids.includes(String(sh.id)));
+  if(ships.length!==ids.length){alert('A marked Transportation is no longer available. Reopen the import window.');return;}
   const importedRows={};
-  eligibleRows.forEach(sourceRow=>{
-    importedRows[sourceRow.key]=copyProfitFinancialValuesFromMain(sourceRow.key,sourceRow);
-  });
-
-  if(!state.financialProfitPageData||typeof state.financialProfitPageData!=='object')state.financialProfitPageData={};
-  state.financialProfitPageData[pageId]={
-    ...(state.financialProfitPageData[pageId]||{}),
-    rows:importedRows,
-    transportationId:sh.id,
-    transportationName:sh.name||'',
-    importedAt:new Date().toISOString()
-  };
+  ships.forEach(sh=>financialImportEligibleRows(sh).forEach(sourceRow=>{
+    importedRows[sourceRow.key]=state.financialProfitPageData?.[pageId]?.rows?.[sourceRow.key]||copyProfitFinancialValuesFromMain(sourceRow.key,sourceRow);
+  }));
+  if(!Object.keys(importedRows).length){alert('No eligible PO items found.');return;}
+  if(!state.financialProfitPageData)state.financialProfitPageData={};
+  state.financialProfitPageData[pageId]={...(state.financialProfitPageData[pageId]||{}),rows:importedRows,transportationIds:ids,transportationId:ids[0],transportationName:ships.map(sh=>sh.name||sh.id).join(', '),importedAt:new Date().toISOString()};
 
   save();
   closeFinancialTransportImport();
@@ -9439,7 +9412,7 @@ function renderSingleFinancialProfitPage(p){
   const pageData=state.financialProfitPageData?.[p.id]||{};
   const summary=document.getElementById(pid+'-transportSummary');
   const importedSh=pageData.transportationId?(state.shipments||[]).find(x=>String(x.id)===String(pageData.transportationId)):null;
-  if(summary)summary.textContent=pageData.transportationId
+  if(summary)summary.textContent=pageData.transportationIds?.length?`Imported from: ${pageData.transportationIds.map(id=>(state.shipments||[]).find(sh=>String(sh.id)===String(id))?.name||id).join(', ')}`:pageData.transportationId
     ? `Imported from: ${importedSh?.name||pageData.transportationName||'Cargo'} | Status: ${importedSh?.status||'—'} | Status Date: ${importedSh?.statusDate||'—'}`
     : 'No Transportation imported yet.';
   let grandCases=0,grandNet=0,grandMoney=0;
