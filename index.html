@@ -1604,7 +1604,7 @@ body{padding-bottom:24px;overflow-x:hidden}
  <div class="table-wrap"><table>
   <thead><tr>
    <th>PO #</th><th>Vendor/Producer</th><th>LCBO Item #</th><th>Product Name</th>
-   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Arrived Date</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th style="border-left:3px solid #64748b">Final Retail Price per Bottle (TAX/HST Included)</th>
+   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Arrived Date</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -9682,9 +9682,14 @@ window.renderHeadInventory=()=>{
        totalBottles+=c*num(line.unitsPerCase);
      });
    });
+   const totalProformaBalanceCents=rows.reduce((sum,r)=>{
+     const balance=inventoryProformaBalanceOwing(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc);
+     return sum+(balance==='—'?0:Math.round(Number(balance)*100));
+   },0);
    k.innerHTML=`<div class="card"><span>POs in Inventory</span><strong>${pos.length}</strong></div>
      <div class="card"><span>Total Cases in Stock</span><strong>${totalCases.toLocaleString()}</strong></div>
-     <div class="card"><span>Total Bottles in Stock</span><strong>${totalBottles.toLocaleString()}</strong></div>`;
+     <div class="card"><span>Total Bottles in Stock</span><strong>${totalBottles.toLocaleString()}</strong></div>
+     <div class="card"><span>Total Amount of Proforma Balance Owing (TAX/HST incl.)</span><strong>${inventoryPriceMoney(totalProformaBalanceCents/100)}</strong></div>`;
  }
 };
 
