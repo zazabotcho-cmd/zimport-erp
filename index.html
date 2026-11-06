@@ -1604,7 +1604,7 @@ body{padding-bottom:24px;overflow-x:hidden}
  <div class="table-wrap"><table>
   <thead><tr>
    <th>PO #</th><th>Vendor/Producer</th><th>LCBO Item #</th><th>Product Name</th>
-   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Arrived Date</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Other Fees per Bottle</th><th>Profit per Bottle (TAX/HST incl.)</th>
+   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Other Fees per Bottle</th><th>Profit per Bottle (TAX/HST incl.)</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -9600,7 +9600,7 @@ window.renderHeadInventory=()=>{
   const transportCosts=statusShipment?.recordKind==='transportation'?shipmentTotals(statusShipment):(shipment?cargoTransportationCostTotals(shipment):null);
   const transportPerBottle=transportCosts?.costPerBottleCad??0;
   const transportStatus=shipmentStatusLabel(statusShipment?.status||po.poStatus||'Arrived in Canada');
-  const arrivalDate=shipment?.statusDate||po.sourceShipmentStatusDate||'—';
+  const statusDate=statusShipment?.statusDate||po.sourceShipmentStatusDate||po.inventoryArrivalStatusDate||'';
   const vendor=(po.supplierNames||po.vendors||[]).join(', ')||po.vendor||'—';
   const program=inventoryPoProgram(po);
   const lines=(po.lines||[]);
@@ -9640,7 +9640,7 @@ window.renderHeadInventory=()=>{
       proformaPricing:po.inventoryProformaPricing||{},
       transportPerBottle,
       shipment:shipment?.name||po.sourceShipmentName||'—',
-      arrivalDate,
+      statusDate,
       deletedFromPoPage:!!po.inventoryDeletedFromPoPage
     });
    });
@@ -9668,8 +9668,7 @@ window.renderHeadInventory=()=>{
     <td>${r.bpc.toLocaleString()}</td>
     <td><b>${r.bottles.toLocaleString()} Btls${r.bottleSize?'/'+escapeHtml(r.bottleSize):''}</b></td>
     <td>${escapeHtml(r.shipment)}</td>
-    <td>${escapeHtml(r.arrivalDate)}</td>
-    <td><span class="badge">${escapeHtml(r.transportStatus)}</span></td>
+    <td><span class="badge">${escapeHtml(r.transportStatus)}</span><br><small>${escapeHtml(r.statusDate?formatTransportationDate(r.statusDate):'—')}</small></td>
     <td><b>${r.cases.toLocaleString()}</b> <button type="button" class="secondary small" onclick="updateInventoryCases('${keyArg}',${r.cases})">Update</button><div style="margin:8px 0"><b>Available for Sale: ${saleAvailable.toLocaleString()}</b><br><small>${saleAvailable>0?'Available for sale':'Not available for sale'}</small> <button type="button" class="secondary small" onclick="markInventoryAvailableForSale('${keyArg}',${r.cases})">Set Available for Sale</button></div> <button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${encodeURIComponent(JSON.stringify({poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${saleAvailable<=0?'disabled':''}>Move to Inventory in stock office/warehouse</button> <button type="button" class="secondary small" onclick="sellInventoryToCustomer('${keyArg}',${r.cases})" ${saleAvailable<=0?'disabled':''}>Sold to the Customer</button> <button type="button" class="secondary small" onclick="archiveLcboInventory('${encodeURIComponent(JSON.stringify(r))}')">Archive</button>${zeroControls}</td>
     <td>${inventoryProformaPriceCell(r.poId,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)}</td>
     <td><b>${inventoryPriceMoney(inventoryProformaTotal(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc))}</b></td>
@@ -9680,7 +9679,7 @@ window.renderHeadInventory=()=>{
     <td><label style="display:flex;align-items:center;gap:5px;min-width:135px"><span>$</span><input type="number" min="0" step="0.01" inputmode="decimal" aria-label="Other fees per bottle" placeholder="0.00" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.otherFeesBottle??''))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="otherFeesBottle" onchange="updateInventoryProformaPrice('${poIdArg}','otherFeesBottle',this)"></label></td>
     <td>${[false,true].map(licensed=>`<div style="min-width:170px;min-height:76px;margin:6px 0;display:flex;flex-direction:column;gap:8px">${licensed?'Licensed customer':'Non-licensed customer'}<b>${inventoryPriceMoney(inventoryRetailProfitPerBottle(inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.transportPerBottle,licensed))}</b></div>`).join('')}<small>Transportation: ${inventoryPriceMoney(r.transportPerBottle)} / bottle</small></td>
    </tr>`;
- }).join('')||'<tr><td colspan="19">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
+ }).join('')||'<tr><td colspan="18">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
 
  if(k){
    let totalCases=0,totalBottles=0;
