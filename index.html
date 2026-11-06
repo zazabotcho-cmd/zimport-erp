@@ -1572,20 +1572,28 @@ body{padding-bottom:24px;overflow-x:hidden}
 <section id="inventory-stock" class="panel"><div class="box">
  <div class="section-head"><div><h2>Inventory Stock</h2><p class="note">Select an inventory page below.</p></div></div>
  <div class="invoice-page-row">
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office/warehouse</button>
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
+</div></section>
+<section id="inventory-archived" class="panel"><div class="box">
+<div class="invoice-page-row"><button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button><button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office/warehouse</button><button type="button" class="invoice-page-tab active" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button></div>
+<div class="section-head"><div><h2>Archived Inventory</h2><p class="note">Archived LCBO Trillium and office/warehouse inventory. Restore a record to return it to its original inventory page.</p></div></div>
+<div class="toolbar"><input id="archivedInventorySearch" type="search" placeholder="Search location, PO, vendor or product" oninput="renderArchivedInventory()"></div>
+<div class="table-wrap"><table><thead><tr><th>Location</th><th>PO #</th><th>Vendor/Producer</th><th>Item #</th><th>Product</th><th>Cases</th><th>Bottles / Case</th><th>Total Bottles</th><th>Archived Date</th><th>Actions</th></tr></thead><tbody id="archivedInventoryRows"></tbody></table></div>
 </div></section>
 <section id="inventory-in-stock" class="panel"><div class="box">
  <div class="invoice-page-row inventory-sticky-nav">
-  <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
+  <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office/warehouse</button>
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
  <div class="section-head">
   <div>
-   <h2>Inventory in stock LCBO</h2>
+   <h2>Inventory in stock LCBO Trillium warehouse</h2>
    <p class="note">Automatically includes every non-TENDER PO that is marked <b>Arrived in Canada</b>, including POs whose Transportation shipment is marked Arrived in Canada.</p>
   </div>
  </div>
@@ -1603,11 +1611,12 @@ body{padding-bottom:24px;overflow-x:hidden}
 </div></section>
 <section id="inventory-in-stock-office" class="panel"><div class="box">
  <div class="invoice-page-row inventory-sticky-nav">
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
-  <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button>
+  <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office/warehouse</button>
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
- <div class="section-head"><div><h2>Inventory in stock office</h2><p class="note">Inventory transferred from LCBO stock to office stock.</p></div></div>
+ <div class="section-head"><div><h2>Inventory in stock office/warehouse</h2><p class="note">Inventory transferred from LCBO stock to office stock.</p></div></div>
  <div class="toolbar"><input id="officeInventorySearch" type="search" placeholder="Search PO, supplier, item or product" oninput="renderOfficeInventory()"></div>
  <div class="cards" id="officeInventoryKpis"></div>
  <div class="table-wrap"><table>
@@ -1621,8 +1630,8 @@ body{padding-bottom:24px;overflow-x:hidden}
 <section id="inventory-financial-regu-seas-other" class="panel">
  <div class="box">
   <div class="invoice-page-row inventory-sticky-nav">
-   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
-   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
+   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button>
+   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office/warehouse</button>
    <button type="button" class="invoice-page-tab active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
   </div>
   <div class="section-head">
@@ -5418,8 +5427,8 @@ function activate(tab,preferredSection=''){
       $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
     }
   }
-  const panel=$('#'+tab);if(panel)panel.classList.add('active');if(tab==='entire-statistics'&&typeof renderEntireStatistics==='function')renderEntireStatistics();if(tab==='price-list')renderPriceList();if(tab==='transportation'||tab==='transportation-records')renderShipments();if(tab==='archived-transportation'||tab==='archived-transportation-records')window.renderArchivedShipments?.();
-  if(preferredSection==='heads-page' && (['inventory-in-stock','inventory-in-stock-office','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
+  const panel=$('#'+tab);if(panel)panel.classList.add('active');if(tab==='entire-statistics'&&typeof renderEntireStatistics==='function')renderEntireStatistics();if(tab==='price-list')renderPriceList();if(tab==='inventory-archived')window.renderArchivedInventory?.();if(tab==='inventory-in-stock-office')window.renderOfficeInventory?.();if(tab==='inventory-in-stock')window.renderHeadInventory?.();if(tab==='transportation'||tab==='transportation-records')renderShipments();if(tab==='archived-transportation'||tab==='archived-transportation-records')window.renderArchivedShipments?.();
+  if(preferredSection==='heads-page' && (['inventory-in-stock','inventory-in-stock-office','inventory-archived','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
     $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav==='heads-page'));
     $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section==='heads-page'));
     const hubTab=$('.subnav[data-section-nav="heads-page"] .tab[data-tab="inventory-stock"]');if(hubTab)hubTab.classList.add('active');
@@ -8679,6 +8688,7 @@ window.updateInventoryCases=(encodedKey,currentCases)=>{
   }
   if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};
   state.inventoryCaseOverrides[key]=value;
+  if(state.inventorySaleAvailability)state.inventorySaleAvailability[key]=inventoryAvailableForSale(key,value);
   if(value>0&&state.inventoryStockOutDates?.[key])delete state.inventoryStockOutDates[key];
   save();
   renderHeadInventory();
@@ -8750,14 +8760,33 @@ window.saveInventoryStockOutDate=()=>{
   }
 })();
 
+function inventoryAvailableForSale(key,currentCases){
+  return Math.min(Math.max(0,Number(currentCases)||0),Math.max(0,Number(state.inventorySaleAvailability?.[key])||0));
+}
+window.markInventoryAvailableForSale=(encodedKey,currentCases)=>{
+  const key=decodeURIComponent(String(encodedKey||''));
+  const current=Number(state.inventoryCaseOverrides?.[key]??currentCases);
+  const entered=prompt('Cases available for sale (0 = not available for sale):',String(inventoryAvailableForSale(key,current)));
+  if(entered===null)return;
+  const qty=Number(entered);
+  if(!entered.trim()||!Number.isFinite(qty)||qty<0||qty>current){alert('Enter an available quantity from 0 to '+current+'.');return;}
+  if(!state.inventorySaleAvailability||typeof state.inventorySaleAvailability!=='object')state.inventorySaleAvailability={};
+  state.inventorySaleAvailability[key]=qty;
+  save();renderHeadInventory();
+};
+
 window.sellInventoryToCustomer=(encodedKey,availableCases)=>{
   const key=decodeURIComponent(String(encodedKey||''));
   const current=Number(state.inventoryCaseOverrides?.[key]??availableCases);
+  const saleAvailable=inventoryAvailableForSale(key,Number(state.inventoryCaseOverrides?.[key]??availableCases));
+  if(saleAvailable<=0){alert('Mark cases as Available for Sale before selling or moving them.');return;}
   const entered=prompt('Cases sold to the customer:', '');
   if(entered===null)return;
   const qty=Number(entered);
   if(!Number.isFinite(qty)||qty<=0){alert('Enter a valid quantity greater than 0.');return;}
   if(!Number.isFinite(current)||qty>current){alert('Sold quantity cannot be greater than Cases in Stock.');return;}
+  if(qty>saleAvailable){alert('Quantity cannot exceed Available for Sale ('+saleAvailable+').');return;}
+  state.inventorySaleAvailability[key]=saleAvailable-qty;
   if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};
   state.inventoryCaseOverrides[key]=Math.max(0,current-qty);
   save();
@@ -8768,15 +8797,19 @@ window.moveInventoryToOffice=(encodedKey,availableCases,encodedMeta)=>{
   const key=decodeURIComponent(String(encodedKey||''));
   let meta={};
   try{meta=JSON.parse(decodeURIComponent(String(encodedMeta||'')))}catch(e){meta={}}
-  const entered=prompt('Move quantity to Inventory in stock office:', '');
+  const saleAvailable=inventoryAvailableForSale(key,Number(state.inventoryCaseOverrides?.[key]??availableCases));
+  if(saleAvailable<=0){alert('Mark cases as Available for Sale before selling or moving them.');return;}
+  const entered=prompt('Move quantity to Inventory in stock office/warehouse:', '');
   if(entered===null)return;
   const qty=Number(entered);
   if(!Number.isFinite(qty)||qty<=0){alert('Enter a valid quantity greater than 0.');return;}
-  if(qty>Number(availableCases||0)){alert('Move quantity cannot be greater than Cases in Stock.');return;}
+  if(qty>Number(state.inventoryCaseOverrides?.[key]??availableCases??0)){alert('Move quantity cannot be greater than Cases in Stock.');return;}
+  if(qty>saleAvailable){alert('Quantity cannot exceed Available for Sale ('+saleAvailable+').');return;}
+  state.inventorySaleAvailability[key]=saleAvailable-qty;
   if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};
-  state.inventoryCaseOverrides[key]=Math.max(0,Number(availableCases||0)-qty);
+  state.inventoryCaseOverrides[key]=Math.max(0,Number(state.inventoryCaseOverrides?.[key]??availableCases??0)-qty);
   if(!Array.isArray(state.officeInventory))state.officeInventory=[];
-  const existing=state.officeInventory.find(x=>x.inventoryKey===key);
+  const existing=state.officeInventory.find(x=>x.inventoryKey===key&&!x.inventoryArchived);
   if(existing){
     existing.cases=num(existing.cases)+qty;
     existing.movedAt=new Date().toISOString();
@@ -8854,11 +8887,37 @@ window.deleteOfficeInventory=(encodedId)=>{
   const row=state.officeInventory.find(x=>String(x.id)===id);
   if(!row)return;
   if(!confirm(`Move ${row.product||row.poNumber||'this office inventory record'} to Head's Recycling Bin?`))return;
-  moveToHeadsRecycleBin('officeInventory','Inventory in stock office',row,{collection:'officeInventory'});
+  moveToHeadsRecycleBin('officeInventory','Inventory in stock office/warehouse',row,{collection:'officeInventory'});
   state.officeInventory=state.officeInventory.filter(x=>String(x.id)!==id);
   save();
   renderOfficeInventory();
   try{renderHeadsRecycleBin()}catch(e){}
+};
+
+window.archiveLcboInventory=(encodedRow)=>{
+  let row;try{row=JSON.parse(decodeURIComponent(encodedRow))}catch(e){return;}
+  if(!confirm('Archive this LCBO inventory record?'))return;
+  if(!state.archivedLcboInventory)state.archivedLcboInventory={};
+  state.archivedLcboInventory[row.inventoryKey]={...row,archivedAt:new Date().toISOString()};
+  save();renderHeadInventory();renderArchivedInventory();
+};
+window.archiveOfficeInventory=(encodedId)=>{
+  const row=(state.officeInventory||[]).find(x=>String(x.id)===decodeURIComponent(encodedId));
+  if(!row||!confirm('Archive this office/warehouse inventory record?'))return;
+  row.inventoryArchived=true;row.inventoryArchivedAt=new Date().toISOString();
+  save();renderOfficeInventory();renderArchivedInventory();
+};
+window.restoreInventoryArchive=(source,encodedKey)=>{
+  const key=decodeURIComponent(encodedKey);
+  if(source==='lcbo'){delete state.archivedLcboInventory?.[key];}
+  else{const row=(state.officeInventory||[]).find(x=>String(x.id)===key);if(row){row.inventoryArchived=false;delete row.inventoryArchivedAt;}}
+  save();renderHeadInventory();renderOfficeInventory();renderArchivedInventory();
+};
+window.renderArchivedInventory=()=>{
+  const body=document.getElementById('archivedInventoryRows');if(!body)return;
+  const q=(document.getElementById('archivedInventorySearch')?.value||'').trim().toLowerCase();
+  const rows=[...Object.entries(state.archivedLcboInventory||{}).map(([key,r])=>({...r,archiveSource:'lcbo',archiveKey:key,location:'LCBO Trillium warehouse'})),...(state.officeInventory||[]).filter(r=>r.inventoryArchived).map(r=>({...r,archiveSource:'office',archiveKey:r.id,location:'Office/warehouse',archivedAt:r.inventoryArchivedAt}))];
+  body.innerHTML=rows.filter(r=>!q||[r.location,r.poNumber,r.vendor,r.itemNo,r.product].join(' ').toLowerCase().includes(q)).map(r=>`<tr><td>${escapeHtml(r.location)}</td><td>${escapeHtml(r.poNumber||'—')}</td><td>${escapeHtml(r.vendor||'—')}</td><td>${escapeHtml(r.itemNo||'—')}</td><td>${escapeHtml(r.product||'—')}</td><td>${num(r.cases).toLocaleString()}</td><td>${num(r.bpc).toLocaleString()}</td><td>${(num(r.cases)*num(r.bpc)).toLocaleString()}</td><td>${escapeHtml((r.archivedAt||'').slice(0,10))}</td><td><button type="button" class="secondary small" onclick="restoreInventoryArchive('${r.archiveSource}','${encodeURIComponent(r.archiveKey)}')">Restore</button></td></tr>`).join('')||'<tr><td colspan="10">No archived inventory records.</td></tr>';
 };
 
 window.renderOfficeInventory=()=>{
@@ -8866,7 +8925,7 @@ window.renderOfficeInventory=()=>{
   if(!body)return;
   if(!Array.isArray(state.officeInventory))state.officeInventory=[];
   const q=(document.getElementById('officeInventorySearch')?.value||'').trim().toLowerCase();
-  const rows=state.officeInventory.filter(x=>num(x.cases)>0).filter(x=>{
+  const rows=state.officeInventory.filter(x=>!x.inventoryArchived&&num(x.cases)>0).filter(x=>{
     if(!q)return true;
     return [x.poNumber,x.program,x.vendor,x.itemNo,x.product].join(' ').toLowerCase().includes(q);
   });
@@ -8880,7 +8939,7 @@ window.renderOfficeInventory=()=>{
     <td>${num(r.bpc).toLocaleString()}</td>
     <td><b>${(num(r.cases)*num(r.bpc)).toLocaleString()}</b></td>
     <td>${escapeHtml((r.movedAt||'').slice(0,10)||'—')}</td>
-    <td><button type="button" class="secondary small" onclick="updateOfficeInventoryCases('${encodeURIComponent(r.id)}')">Update</button> <button type="button" class="secondary small" onclick="stockOutOfficeInventory('${encodeURIComponent(r.id)}')" ${num(r.cases)<=0?'disabled':''}>Stocked Out</button> <button type="button" class="danger small" onclick="deleteOfficeInventory('${encodeURIComponent(r.id)}')">Delete</button><div id="office-action-${escapeHtml(String(r.id))}" style="margin-top:6px"></div></td>
+    <td><button type="button" class="secondary small" onclick="updateOfficeInventoryCases('${encodeURIComponent(r.id)}')">Update</button> <button type="button" class="secondary small" onclick="stockOutOfficeInventory('${encodeURIComponent(r.id)}')" ${num(r.cases)<=0?'disabled':''}>Stocked Out</button> <button type="button" class="danger small" onclick="deleteOfficeInventory('${encodeURIComponent(r.id)}')">Delete</button> <button type="button" class="secondary small" onclick="archiveOfficeInventory('${encodeURIComponent(r.id)}')">Archive</button><div id="office-action-${escapeHtml(String(r.id))}" style="margin-top:6px"></div></td>
   </tr>`).join('')||'<tr><td colspan="10">No inventory has been moved to the office yet.</td></tr>';
   if(k){
     const totalCases=rows.reduce((a,r)=>a+num(r.cases),0);
@@ -9323,8 +9382,8 @@ function financialProfitPageHtml(p){
   const pid=financialProfitPageId(p);
   return `<section id="${pid}" class="panel"><div class="box">
     <div class="invoice-page-row inventory-sticky-nav">
-      <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO</button>
-      <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office</button>
+      <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button>
+      <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office/warehouse</button>
       <button type="button" class="invoice-page-tab active financial-parent-active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
     </div>
     <div class="invoice-page-row financial-regu-child-nav profit-child-nav">
@@ -9476,6 +9535,8 @@ window.renderHeadInventory=()=>{
 
  pos.forEach(po=>{
   const shipment=inventoryShipmentForPo(po);
+  const statusShipment=shipment?.recordKind==='transportation'?shipment:(shipment?cargoDateSourceTransportation(shipment):null)||shipment;
+  const transportStatus=shipmentStatusLabel(statusShipment?.status||po.poStatus||'Arrived in Canada');
   const arrivalDate=shipment?.statusDate||po.sourceShipmentStatusDate||'—';
   const vendor=(po.supplierNames||po.vendors||[]).join(', ')||po.vendor||'—';
   const program=inventoryPoProgram(po);
@@ -9488,6 +9549,7 @@ window.renderHeadInventory=()=>{
     const bpc=num(line.unitsPerCase);
     const bottles=cases*bpc;
     const inventoryKey=inventoryLineKey(po,line,lineIndex);
+    if(state.archivedLcboInventory?.[inventoryKey])return;
     const poId=po.originalPoId||po.id||'';
     const poNumber=po.number||'';
     const totalQuotedValue=originalCases*num(line.quotedPricePerCase);
@@ -9507,6 +9569,7 @@ window.renderHeadInventory=()=>{
       bpc,
       bottles,
       inventoryKey,
+      transportStatus,
       shipment:shipment?.name||po.sourceShipmentName||'—',
       arrivalDate,
       deletedFromPoPage:!!po.inventoryDeletedFromPoPage
@@ -9517,6 +9580,7 @@ window.renderHeadInventory=()=>{
 
  body.innerHTML=rows.map(r=>{
    const keyArg=encodeURIComponent(r.inventoryKey);
+   const saleAvailable=inventoryAvailableForSale(r.inventoryKey,r.cases);
    const poIdArg=encodeURIComponent(r.poId||'');
    const poNoArg=encodeURIComponent(r.poNumber||'');
    const stockOut=state.inventoryStockOutDates?.[r.inventoryKey];
@@ -9532,12 +9596,12 @@ window.renderHeadInventory=()=>{
     <td>${escapeHtml(r.itemNo)}</td>
     <td><b>${escapeHtml(r.product)}</b></td>
     <td><b>${r.totalQuotedValue?escapeHtml((r.quoteCurrency?r.quoteCurrency+' ':'')+r.totalQuotedValue.toFixed(2)):'—'}</b></td>
-    <td><b>${r.cases.toLocaleString()}</b> <button type="button" class="secondary small" onclick="updateInventoryCases('${keyArg}',${r.cases})">Update</button> <button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${encodeURIComponent(JSON.stringify({poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${r.cases<=0?'disabled':''}>Move to Inventory in stock office</button> <button type="button" class="secondary small" onclick="sellInventoryToCustomer('${keyArg}',${r.cases})" ${r.cases<=0?'disabled':''}>Sold to the Customer</button>${zeroControls}</td>
+    <td><b>${r.cases.toLocaleString()}</b> <button type="button" class="secondary small" onclick="updateInventoryCases('${keyArg}',${r.cases})">Update</button><div style="margin:8px 0"><b>Available for Sale: ${saleAvailable.toLocaleString()}</b><br><small>${saleAvailable>0?'Available for sale':'Not available for sale'}</small> <button type="button" class="secondary small" onclick="markInventoryAvailableForSale('${keyArg}',${r.cases})">Set Available for Sale</button></div> <button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${encodeURIComponent(JSON.stringify({poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${saleAvailable<=0?'disabled':''}>Move to Inventory in stock office/warehouse</button> <button type="button" class="secondary small" onclick="sellInventoryToCustomer('${keyArg}',${r.cases})" ${saleAvailable<=0?'disabled':''}>Sold to the Customer</button> <button type="button" class="secondary small" onclick="archiveLcboInventory('${encodeURIComponent(JSON.stringify(r))}')">Archive</button>${zeroControls}</td>
     <td>${r.bpc.toLocaleString()}</td>
     <td><b>${r.bottles.toLocaleString()}</b></td>
     <td>${escapeHtml(r.shipment)}</td>
     <td>${escapeHtml(r.arrivalDate)}</td>
-    <td><span class="badge">Arrived in Canada</span></td>
+    <td><span class="badge">${escapeHtml(r.transportStatus)}</span></td>
    </tr>`;
  }).join('')||'<tr><td colspan="12">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
 
@@ -9545,7 +9609,8 @@ window.renderHeadInventory=()=>{
    let totalCases=0,totalBottles=0;
    pos.forEach(po=>{
      (po.lines||[]).forEach((line,index)=>{
-       const c=inventoryCasesForLine(po,line,index);
+       if(state.archivedLcboInventory?.[inventoryLineKey(po,line,index)])return;
+     const c=inventoryCasesForLine(po,line,index);
        totalCases+=c;
        totalBottles+=c*num(line.unitsPerCase);
      });
