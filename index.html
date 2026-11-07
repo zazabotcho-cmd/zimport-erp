@@ -462,7 +462,7 @@ label[data-retrieved-locked="1"] textarea{
   border-left:3px solid #d7dce2;
 }
 .financial-regu-child-nav.profit-child-nav::before{
-  content:"Under FINANCIAL REGU/SEAS/OTHER";
+  content:"Profit Calculators";
   font-size:11px;
   font-weight:700;
   opacity:.65;
@@ -1582,9 +1582,10 @@ body{padding-bottom:24px;overflow-x:hidden}
  <div class="invoice-page-row">
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button>
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office/warehouse</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
+  
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
+<div class="invoice-page-row"><span id="financialProfitDynamicTabs"></span><button type="button" class="secondary invoice-page-tab" onclick="addFinancialProfitPage()">+ Profit Calulator REGU/SEAS/OTHER</button></div>
 </div></section>
 <section id="inventory-archived" class="panel"><div class="box">
 <div class="invoice-page-row"><button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button><button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office/warehouse</button><button type="button" class="invoice-page-tab active" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button></div>
@@ -1596,7 +1597,7 @@ body{padding-bottom:24px;overflow-x:hidden}
  <div class="invoice-page-row inventory-sticky-nav">
   <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button>
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office/warehouse</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
+  
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
  <div class="section-head">
@@ -1621,7 +1622,7 @@ body{padding-bottom:24px;overflow-x:hidden}
  <div class="invoice-page-row inventory-sticky-nav">
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button>
   <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office/warehouse</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
+  
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
  <div class="section-head"><div><h2>Inventory in stock office/warehouse</h2><p class="note">Inventory transferred from LCBO stock to office stock.</p></div></div>
@@ -1634,26 +1635,6 @@ body{padding-bottom:24px;overflow-x:hidden}
 </div></section>
 <div id="financialProfitDynamicPages"></div>
 
-
-<section id="inventory-financial-regu-seas-other" class="panel">
- <div class="box">
-  <div class="invoice-page-row inventory-sticky-nav">
-   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button>
-   <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office/warehouse</button>
-   <button type="button" class="invoice-page-tab active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
-  </div>
-  <div class="section-head">
-   <div>
-    <h2>FINANCIAL REGU/SEAS/OTHER</h2>
-    <p class="note">Financial pages for REGU / SEAS / OTHER orders.</p>
-   </div>
-  </div>
-  <div class="invoice-page-row financial-regu-child-nav">
-   <span id="financialProfitDynamicTabs"></span>
-   <button type="button" class="secondary invoice-page-tab" onclick="addFinancialProfitPage()">+ Profit Calulator REGU/SEAS/OTHER</button>
-  </div>
- </div>
-</section>
 
 <section id="all-invoices" class="panel"><div class="box"><div class="section-head"><div><h2>All Invoices</h2><p class="note">Select an invoice page below.</p></div></div><div class="invoice-page-row">
   <button type="button" class="invoice-page-tab" onclick="activate('financial','heads-page')">LCBO to Agent Tender Invoices</button>
@@ -9146,7 +9127,7 @@ window.deleteFinancialProfitPage=(id)=>{
   if(state.financialProfitPageData&&typeof state.financialProfitPageData==='object')delete state.financialProfitPageData[id];
   save();
   renderFinancialProfitPages();
-  activate('inventory-financial-regu-seas-other','heads-page');
+  activate('inventory-stock','heads-page');
 };
 window.updateFinancialProfitCopyField=(pageId,key,field,value)=>{
   const store=state.financialProfitPageData?.[pageId]?.rows?.[key];if(!store)return;
@@ -9392,13 +9373,13 @@ function financialProfitPageHtml(p){
     <div class="invoice-page-row inventory-sticky-nav">
       <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button>
       <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office/warehouse</button>
-      <button type="button" class="invoice-page-tab active financial-parent-active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button>
+      
     </div>
     <div class="invoice-page-row financial-regu-child-nav profit-child-nav">
          <span class="financial-profit-dynamic-tabs"></span>
       <button type="button" class="secondary invoice-page-tab" onclick="addFinancialProfitPage()">+ Profit Calulator REGU/SEAS/OTHER</button>
     </div>
-    <div class="financial-child-path"><button type="button" class="invoice-page-tab active" onclick="activate('inventory-financial-regu-seas-other','heads-page')">FINANCIAL REGU/SEAS/OTHER</button><span>›</span><strong>${escapeHtml(p.name)}</strong></div>
+    
     <div class="section-head"><div><h2>${escapeHtml(p.name)}</h2><p class="note">Automatically created from Transportation. REGU / SEAS / OTHER PO items, saved financial inputs, formulas, totals, and Cargo/Transportation status information are filled automatically.</p><div id="${pid}-transportSummary" class="note"></div></div>
       <div>${p.autoCreatedFromTransportation?'':`<button type="button" class="secondary small" onclick="openFinancialTransportImport('${p.id}')">Import from Transportation</button> `}<button type="button" class="danger small" onclick="deleteFinancialProfitPage('${p.id}')">Delete Page</button></div>
     </div>
