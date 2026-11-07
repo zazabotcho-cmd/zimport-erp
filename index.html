@@ -307,6 +307,14 @@ label[data-retrieved-locked="1"] textarea{
 .price-list-editor-table input,.price-list-editor-table select{width:100%;min-width:85px}
 .price-list-editor-table td:nth-child(1),.price-list-editor-table td:nth-child(2){min-width:190px}
 .price-list-editor-table td:last-child{min-width:160px}
+
+/* LCBO inventory: use Transportation labels with the update date underneath. */
+#headInventoryRows .inventory-transport-status-cell{min-width:250px;width:270px;vertical-align:top}
+#headInventoryRows .inventory-transport-status{display:flex;flex-direction:column;align-items:flex-start;gap:9px;padding:2px 0}
+#headInventoryRows .inventory-transport-status-label{display:block;max-width:260px;white-space:normal;word-break:normal;overflow-wrap:normal;line-height:1.45;border-radius:8px;padding:7px 10px;font-size:12px;text-transform:none}
+#headInventoryRows .inventory-transport-status-date{display:flex;flex-direction:column;gap:3px;padding-left:2px;white-space:nowrap}
+#headInventoryRows .inventory-transport-status-date small{font-size:10px;font-weight:600;letter-spacing:.3px;color:#677787}
+#headInventoryRows .inventory-transport-status-date time{font-size:12px;font-weight:600;color:#425466;font-variant-numeric:tabular-nums}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -9248,6 +9256,19 @@ function financialImportEligibleRows(sh){
   });
   return out;
 }
+// Read-only bridge for the Non-Tender Project transportation picker.
+window.getNonTenderProjectTransportations=()=> (state.shipments||[]).map(sh=>{
+ const rows=financialImportEligibleRows(sh),pos=financialImportEligiblePos(sh);
+ return {id:String(sh.id),name:sh.name||String(sh.id),status:sh.status||'',statusDate:sh.statusDate||'',
+ poText:pos.map(po=>`${po.number||'—'} (${profitCalcPoProgram(po)})`).join(', '),
+ itemText:rows.map(r=>r.line.yearProductName||r.line.productDescription||r.line.description||r.line.productName||'Item').join(', '),
+ items:rows.map(r=>{const v=copyProfitFinancialValuesFromMain(r.key,r);return {
+ sourceKey:String(sh.id)+':'+r.key,sourceTransportationId:String(sh.id),sourcePoId:String(r.po.id),
+ A:r.line.yearProductName||r.line.productDescription||r.line.description||r.line.productName||'Item',
+ F:v.currency==='USD'?v.supplierBottlePrice:'',H:v.agencyFee,I:v.transportPerBtl,J:r.bpc,
+ proformaBase:v.proformaPrice,hstPercent:v.hstPct,M:v.currencyDiff,Q:v.totalCases,S:v.labOther,T:v.approxMonths||'',X:'',Y:''
+ };})};
+}).filter(sh=>sh.items.length);
 function financialImportShipments(currentPageId=''){
   const usedByOtherPages=new Set();
   Object.entries(state.financialProfitPageData||{}).forEach(([pageId,data])=>{
@@ -9641,7 +9662,7 @@ window.renderHeadInventory=()=>{
     <td>${r.bpc.toLocaleString()}</td>
     <td><b>${r.bottles.toLocaleString()} Btls${r.bottleSize?'/'+escapeHtml(r.bottleSize):''}</b></td>
     <td>${escapeHtml(r.shipment)}</td>
-    <td><span class="badge">${escapeHtml(r.transportStatus)}</span><br><small>${escapeHtml(r.statusDate?formatTransportationDate(r.statusDate):'—')}</small></td>
+    <td class="inventory-transport-status-cell"><div class="inventory-transport-status"><span class="global-status-badge inventory-transport-status-label">${escapeHtml(r.transportStatus)}</span><div class="inventory-transport-status-date"><small>Updated</small><time datetime="${escapeHtml(r.statusDate||'')}">${escapeHtml(r.statusDate?formatTransportationDate(r.statusDate):'Date not recorded')}</time></div></div></td>
     <td><b>${r.cases.toLocaleString()}</b> <button type="button" class="secondary small" onclick="updateInventoryCases('${keyArg}',${r.cases})">Update</button><div style="margin:8px 0"><b>Available for Sale: ${saleAvailable.toLocaleString()}</b><br><small>${saleAvailable>0?'Available for sale':'Not available for sale'}</small> <button type="button" class="secondary small" onclick="markInventoryAvailableForSale('${keyArg}',${r.cases})">Set Available for Sale</button></div> <button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${encodeURIComponent(JSON.stringify({poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${saleAvailable<=0?'disabled':''}>Move to Inventory in stock office/warehouse</button> <button type="button" class="secondary small" onclick="sellInventoryToCustomer('${keyArg}',${r.cases})" ${saleAvailable<=0?'disabled':''}>Sold to the Customer</button> <button type="button" class="secondary small" onclick="archiveLcboInventory('${encodeURIComponent(JSON.stringify(r))}')">Archive</button>${zeroControls}</td>
     <td>${inventoryProformaPriceCell(r.poId,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)}</td>
     <td><b>${inventoryPriceMoney(inventoryProformaTotal(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc))}</b></td>
