@@ -1,0 +1,74 @@
+
+    
+    <h3 id="itWinFormTitle">Add Supplier Information</h3>
+    <div class="form-grid three">
+      <label>LCBO Supplier Number (if applicable)<input id="itWinLcboSupplierNumber" name="itWinLcboSupplierNumber"></label>
+      <label>Vendor # in NISS (if applicable)<input id="itWinAgencyNissNumber" autocomplete="off" name="itWinAgencyNissNumber"></label>
+      <label>Supplier Legal Full Name<input id="itWinName" name="itWinName"></label>
+      <label>Supplier Address Line 1<input id="itWinAddress1" name="itWinAddress1"></label>
+      <label>Supplier Address Line 2<input id="itWinAddress2" name="itWinAddress2"></label>
+      <label>Supplier City<input id="itWinCity" name="itWinCity"></label>
+      <label>Supplier Region<input id="itWinRegion" name="itWinRegion"></label>
+      <label>Supplier Country<input id="itWinCountry" name="itWinCountry"></label>
+      <label>Supplier Postal Code<input id="itWinPostalCode" name="itWinPostalCode"></label>
+      <label>Phone Number<input id="itWinPhone" name="itWinPhone"></label>
+      <label>Email Address<input id="itWinEmail" type="email" name="itWinEmail"></label>
+      <label>Payment Terms<select id="itWinPaymentTerms" name="itWinPaymentTerms"><option value="">Select</option><option>60 days</option><option>90 days (Preferable)</option></select></label>
+      <label>Direction to Pay Agent<select id="itWinDirectionToPayAgent" name="itWinDirectionToPayAgent"><option value="">Select</option><option>Yes</option><option>No</option></select></label>
+      <label>Does the supplier have a designated agent in Ontario / LCBO?<select id="itWinOntario" name="itWinOntario"><option value="">Select</option><option>No</option><option>Yes</option></select></label>
+      <div id="itWinOntarioAgentDetails" class="full item-group hidden">
+        <h3>Ontario / LCBO Agent Information</h3>
+        <div class="form-grid three">
+          <label>Agent / Company Name<input id="itWinOntarioAgentCompany" name="itWinOntarioAgentCompany"></label>
+          <label>How Long Has the Supplier Worked With This Agent?<input id="itWinOntarioAgentHowLong" placeholder="e.g. 3 years" name="itWinOntarioAgentHowLong"></label>
+          <label>Quantity Imported<input id="itWinOntarioAgentQuantity" placeholder="e.g. cases / bottles / litres" name="itWinOntarioAgentQuantity"></label>
+          <label>Import Date<input id="itWinOntarioAgentImportDate" type="date" name="itWinOntarioAgentImportDate"></label>
+          <label class="full">Additional Information<textarea id="itWinOntarioAgentInfo" rows="4" placeholder="Additional information about the agent and imports" name="itWinOntarioAgentInfo"></textarea></label>
+        </div>
+      </div>
+      <label>Does the supplier export to Canadian provinces other than Ontario?<select id="itWinExportsOtherProvinces" name="itWinExportsOtherProvinces"><option value="">Select</option><option>No</option><option>Yes</option></select></label>
+      <div id="itWinOtherProvinceDetails" class="full item-group hidden">
+        <h3>Other Canadian Province Export Information</h3>
+        <div class="form-grid three">
+          <label>Agent / Company Name<input id="itWinOtherProvinceCompany" name="itWinOtherProvinceCompany"></label>
+          <label>Province(s)<input id="itWinOtherProvinceNames" placeholder="e.g. Quebec, Alberta, British Columbia" name="itWinOtherProvinceNames"></label>
+          <label>How Long Has the Supplier Exported There?<input id="itWinOtherProvinceHowLong" placeholder="e.g. 2 years" name="itWinOtherProvinceHowLong"></label>
+          <label>Quantity Imported<input id="itWinOtherProvinceQuantity" placeholder="e.g. cases / bottles / litres" name="itWinOtherProvinceQuantity"></label>
+          <label>Import Date<input id="itWinOtherProvinceImportDate" type="date" name="itWinOtherProvinceImportDate"></label>
+          <label class="full">Additional Information<textarea id="itWinOtherProvinceInfo" rows="4" placeholder="Additional information about exports to other Canadian provinces" name="itWinOtherProvinceInfo"></textarea></label>
+        </div>
+      </div>
+      <label>Producer Size: *<select id="itWinProducerSize" name="itWinProducerSize"><option value="">Select</option><option>Small</option><option>N/A</option></select></label>
+      <div class="full note">
+        <b>Small</b> - a winery with &lt; 375,000 litres wine sales in the last 12 months<br>
+        <b>N/A</b> - a winery with &gt;= 375,000 litres wine sales in the last 12 months
+      </div>
+      <div class="full item-group">
+        <h3>Contact Person 1</h3>
+        <div class="form-grid">
+          <label>Contact Person Name<input id="itWinContactName1" name="itWinContactName1"></label>
+          <label>Position<input id="itWinContactPosition1" name="itWinContactPosition1"></label>
+          <label>Email<input id="itWinContactEmail1" type="email" name="itWinContactEmail1"></label>
+          <label>Phone<input id="itWinContactPhone1" type="tel" name="itWinContactPhone1"></label>
+        </div>
+      </div>
+      <div class="full item-group">
+        <h3>Contact Person 2</h3>
+        <div class="form-grid">
+          <label>Contact Person Name<input id="itWinContactName2" name="itWinContactName2"></label>
+          <label>Position<input id="itWinContactPosition2" name="itWinContactPosition2"></label>
+          <label>Email<input id="itWinContactEmail2" type="email" name="itWinContactEmail2"></label>
+          <label>Phone<input id="itWinContactPhone2" type="tel" name="itWinContactPhone2"></label>
+        </div>
+      </div>
+      <div class="full item-group">
+        <h3>Contact Person 3</h3>
+        <div class="form-grid">
+          <label>Contact Person Name<input id="itWinContactName3" name="itWinContactName3"></label>
+          <label>Position<input id="itWinContactPosition3" name="itWinContactPosition3"></label>
+          <label>Email<input id="itWinContactEmail3" type="email" name="itWinContactEmail3"></label>
+          <label>Phone<input id="itWinContactPhone3" type="tel" name="itWinContactPhone3"></label>
+        </div>
+      </div>
+    </div>
+    

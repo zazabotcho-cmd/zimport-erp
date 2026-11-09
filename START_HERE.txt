@@ -1,2 +1,44 @@
-WINDOWS: Extract all files into one folder, then double-click START_WINGLOBAL.bat. Keep the server window open. Python must be installed.
-HOSTED WEBSITE: Open your existing live program website address; the BAT starter is for running locally.
+WINGLOBAL WINERY PORTAL — LOCAL PROTOTYPE
+
+1. Extract the ZIP into a separate folder on Windows.
+2. Double-click START_WINERY_PORTAL.bat. Python is required.
+3. Use New Supplier to submit a sample supplier profile.
+4. Switch to Portal administrator and approve the winery request.
+5. Switch to the winery and save a wine draft. Open Approved Items to submit it.
+6. Switch to the administrator and approve it in Wine Review. Check Transfer Queue.
+7. Announce a tender for that winery, switch back and offer the approved wine.
+8. Review the offer as administrator, request a sample document, and check the Inbox.
+
+Data persists in the current browser at http://127.0.0.1:8091/.
+The role selector simulates accounts. Use sample information only.
+The supplier and item forms use fields and choices extracted from the attached
+WINGLOBAL program. Some original calculations and dynamic controls are simplified.
+The correction email opens a draft with no recipient configured.
+Transfer Queue previews approved records and revisions. This build has no
+connection to the private Tender Item Database and performs no external transfers.
+
+TENDER EMAIL
+Set WINERY_SMTP_HOST, WINERY_SMTP_PORT (default 587), WINERY_SMTP_FROM,
+WINERY_SMTP_USER and WINERY_SMTP_PASSWORD in the launcher's environment.
+The mail server must support STARTTLS. Keep credentials outside source files.
+Tender announcements always appear in the selected suppliers' Inbox.
+Email is attempted at announcement time. Use sample recipients for local tests.
+
+TRANSFER APPROVED ACTIVE TENDER OFFERS
+Extract this ZIP into a dedicated folder and run:
+  python install_winglobal_bridge.py
+Paste the existing main WINGLOBAL folder. The installer backs up index.html.
+Start both Windows launchers. Open the main program at http://127.0.0.1:8000/
+and sign in as an administrator. Approve an offer in the winery portal.
+The main program checks for offers every five seconds and lists them under
+All Submitted Items. This does not submit anything to LCBO.
+The portal launcher must be running when the main program checks the queue.
+The local queue is winglobal-approved-offers.sqlite3 one folder above the
+extracted portal. Keep that file when updating the portal.
+This bridge is for the localhost prototype only.
+
+SUPPLIER SUBMISSION STATUS
+Run the bridge installer again to update the main program's importer.
+Restart both launchers and reload both browser pages. While the main program
+is open as administrator, it publishes the Submission Status for linked offers.
+Suppliers see it under My Active Tender Offers. This is a local prototype.
