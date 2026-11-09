@@ -2281,8 +2281,29 @@ function permanentlyRemoveListedHeadsRecords(){
  return changed;
 }
 
+function permanentlyRemoveTvera5566Submission(){
+ const norm=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+ const blocked=new Set(state.permanentlyRemovedTvera5566SubmissionIds||[]);
+ const tenderIds=new Set((state.permanentlyRemovedTender5566Ids||[]).map(String));
+ for(const t of state.tenders||[])if(String(t.code||'').trim()==='5566'&&norm(t.name)==='eastern europe')tenderIds.add(String(t.id));
+ const matches=(r,group)=>{
+  if(!r)return false;if(r.id&&blocked.has(String(r.id)))return true;
+  const item=(state.items||[]).find(i=>String(i.id)===String(r.itemId||''));
+  const names=[r.itemName,r.productDescription,r.description,r.name,item?.productDescription];
+  const isTvera=names.some(name=>/^tvera(?:\s+2026)?$/i.test(norm(name)));
+  const context=[r.tenderId,r.tenderNumber,group?.code].some(v=>String(v||'').trim()==='5566')||[r.tenderName,group?.name].some(v=>norm(v)==='eastern europe')||[r.tenderRecordId,r.opportunityId,group?.id].some(id=>id&&tenderIds.has(String(id)));
+  return isTvera&&context;
+ };
+ let changed=false;
+ const purge=(rows,group)=>(rows||[]).filter(r=>{if(!matches(r,group))return true;if(r.id)blocked.add(String(r.id));changed=true;return false;});
+ for(const key of ['records','winners','archivedTenders','standaloneSubmissions'])if(Array.isArray(state[key]))state[key]=purge(state[key]);
+ for(const t of state.tenders||[])if(Array.isArray(t.workItems))t.workItems=purge(t.workItems,t);
+ for(const key of ['headsRecycleBin','recycleBin','portfolioManagerRecycleBin','countryRecycleBin'])if(Array.isArray(state[key]))state[key]=state[key].filter(entry=>{const r=entry.record||entry.data||entry;if(!matches(r))return true;if(r.id)blocked.add(String(r.id));changed=true;return false;});
+ state.permanentlyRemovedTvera5566SubmissionIds=[...blocked];return changed;
+}
 function removeRequestedGeorgiaWineCandidate(){
- let changed=removeRequestedOxxSupplierAndItem();
+ let changed=permanentlyRemoveTvera5566Submission();
+ changed=removeRequestedOxxSupplierAndItem()||changed;
  const norm=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
  const deleted=new Set(state.requestedGeorgiaCandidateDeletionIds||[]);
  const matches=record=>{
