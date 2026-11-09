@@ -934,7 +934,6 @@ body{padding-bottom:24px;overflow-x:hidden}
   <button class="main-section-btn" data-section="tender-niss">TENDERS</button>
   <button class="main-section-btn" data-section="speciality-services">SPECIALITY SERVICES / PRIVATE ORDERS</button>
   <button class="main-section-btn" data-section="transportations">ALL PO'S/CARGO/TRANSPORTATION</button>
-  <button class="main-section-btn" data-section="country-sourcing">COUNTRY SOURCING</button>
   <button class="main-section-btn" data-section="invoice-calculator-section">INVOICE CALCULATOR</button>
   <button class="main-section-btn" data-section="internal-mail-section">INTERNAL MAIL <span id="mainInternalMailBadge" class="internal-mail-badge" style="display:none">0</span></button>
 <button class="main-section-btn" data-section="recycle-section">RECYCLING BIN</button>
@@ -953,8 +952,7 @@ body{padding-bottom:24px;overflow-x:hidden}
   <button class="tab" data-tab="heads-recycle-bin">Head's Recycling Bin</button>
 </nav>
 <nav class="subnav" data-section-nav="tender-niss">
-  <button class="tab" data-tab="tenders">Tenders</button>
-  <button class="tab" data-tab="worker-list">LCBO SUBMISSIONS LIST</button>
+  <button class="tab" data-tab="worker-list">LCBO submiision list</button>
   <button class="tab" data-tab="items">Tender Item Database</button>
   <button class="tab" data-tab="submissions">All Submitted Items</button>
   <button class="tab" data-tab="tender-winners">TENDER WINNERS</button>
@@ -982,31 +980,7 @@ body{padding-bottom:24px;overflow-x:hidden}
   <button class="tab" data-tab="archived-transportation-records">Archived Transportation</button>
 </nav>
 
-<nav class="subnav country-sourcing-nav" data-section-nav="country-sourcing">
-  <div class="country-sourcing-country-row">
-    <span id="countrySourcingCountryButtons" class="country-sourcing-country-buttons"></span>
-    <button id="addCountrySourcingBtn" class="secondary" type="button" style="display:none">+ Add New Country</button>
-    <button id="deleteCountrySourcingBtn" class="danger" type="button" style="display:none">Delete Country</button>
-  </div>
-  <div class="country-sourcing-supplier-row">
-    <span class="country-sourcing-level-label">Suppliers:</span>
-    <span id="countrySourcingSupplierButtons" class="country-sourcing-supplier-buttons"></span>
-    <button id="addCountrySupplierBtn" class="secondary" type="button" style="display:none" disabled>+ Add Supplier</button>
-    <button id="deleteSelectedCountrySupplierBtn" class="danger" type="button" style="display:none">Delete Supplier</button>
-  </div>
-  <div class="country-sourcing-page-row" id="countrySourcingPageRow">
-    <button class="tab" data-tab="country-dashboard"><span id="countryDashboardTabLabel">Dashboard</span></button>
-    <button class="tab" data-tab="country-opportunities">My Tenders</button>
-    <button class="tab" data-tab="country-candidates">My Active Items</button>
-    <button class="tab" data-tab="country-archived-candidates">My Items</button>
-    <button class="tab" data-tab="country-manager-notes">My Working Notes</button>
-    <button class="tab" data-tab="country-internal-mail">Internal Mail <span id="supplierInternalMailBadge" class="internal-mail-badge" style="display:none">0</span></button>
-    <button class="tab" data-tab="country-manager-recycle-bin">My Recycling Bin</button>
-    <span class="country-sourcing-end-separator" aria-hidden="true"></span>
-    <button class="tab country-sourcing-end-tab" data-tab="country-winners">My Archived Winners</button>
-    <button class="tab country-sourcing-end-tab" data-tab="country-wineries">Supplier Information</button>
-  </div>
-</nav>
+
 <nav class="subnav" data-section-nav="internal-mail-section"><button class="tab" data-tab="internal-mail">Internal Mail <span id="mainInternalMailTabBadge" class="internal-mail-badge" style="display:none">0</span></button></nav>
 <nav class="subnav" data-section-nav="recycle-section">
   <button class="tab" data-tab="recycle-bin">Recycling Bin</button>
@@ -1032,26 +1006,8 @@ body{padding-bottom:24px;overflow-x:hidden}
 <div class="statistics-breakdowns"><div><h3>Bottles by transportation status</h3><div class="table-wrap"><table><thead><tr><th>Status</th><th>Bottles</th></tr></thead><tbody id="statisticsStatusRows"></tbody></table></div></div><div><h3>Bottles by vendor/producer</h3><div class="table-wrap"><table><thead><tr><th>Vendor/Producer</th><th>Bottles</th></tr></thead><tbody id="statisticsVendorRows"></tbody></table></div></div></div>
 <h3>Transportations included in bottle statistics</h3><div class="table-wrap"><table><thead><tr><th>Transportation</th><th>Selected date</th><th>Status</th><th>POs</th><th>Bottles</th><th>Pallets</th><th>Payment status</th></tr></thead><tbody id="statisticsTransportRows"></tbody></table></div>
 <h3>Transportation payments in the selected dates</h3><p id="statisticsCurrencyTotals" class="note"></p><p class="note">Paid invoice amounts come from the transportation’s Cost of Shipment. Records marked Other or Not Paid are excluded. CAD conversion uses each transportation’s saved exchange rate.</p><div class="table-wrap"><table><thead><tr><th>Transportation</th><th>Transport company</th><th>Pay date</th><th>Amount paid</th><th>Amount in CAD</th></tr></thead><tbody id="statisticsPaymentRows"></tbody></table></div></div></div></section>
-<section id="country-dashboard" class="panel"><div class="box">
-  <div class="section-head">
-    <div><h2>Country Supplier Dashboard</h2><p class="note">Supplier sourcing and submission overview.</p></div>
-    <span class="badge">COUNTRY</span>
-  </div>
-  <div class="cards" id="italyKpis"></div><div class="toolbar"><input id="supplierDashboardSearch" type="search" placeholder="Search Dashboard" oninput="filterSupplierDashboard()"></div>
-  <div class="box">
-    <h2>Supplier Responsibilities</h2>
-    <div class="breakdown">
-      <div class="row"><span>Prepare winning wine orders on time according to the required preparation date</span><b>Required</b></div>
-      <div class="row"><span>Contact the administrator when required</span><b>Required</b></div>
-      <div class="row"><span>Send all requested documents on time</span><b>Required</b></div>
-      <div class="row"><span>Provide requested samples on time</span><b>Required</b></div>
-      <div class="row"><span>Prepare order cases and labels exactly as requested</span><b>Required</b></div>
-      <div class="row"><span>Be available and reply to emails within 24 hours</span><b>Required</b></div>
-      <div class="row"><span>Prepare all required export documents</span><b>Required</b></div>
-    </div>
-  </div>
-</div></section>
-<section id="country-opportunities" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — My Tenders</h2><p class="note">Read-only tender information. This page automatically shows tenders created in TENDERS and announced to the Italy Country Portfolio & Sourcing Representative. Tenders cannot be created, edited, or deleted here.</p></div></div><div class="toolbar"><input id="supplierMyTendersSearch" type="search" placeholder="Search My Tenders" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name</th><th>Product Needs</th><th>Pre-Submission Date</th><th>Tasting Date</th><th>Status</th><th>Notes</th><th>My Active Items</th></tr></thead><tbody id="italyOpportunityRows"></tbody></table></div></div></section>
+
+
 
 <div id="supplierTenderContactModal" class="modal hidden"><div class="modal-card" style="max-width:900px">
  <div class="modal-head"><div><h2 id="supplierContactPersonModalTitle">Add Contact Persons</h2><p id="supplierTenderContactTenderLabel" class="note">Supplier contact information</p></div><button type="button" class="icon" onclick="closeSupplierTenderContact()">×</button></div>
@@ -1078,126 +1034,19 @@ body{padding-bottom:24px;overflow-x:hidden}
  </div>
  <div class="modal-actions"><span></span><button type="button" class="secondary" onclick="closeSupplierTenderContact()">Cancel</button><button type="button" onclick="saveSupplierTenderContact()">Save Contacts</button></div>
 </div></div>
-<section id="country-wineries" class="panel"><div class="box">
-  <div class="section-head">
-    <div><h2>Supplier Information</h2><p class="note">Add and manage multiple Supplier Information records for the selected supplier.</p></div>
-    <button type="button" onclick="openItalyWineryForm()">+ Add Supplier Information</button>
-  </div>
-  <div id="italyWineryForm" class="item-group hidden" style="margin:16px 0">
-    <input type="hidden" id="itWinRecordId">
-    <h3 id="itWinFormTitle" style="margin-top:0">Add Supplier Information</h3>
-    <div class="form-grid three">
-      <label>LCBO Supplier Number (if applicable)<input id="itWinLcboSupplierNumber"></label>
-      <label>Vendor # in NISS (if applicable)<input id="itWinAgencyNissNumber" autocomplete="off"></label>
-      <label>Supplier Legal Full Name<input id="itWinName"></label>
-      <label>Supplier Address Line 1<input id="itWinAddress1"></label>
-      <label>Supplier Address Line 2<input id="itWinAddress2"></label>
-      <label>Supplier City<input id="itWinCity"></label>
-      <label>Supplier Region<input id="itWinRegion"></label>
-      <label>Supplier Country<input id="itWinCountry"></label>
-      <label>Supplier Postal Code<input id="itWinPostalCode"></label>
-      <label>Phone Number<input id="itWinPhone"></label>
-      <label>Email Address<input id="itWinEmail" type="email"></label>
-      <label>Payment Terms<select id="itWinPaymentTerms"><option value="">Select</option><option>60 days</option><option>90 days (Preferable)</option></select></label>
-      <label>Direction to Pay Agent<select id="itWinDirectionToPayAgent"><option value="">Select</option><option>Yes</option><option>No</option></select></label>
-      <label>Does the supplier have a designated agent in Ontario / LCBO?<select id="itWinOntario" onchange="toggleSupplierOntarioAgentDetails()"><option value="">Select</option><option>No</option><option>Yes</option></select></label>
-      <div id="itWinOntarioAgentDetails" class="full item-group hidden">
-        <h3 style="margin-top:0">Ontario / LCBO Agent Information</h3>
-        <div class="form-grid three">
-          <label>Agent / Company Name<input id="itWinOntarioAgentCompany"></label>
-          <label>How Long Has the Supplier Worked With This Agent?<input id="itWinOntarioAgentHowLong" placeholder="e.g. 3 years"></label>
-          <label>Quantity Imported<input id="itWinOntarioAgentQuantity" placeholder="e.g. cases / bottles / litres"></label>
-          <label>Import Date<input id="itWinOntarioAgentImportDate" type="date"></label>
-          <label class="full">Additional Information<textarea id="itWinOntarioAgentInfo" rows="4" placeholder="Additional information about the agent and imports"></textarea></label>
-        </div>
-      </div>
-      <label>Does the supplier export to Canadian provinces other than Ontario?<select id="itWinExportsOtherProvinces" onchange="toggleSupplierOtherProvinceDetails()"><option value="">Select</option><option>No</option><option>Yes</option></select></label>
-      <div id="itWinOtherProvinceDetails" class="full item-group hidden">
-        <h3 style="margin-top:0">Other Canadian Province Export Information</h3>
-        <div class="form-grid three">
-          <label>Agent / Company Name<input id="itWinOtherProvinceCompany"></label>
-          <label>Province(s)<input id="itWinOtherProvinceNames" placeholder="e.g. Quebec, Alberta, British Columbia"></label>
-          <label>How Long Has the Supplier Exported There?<input id="itWinOtherProvinceHowLong" placeholder="e.g. 2 years"></label>
-          <label>Quantity Imported<input id="itWinOtherProvinceQuantity" placeholder="e.g. cases / bottles / litres"></label>
-          <label>Import Date<input id="itWinOtherProvinceImportDate" type="date"></label>
-          <label class="full">Additional Information<textarea id="itWinOtherProvinceInfo" rows="4" placeholder="Additional information about exports to other Canadian provinces"></textarea></label>
-        </div>
-      </div>
-      <label>Producer Size: *<select id="itWinProducerSize"><option value="">Select</option><option>Small</option><option>N/A</option></select></label>
-      <div class="full note">
-        <b>Small</b> - a winery with &lt; 375,000 litres wine sales in the last 12 months<br>
-        <b>N/A</b> - a winery with &gt;= 375,000 litres wine sales in the last 12 months
-      </div>
-      <div class="full item-group" style="margin-top:12px">
-        <h3 style="margin-top:0">Contact Person 1</h3>
-        <div class="form-grid">
-          <label>Contact Person Name<input id="itWinContactName1"></label>
-          <label>Position<input id="itWinContactPosition1"></label>
-          <label>Email<input id="itWinContactEmail1" type="email"></label>
-          <label>Phone<input id="itWinContactPhone1" type="tel"></label>
-        </div>
-      </div>
-      <div class="full item-group">
-        <h3 style="margin-top:0">Contact Person 2</h3>
-        <div class="form-grid">
-          <label>Contact Person Name<input id="itWinContactName2"></label>
-          <label>Position<input id="itWinContactPosition2"></label>
-          <label>Email<input id="itWinContactEmail2" type="email"></label>
-          <label>Phone<input id="itWinContactPhone2" type="tel"></label>
-        </div>
-      </div>
-      <div class="full item-group">
-        <h3 style="margin-top:0">Contact Person 3</h3>
-        <div class="form-grid">
-          <label>Contact Person Name<input id="itWinContactName3"></label>
-          <label>Position<input id="itWinContactPosition3"></label>
-          <label>Email<input id="itWinContactEmail3" type="email"></label>
-          <label>Phone<input id="itWinContactPhone3" type="tel"></label>
-        </div>
-      </div>
-    </div>
-    <div class="modal-actions"><span></span><button class="secondary" onclick="closeItalyWineryForm()">Cancel</button><button id="itWinSaveBtn" onclick="saveItalyWinery()">Submit Supplier Information</button></div>
-  </div>
-  <div class="toolbar"><input id="italyWinerySearch" placeholder="Search Supplier Information" oninput="renderItalySourcing()"></div>
-  <div class="table-wrap"><table><thead><tr>
-    <th>LCBO Supplier #</th><th>Supplier Legal Full Name</th><th>Address</th><th>City</th><th>Region</th><th>Country</th><th>Postal Code</th>
-    <th>Phone</th><th>Email</th><th>Payment Terms</th><th>Direction to Pay Agent</th><th>Ontario / LCBO Agent?</th><th>Exports Other Provinces?</th><th>Producer Size</th><th>Action</th>
-  </tr></thead><tbody id="italyWineryRows"></tbody></table></div>
-</div></section>
-<section id="country-candidates" class="panel"><div class="box"><div class="section-head"><div><h2>Italy — My Active Items</h2><p class="note">Item Candidate uses the same detailed product profile as Add Tender Item, with country-sourcing fields added for the representative.</p></div><button type="button" onclick="openItalyCandidateForm()">+ Propose Item</button></div><div class="toolbar"><input id="supplierWineCandidatesSearch" type="search" placeholder="Search My Active Items" oninput="renderItalySourcing()"></div><div class="table-wrap"><table><thead><tr><th>Item</th><th>Supplier / Producer</th><th>Opportunity</th><th>Supplier Price / Case</th><th>Local Retail / Bottle</th><th>Score / Awards</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="italyCandidateRows"></tbody></table></div></div></section>
-<section id="country-archived-candidates" class="panel"><div class="box">
-  <div class="section-head">
-    <div><h2 id="archivedCountryCandidatesTitle">Italy — My Items</h2><p class="note">My items for the selected country. Create and save a complete item profile here, then update or propose it to Head Office later.</p></div>
-    <button type="button" onclick="openCreateMyItemForm()">+ Create My Item</button>
-  </div><div class="toolbar"><input id="supplierArchivedCandidatesSearch" type="search" placeholder="Search My Items" oninput="renderArchivedCountryCandidates()"></div>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Item</th><th>Supplier / Producer</th><th>Supplier Price / Case</th><th>Bottles Per Case</th><th>Score / Awards</th><th>Submitted Date</th><th>Item Status</th><th>Actions</th><th>My Comment / Reason</th></tr></thead>
-    <tbody id="archivedCountryCandidateRows"></tbody>
-  </table></div>
-</div></section>
-<section id="country-winners" class="panel"><div class="box">
-  <div class="section-head"><div><h2 id="countryWinnersTitle">My Archived Winners</h2><p class="note">Items automatically appear here after they are moved from TENDER WINNERS into Archived Tender Winners. These items are locked and read-only. Click the item name to view complete item information.</p></div></div>
-  <div class="toolbar"><input id="supplierMyWinnersSearch" type="search" placeholder="Search My Archived Winners" oninput="renderItalySourcing()"></div>
-  <div class="table-wrap"><table><thead><tr><th>Item</th><th>Supplier / Producer</th><th>Tender</th><th>Supplier Price / Case</th><th>Submission Status</th><th>Access</th></tr></thead><tbody id="countryWinnerRows"></tbody></table></div>
-</div></section>
 
-<section id="country-manager-notes" class="panel"><div class="box">
-<div class="section-head"><div><h2 id="portfolioManagerNotesTitle">My Working Notes</h2><p class="note">Working notes for the selected supplier.</p></div><button id="addPortfolioManagerNoteBtn" type="button">+ Add My Working Note</button></div><div class="toolbar"><input id="supplierWorkingNotesSearch" type="search" placeholder="Search My Working Notes" oninput="renderPortfolioManagerNotes()"></div>
-<div class="table-wrap"><table><thead><tr><th>Date</th><th>Note Title</th><th>Note</th><th>Actions</th></tr></thead><tbody id="portfolioManagerNotesRows"></tbody></table></div>
-</div></section>
+
+
+
+
+
 <div id="portfolioManagerNoteModal" class="modal hidden"><div class="modal-card" style="max-width:720px">
 <div class="modal-head"><div><h2 id="portfolioManagerNoteModalTitle">My Working Note</h2><p class="note" id="portfolioManagerNoteCountryLabel"></p></div><button id="closePortfolioManagerNoteModal" class="icon" type="button">×</button></div>
 <input type="hidden" id="portfolioManagerNoteId">
 <div class="form-grid"><label>Date<input id="portfolioManagerNoteDate" type="date"></label><label>Note Title<input id="portfolioManagerNoteTitleInput" maxlength="120"></label><label class="full">Note<textarea id="portfolioManagerNoteText" rows="10"></textarea></label><div class="full note"><b>Attachments:</b> add or update up to 5 files. Add a description next to each file.</div><label>File 1<input id="portfolioManagerNoteFile1" type="file"></label><label>File 1 Description<input id="portfolioManagerNoteFileDesc1" maxlength="200" placeholder="Describe this file"></label><label>File 2<input id="portfolioManagerNoteFile2" type="file"></label><label>File 2 Description<input id="portfolioManagerNoteFileDesc2" maxlength="200" placeholder="Describe this file"></label><label>File 3<input id="portfolioManagerNoteFile3" type="file"></label><label>File 3 Description<input id="portfolioManagerNoteFileDesc3" maxlength="200" placeholder="Describe this file"></label><label>File 4<input id="portfolioManagerNoteFile4" type="file"></label><label>File 4 Description<input id="portfolioManagerNoteFileDesc4" maxlength="200" placeholder="Describe this file"></label><label>File 5<input id="portfolioManagerNoteFile5" type="file"></label><label>File 5 Description<input id="portfolioManagerNoteFileDesc5" maxlength="200" placeholder="Describe this file"></label><div id="portfolioManagerExistingFiles" class="full"></div></div>
 <div class="modal-actions"><span></span><button id="cancelPortfolioManagerNoteBtn" class="secondary" type="button">Cancel</button><button id="savePortfolioManagerNoteBtn" type="button">Save Note</button></div>
 </div></div>
-<section id="country-manager-recycle-bin" class="panel"><div class="box">
-  <div class="section-head"><div><h2 id="portfolioManagerRecycleTitle">Italy — My Recycling Bin</h2><p class="note">Deleted records from this country are kept here. Everyone can restore records. Only an Administrator can permanently delete them.</p></div></div><div class="toolbar"><input id="supplierRecycleSearch" type="search" placeholder="Search My Recycling Bin" oninput="renderPortfolioManagerRecycleBin()"></div>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Deleted Date</th><th>Page</th><th>Record</th><th>Type</th><th>Actions</th></tr></thead>
-    <tbody id="portfolioManagerRecycleRows"></tbody>
-  </table></div>
-</div></section>
+
 <section id="all-proposals" class="panel">
   <div class="box">
     <div class="section-head">
@@ -1330,7 +1179,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 
 <div id="winnerEditorOverlay" class="hidden" style="position:fixed;inset:0;z-index:2100;background:#0009;overflow:auto;padding:22px"><div style="max-width:1050px;margin:auto;background:white;border-radius:12px;padding:24px"><h2 id="winnerEditorTitle">Create Tender Winner</h2><form id="winnerEditorForm" onsubmit="saveWinnerEditor(event)"><input id="weId" type="hidden"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px"><label style="display:grid;gap:5px">Tender ID<input id="weTenderId" type="text"  ></label><input id="weDate" type="hidden"><label style="display:grid;gap:5px">Tender Name<input id="weTenderName" type="text"  ></label><label style="display:grid;gap:5px">Agency<select id="weAgency" required></select></label><label style="display:grid;gap:5px">Supplier<select id="weSupplier"><option value="">Select supplier</option></select></label><label style="display:grid;gap:5px">Item Description<select id="weBrand" required><option value="">Select item from Tender Item Database</option></select></label><label style="display:grid;gap:5px">ITEM LCBO#<input id="weLcboItemNumber" type="text" placeholder="Enter LCBO #"></label><label style="display:grid;gap:5px">Product / Submission #<input id="weSubmission" type="text"  ></label><label style="display:grid;gap:5px">NTP Status<select id="weNtp"><option>Not Issued</option><option>Issued</option></select></label><label style="display:grid;gap:5px">STORE RELEASE DATE<input id="weRelease" type="date"></label><label style="display:grid;gap:5px">Comments<textarea id="weComments" rows="3"></textarea></label><label style="display:grid;gap:5px">WINNER CASE ORDER QTY<input id="weQty" type="number" min="0" step="1"><span style="display:flex;gap:8px;align-items:end;margin-top:5px"><label style="display:grid;gap:2px;font-size:11px">Items Per Case<input id="weItemsPerCase" type="number" min="0" step="1" style="width:82px;padding:5px 6px"></label><label style="display:grid;gap:2px;font-size:11px">Pallet QTY<input id="wePalletQty" type="number" min="0" step="1" style="width:82px;padding:5px 6px"></label></span></label><label style="display:grid;gap:5px">PO # FILE<select id="wePoStatus"><option>Not Issued</option><option>Issued</option></select></label><label style="display:grid;gap:5px">PO PREPARATION STATUS<select id="wePoPreparationStatus"><option value="">Select status</option><option>PO Sent to the Supplier</option><option>PO Ready for Pick Up</option><option>Picked Up</option></select><input id="wePoPreparationDate" type="date" title="Status date"></label><label style="display:grid;gap:5px">PO Number<input id="wePoNumber" type="text"  ></label><label style="display:grid;gap:5px">PO Cargo/Transportation status<input id="weTransport" type="text" readonly ></label><label style="display:grid;gap:5px">Tracking Number (Imported Ref #)<input id="weRef" type="text" readonly ></label><label style="display:grid;gap:5px">Tracking Link (Paste / Copy)<input id="weTracking" type="url"  ></label></div><p class="note">Cargo/Transportation status and imported reference are read-only and come from the PO's linked transportation shipment.</p><div class="action-buttons" style="margin-top:18px"><button type="submit" class="success">Save Tender Winner</button><button type="button" class="secondary" onclick="closeWinnerEditor()">Cancel</button></div></form></div></div>
 <section id="worker-list" class="panel">
-  <div class="box worker-list"><div class="section-head"><div><h2>LCBO SUBMISSIONS LIST <span id="pageRecordCount-worker" aria-live="polite">(0)</span></h2><p class="note">All products approved by Head Office for LCBO Submission appear here automatically. Additional items can still be added manually when needed.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>Submitted</option><option>Updated Proposal to Head Office</option><option>Approved for LCBO Submission</option><option>Submitted to the LCBO</option><option>Registered in LCBO</option><option value="Additional Information Required">Additional Information Requested</option><option>Declined</option><option>To Register</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Item</button></div></div>
+  <div class="box worker-list"><div class="section-head"><div><h2>LCBO submiision list <span id="pageRecordCount-worker" aria-live="polite">(0)</span></h2><p class="note">All products approved by Head Office for LCBO Submission appear here automatically. Additional items can still be added manually when needed.</p></div><select id="workerTenderFilter" style="max-width:330px"><option value="">All active tenders</option></select></div><button type="button" class="secondary worker-search-toggle" id="toggleWorkerSearch">Search</button><div id="workerSearchPanel"><label>Tender ID<input id="workerTenderIdSearch" type="search" placeholder="Type tender ID"></label><label>Tender Name / Date<input id="workerTenderNameDateSearch" type="search" placeholder="Tender name or date"></label><label>Supplier<input id="workerSupplierSearch" type="search" placeholder="Type supplier name"></label><label>Item<input id="workerItemSearch" type="search" placeholder="Type item name"></label><label>Offered Price<input id="workerOfferedPriceSearch" type="search" inputmode="decimal" placeholder="Example: 15.95"></label><label>Agency / Where to Register<select id="workerAgencySearch"><option value="">All agencies</option></select></label><label>Work Status<select id="workerStatusSearch"><option value="">All statuses</option><option>Submitted</option><option>Updated Proposal to Head Office</option><option>Approved for LCBO Submission</option><option>Submitted to the LCBO</option><option>Registered in LCBO</option><option value="Additional Information Required">Additional Information Requested</option><option>Declined</option><option>To Register</option><option>On Hold</option><option>Registered in LCBO NISS</option></select></label><button type="button" class="secondary" id="clearWorkerSearch">Clear Search</button></div><div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name / Date</th><th>Supplier</th><th>Item</th><th>Offered Price</th><th>Agency / Where to Register</th><th>Instructions</th><th>Submission Status</th><th>Action</th></tr></thead><tbody id="workerRows"></tbody></table></div><div class="worker-add-footer"><button type="button" class="secondary" onclick="addNewWorkerListItem()">+ Add New Submission</button></div></div>
 </section>
 
 <section id="tender-suppliers" class="panel">
@@ -1429,20 +1278,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 </div></div>
 
 
-<section id="tenders" class="panel">
-  <div class="section-head"><div><h2>Tenders <span id="pageRecordCount-tenders" aria-live="polite">(0)</span></h2></div><button id="addTenderBtn">+ Create a Tender</button></div>
-  <button type="button" class="secondary page-search-toggle" id="toggleTenderSearch">Search</button>
-  <div class="page-search-panel" id="tenderSearchPanel">
-    <label>Tender ID<input id="tenderIdSearch" type="search" placeholder="Type tender ID"></label>
-    <label>Tender Name<input id="tenderNameSearch" type="search" placeholder="Type tender name"></label>
-    <label>Product Needs<input id="tenderProductNeedsSearch" type="search" placeholder="Type product need"></label>
-    <label>Pre-Submission Date<input id="tenderPresubDateSearch" type="date"></label>
-    <label>Tasting Date<input id="tenderTastingDateSearch" type="date"></label>
-    <label>Status<select id="tenderStatusSearch"><option value="">All statuses</option><option>Active</option><option>Closed</option></select></label>
-    <div class="page-search-actions"><button type="button" class="secondary" id="clearTenderSearch">Clear Search</button></div>
-  </div>
-  <div class="table-wrap"><table><thead><tr><th>Tender ID</th><th>Tender Name</th><th>Product Needs</th><th>Pre-Submission Date</th><th>Tasting Date</th><th>Status</th><th>Items to Register</th><th>Submissions</th><th>Notes</th><th>Action</th></tr></thead><tbody id="tenderRows"></tbody></table></div>
-</section>
+
 
 <section id="items" class="panel">
   <div class="section-head"><div><h2>Tender Item Database <span id="pageRecordCount-items" aria-live="polite">(0)</span></h2></div><button id="addItemBtn">+ Add Item</button></div>
@@ -1896,23 +1732,8 @@ body{padding-bottom:24px;overflow-x:hidden}
 </div></section>
 
 
-<section id="country-contact-person" class="panel"><div class="box">
- <div class="section-head">
-   <div><h2 id="supplierContactPersonPageTitle">Supplier Contact Persons</h2><p class="note">Add and manage multiple contact persons for the selected supplier.</p></div>
-   <button type="button" onclick="openSupplierContactPersonForm()">+ Add Contact Person</button>
- </div><div class="toolbar"><input id="supplierContactPersonsSearch" type="search" placeholder="Search Contact Persons" oninput="renderSupplierContactPersons()"></div>
- <div class="table-wrap"><table>
-   <thead><tr><th>Name</th><th>Position</th><th>Email</th><th>Phone</th><th>Other</th><th>Actions</th></tr></thead>
-   <tbody id="supplierContactPersonsRows"></tbody>
- </table></div>
-</div></section>
-<section id="country-internal-mail" class="panel"><div class="box">
-  <div class="section-head"><div><h2 id="supplierInternalMailTitle">Supplier Internal Mail</h2><p class="note">Messages between this supplier and the main office.</p></div><div class="inline-actions"><button type="button" class="secondary" onclick="showInternalMailDrafts('supplier')">Drafts</button><button type="button" onclick="openInternalMailCompose('supplier')">+ New Message</button></div></div>
-  <div class="toolbar"><input id="supplierInternalMailSearch" type="search" placeholder="Search Supplier Internal Mail" oninput="renderSupplierInternalMail()"></div><div class="internal-mail-layout">
-    <div id="supplierInternalMailList" class="internal-mail-list"></div>
-    <div id="supplierInternalMailThread" class="internal-mail-thread"><p class="note">Select a message.</p></div>
-  </div>
-</div></section>
+
+
 
 <div id="internalMailComposeModal" class="modal hidden"><div class="modal-card" style="max-width:760px">
   <div class="modal-head"><div><h2>New Internal Message</h2><p id="internalMailComposeContext" class="note"></p></div><button type="button" class="icon" onclick="closeInternalMailCompose()">×</button></div>
@@ -2070,7 +1891,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 <div id="italyCandidateModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="italyCandidateModalTitle">Add Propose Item — Italy</h2><p>Product information follows Add Tender Item, with dedicated Country Representative Sourcing Information and item photos.</p></div><button type="button" class="icon" onclick="closeItalyCandidateForm()">×</button></div><form id="italyCandidateDetailedForm"><input type="hidden" id="itCanRecordId"><div id="candidateApprovedLockNote" class="candidate-approved-lock-note">Approved for LCBO Submission — protected submission information is locked and cannot be edited.</div><div id="italyCandidateFields" class="item-form"></div><div class="modal-actions"><button type="button" id="deleteItalyCandidateBtn" class="danger" onclick="deleteItalyCandidateFromModal()">Delete</button><span></span><button type="button" class="secondary" onclick="closeItalyCandidateForm()">Cancel</button><button type="button" id="proposeItalyCandidateBtn" onclick="proposeItalyCandidateToHeadOffice(this)">Propose to Head Office</button></div></form></div></div>
 <div id="itemInfoModal" class="modal hidden"><div class="modal-card item-info-page"><div class="modal-head"><div><h2 id="itemInfoTitle">Item Information</h2><p>Database information prepared for easy copying into the registration system.</p></div><button id="closeItemInfo" class="icon">×</button></div><div class="info-toolbar"><button type="button" id="copyAllItemInfo" class="secondary">Copy All Information</button><button type="button" id="editItemFromInfo">EDIT ITEM</button></div><div id="itemInfoContent"></div><div class="modal-actions"><span></span><button type="button" id="closeItemInfoBottom" class="secondary">Close</button></div></div></div>
 
-<div id="workerItemModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="workerItemModalTitle">ADD ITEM INTO LCBO SUBMISSIONS LIST</h2><p>Select an item from the Tender Item Database and assign registration details.</p></div><button id="closeWorkerItemModal" class="icon">×</button></div><input type="hidden" id="workerEditTenderId"><input type="hidden" id="workerEditWorkId"><div class="form-grid"><label>Tender *<select id="workerItemTender"></select></label><label class="full">Select item from Tender Item Database *<select id="workerDatabaseItem"></select></label><label>Offered Price<input id="workerOfferedPrice" type="number" step="0.01"></label><label>Currency<select id="workerCurrency"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></label><label>Agency / Where to Register<select id="workerAgency"></select></label><label>Work Status<select id="workerStatus"><option>To Register</option><option>Submitted</option><option>Registered in LCBO NISS</option><option>Registered in LCBO</option><option>On Hold</option></select></label><label class="full">Instructions<textarea id="workerInstructions"></textarea></label></div><div class="modal-actions"><button type="button" id="removeWorkerItem" class="danger">Remove Item</button><span></span><button type="button" id="cancelWorkerItem" class="secondary">Cancel</button><button type="button" id="saveWorkerItem">Add Item</button></div></div></div>
+<div id="workerItemModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><div><h2 id="workerItemModalTitle">ADD ITEM INTO LCBO submiision list</h2><p>Select an item from the Tender Item Database and assign registration details.</p></div><button id="closeWorkerItemModal" class="icon">×</button></div><input type="hidden" id="workerEditTenderId"><input type="hidden" id="workerEditWorkId"><div class="form-grid"><label>Tender *<select id="workerItemTender"></select></label><label class="full">Select item from Tender Item Database *<select id="workerDatabaseItem"></select></label><label>Offered Price<input id="workerOfferedPrice" type="number" step="0.01"></label><label>Currency<select id="workerCurrency"><option>CAD</option><option>USD</option><option>GBP</option><option>EUR</option></select></label><label>Agency / Where to Register<select id="workerAgency"></select></label><label>Work Status<select id="workerStatus"><option>To Register</option><option>Submitted</option><option>Registered in LCBO NISS</option><option>Registered in LCBO</option><option>On Hold</option></select></label><label class="full">Instructions<textarea id="workerInstructions"></textarea></label></div><div class="modal-actions"><button type="button" id="removeWorkerItem" class="danger">Remove Item</button><span></span><button type="button" id="cancelWorkerItem" class="secondary">Cancel</button><button type="button" id="saveWorkerItem">Add Item</button></div></div></div>
 
 <div id="tenderSupplierDetailModal" class="modal hidden"><div class="modal-card head-detail-modal-card">
   <div class="modal-head">
@@ -2596,7 +2417,7 @@ function updateSubmittedItemSubmissionStatus(recordId,status){
   const t=(state.tenders||[]).find(x=>String(x.id||'')===String(r.tenderRecordId||''));
   const w=linkedWorkItemForSubmission(r);
   if(!t||!w){
-    alert('This submitted item is not linked to its LCBO SUBMISSIONS LIST record.');
+    alert('This submitted item is not linked to its LCBO submiision list record.');
     renderTable();
     return;
   }
@@ -2738,7 +2559,7 @@ function renderSubmissionTable(targetId='submissionRows',mode='active',useFilter
       const transport=winnerTransportationInfo(r);const ref=transport.ref||'—';
       return `<tr data-record-id="${r.id}">${base}${productSubmissionCell(r)}<td><select onchange="updateSubmissionField('${r.id}','ntpStatus',this.value)">${selectOptions(ntpOpts,r.ntpStatus||'Not Issued')}</select>${(r.ntpStatus||'Not Issued')==='Issued'?`<div class="ntp-file"><input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" onchange="saveNtpAttachment('${r.id}',this.files[0])">${r.ntpFileName?`<div class="file-actions"><button type="button" class="small secondary" onclick="openNtpAttachment('${r.id}')">Open ${escapeHtml(r.ntpFileName)}</button><button type="button" class="small danger" onclick="removeNtpFile('${r.id}')">Remove File</button></div>`:'<small>Attach NTP file</small>'}</div>`:''}<label style="display:grid;gap:3px;font-size:11px;font-weight:700;margin-top:8px">STORE RELEASE DATE<input type="date" value="${escapeHtml(r.storeReleaseDate||'')}" onchange="updateSubmissionField('${r.id}','storeReleaseDate',this.value)"></label></td><td><textarea rows="2" placeholder="Type comments" onchange="updateSubmissionField('${r.id}','comments',this.value)">${escapeHtml(r.comments||'')}</textarea></td><td><div class="qty-input"><input type="number" min="0" step="1" value="${num(r.finalOrderedQty)||''}" placeholder="800" onchange="updateSubmissionField('${r.id}','finalOrderedQty',this.value)"><span>cases</span></div><div style="margin-top:7px;display:grid;gap:5px"><label style="font-size:10px;font-weight:700;display:flex;align-items:center;gap:5px">Items Per Case <input type="number" min="0" step="1" value="${num(r.itemsPerCase)||num(item.sellingUnitsPerShippingCase)||''}" onchange="updateSubmissionField('${r.id}','itemsPerCase',this.value)" style="width:62px;padding:4px 5px"></label><label style="font-size:10px;font-weight:700;display:flex;align-items:center;gap:5px">Pallet QTY <input type="number" min="0" step="1" value="${num(r.palletQty)||num(item.casesPerPallet)||''}" onchange="updateSubmissionField('${r.id}','palletQty',this.value)" style="width:62px;padding:4px 5px"></label></div></td><td><select onchange="updateSubmissionField('${r.id}','poStatus',this.value)">${selectOptions(poOpts,r.poStatus||'Not Issued')}</select>${(r.poStatus||'Not Issued')==='Issued'?`<input type="text" value="${escapeHtml(r.poNumber||'')}" placeholder="Type PO number" onchange="updateSubmissionField('${r.id}','poNumber',this.value)"><div class="po-file"><input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" onchange="savePoAttachment('${r.id}',this.files[0])">${r.poFileName?`<div class="file-actions"><button type="button" class="small secondary" onclick="openPoAttachment('${r.id}')">Open ${escapeHtml(r.poFileName)}</button><button type="button" class="small danger" onclick="removePoFile('${r.id}')">Remove File</button></div>`:'<small>Attach PO file</small>'}</div>`:''}</td><td>${(()=>{const pv=poPreparationVisual(r);return `<div style="display:grid;gap:6px;min-width:155px;padding:7px;border:1px solid ${pv.border};border-radius:8px;background:${pv.bg};box-shadow:${pv.shadow}"><select onchange="updatePoPreparationStatus('${r.id}',this.value)" style="background:${pv.bg};color:${pv.color};font-weight:700;border-color:${pv.border}">${selectOptions(['','PO Sent to the Supplier','PO Ready for Pick Up','Picked Up'],pv.status)}</select><input type="date" value="${escapeHtml(pv.date)}" onchange="updateSubmissionField('${r.id}','poPreparationDate',this.value)" title="Status date" style="padding:5px 6px;background:#fff">${pv.warning}</div>`})()}</td><td>${shipmentStatusBadge(transport.status)}<div style="margin-top:10px;display:grid;gap:8px"><div><small style="display:block;font-weight:700;margin-bottom:3px">Tracking Number (Imported Ref #)</small><div class="tracking-number"><b>${escapeHtml(ref)}</b>${transport.ref?`<button type="button" class="secondary small" onclick='copyText(${JSON.stringify(transport.ref)})'>Copy</button>`:''}</div></div><div><small style="display:block;font-weight:700;margin-bottom:3px">Tracking Link (Paste / Copy)</small><input type="url" value="${escapeHtml(r.trackingLink||'')}" placeholder="Paste tracking link here" onchange="updateSubmissionField('${r.id}','trackingLink',this.value)">${r.trackingLink?`<div class="file-actions"><a class="button-link small" href="${escapeHtml(r.trackingLink)}" target="_blank" rel="noopener">Open Link</a><button type="button" class="secondary small" onclick='copyText(${JSON.stringify(r.trackingLink)})'>Copy Link</button></div>`:''}</div></div></td><td><div class="action-buttons"><button type="button" class="secondary small" onclick='openWinnerEditor(${JSON.stringify(r.id)})'>Edit</button><button class="small success" onclick="completeWinnerPO('${r.id}')">TENDER WINNERS &amp; move into archived tender winners</button><button type="button" class="secondary small" onclick="moveBackToAllSubmitted('${r.id}')">Restore</button></div></td></tr>`;
     }
-    const linkedWork=linkedWorkItemForSubmission(r);const linkedCandidate=linkedWork?.sourceCandidateId?(state.countryCandidates||[]).find(c=>String(c.id)===String(linkedWork.sourceCandidateId)):null;const submissionStatus=linkedWork?(linkedCandidate?window.normalizeHeadProposalStatus(linkedCandidate.headOfficeActionStatus||linkedCandidate.status||linkedWork.status):(linkedWork.status==='Registered'?'Registered in LCBO NISS':(linkedWork.status||'To Register'))):(r.submissionStatus||'Submitted to the LCBO');const submittedStatusExtra=linkedWork&&submissionStatus==='Additional Information Required'&&linkedCandidate?.additionalInformationRequested?`<div class="head-comment-box" style="margin-top:6px">${escapeHtml(linkedCandidate.additionalInformationRequested)}</div>`:'';const submittedNumberInput=linkedWork&&submissionStatus==='Registered in LCBO NISS'?`<div class="submission-number-wrap"><small>Submission #</small><input type="text" value="${escapeHtml(linkedWork.submissionNumber||r.submissionNumber||'')}" placeholder="1177144" onchange="updateWorkerSubmissionNumber('${r.tenderRecordId}','${linkedWork.id}',this.value)"></div>`:'';return `<tr data-record-id="${r.id}">${base}<td><select class="work-status ${['Submitted','Submitted to the LCBO','Registered in LCBO','In Progress','Registered in LCBO NISS'].includes(submissionStatus)?'work-status-green':'work-status-yellow'}" onchange="updateWorkStatus('${r.tenderRecordId}','${linkedWork?.id||''}',this.value);applyWorkStatusColor(this)" ${linkedWork?'':'disabled title="No linked LCBO SUBMISSIONS LIST item"'}>${submissionStatusOptions(submissionStatus,!!linkedCandidate)}</select>${submittedStatusExtra}${submittedNumberInput}</td>${productSubmissionCell(r)}<td><select class="${stage===''?'':decisionClass(stage)}" onchange="updateSubmissionField('${r.id}','stage1Decision',this.value);applyDecisionColor(this)">${selectLabeledOptions(stageDisplayOpts,stage)}</select></td><td><input type="date" value="${escapeHtml(r.sampleProvideDate||'')}" onchange="updateSubmissionField('${r.id}','sampleProvideDate',this.value)"></td><td><select class="sample-doc-status ${(r.sampleDocumentStatus||'Requested to the Supplier')==='Delivered to Consolidation'?'sample-doc-green':'sample-doc-yellow'}" onchange="updateSubmissionField('${r.id}','sampleDocumentStatus',this.value);this.classList.toggle('sample-doc-green',this.value==='Delivered to Consolidation');this.classList.toggle('sample-doc-yellow',this.value!=='Delivered to Consolidation')">${selectLabeledOptions(sampleDocDisplayOpts,r.sampleDocumentStatus||'Requested to the Supplier')}</select></td><td><div class="submitted-comment-box"><textarea id="submittedComment_${r.id}" rows="3" placeholder="Write a reminder or comment...">${escapeHtml(r.submittedReminderComment||'')}</textarea><div class="file-actions"><button type="button" class="small" onclick="saveSubmittedReminderComment('${r.id}')">Save Comment</button><button type="button" class="small danger" onclick="deleteSubmittedReminderComment('${r.id}')">Delete Comment</button></div></div></td><td><select class="${decisionClass(forced)}" onchange="updateSubmissionField('${r.id}','finalDecision',this.value);applyDecisionColor(this)" ${finalDisabled?'disabled title="Final Decision is controlled by the 1st Stage Decision"':''}>${selectOptions(finalOpts,forced)}</select></td></tr>`
+    const linkedWork=linkedWorkItemForSubmission(r);const linkedCandidate=linkedWork?.sourceCandidateId?(state.countryCandidates||[]).find(c=>String(c.id)===String(linkedWork.sourceCandidateId)):null;const submissionStatus=linkedWork?(linkedCandidate?window.normalizeHeadProposalStatus(linkedCandidate.headOfficeActionStatus||linkedCandidate.status||linkedWork.status):(linkedWork.status==='Registered'?'Registered in LCBO NISS':(linkedWork.status||'To Register'))):(r.submissionStatus||'Submitted to the LCBO');const submittedStatusExtra=linkedWork&&submissionStatus==='Additional Information Required'&&linkedCandidate?.additionalInformationRequested?`<div class="head-comment-box" style="margin-top:6px">${escapeHtml(linkedCandidate.additionalInformationRequested)}</div>`:'';const submittedNumberInput=linkedWork&&submissionStatus==='Registered in LCBO NISS'?`<div class="submission-number-wrap"><small>Submission #</small><input type="text" value="${escapeHtml(linkedWork.submissionNumber||r.submissionNumber||'')}" placeholder="1177144" onchange="updateWorkerSubmissionNumber('${r.tenderRecordId}','${linkedWork.id}',this.value)"></div>`:'';return `<tr data-record-id="${r.id}">${base}<td><select class="work-status ${['Submitted','Submitted to the LCBO','Registered in LCBO','In Progress','Registered in LCBO NISS'].includes(submissionStatus)?'work-status-green':'work-status-yellow'}" onchange="updateWorkStatus('${r.tenderRecordId}','${linkedWork?.id||''}',this.value);applyWorkStatusColor(this)" ${linkedWork?'':'disabled title="No linked LCBO submiision list item"'}>${submissionStatusOptions(submissionStatus,!!linkedCandidate)}</select>${submittedStatusExtra}${submittedNumberInput}</td>${productSubmissionCell(r)}<td><select class="${stage===''?'':decisionClass(stage)}" onchange="updateSubmissionField('${r.id}','stage1Decision',this.value);applyDecisionColor(this)">${selectLabeledOptions(stageDisplayOpts,stage)}</select></td><td><input type="date" value="${escapeHtml(r.sampleProvideDate||'')}" onchange="updateSubmissionField('${r.id}','sampleProvideDate',this.value)"></td><td><select class="sample-doc-status ${(r.sampleDocumentStatus||'Requested to the Supplier')==='Delivered to Consolidation'?'sample-doc-green':'sample-doc-yellow'}" onchange="updateSubmissionField('${r.id}','sampleDocumentStatus',this.value);this.classList.toggle('sample-doc-green',this.value==='Delivered to Consolidation');this.classList.toggle('sample-doc-yellow',this.value!=='Delivered to Consolidation')">${selectLabeledOptions(sampleDocDisplayOpts,r.sampleDocumentStatus||'Requested to the Supplier')}</select></td><td><div class="submitted-comment-box"><textarea id="submittedComment_${r.id}" rows="3" placeholder="Write a reminder or comment...">${escapeHtml(r.submittedReminderComment||'')}</textarea><div class="file-actions"><button type="button" class="small" onclick="saveSubmittedReminderComment('${r.id}')">Save Comment</button><button type="button" class="small danger" onclick="deleteSubmittedReminderComment('${r.id}')">Delete Comment</button></div></div></td><td><select class="${decisionClass(forced)}" onchange="updateSubmissionField('${r.id}','finalDecision',this.value);applyDecisionColor(this)" ${finalDisabled?'disabled title="Final Decision is controlled by the 1st Stage Decision"':''}>${selectOptions(finalOpts,forced)}</select></td></tr>`
   }).join('');
   const cols=mode==='archived'?17:mode==='winner'?12:13;$('#'+targetId).innerHTML=rows||`<tr><td colspan="${cols}">${mode==='archived'?'No archived submissions match the search.':mode==='winner'?'No tender winner submissions.':'No active submissions registered in LCBO NISS.'}</td></tr>`
 }
@@ -2861,7 +2682,7 @@ function renderTenders(){updateAutomaticTenderStatuses();const idQ=($('#tenderId
 function findDatabaseItem(workItem){if(!workItem)return null;if(workItem.itemId){const exact=state.items.find(i=>i.id===workItem.itemId);if(exact)return exact}const n=String(workItem.itemName||'').trim().toLowerCase();return state.items.find(i=>String(i.productDescription||'').trim().toLowerCase()===n)||null}
 function applyWorkStatusColor(el){el.classList.remove('work-status-yellow','work-status-green');el.classList.add(['Submitted','Submitted to the LCBO','Registered in LCBO','Registered in LCBO NISS'].includes(el.value)?'work-status-green':'work-status-yellow');}
 function renderWorkerList(){
-  // Keep LCBO SUBMISSIONS LIST automatically synchronized with Head Office approvals.
+  // Keep LCBO submiision list automatically synchronized with Head Office approvals.
   // This also backfills proposals that were approved before this program version.
   if(Array.isArray(state.countryCandidates)){
     const beforeApprovedRows=(state.tenders||[]).reduce((sum,t)=>sum+((t.workItems||[]).filter(w=>w.sourceCandidateId).length),0);
@@ -2883,7 +2704,7 @@ function renderWorkerList(){
       if(window.ZimportOnline?.queueSync)window.ZimportOnline.queueSync(state,settings);
     }
   }
-  // Keep Submission Status bidirectionally synchronized between HEAD'S PAGE and LCBO SUBMISSIONS LIST.
+  // Keep Submission Status bidirectionally synchronized between HEAD'S PAGE and LCBO submiision list.
   (state.countryCandidates||[]).forEach(candidate=>{
     const wi=window.candidateLcboSubmissionWorkItem(candidate);
     if(wi){
@@ -2899,7 +2720,7 @@ function renderWorkerList(){
     }
   });
 
-  // Keep dedicated Head Office Instructions synchronized into LCBO SUBMISSIONS LIST.
+  // Keep dedicated Head Office Instructions synchronized into LCBO submiision list.
   (state.countryCandidates||[]).forEach(candidate=>{
     if(!candidate?.headOfficeInstructions)return;
     const wi=window.candidateLcboSubmissionWorkItem(candidate);
@@ -3027,7 +2848,7 @@ function updateWorkerSubmissionNumber(tenderId,itemId,value){const t=state.tende
 
 let pendingWorkerAdditionalInfoPreviousStatus='';
 
-function openWorkerAdditionalInfo(tenderId,itemId,previousStatus,candidateId='',source='LCBO SUBMISSIONS LIST'){
+function openWorkerAdditionalInfo(tenderId,itemId,previousStatus,candidateId='',source='LCBO submiision list'){
   const modal=document.getElementById('workerAdditionalInfoModal');
   const t=state.tenders.find(x=>x.id===tenderId);
   const w=t?.workItems?.find(x=>x.id===itemId);
@@ -3039,7 +2860,7 @@ function openWorkerAdditionalInfo(tenderId,itemId,previousStatus,candidateId='',
   document.getElementById('workerAdditionalInfoTenderId').value=tenderId||'';
   document.getElementById('workerAdditionalInfoItemId').value=itemId||'';
   document.getElementById('workerAdditionalInfoCandidateId').value=candidate.id;
-  document.getElementById('workerAdditionalInfoSource').value=source||'LCBO SUBMISSIONS LIST';
+  document.getElementById('workerAdditionalInfoSource').value=source||'LCBO submiision list';
   document.getElementById('workerAdditionalInfoText').value=candidate.additionalInformationRequested||candidate.headOfficeComment||'';
   modal.classList.remove('hidden');
   setTimeout(()=>document.getElementById('workerAdditionalInfoText')?.focus(),0);
@@ -3057,7 +2878,7 @@ function saveWorkerAdditionalInfo(){
   const tenderId=document.getElementById('workerAdditionalInfoTenderId')?.value||'';
   const itemId=document.getElementById('workerAdditionalInfoItemId')?.value||'';
   const candidateId=document.getElementById('workerAdditionalInfoCandidateId')?.value||'';
-  const source=document.getElementById('workerAdditionalInfoSource')?.value||'LCBO SUBMISSIONS LIST';
+  const source=document.getElementById('workerAdditionalInfoSource')?.value||'LCBO submiision list';
   const info=String(document.getElementById('workerAdditionalInfoText')?.value||'').trim();
 
   if(!info){
@@ -3123,7 +2944,7 @@ function updateWorkStatus(tenderId,itemId,status){
    candidate.headOfficeActionStatus=normalized;
    candidate.headOfficeUpdatedAt=new Date().toISOString();
    if(!Array.isArray(candidate.headOfficeActions))candidate.headOfficeActions=[];
-   candidate.headOfficeActions.push({status:normalized,comment:'Status updated from TENDERS → LCBO SUBMISSIONS LIST.',date:candidate.headOfficeUpdatedAt,source:'LCBO SUBMISSIONS LIST'});
+   candidate.headOfficeActions.push({status:normalized,comment:'Status updated from TENDERS → LCBO submiision list.',date:candidate.headOfficeUpdatedAt,source:'LCBO submiision list'});
 
    // When Submission Status becomes "Submitted to the LCBO", automatically
    // create/show the linked item in All Submitted Items.
@@ -3248,7 +3069,7 @@ function updateWorkStatus(tenderId,itemId,status){
  matches.forEach(r=>{if(isSubmitted)r.registered='Yes';r.submissionNumber=w.submissionNumber||r.submissionNumber||'';if(!isRegistered)r.finalDecision='In Progress';});
  save();if(typeof renderItalySourcing==='function')renderItalySourcing();
 }
-function deleteWorkerItem(tenderId,itemId){const t=state.tenders.find(x=>x.id===tenderId);if(!t)return;const w=t.workItems?.find(x=>x.id===itemId);if(!w)return;if(confirm(`Move ${w.itemName||'this item'} to the Recycle Bin?`)){moveToRecycleBin('workerItem','LCBO SUBMISSIONS LIST',w,{tenderId});t.workItems=t.workItems.filter(x=>x.id!==itemId);save();}}
+function deleteWorkerItem(tenderId,itemId){const t=state.tenders.find(x=>x.id===tenderId);if(!t)return;const w=t.workItems?.find(x=>x.id===itemId);if(!w)return;if(confirm(`Move ${w.itemName||'this item'} to the Recycle Bin?`)){moveToRecycleBin('workerItem','LCBO submiision list',w,{tenderId});t.workItems=t.workItems.filter(x=>x.id!==itemId);save();}}
 function syncTenderOtherNeed(){const other=$('#tenderProductNeeds').value==='Other';$('#tenderOtherNeedWrap').classList.toggle('hidden',!other);if(!other)$('#tenderOtherNeed').value='';}
 
 function sourcingCountryNames(){
@@ -5392,6 +5213,7 @@ function isAdminOnlyTab(tab){if(tab==='users')return true;if(window.ZimportOnlin
 function canManageProgramBackups(){const profile=window.ZimportOnline?.profile;return profile?.role==='admin'&&profile.active!==false;}
 function isAdminUser(){return (window.ZIMPORT_CURRENT_ROLE||'readonly')==='admin'}
 function activate(tab,preferredSection=''){
+ if(tab==='tenders'||String(tab).startsWith('country-'))return;
  if(tab==='country-performance')return;
   if(!tab)return;
   if(window.ZimportPermissions&&window.ZimportOnline?.profile&&!window.ZimportPermissions.canPage(window.ZimportOnline.profile,tab)){alert('You do not have access to this page.');return;}
@@ -5470,6 +5292,7 @@ function removePriceListItem(id){
  settings.priceListItems=priceListItems().filter(item=>item.id!==id);safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));save();renderPriceList();
 }
 function activateMainSection(section){
+ if(section==='country-sourcing')return;
   if(!isAdminUser() && section==='heads-page'&&!window.ZimportOnline?.profile?.allowed_pages){
     alert('Administrator access only.');
     section='tender-niss';
@@ -5743,7 +5566,7 @@ $('#deleteRecord').onclick=()=>{const id=$('#recordId').value,r=state.records.fi
 $('#addPoBtn').onclick=()=>openPoEditor();$('#closePoModal').onclick=$('#cancelPoBtn').onclick=closePoEditor;$('#savePoBtn').onclick=savePoRecord;$('#deletePoBtn').onclick=deletePoFromEditor;$('#poProgramInput').onchange=syncPoProgramOther;
 $('#closeShipmentInfo').onclick=$('#closeShipmentInfoBottom').onclick=closeShipmentInfo;$('#addShipmentBtn').onclick=()=>openShipmentEditor();$('#addTransportationBtn').onclick=()=>openShipmentEditor('','transportation');$('#toggleTransportationRecordsSearch').onclick=()=>$('#transportationRecordsSearchPanel').classList.toggle('open');$('#transportationRecordsPageSearch').oninput=renderShipments;$('#clearTransportationRecordsSearch').onclick=()=>{$('#transportationRecordsPageSearch').value='';renderShipments()};$('#closeShipmentModal').onclick=$('#cancelShipmentBtn').onclick=closeShipmentEditor;$('#saveShipmentBtn').onclick=saveShipment;$('#deleteShipmentBtn').onclick=()=>deleteShipment($('#shipmentRecordId').value);$('#addShipmentPoBtn').onclick=addShipmentPo;$('#shipmentCostInput').oninput=updateShipmentCalculations;$('#shipmentCurrencyInput').onchange=()=>updateShipmentCalculations(true);$('#shipmentExchangeRateInput').oninput=()=>updateShipmentCalculations(false);$('#shipmentPaymentStatusInput').onchange=syncShipmentPaymentOther;$('#shipmentStatusInput').onchange=syncShipmentStatusFields;$('#shipmentRefPalletStatusInput').onchange=syncShipmentYesNoColors;$('#shipmentExportFilesStatusInput').onchange=syncShipmentYesNoColors;const archivedFilterIds=['archivedTenderSearch','archivedYearSearch','archivedItemSearch','archivedAgencySearch','archivedProductSearch','archivedStageSearch','archivedFinalSearch','archivedQuoteFrom','archivedQuoteTo','archivedCurrencySearch','archivedErpFrom','archivedErpTo'];archivedFilterIds.forEach(id=>{const el=$('#'+id);if(el){el.oninput=()=>renderSubmissionTable('archivedSubmissionRows','archived',false);el.onchange=()=>renderSubmissionTable('archivedSubmissionRows','archived',false)}});const archivedAgency=$('#archivedAgencySearch');if(archivedAgency){archivedAgency.innerHTML='<option value="">All agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('')}const archivedProduct=$('#archivedProductSearch');if(archivedProduct){const products=[...new Set(state.records.map(r=>r.productType).filter(Boolean))].sort();archivedProduct.innerHTML='<option value="">All products</option>'+products.map(v=>`<option>${escapeHtml(v)}</option>`).join('')}const clearArchived=$('#clearArchivedSearch');if(clearArchived)clearArchived.onclick=()=>{archivedFilterIds.forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderSubmissionTable('archivedSubmissionRows','archived',false)};[1,2,3,4,5,6].forEach(n=>{$('#shipmentFile'+n).onchange=e=>{readShipmentFile(e.target.files[0],n-1);e.target.value=''};$('#openShipmentFile'+n).onclick=()=>openShipmentFile(n-1);$('#removeShipmentFile'+n).onclick=()=>removeShipmentFile(n-1)});
 if($('#addPoSupplierBtn'))$('#addPoSupplierBtn').onclick=addPoSupplierChoice;if($('#addPoVendorBtn'))$('#addPoVendorBtn').onclick=addPoVendorChoice;if($('#poSupplierSelect'))$('#poSupplierSelect').onchange=syncPoOtherSupplier;if($('#poSameProducerSelect'))$('#poSameProducerSelect').onchange=syncPoProducerControls;
-$('#addPoLineBtn').onclick=()=>addPoLine();$('#poItemLines').addEventListener('input',calculatePoTotals);$('#poItemLines').addEventListener('click',e=>{if(e.target.classList.contains('po-remove-line')){e.target.closest('tr').remove();if(!$('#poItemLines').children.length)addPoLine();calculatePoTotals();}});$('#poFileInput').onchange=e=>{poPendingFile=e.target.files[0]||null;renderPoFileStatus(poPendingFile?.name||'');e.target.value='';};$('#openPoRecordFileBtn').onclick=()=>{if(poPendingFile){const url=URL.createObjectURL(poPendingFile);window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000)}else{const id=$('#poRecordId').value;if(id)openPoRecordFile(id)}};$('#removePoRecordFileBtn').onclick=removeCurrentPoRecordFile;$('#tenderCode').addEventListener('input',autofillTenderById);$('#tenderCode').addEventListener('change',autofillTenderById);$('#closeItemInfo').onclick=$('#closeItemInfoBottom').onclick=closeItemInfo;$('#copyAllItemInfo').onclick=copyAllItemInformation;$('#editItemFromInfo').onclick=()=>{const id=currentInfoItemId;closeItemInfo();activate('items');editItem(id)};$('#addTenderBtn').onclick=()=>openTender();$('#tenderProductNeeds').onchange=syncTenderOtherNeed;$('#workerTenderFilter').onchange=renderWorkerList;const workerSearchIds=['workerTenderIdSearch','workerTenderNameDateSearch','workerSupplierSearch','workerItemSearch','workerOfferedPriceSearch'];workerSearchIds.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderWorkerList});['workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.onchange=renderWorkerList});if($('#toggleWorkerSearch'))$('#toggleWorkerSearch').onclick=()=>{const panel=$('#workerSearchPanel');panel.classList.toggle('open');$('#toggleWorkerSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearWorkerSearch'))$('#clearWorkerSearch').onclick=()=>{[...workerSearchIds,'workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderWorkerList()};const workerAgency=$('#workerAgencySearch');if(workerAgency)workerAgency.innerHTML='<option value="">All agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');$('#closeWorkerItemModal').onclick=$('#cancelWorkerItem').onclick=closeWorkerItemEditor;$('#saveWorkerItem').onclick=saveWorkerListItem;$('#removeWorkerItem').onclick=removeWorkerItemFromEditor;$('#closeTender').onclick=$('#cancelTender').onclick=closeTender;const tenderSearchInputs=['tenderIdSearch','tenderNameSearch','tenderProductNeedsSearch','tenderPresubDateSearch','tenderTastingDateSearch'];tenderSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderTenders});if($('#tenderStatusSearch'))$('#tenderStatusSearch').onchange=renderTenders;if($('#toggleTenderSearch'))$('#toggleTenderSearch').onclick=()=>{const panel=$('#tenderSearchPanel');panel.classList.toggle('open');$('#toggleTenderSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearTenderSearch'))$('#clearTenderSearch').onclick=()=>{[...tenderSearchInputs,'tenderStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderTenders()};
+$('#addPoLineBtn').onclick=()=>addPoLine();$('#poItemLines').addEventListener('input',calculatePoTotals);$('#poItemLines').addEventListener('click',e=>{if(e.target.classList.contains('po-remove-line')){e.target.closest('tr').remove();if(!$('#poItemLines').children.length)addPoLine();calculatePoTotals();}});$('#poFileInput').onchange=e=>{poPendingFile=e.target.files[0]||null;renderPoFileStatus(poPendingFile?.name||'');e.target.value='';};$('#openPoRecordFileBtn').onclick=()=>{if(poPendingFile){const url=URL.createObjectURL(poPendingFile);window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000)}else{const id=$('#poRecordId').value;if(id)openPoRecordFile(id)}};$('#removePoRecordFileBtn').onclick=removeCurrentPoRecordFile;$('#tenderCode').addEventListener('input',autofillTenderById);$('#tenderCode').addEventListener('change',autofillTenderById);$('#closeItemInfo').onclick=$('#closeItemInfoBottom').onclick=closeItemInfo;$('#copyAllItemInfo').onclick=copyAllItemInformation;$('#editItemFromInfo').onclick=()=>{const id=currentInfoItemId;closeItemInfo();activate('items');editItem(id)};$('#tenderProductNeeds').onchange=syncTenderOtherNeed;$('#workerTenderFilter').onchange=renderWorkerList;const workerSearchIds=['workerTenderIdSearch','workerTenderNameDateSearch','workerSupplierSearch','workerItemSearch','workerOfferedPriceSearch'];workerSearchIds.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderWorkerList});['workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.onchange=renderWorkerList});if($('#toggleWorkerSearch'))$('#toggleWorkerSearch').onclick=()=>{const panel=$('#workerSearchPanel');panel.classList.toggle('open');$('#toggleWorkerSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearWorkerSearch'))$('#clearWorkerSearch').onclick=()=>{[...workerSearchIds,'workerAgencySearch','workerStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderWorkerList()};const workerAgency=$('#workerAgencySearch');if(workerAgency)workerAgency.innerHTML='<option value="">All agencies</option>'+state.agencies.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');$('#closeWorkerItemModal').onclick=$('#cancelWorkerItem').onclick=closeWorkerItemEditor;$('#saveWorkerItem').onclick=saveWorkerListItem;$('#removeWorkerItem').onclick=removeWorkerItemFromEditor;$('#closeTender').onclick=$('#cancelTender').onclick=closeTender;const tenderSearchInputs=['tenderIdSearch','tenderNameSearch','tenderProductNeedsSearch','tenderPresubDateSearch','tenderTastingDateSearch'];tenderSearchInputs.forEach(id=>{const el=$('#'+id);if(el)el.oninput=renderTenders});if($('#tenderStatusSearch'))$('#tenderStatusSearch').onchange=renderTenders;if($('#toggleTenderSearch'))$('#toggleTenderSearch').onclick=()=>{const panel=$('#tenderSearchPanel');panel.classList.toggle('open');$('#toggleTenderSearch').textContent=panel.classList.contains('open')?'Hide Search':'Search'};if($('#clearTenderSearch'))$('#clearTenderSearch').onclick=()=>{[...tenderSearchInputs,'tenderStatusSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value=''});renderTenders()};
 function tenderSupplierKey(country,id){return `${country}::${id}`;}
 function normalizeTenderCountryName(value){return String(value||'').trim().replace(/\s+/g,' ').toLowerCase();}
 function renderTenderSupplierChoices(selected=[]){
@@ -9734,7 +9557,7 @@ function renderHeadOfficeProposals(){
       <option value="Declined on Tenders Final Decision" ${status==='Declined on Tenders Final Decision'?'selected':''}>DECLINED ON TENDERS FINAL DECISION</option>
     </select>${status==='Additional Information Required'&&x.additionalInformationRequested?`<div class="head-comment-box" style="margin-top:6px">${esc(x.additionalInformationRequested)}</div>`:''}</td>
     <td>
-      <textarea class="head-instructions-input" placeholder="Write instructions for LCBO SUBMISSIONS LIST">${esc(x.headOfficeInstructions||window.candidateLcboSubmissionWorkItem(x)?.instructions||'')}</textarea>
+      <textarea class="head-instructions-input" placeholder="Write instructions for LCBO submiision list">${esc(x.headOfficeInstructions||window.candidateLcboSubmissionWorkItem(x)?.instructions||'')}</textarea>
       <button type="button" class="secondary small" style="margin-top:6px" onclick="saveHeadProposalInstructions(this,'${x.id}')">Save Instructions</button>
     </td>
     <td class="head-history">
@@ -9833,11 +9656,11 @@ window.saveHeadProposalInstructions=function(button,id){
  const instructions=String(input?.value||'').trim();
  const stamp=new Date().toISOString();
 
- // Keep this field dedicated to Head's Page + LCBO SUBMISSIONS LIST only.
+ // Keep this field dedicated to Head's Page + LCBO submiision list only.
  x.headOfficeInstructions=instructions;
  x.headOfficeInstructionsUpdatedAt=stamp;
 
- // Synchronize to the matching LCBO SUBMISSIONS LIST item.
+ // Synchronize to the matching LCBO submiision list item.
  try{
    let workItem=window.candidateLcboSubmissionWorkItem(x);
    if(!workItem && normalizeHeadProposalStatus(x.headOfficeActionStatus||x.status)==='Approved for LCBO Submission'){
@@ -10011,12 +9834,12 @@ function ensureApprovedCandidateInLcboSubmissions(candidate){
  // opportunityId, tenderRecordId, tenderId, tender code, or tender name.
  const tender=resolveCandidateTender(candidate);
  if(!tender){
-   console.warn('Approved Wine Candidate could not be moved to LCBO SUBMISSIONS LIST because its Tender was not found.',candidate);
+   console.warn('Approved Wine Candidate could not be moved to LCBO submiision list because its Tender was not found.',candidate);
    return null;
  }
  if(!Array.isArray(tender.workItems))tender.workItems=[];
 
- // The approved proposal belongs in one LCBO SUBMISSIONS LIST only. Remove an
+ // The approved proposal belongs in one LCBO submiision list only. Remove an
  // older copy from any other tender before adding/updating it under this tender.
  state.tenders.forEach(t=>{
    if(t.id===tender.id||!Array.isArray(t.workItems))return;
@@ -10098,13 +9921,13 @@ window.updateHeadProposalAction=function(button,id){
    if(!Array.isArray(x.headOfficeActions))x.headOfficeActions=[];
    x.headOfficeActions.push({status,comment,date:stamp});
 
-   // Submission Status is shared between HEAD'S PAGE and LCBO SUBMISSIONS LIST.
+   // Submission Status is shared between HEAD'S PAGE and LCBO submiision list.
    // Any status selected here must create/synchronize the matching LCBO row.
    try{
      if(typeof ensureApprovedCandidateInLcboSubmissions==='function'){
        const approvedWorkItem=ensureApprovedCandidateInLcboSubmissions(x);
        if(status==='Approved for LCBO Submission'&&!approvedWorkItem){
-         throw new Error('This item is not linked to a Tender, so it cannot be moved to LCBO SUBMISSIONS LIST.');
+         throw new Error('This item is not linked to a Tender, so it cannot be moved to LCBO submiision list.');
        }
      }
      const tender=resolveCandidateTender(x);
@@ -10117,7 +9940,7 @@ window.updateHeadProposalAction=function(button,id){
      console.error('LCBO submission status sync warning:',syncErr);
    }
 
-   // Head Office Comment must appear as Instructions in LCBO SUBMISSIONS LIST.
+   // Head Office Comment must appear as Instructions in LCBO submiision list.
    // Update the matching submission row whenever it already exists or was just created above.
    try{
      const tender=resolveCandidateTender(x);
@@ -10148,7 +9971,7 @@ window.updateHeadProposalAction=function(button,id){
 }
 window.updateHeadProposal=window.updateHeadProposalAction;
 
-// HEAD'S PAGE uses the exact same Submission Status workflow as LCBO SUBMISSIONS LIST.
+// HEAD'S PAGE uses the exact same Submission Status workflow as LCBO submiision list.
 window.updateHeadSubmissionStatus=function(candidateId,status){
  const candidate=(state.countryCandidates||[]).find(c=>c.id===candidateId);
  if(!candidate){alert('Item proposal was not found.');return false;}
@@ -10156,7 +9979,7 @@ window.updateHeadSubmissionStatus=function(candidateId,status){
  if(!allowed.includes(status)){alert('Select a valid Submission Status.');renderHeadOfficeProposals();return false;}
  const previous=window.normalizeHeadProposalStatus(candidate.headOfficeActionStatus||candidate.status||'In Progress');
 
- // Additional Information Requested uses the exact same required-information modal as LCBO SUBMISSIONS LIST.
+ // Additional Information Requested uses the exact same required-information modal as LCBO submiision list.
  if(status==='Additional Information Required'){
    const existingWorkItem=window.candidateLcboSubmissionWorkItem(candidate);
    const existingTender=resolveCandidateTender(candidate);
@@ -10164,7 +9987,7 @@ window.updateHeadSubmissionStatus=function(candidateId,status){
    return true;
  }
 
- // Approval creates the LCBO SUBMISSIONS LIST row first, then the shared LCBO status handler updates both pages.
+ // Approval creates the LCBO submiision list row first, then the shared LCBO status handler updates both pages.
  if(status==='Approved for LCBO Submission'){
    candidate.status=status;
    candidate.headOfficeActionStatus=status;
@@ -10172,14 +9995,14 @@ window.updateHeadSubmissionStatus=function(candidateId,status){
    const tender=resolveCandidateTender(candidate);
    if(!workItem||!tender){
      candidate.status=previous;candidate.headOfficeActionStatus=previous;
-     alert('This item is not linked to a Tender, so it cannot be moved to LCBO SUBMISSIONS LIST.');
+     alert('This item is not linked to a Tender, so it cannot be moved to LCBO submiision list.');
      renderHeadOfficeProposals();return false;
    }
    updateWorkStatus(tender.id,workItem.id,status);
    return true;
  }
 
- // If this proposal already has an LCBO row, use exactly the same handler as LCBO SUBMISSIONS LIST.
+ // If this proposal already has an LCBO row, use exactly the same handler as LCBO submiision list.
  const workItem=window.candidateLcboSubmissionWorkItem(candidate);
  const tender=resolveCandidateTender(candidate);
  if(workItem&&tender){
