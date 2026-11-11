@@ -15,7 +15,7 @@
       <label>Email Address<input id="itWinEmail" type="email" name="itWinEmail"></label>
       <label>Payment Terms<select id="itWinPaymentTerms" name="itWinPaymentTerms"><option value="">Select</option><option>60 days</option><option>90 days (Preferable)</option></select></label>
       <label>Direction to Pay Agent<select id="itWinDirectionToPayAgent" name="itWinDirectionToPayAgent"><option value="">Select</option><option>Yes</option><option>No</option></select></label>
-      <label>Does the supplier have a designated agent in Ontario / LCBO?<select id="itWinOntario" name="itWinOntario"><option value="">Select</option><option>No</option><option>Yes</option></select></label>
+      <label>Did the supplier previously have a designated agent in Ontario / LCBO?<select id="itWinOntario" name="itWinOntario"><option value="">Select</option><option>No</option><option>Yes</option></select></label>
       <div id="itWinOntarioAgentDetails" class="full item-group hidden">
         <h3>Ontario / LCBO Agent Information</h3>
         <div class="form-grid three">
@@ -38,10 +38,12 @@
           <label class="full">Additional Information<textarea id="itWinOtherProvinceInfo" rows="4" placeholder="Additional information about exports to other Canadian provinces" name="itWinOtherProvinceInfo"></textarea></label>
         </div>
       </div>
-      <label>Producer Size: *<select id="itWinProducerSize" name="itWinProducerSize"><option value="">Select</option><option>Small</option><option>N/A</option></select></label>
+      <div class="full producer-size-section">
+        <label style="max-width:350px">Producer Size: *<select id="itWinProducerSize" name="itWinProducerSize"><option value="">Select</option><option>Small</option><option>N/A</option></select></label>
       <div class="full note">
         <b>Small</b> - a winery with &lt; 375,000 litres wine sales in the last 12 months<br>
         <b>N/A</b> - a winery with &gt;= 375,000 litres wine sales in the last 12 months
+      </div>
       </div>
       <div class="full item-group">
         <h3>Contact Person 1</h3>

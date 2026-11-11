@@ -14,6 +14,10 @@ QUEUE = Path(__file__).resolve().parent.parent / "winglobal-approved-offers.sqli
 
 
 class PortalHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
+        super().end_headers()
+
     def do_GET(self):
         if self.path == "/submission-status":
             with sqlite3.connect(QUEUE) as db:
