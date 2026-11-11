@@ -2653,18 +2653,18 @@ const submissionFilesCache=new Map();
 
 function renderSubmissionFiles(cell,files){
   cell.innerHTML=`
-    <label class="ntp-file">Attach Files
+    <label class="ntp-file">
       <input type="file" multiple aria-label="Attach Files" onchange="attachSubmissionFiles(this)" ${files.length>=ACCEPTED_FILE_LIMIT?'disabled':''}>
     </label>
     <small>${files.length} / ${ACCEPTED_FILE_LIMIT} files</small>
-    <div style="display:grid;grid-template-columns:repeat(3,minmax(100px,1fr));gap:6px;margin-top:6px">
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(155px,1fr));gap:6px;margin-top:6px">
       ${files.map((file,index)=>`
         <div data-file-index="${index}" style="padding:6px;border:1px solid #cbd5e1;border-radius:6px">
-          <label>File name<input type="text" value="${escapeHtml(file.name)}" aria-label="File name"></label>
-          <div class="file-actions" style="flex-wrap:wrap">
-            <button type="button" class="secondary small" onclick="renameSubmissionFile(this)">Save name</button>
-            <button type="button" class="secondary small" onclick="openSubmissionFile(this)">Open</button>
-            <button type="button" class="danger small" onclick="removeSubmissionFile(this)">Remove</button>
+          <label>File name<input type="text" value="${escapeHtml(file.name)}" aria-label="File name" onchange="renameSubmissionFile(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"></label>
+          <div class="file-actions" style="flex-wrap:nowrap;gap:4px;white-space:nowrap">
+            <button type="button" class="secondary small" style="padding:4px;font-size:11px" onclick="openSubmissionFile(this,true)">Download</button>
+            <button type="button" class="secondary small" style="padding:4px;font-size:11px" onclick="openSubmissionFile(this)">Open</button>
+            <button type="button" class="danger small" style="padding:4px;font-size:11px" onclick="removeSubmissionFile(this)">Remove</button>
           </div>
         </div>`).join('')}
     </div>`;
@@ -2692,7 +2692,7 @@ function loadSubmissionFileCells(container){
     });
   }
 }
-async function updateSubmissionFiles(control,update){
+async function updateSubmissionFiles(control,update,renamedId){
   const cell=control.closest('[data-tender-files]');
   const id=cell.dataset.tenderFiles;
   control.disabled=true;
@@ -2700,7 +2700,16 @@ async function updateSubmissionFiles(control,update){
     const files=await acceptedFilesTransaction(id,update);
     submissionFilesCache.set(id,files);
     for(const visibleCell of document.querySelectorAll('[data-tender-files]')){
-      if(visibleCell.dataset.tenderFiles===id)renderSubmissionFiles(visibleCell,files);
+      if(visibleCell.dataset.tenderFiles!==id)continue;
+      if(!renamedId || files.some((file,index)=>file.id!==visibleCell.submissionFiles?.[index]?.id)
+        || files.length!==visibleCell.submissionFiles?.length){
+        renderSubmissionFiles(visibleCell,files);
+        continue;
+      }
+      visibleCell.submissionFiles=files;
+      const index=files.findIndex(file=>file.id===renamedId);
+      const input=visibleCell.querySelector(`[data-file-index="${index}"] input`);
+      if(input && input!==document.activeElement)input.value=files[index].name;
     }
   }catch(error){
     alert(error.message||'The attachment change could not be saved.');
@@ -2727,25 +2736,27 @@ function selectedSubmissionFile(button){
   const cell=button.closest('[data-tender-files]');
   return cell.submissionFiles[Number(button.closest('[data-file-index]').dataset.fileIndex)];
 }
-function renameSubmissionFile(button){
-  const name=button.closest('[data-file-index]').querySelector('input').value.trim();
-  if(!name){alert('Enter a file name.');return;}
-  const {id}=selectedSubmissionFile(button);
-  updateSubmissionFiles(button,files=>files.map(file=>file.id===id?{...file,name}:file));
+function renameSubmissionFile(input){
+  const file=selectedSubmissionFile(input);
+  const name=input.value.trim();
+  input.value=name||file.name;
+  if(!name || name===file.name)return;
+  updateSubmissionFiles(input,files=>files.map(saved=>saved.id===file.id?{...saved,name}:saved),file.id);
 }
 function removeSubmissionFile(button){
   if(!confirm('Remove the attached file?'))return;
   const {id}=selectedSubmissionFile(button);
   updateSubmissionFiles(button,files=>files.filter(file=>file.id!==id));
 }
-function openSubmissionFile(button){
+function openSubmissionFile(button,download=false){
   const {blob,name}=selectedSubmissionFile(button);
+  const currentName=button.closest('[data-file-index]').querySelector('input').value.trim()||name;
   const url=URL.createObjectURL(blob);
   const link=document.createElement('a');
   link.href=url;
   link.target='_blank';
   link.rel='noopener';
-  if(!/^(application\/pdf|image\/(jpeg|png|gif|webp|avif))$/i.test(blob.type))link.download=name;
+  if(download || !/^(application\/pdf|image\/(jpeg|png|gif|webp|avif))$/i.test(blob.type))link.download=currentName;
   document.body.appendChild(link);
   link.click();
   link.remove();
