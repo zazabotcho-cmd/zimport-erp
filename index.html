@@ -1521,7 +1521,7 @@ body{padding-bottom:24px;overflow-x:hidden}
   <button type="button" class="invoice-page-tab" onclick="activate('archived-invoices','heads-page')">Archived Invoices</button>
 </div>
   <div class="section-head"><div><h2>OTHER MIXED INVOICES</h2><p class="note">Create and manage invoices that do not belong to the supplier-payment or agency-fee pages.</p></div><button type="button" id="createOtherNewInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleOtherNewInvoiceSearch">Search</button><div class="page-search-panel" id="otherNewInvoiceSearchPanel"><label>Search Invoices<input id="otherNewInvoicePageSearch" type="search" placeholder="Invoice name, number, date, status, notes or amount"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearOtherNewInvoiceSearch">Clear Search</button></div></div>
-  <div id="otherNewInvoiceList"><div class="table-wrap"><table><thead><tr><th>Invoice Number</th><th>Invoice Date</th><th>Invoice Amount</th><th>Currency</th><th>Invoice Notes</th><th>Paid Status</th><th>Actions</th></tr></thead><tbody id="otherNewInvoiceRows"></tbody></table></div></div>
+  <div id="otherNewInvoiceList"><div class="table-wrap"><table><thead><tr><th>Invoice Number</th><th>Invoice Date</th><th>Invoice Amount</th><th>Currency</th><th>INVOICE PAY DATE/NOTES</th><th>Paid Status</th><th>Actions</th></tr></thead><tbody id="otherNewInvoiceRows"></tbody></table></div></div>
   <div id="otherNewInvoiceEditor" class="hidden">
     <div class="section-head"><div><h2 id="otherNewInvoiceEditorTitle">Create Invoice</h2><p class="note">Enter invoice details. Attached files are saved with the invoice.</p></div><button type="button" class="secondary" id="backToOtherNewInvoiceList">Back to Invoice List</button></div>
     <input type="hidden" id="otherNewInvoiceId">
@@ -1530,8 +1530,8 @@ body{padding-bottom:24px;overflow-x:hidden}
         <label>Invoice Name *<input id="otherNewInvoiceName" placeholder="Enter invoice name"></label>
         <label>Invoice Number *<input id="otherNewInvoiceNumber" type="text" placeholder="Enter invoice number" required></label>
         <label>Invoice Date<input id="otherNewInvoiceDate" type="date"></label>
-        <div class="amount-currency-row"><label>Invoice Amount<input id="otherNewInvoiceAmount" type="number" min="0" step="0.01"></label><label class="currency-mini">Currency<select id="otherNewInvoiceCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option></select></label></div>
-        <label>Invoice Notes<textarea id="otherNewInvoiceNotes" placeholder="Add invoice notes"></textarea></label>
+        <div class="amount-currency-row"><label>Invoice Amount<input id="otherNewInvoiceAmount" type="text" inputmode="decimal"></label><label class="currency-mini">Currency<select id="otherNewInvoiceCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option></select></label></div>
+        <label>INVOICE PAY DATE/NOTES<textarea id="otherNewInvoiceNotes" placeholder="Enter pay date or notes"></textarea></label>
       </div>
       <div class="supplier-payment-card"><h3>Invoice Paid Status</h3>
         <label>Paid Status<select id="otherNewInvoicePaidStatus"><option>Not Paid</option><option>Partially Paid</option><option>Fully Paid</option><option>Other</option></select></label>
@@ -6309,6 +6309,18 @@ document.addEventListener('click',e=>{
 
 
 
+const mixedInvoiceAmountFormatter = new Intl.NumberFormat('en-CA', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+  useGrouping: true
+});
+function formatMixedInvoiceAmount(value){
+  const text=String(value??'').trim();
+  if(!/^-?(?:(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d*)?|\.\d+)$/.test(text))return text;
+  const amount=Number(text.replaceAll(',',''));
+  return Number.isFinite(amount)?mixedInvoiceAmountFormatter.format(amount):text;
+}
+
 (function(){
   const NEW_OTHER_FIELDS = {
     invoiceNumber: 'Number',
@@ -6331,6 +6343,7 @@ document.addEventListener('click',e=>{
     const rec=(state.otherNewInvoices||[]).find(x=>x.id===id)||{};
     const idEl=document.getElementById('otherNewInvoiceId');if(idEl)idEl.value=rec.id||'';
     Object.entries(NEW_OTHER_FIELDS).forEach(([key,suffix])=>{const el=nEl(suffix);if(el)el.value=rec[key]??''});
+    nEl('Amount').value=formatMixedInvoiceAmount(rec.invoiceAmount);
     const t=document.getElementById('otherNewInvoiceEditorTitle');if(t)t.textContent=rec.id?'Edit Invoice':'Create Invoice';
   ;mixedInvoicePendingFile=rec.file||null;renderMixedInvoiceFile();loadInvoiceOtherFiles('otherNewInvoice', 'otherNewInvoices', id);}
   function saveOtherNewInvoice(){
@@ -6338,6 +6351,13 @@ document.addEventListener('click',e=>{
     const rec={id,otherFiles:invoiceOtherFiles.otherNewInvoice||[null,null,null],file:mixedInvoicePendingFile,fileName:mixedInvoicePendingFile?.name||''};
     Object.entries(NEW_OTHER_FIELDS).forEach(([key,suffix])=>{rec[key]=nEl(suffix)?.value??''});
     if(!String(rec.invoiceNumber||'').trim()){alert('Invoice Number is required.');nEl('Number')?.focus();return}
+    const amount=formatMixedInvoiceAmount(rec.invoiceAmount);
+    if(amount&&!/^-?\d{1,3}(?:,\d{3})*\.\d{2}$/.test(amount)){
+      alert('Enter a valid invoice amount, such as 1,051.20.');
+      nEl('Amount').focus();
+      return;
+    }
+    rec.invoiceAmount=amount.replaceAll(',','');
     const i=(state.otherNewInvoices||[]).findIndex(x=>x.id===id);
     if(i>=0)state.otherNewInvoices[i]=rec;else state.otherNewInvoices.push(rec);
     save();nBack();
@@ -6360,11 +6380,11 @@ window.deleteOtherNewInvoiceFromList=deleteOtherNewInvoiceFromList;
 function renderOtherNewInvoices(){
     const tbody=document.getElementById('otherNewInvoiceRows');if(!tbody)return;
     const q=(document.getElementById('otherNewInvoicePageSearch')?.value||'').trim().toLowerCase();
-    const rows=(state.otherNewInvoices||[]).filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q)).map(r=>`
+    const rows=(state.otherNewInvoices||[]).filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q)||formatMixedInvoiceAmount(r.invoiceAmount).includes(q)).map(r=>`
       <tr>
         <td>${escapeHtml(r.invoiceNumber||'—')}</td>
         <td>${escapeHtml(r.invoiceDate||'—')}</td>
-        <td>${escapeHtml(r.invoiceAmount||'—')}</td>
+        <td>${escapeHtml(formatMixedInvoiceAmount(r.invoiceAmount)||'—')}</td>
         <td>${escapeHtml(r.currency||'CAD')}</td>
         <td>${escapeHtml(r.invoiceNotes||'—')}</td>
         <td>${rsoInvoiceStatusSelect(r)}</td>
@@ -6373,6 +6393,9 @@ function renderOtherNewInvoices(){
     tbody.innerHTML=rows||'<tr><td colspan="8">No invoices.</td></tr>';
   }
   function bindOtherNew(){
+    nEl('Amount').addEventListener('blur',event=>{
+      event.target.value=formatMixedInvoiceAmount(event.target.value);
+    });
     document.getElementById('createOtherNewInvoiceBtn')?.addEventListener('click',()=>openOtherNewInvoice(''));
     document.getElementById('backToOtherNewInvoiceList')?.addEventListener('click',nBack);
     document.getElementById('cancelOtherNewInvoice')?.addEventListener('click',nBack);
@@ -6474,7 +6497,7 @@ function restoreArchivedInvoice(id){
     else if(a.sourceType==='Supplier to Agent Fee')sections=genericInvoiceDetailSections('agency',d);
     else if(a.sourceType==='SEAS/REGU/OTHER TO AGENT')sections=genericInvoiceDetailSections('other',d);
     else if(a.sourceType==='OTHER')sections=[['Invoice Information',[
-      ['Invoice Number',d.invoiceNumber],['Invoice Date',d.invoiceDate],['Invoice Amount',`${d.currency||'CAD'} ${num(d.invoiceAmount).toFixed(2)}`],['Currency',d.currency||'CAD'],['Invoice Notes',d.invoiceNotes],['Paid Status',d.paidStatus||'Not Paid'],['Other Status Comments',d.paidStatusOther]
+      ['Invoice Number',d.invoiceNumber],['Invoice Date',d.invoiceDate],['Invoice Amount',`${d.currency||'CAD'} ${formatMixedInvoiceAmount(d.invoiceAmount)||'—'}`],['Currency',d.currency||'CAD'],['INVOICE PAY DATE/NOTES',d.invoiceNotes],['Paid Status',d.paidStatus||'Not Paid'],['Other Status Comments',d.paidStatusOther]
     ]]];
     else sections=[['Invoice Information',Object.entries(d).filter(([k,v])=>k!=='id'&&typeof v!=='object').map(([k,v])=>[k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()),v])]];
     sections.unshift(['Archive Information',[
