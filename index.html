@@ -1528,7 +1528,7 @@ body{padding-bottom:24px;overflow-x:hidden}
     <div class="supplier-payment-grid">
       <div class="supplier-payment-card"><h3>Invoice Information</h3>
         <label>Invoice Name *<input id="otherNewInvoiceName" placeholder="Enter invoice name"></label>
-        <label>Invoice Number<input id="otherNewInvoiceNumber" placeholder="Enter invoice number"></label>
+        <label>Invoice Number *<input id="otherNewInvoiceNumber" type="text" placeholder="Enter invoice number" required></label>
         <label>Invoice Date<input id="otherNewInvoiceDate" type="date"></label>
         <div class="amount-currency-row"><label>Invoice Amount<input id="otherNewInvoiceAmount" type="number" min="0" step="0.01"></label><label class="currency-mini">Currency<select id="otherNewInvoiceCurrency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option></select></label></div>
         <label>Invoice Notes<textarea id="otherNewInvoiceNotes" placeholder="Add invoice notes"></textarea></label>
@@ -6310,9 +6310,15 @@ document.addEventListener('click',e=>{
 
 
 (function(){
-  const NEW_OTHER_FIELDS = [
-    'InvoiceNumber','InvoiceDate','InvoiceAmount','Currency','InvoiceNotes','PaidStatus','PaidStatusOther'
-  ];
+  const NEW_OTHER_FIELDS = {
+    invoiceNumber: 'Number',
+    invoiceDate: 'Date',
+    invoiceAmount: 'Amount',
+    currency: 'Currency',
+    invoiceNotes: 'Notes',
+    paidStatus: 'PaidStatus',
+    paidStatusOther: 'PaidStatusOther'
+  };
   function nEl(s){return document.getElementById('otherNewInvoice'+s)}
   function nBack(){
     document.getElementById('otherNewInvoiceEditor')?.classList.add('hidden');
@@ -6324,14 +6330,14 @@ document.addEventListener('click',e=>{
     document.getElementById('otherNewInvoiceEditor')?.classList.remove('hidden');
     const rec=(state.otherNewInvoices||[]).find(x=>x.id===id)||{};
     const idEl=document.getElementById('otherNewInvoiceId');if(idEl)idEl.value=rec.id||'';
-    NEW_OTHER_FIELDS.forEach(k=>{const el=nEl(k);if(el)el.value=rec[k.charAt(0).toLowerCase()+k.slice(1)]??''});
+    Object.entries(NEW_OTHER_FIELDS).forEach(([key,suffix])=>{const el=nEl(suffix);if(el)el.value=rec[key]??''});
     const t=document.getElementById('otherNewInvoiceEditorTitle');if(t)t.textContent=rec.id?'Edit Invoice':'Create Invoice';
   ;mixedInvoicePendingFile=rec.file||null;renderMixedInvoiceFile();loadInvoiceOtherFiles('otherNewInvoice', 'otherNewInvoices', id);}
   function saveOtherNewInvoice(){
     const id=document.getElementById('otherNewInvoiceId')?.value||uid();
     const rec={id,otherFiles:invoiceOtherFiles.otherNewInvoice||[null,null,null],file:mixedInvoicePendingFile,fileName:mixedInvoicePendingFile?.name||''};
-    NEW_OTHER_FIELDS.forEach(k=>{const el=nEl(k);rec[k.charAt(0).toLowerCase()+k.slice(1)]=el?.value??''});
-    if(!String(rec.invoiceNumber||'').trim()){alert('Invoice Number is required.');nEl('InvoiceNumber')?.focus();return}
+    Object.entries(NEW_OTHER_FIELDS).forEach(([key,suffix])=>{rec[key]=nEl(suffix)?.value??''});
+    if(!String(rec.invoiceNumber||'').trim()){alert('Invoice Number is required.');nEl('Number')?.focus();return}
     const i=(state.otherNewInvoices||[]).findIndex(x=>x.id===id);
     if(i>=0)state.otherNewInvoices[i]=rec;else state.otherNewInvoices.push(rec);
     save();nBack();
@@ -6380,8 +6386,8 @@ function renderOtherNewInvoices(){
     renderOtherNewInvoices();
   }
   window.openOtherNewInvoice=openOtherNewInvoice;
-  document.addEventListener('DOMContentLoaded',bindOtherNew);
-  setTimeout(bindOtherNew,0);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindOtherNew,{once:true});
+  else bindOtherNew();
 })();
 
 (function(){
