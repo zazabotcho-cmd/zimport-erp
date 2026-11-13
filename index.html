@@ -9666,12 +9666,26 @@ function inventoryProformaPriceCell(poId,pricing){
  return `<label style="display:flex;flex-direction:column;justify-content:flex-start;gap:8px;min-width:170px;margin:6px 0;min-height:76px">${label}<span style="display:flex;align-items:center;gap:5px"><span>$</span><input type="number" min="0" step="0.01" inputmode="decimal" aria-label="${field==='bottleDeposit'?'Bottle Deposit per bottle':label+' proforma bottle net price'}" placeholder="${placeholder}" value="${escapeHtml(String(pricing?.[field]??''))}" data-inventory-price-po="${escapeHtml(encoded)}" data-inventory-price-field="${field}" onchange="updateInventoryProformaPrice('${encoded}','${field}',this)"></span></label>`;}).join('');
 }
 
+function inventorySalesProfit(sales,pricing,transportPerBottle,originalPoBottles,bottlesPerCase){
+ const salesByCustomer=[false,true].map(licensed=>{
+   const count=num(sales[licensed?'licensedCasesSold':'nonLicensedCasesSold']);
+   const perBottle=inventoryRetailProfitPerBottle(pricing,transportPerBottle,originalPoBottles,licensed);
+   return {label:licensed?'Licensed customer':'Non-licensed customer',count,
+     profit:count===0?0:perBottle==='—'||bottlesPerCase<=0?null:count*bottlesPerCase*Number(perBottle)};
+ });
+ const totalSalesProfit=salesByCustomer.some(customer=>customer.profit===null)?null:
+   salesByCustomer.reduce((total,customer)=>total+customer.profit,0);
+ return {salesByCustomer,totalSalesProfit};
+}
+
 window.renderHeadInventory=()=>{
  const body=document.getElementById('headInventoryRows'),k=document.getElementById('headInventoryKpis');
  if(!body)return;
  const q=(document.getElementById('headInventorySearch')?.value||'').trim().toLowerCase();
  const pos=automaticInventoryPos();
  const rows=[];
+ let projectTotalProfit=0;
+ let hasMissingProfit=false;
 
  pos.forEach(po=>{
   const shipment=inventoryShipmentForPo(po);
@@ -9700,9 +9714,15 @@ window.renderHeadInventory=()=>{
     const poNumber=po.number||'';
     const totalQuotedValue=originalCases*num(line.quotedPricePerCase);
     const hay=[poNumber,program,vendor,line.itemNo,line.yearProductName,shipment?.name,po.poStatus].join(' ').toLowerCase();
+    const salesProfit=inventorySalesProfit(state.inventorySalesMetrics?.[inventoryKey]||{},
+      inventoryProformaPo(poId)?.inventoryProformaPricing||po.inventoryProformaPricing,
+      transportPerBottle,originalPoBottles,bpc);
+    if(salesProfit.totalSalesProfit===null)hasMissingProfit=true;
+    else projectTotalProfit+=salesProfit.totalSalesProfit;
     if(q&&!hay.includes(q))return;
 
     rows.push({
+      salesProfit,
       poNumber,
       poId,
       program,
@@ -9745,16 +9765,8 @@ window.renderHeadInventory=()=>{
    const stockOut=state.inventoryStockOutDates?.[r.inventoryKey];
    const sales=state.inventorySalesMetrics?.[r.inventoryKey]||{};
    const months=inventorySellingMonths(sales);
-   const pricing=inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing;
-   const salesByCustomer=[false,true].map(licensed=>{
-     const count=num(sales[licensed?'licensedCasesSold':'nonLicensedCasesSold']);
-     const perBottle=inventoryRetailProfitPerBottle(pricing,r.transportPerBottle,r.originalPoBottles,licensed);
-     return {label:licensed?'Licensed customer':'Non-licensed customer',count,
-       profit:count===0?0:perBottle==='—'||r.bpc<=0?null:count*r.bpc*Number(perBottle)};
-   });
+   const {salesByCustomer,totalSalesProfit}=r.salesProfit;
    const totalCasesSold=salesByCustomer.reduce((total,customer)=>total+customer.count,0);
-   const totalSalesProfit=salesByCustomer.some(customer=>customer.profit===null)?null:
-     salesByCustomer.reduce((total,customer)=>total+customer.profit,0);
    const zeroControls=r.cases===0
      ? ` <button type="button" class="secondary small" onclick="openInventoryStockOutDate('${keyArg}','${poIdArg}','${poNoArg}')">Mark Stock-Out Date</button>
         ${stockOut?.stockOutDate?`<br><small>Stock-Out: ${escapeHtml(stockOut.stockOutDate)} · Payment due: ${escapeHtml(stockOut.paymentDueDate||'')}</small>`:''}`
@@ -9811,7 +9823,8 @@ window.renderHeadInventory=()=>{
  if(k){
    let totalCases=0,totalBottles=0;
    let projectCases=0,projectBottles=0,projectBalanceCents=0;
-   let projectTransportation=0,totalLabCost=0,totalOtherExpenses=0;
+   let projectTransportation=0,totalLabCost=0,totalOtherFees=0;
+   let projectSellOutMonths=null,projectCasesPerMonth=0;
    pos.forEach(po=>{
      const pricing=inventoryProformaPo(po.originalPoId||po.id)?.inventoryProformaPricing||po.inventoryProformaPricing;
      const transportationPerBottle=nonTenderPoTransportationCad(po,inventoryShipmentForPo(po));
@@ -9820,25 +9833,44 @@ window.renderHeadInventory=()=>{
        if(state.archivedLcboInventory?.[inventoryLineKey(po,line,index)])return;
        const originalCases=num(line.totalQuantity);
        const bottlesPerCase=num(line.unitsPerCase);
+       const sales=state.inventorySalesMetrics?.[inventoryLineKey(po,line,index)]||{};
+       const casesSold=num(sales.nonLicensedCasesSold)+num(sales.licensedCasesSold);
+       const months=inventorySellingMonths(sales);
+       if(months!==null){
+         projectCasesPerMonth+=casesSold/months;
+         projectSellOutMonths=Math.max(projectSellOutMonths??0,months);
+       }
        projectCases+=originalCases;
        projectBottles+=originalCases*bottlesPerCase;
        poHasActiveInventory=true;
        const originalBottles=originalCases*bottlesPerCase;
        projectTransportation+=originalBottles*transportationPerBottle;
-       totalOtherExpenses+=originalBottles*num(pricing?.otherFeesBottle);
        const projectBalance=inventoryProformaBalanceOwing(originalCases,pricing,bottlesPerCase);
        if(projectBalance!=='—')projectBalanceCents+=Math.round(Number(projectBalance)*100);
        const c=inventoryCasesForLine(po,line,index);
        totalCases+=c;
        totalBottles+=c*bottlesPerCase;
      });
-     if(poHasActiveInventory)totalLabCost+=num(pricing?.totalLabCost);
+     if(poHasActiveInventory){
+       totalLabCost+=num(pricing?.totalLabCost);
+       totalOtherFees+=num(pricing?.otherFeesBottle);
+     }
    });
    const totalProformaBalanceCents=rows.reduce((sum,r)=>{
      const balance=inventoryProformaBalanceOwing(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc);
      return sum+(balance==='—'?0:Math.round(Number(balance)*100));
    },0);
-   k.innerHTML=`<div class="card"><span>POs in Inventory</span><strong>${pos.length}</strong></div>
+   const projectBudgetCents=projectBalanceCents+Math.round(projectTransportation*100)
+     +Math.round(totalLabCost*100)+Math.round(totalOtherFees*100);
+   k.innerHTML=`<div class="card"><span>Total Project Budget (CAD, Supplier Costs Not Included)</span><strong>${inventoryPriceMoney(projectBudgetCents/100)}</strong>
+       <span style="margin-top:8px">Project Total Profit / Project Monthly Profit</span>
+       <strong>${inventoryPriceMoney(hasMissingProfit?null:projectTotalProfit)} / ${inventoryPriceMoney(hasMissingProfit||!projectSellOutMonths?null:projectTotalProfit/projectSellOutMonths)}</strong>
+     </div>
+     <div class="card">
+       <span>Project Sell-Out Months / Total Cases Sold per Month</span>
+       <strong>${projectSellOutMonths===null?'—':projectSellOutMonths.toLocaleString('en-CA',{maximumFractionDigits:2})} / ${projectSellOutMonths!==null?projectCasesPerMonth.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong>
+     </div>
+     <div class="card"><span>POs in Inventory</span><strong>${pos.length}</strong></div>
      <div class="card">
        <span>Total Project Cases / Total Project Bottles</span>
        <strong>${projectCases.toLocaleString()} / ${projectBottles.toLocaleString()}</strong>
@@ -9856,8 +9888,8 @@ window.renderHeadInventory=()=>{
        <strong>${inventoryPriceMoney(projectTransportation)}</strong>
        <span style="margin-top:8px">Total Lab Cost</span>
        <strong>${inventoryPriceMoney(totalLabCost)}</strong>
-       <span style="margin-top:8px">Total Other Expenses</span>
-       <strong>${inventoryPriceMoney(totalOtherExpenses)}</strong>
+       <span style="margin-top:8px">Total Other Fees</span>
+       <strong>${inventoryPriceMoney(totalOtherFees)}</strong>
      </div>`;
  }
 };
