@@ -9668,7 +9668,10 @@ function inventoryProformaHst(net,deposit,pricing){
 }
 function inventoryProformaBalanceOwing(cases,pricing,bottlesPerCase){
  const total=inventoryProformaTotal(cases,pricing,bottlesPerCase);
- return total==='—'?'—':inventoryProformaHst(Number(total),inventoryBottleDepositTotal(cases,pricing,bottlesPerCase),pricing).toFixed(2);
+ if(total==='—')return total;
+ const net=Number(total);
+ const deposit=inventoryBottleDepositTotal(cases,pricing,bottlesPerCase);
+ return (net+inventoryProformaHst(net,deposit,pricing)).toFixed(2);
 }
 function inventoryPriceMoney(value){return value==='—'||value===undefined||value===null||value===''?'—':'$'+Number(value).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function inventoryProformaCaseSellingPrice(pricing,bottlesPerCase){
