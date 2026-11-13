@@ -9752,6 +9752,9 @@ window.renderHeadInventory=()=>{
      return {label:licensed?'Licensed customer':'Non-licensed customer',count,
        profit:count===0?0:perBottle==='—'||r.bpc<=0?null:count*r.bpc*Number(perBottle)};
    });
+   const totalCasesSold=salesByCustomer.reduce((total,customer)=>total+customer.count,0);
+   const totalSalesProfit=salesByCustomer.some(customer=>customer.profit===null)?null:
+     salesByCustomer.reduce((total,customer)=>total+customer.profit,0);
    const zeroControls=r.cases===0
      ? ` <button type="button" class="secondary small" onclick="openInventoryStockOutDate('${keyArg}','${poIdArg}','${poNoArg}')">Mark Stock-Out Date</button>
         ${stockOut?.stockOutDate?`<br><small>Stock-Out: ${escapeHtml(stockOut.stockOutDate)} · Payment due: ${escapeHtml(stockOut.paymentDueDate||'')}</small>`:''}`
@@ -9798,29 +9801,64 @@ window.renderHeadInventory=()=>{
       </label>`).join('')}
       <small>Selling period: ${months===null?'—':months.toFixed(2)+' months'}</small>
     </td>
-    <td>${salesByCustomer.map(({label,count})=>`<div style="min-width:175px;margin-bottom:12px">${label}<br><b>${count.toLocaleString()}</b> cases sold<br><small>${months===null?'—':(count/months).toFixed(2)} cases/month</small></div>`).join('')}</td>
-    <td>${salesByCustomer.map(({label,profit})=>`<div style="min-width:175px;margin-bottom:12px">${label}<br><b>${inventoryPriceMoney(profit)}</b> total<br><small>${inventoryPriceMoney(months===null||profit===null?null:profit/months)} / month</small></div>`).join('')}</td>
+    <td>${salesByCustomer.map(({label,count})=>`<div style="min-width:175px;margin-bottom:12px">${label}<br><b>${count.toLocaleString()}</b> cases sold<br><small>${months===null?'—':(count/months).toFixed(2)} cases/month</small></div>`).join('')}
+      <small>Combined total: ${totalCasesSold.toLocaleString()} cases sold<br>${months===null?'—':(totalCasesSold/months).toFixed(2)} cases/month</small></td>
+    <td>${salesByCustomer.map(({label,profit})=>`<div style="min-width:175px;margin-bottom:12px">${label}<br><b>${inventoryPriceMoney(profit)}</b> total<br><small>${inventoryPriceMoney(months===null||profit===null?null:profit/months)} / month</small></div>`).join('')}
+      <small>Combined total: ${inventoryPriceMoney(totalSalesProfit)}<br>${inventoryPriceMoney(months===null||totalSalesProfit===null?null:totalSalesProfit/months)} / month</small></td>
    </tr>`;
  }).join('')||'<tr><td colspan="22">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
 
  if(k){
    let totalCases=0,totalBottles=0;
+   let projectCases=0,projectBottles=0,projectBalanceCents=0;
+   let projectTransportation=0,totalLabCost=0,totalOtherExpenses=0;
    pos.forEach(po=>{
+     const pricing=inventoryProformaPo(po.originalPoId||po.id)?.inventoryProformaPricing||po.inventoryProformaPricing;
+     const transportationPerBottle=nonTenderPoTransportationCad(po,inventoryShipmentForPo(po));
+     let poHasActiveInventory=false;
      (po.lines||[]).forEach((line,index)=>{
        if(state.archivedLcboInventory?.[inventoryLineKey(po,line,index)])return;
-     const c=inventoryCasesForLine(po,line,index);
+       const originalCases=num(line.totalQuantity);
+       const bottlesPerCase=num(line.unitsPerCase);
+       projectCases+=originalCases;
+       projectBottles+=originalCases*bottlesPerCase;
+       poHasActiveInventory=true;
+       const originalBottles=originalCases*bottlesPerCase;
+       projectTransportation+=originalBottles*transportationPerBottle;
+       totalOtherExpenses+=originalBottles*num(pricing?.otherFeesBottle);
+       const projectBalance=inventoryProformaBalanceOwing(originalCases,pricing,bottlesPerCase);
+       if(projectBalance!=='—')projectBalanceCents+=Math.round(Number(projectBalance)*100);
+       const c=inventoryCasesForLine(po,line,index);
        totalCases+=c;
-       totalBottles+=c*num(line.unitsPerCase);
+       totalBottles+=c*bottlesPerCase;
      });
+     if(poHasActiveInventory)totalLabCost+=num(pricing?.totalLabCost);
    });
    const totalProformaBalanceCents=rows.reduce((sum,r)=>{
      const balance=inventoryProformaBalanceOwing(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc);
      return sum+(balance==='—'?0:Math.round(Number(balance)*100));
    },0);
    k.innerHTML=`<div class="card"><span>POs in Inventory</span><strong>${pos.length}</strong></div>
-     <div class="card"><span>Total Cases in Stock</span><strong>${totalCases.toLocaleString()}</strong></div>
-     <div class="card"><span>Total Bottles in Stock</span><strong>${totalBottles.toLocaleString()}</strong></div>
-     <div class="card"><span>Total Amount of Proforma Balance Owing (TAX/HST incl.)</span><strong>${inventoryPriceMoney(totalProformaBalanceCents/100)}</strong></div>`;
+     <div class="card">
+       <span>Total Project Cases / Total Project Bottles</span>
+       <strong>${projectCases.toLocaleString()} / ${projectBottles.toLocaleString()}</strong>
+       <span style="margin-top:8px">Total Cases in Stock / Total Bottles in Stock</span>
+       <strong>${totalCases.toLocaleString()} / ${totalBottles.toLocaleString()}</strong>
+     </div>
+     <div class="card">
+       <span>Total Amount of Proforma Project Balance (TAX/HST incl.)</span>
+       <strong>${inventoryPriceMoney(projectBalanceCents/100)}</strong>
+       <span style="margin-top:8px">Total Amount of Proforma Balance Owing (TAX/HST incl.)</span>
+       <strong>${inventoryPriceMoney(totalProformaBalanceCents/100)}</strong>
+     </div>
+     <div class="card">
+       <span>Total Project Transportation Price (CAD)</span>
+       <strong>${inventoryPriceMoney(projectTransportation)}</strong>
+       <span style="margin-top:8px">Total Lab Cost</span>
+       <strong>${inventoryPriceMoney(totalLabCost)}</strong>
+       <span style="margin-top:8px">Total Other Expenses</span>
+       <strong>${inventoryPriceMoney(totalOtherExpenses)}</strong>
+     </div>`;
  }
 };
 
