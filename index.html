@@ -825,6 +825,16 @@ select.global-status-control option{font-weight:600;background:#fff;color:#1f293
 #screen-top-table-header th{position:static;background:#eef3f8;box-sizing:border-box;}
 .panel .table-wrap:not(.modal .table-wrap) {max-height:none;overflow-x:auto;overflow-y:hidden;}
 .panel .table-wrap > table > thead th {position:static!important;top:auto!important;}
+#inventory-in-stock .table-wrap > table .inventory-pinned-product {
+  position:sticky!important;left:0;z-index:2;background:#fff;
+  box-shadow:2px 0 4px #0b1f3a26;min-width:150px;
+}
+#inventory-in-stock .table-wrap > table th.inventory-pinned-product {
+  z-index:3;background:#eef3f8;
+}
+#screen-top-table-header th.inventory-pinned-product {
+  position:relative!important;z-index:1;box-shadow:2px 0 4px #0b1f3a26;
+}
 #screen-top-table-header thead th{position:static!important;top:auto!important;background:#eef3f8!important;}
 </style>
 <style>
@@ -1359,8 +1369,8 @@ body{padding-bottom:24px;overflow-x:hidden}
  <div class="cards" id="headInventoryKpis"></div>
  <div class="table-wrap"><table>
   <thead><tr>
-   <th>PO #</th><th>Vendor/Producer</th><th>LCBO Item #</th><th>Product Name</th>
-   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Inventory in stock office/warehouse</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Other Fees per Bottle</th><th>Profit per Bottle (TAX/HST incl.)</th>
+   <th>PO #</th><th>Vendor/Producer</th><th>LCBO Item #</th><th class="inventory-pinned-product">Product Name</th>
+   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Inventory in stock office/warehouse</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Other Fees per Bottle</th><th>Profit per Bottle (TAX/HST incl.)</th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>Total cases sold / Cases sold per month</th><th>Total profit / Monthly profit</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -8866,12 +8876,46 @@ function inventorySaleButtons(keyArg,cases,available,location){
     `<button type="button" class="secondary small" onclick="sellInventoryToCustomer('${keyArg}',${cases},'${location}',${index===1})" ${available<=0?'disabled':''}>Sold to the ${customer}</button>`
   ).join(' ');
 }
+function officeInventoryRecords(key){
+  return (state.officeInventory||[]).filter(record=>
+    !record.inventoryArchived&&String(record.inventoryKey)===key&&num(record.cases)>0
+  );
+}
+function deductOfficeInventoryCases(officeRecords,qty){
+  let remaining=qty;
+  for(const record of officeRecords){
+    const deducted=Math.min(num(record.cases),remaining);
+    record.cases=num(record.cases)-deducted;
+    remaining-=deducted;
+    if(remaining<=0)break;
+  }
+}
+window.moveInventoryBackToTrillium=(encodedKey,trilliumCases)=>{
+  const key=decodeURIComponent(encodedKey);
+  const officeRecords=officeInventoryRecords(key);
+  const officeCases=officeRecords.reduce((total,record)=>total+num(record.cases),0);
+  if(officeCases<=0)return;
+  const entered=prompt('Cases to move back to LCBO Trillium warehouse:', '');
+  if(entered===null)return;
+  const qty=Number(entered);
+  if(!Number.isFinite(qty)||qty<=0||qty>officeCases){
+    alert('Enter a quantity greater than 0 and no more than '+officeCases+'.');
+    return;
+  }
+  const current=num(state.inventoryCaseOverrides?.[key]??trilliumCases);
+  const available=inventoryAvailableForSale(key,current);
+  deductOfficeInventoryCases(officeRecords,qty);
+  state.inventoryCaseOverrides??={};
+  state.inventorySaleAvailability??={};
+  state.inventoryCaseOverrides[key]=current+qty;
+  state.inventorySaleAvailability[key]=available+qty;
+  save();
+  renderHeadInventory();
+};
 window.sellInventoryToCustomer=(encodedKey,availableCases,location,licensed)=>{
   const key=decodeURIComponent(String(encodedKey||''));
   const office=location==='office';
-  const officeRecords=office?(state.officeInventory||[]).filter(record=>
-    !record.inventoryArchived&&String(record.inventoryKey)===key&&num(record.cases)>0
-  ):[];
+  const officeRecords=office?officeInventoryRecords(key):[];
   const current=office?officeRecords.reduce((total,record)=>total+num(record.cases),0):
     Number(state.inventoryCaseOverrides?.[key]??availableCases);
   const saleAvailable=office?current:inventoryAvailableForSale(key,current);
@@ -8886,18 +8930,15 @@ window.sellInventoryToCustomer=(encodedKey,availableCases,location,licensed)=>{
   if(!Number.isFinite(qty)||qty<=0){alert('Enter a valid quantity greater than 0.');return;}
   if(qty>saleAvailable){alert('Quantity cannot exceed available cases ('+saleAvailable+').');return;}
   if(office){
-    let remaining=qty;
-    for(const record of officeRecords){
-      const deducted=Math.min(num(record.cases),remaining);
-      record.cases=num(record.cases)-deducted;
-      remaining-=deducted;
-      if(remaining<=0)break;
-    }
+    deductOfficeInventoryCases(officeRecords,qty);
   }else{
     state.inventorySaleAvailability[key]=saleAvailable-qty;
     if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};
     state.inventoryCaseOverrides[key]=current-qty;
   }
+  const metrics=(state.inventorySalesMetrics??={})[key]??={};
+  const countField=licensed?'licensedCasesSold':'nonLicensedCasesSold';
+  metrics[countField]=num(metrics[countField])+qty;
   save();
   renderHeadInventory();
 };
@@ -9545,7 +9586,7 @@ function inventoryProformaPo(poId){
  return [...(state.purchaseOrders||[]),...(state.manuallyArchivedPurchaseOrders||[]),...(state.inventoryDeletedPoSnapshots||[])].find(po=>String(po.originalPoId||po.id)===String(poId));
 }
 window.updateInventoryProformaPrice=(encodedPoId,field,input)=>{
- const fields=['nonLicensedBottle','licensedBottle','hstPercent','finalRetailBottle','licensedRetailBottle','otherFeesBottle','bottleDeposit'];
+ const fields=['nonLicensedBottle','licensedBottle','hstPercent','finalRetailBottle','licensedRetailBottle','otherFeesBottle','bottleDeposit','totalLabCost'];
  if(!fields.includes(field))return;
  const poId=decodeURIComponent(encodedPoId),po=inventoryProformaPo(poId);if(!po)return;
  const raw=input.value.trim(),value=raw===''?(field==='hstPercent'?13:''):Number(raw);
@@ -9585,10 +9626,33 @@ function inventoryProformaCaseSellingPrice(pricing,bottlesPerCase){
   return `<div style="min-width:250px;margin:6px 0;min-height:76px;display:flex;flex-direction:column;justify-content:flex-start;gap:8px">${label}<b>${inventoryPriceMoney(net)} / ${inventoryPriceMoney(gross)}</b><small>Net / +TAX/HST</small></div>`;
  }).join('');
 }
-function inventoryRetailProfitPerBottle(pricing,transportPerBottle,licensed=false){
+window.updateInventorySalesDate=(encodedKey,field,input)=>{
+ if(!['availableSince','soldOutOn'].includes(field))return;
+ const key=decodeURIComponent(encodedKey);
+ const metrics=(state.inventorySalesMetrics??={})[key]??={};
+ const next={...metrics,[field]:input.value};
+ if(next.availableSince&&next.soldOutOn&&next.soldOutOn<next.availableSince){
+   alert('Sold out date must be on or after the available for sale date.');
+   input.value=metrics[field]||'';
+   return;
+ }
+ state.inventorySalesMetrics[key]=next;
+ save();
+ renderHeadInventory();
+};
+function inventorySellingMonths(metrics){
+ if(!metrics.availableSince||!metrics.soldOutOn)return null;
+ const days=(Date.parse(metrics.soldOutOn)-Date.parse(metrics.availableSince))/86400000+1;
+ return days>0?days/30:null;
+}
+function inventoryLabCostPerBottle(pricing,originalPoBottles){
+ const cost=pricing?.totalLabCost;
+ return cost==null||cost===''||originalPoBottles<=0?null:num(cost)/originalPoBottles;
+}
+function inventoryRetailProfitPerBottle(pricing,transportPerBottle,originalPoBottles,licensed=false){
  const retailField=licensed?'licensedRetailBottle':'finalRetailBottle',bottleField=licensed?'licensedBottle':'nonLicensedBottle';
  if(pricing?.[retailField]===undefined||pricing[retailField]===null||pricing[retailField]===''||pricing?.[bottleField]===undefined||pricing[bottleField]===null||pricing[bottleField]==='')return '—';
- return (num(pricing[retailField])-(num(pricing[bottleField])+inventoryProformaHst(num(pricing[bottleField]),num(pricing.bottleDeposit),pricing)+num(pricing.otherFeesBottle)+num(transportPerBottle))).toFixed(2);
+ return (num(pricing[retailField])-(num(pricing[bottleField])+inventoryProformaHst(num(pricing[bottleField]),num(pricing.bottleDeposit),pricing)+num(pricing.otherFeesBottle)+num(transportPerBottle)+(inventoryLabCostPerBottle(pricing,originalPoBottles)??0))).toFixed(2);
 }
 function inventoryProformaPriceCell(poId,pricing){
  const encoded=encodeURIComponent(poId||'');
@@ -9619,6 +9683,7 @@ window.renderHeadInventory=()=>{
   const vendor=(po.supplierNames||po.vendors||[]).join(', ')||po.vendor||'—';
   const program=inventoryPoProgram(po);
   const lines=(po.lines||[]);
+  const originalPoBottles=lines.reduce((total,line)=>total+num(line.totalQuantity)*num(line.unitsPerCase),0);
 
   if(lines.length){
    lines.forEach((line,lineIndex)=>{
@@ -9645,6 +9710,7 @@ window.renderHeadInventory=()=>{
       itemNo:line.itemNo||'—',
       product:line.yearProductName||'—',
       totalQuotedValue,
+      originalPoBottles,
       quoteCurrency:po.currency||po.quotationCurrency||po.supplierCurrency||'',
       cases,
       bpc,
@@ -9677,6 +9743,15 @@ window.renderHeadInventory=()=>{
    const poIdArg=encodeURIComponent(r.poId||'');
    const poNoArg=encodeURIComponent(r.poNumber||'');
    const stockOut=state.inventoryStockOutDates?.[r.inventoryKey];
+   const sales=state.inventorySalesMetrics?.[r.inventoryKey]||{};
+   const months=inventorySellingMonths(sales);
+   const pricing=inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing;
+   const salesByCustomer=[false,true].map(licensed=>{
+     const count=num(sales[licensed?'licensedCasesSold':'nonLicensedCasesSold']);
+     const perBottle=inventoryRetailProfitPerBottle(pricing,r.transportPerBottle,r.originalPoBottles,licensed);
+     return {label:licensed?'Licensed customer':'Non-licensed customer',count,
+       profit:count===0?0:perBottle==='—'||r.bpc<=0?null:count*r.bpc*Number(perBottle)};
+   });
    const zeroControls=r.cases===0
      ? ` <button type="button" class="secondary small" onclick="openInventoryStockOutDate('${keyArg}','${poIdArg}','${poNoArg}')">Mark Stock-Out Date</button>
         ${stockOut?.stockOutDate?`<br><small>Stock-Out: ${escapeHtml(stockOut.stockOutDate)} · Payment due: ${escapeHtml(stockOut.paymentDueDate||'')}</small>`:''}`
@@ -9686,7 +9761,7 @@ window.renderHeadInventory=()=>{
     <td><b>${escapeHtml(r.poNumber||'—')}</b><br><small>${escapeHtml(r.program)}</small>${r.deletedFromPoPage?'<br><small>PO deleted from PO page — retained in inventory</small>':''}</td>
     <td>${escapeHtml(r.vendor)}</td>
     <td>${escapeHtml(r.itemNo)}</td>
-    <td><b>${escapeHtml(r.product)}</b></td>
+    <td class="inventory-pinned-product"><b>${escapeHtml(r.product)}</b></td>
     <td><b>${r.totalQuotedValue?escapeHtml((r.quoteCurrency?r.quoteCurrency+' ':'')+'$'+r.totalQuotedValue.toFixed(2)):'—'}</b></td>
 
     <td>${r.bpc.toLocaleString()}</td>
@@ -9694,7 +9769,7 @@ window.renderHeadInventory=()=>{
     <td>${escapeHtml(r.shipment)}</td>
     <td class="inventory-transport-status-cell" data-global-status-cell="1"><div class="inventory-transport-status"><span class="global-status-badge inventory-transport-status-label">${escapeHtml(r.transportStatus)}</span><div class="inventory-transport-status-date"><small>Updated</small><time datetime="${escapeHtml(r.statusDate||'')}">${escapeHtml(r.statusDate?formatTransportationDate(r.statusDate):'Date not recorded')}</time></div></div></td>
     <td><b>${r.cases.toLocaleString()}</b> <button type="button" class="secondary small" onclick="updateInventoryCases('${keyArg}',${r.cases})">Update</button><div style="margin:8px 0"><b>Available for Sale: ${saleAvailable.toLocaleString()}</b><br><small>${saleAvailable>0?'Available for sale':'Not available for sale'}</small> <button type="button" class="secondary small" onclick="markInventoryAvailableForSale('${keyArg}',${r.cases})">Set Available for Sale</button></div> <button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${encodeURIComponent(JSON.stringify({poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${saleAvailable<=0?'disabled':''}>Move to Inventory in stock office/warehouse</button> <div>${inventorySaleButtons(keyArg,r.cases,saleAvailable,'trillium')}</div> <button type="button" class="secondary small" onclick="archiveLcboInventory('${encodeURIComponent(JSON.stringify(r))}')">Archive</button>${zeroControls}</td>
-    <td><b>${officeCases.toLocaleString()}</b><div>${inventorySaleButtons(keyArg,officeCases,officeCases,'office')}</div></td>
+    <td><b>${officeCases.toLocaleString()}</b><div><button type="button" class="secondary small" onclick="moveInventoryBackToTrillium('${keyArg}',${r.cases})" ${officeCases<=0?'disabled':''}>Move Back to Trillium</button></div><div>${inventorySaleButtons(keyArg,officeCases,officeCases,'office')}</div></td>
     <td>${inventoryProformaPriceCell(r.poId,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)}</td>
     <td><b>${inventoryPriceMoney(inventoryProformaTotal(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc))}</b></td>
     <td><div style="display:flex;align-items:center;gap:5px;min-width:110px"><input type="number" min="0" step="0.01" inputmode="decimal" style="width:85px" aria-label="TAX/HST percentage" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.hstPercent??13))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="hstPercent" onchange="updateInventoryProformaPrice('${poIdArg}','hstPercent',this)"><span>%</span></div>
@@ -9707,10 +9782,26 @@ window.renderHeadInventory=()=>{
     <td><b>${inventoryPriceMoney(inventoryProformaBalanceOwing(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc))}</b></td>
     <td>${inventoryProformaCaseSellingPrice(inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc)}</td>
     <td style="border-left:3px solid #64748b">${['nonLicensed','licensed'].map(type=>{const field=type==='licensed'?'licensedRetailBottle':'finalRetailBottle',label=type==='licensed'?'Licensed customer':'Non-licensed customer';return `<label style="display:flex;flex-direction:column;gap:8px;min-width:170px;min-height:76px;margin:6px 0">${label}<span style="display:flex;align-items:center;gap:5px">$<input type="number" min="0" step="0.01" inputmode="decimal" aria-label="${label} final retail price including TAX/HST" placeholder="Enter retail price" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.[field]??''))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="${field}" onchange="updateInventoryProformaPrice('${poIdArg}','${field}',this)"></span></label>`;}).join('')}</td>
-    <td><label style="display:flex;align-items:center;gap:5px;min-width:135px"><span>$</span><input type="number" min="0" step="0.01" inputmode="decimal" aria-label="Other fees per bottle" placeholder="0.00" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.otherFeesBottle??''))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="otherFeesBottle" onchange="updateInventoryProformaPrice('${poIdArg}','otherFeesBottle',this)"></label></td>
-    <td>${[false,true].map(licensed=>`<div style="min-width:170px;min-height:76px;margin:6px 0;display:flex;flex-direction:column;gap:8px">${licensed?'Licensed customer':'Non-licensed customer'}<b>${inventoryPriceMoney(inventoryRetailProfitPerBottle(inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.transportPerBottle,licensed))}</b></div>`).join('')}<small>Transportation: ${inventoryPriceMoney(r.transportPerBottle)} / bottle</small></td>
+    <td><label style="display:flex;align-items:center;gap:5px;min-width:135px"><span>$</span><input type="number" min="0" step="0.01" inputmode="decimal" aria-label="Other fees per bottle" placeholder="0.00" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.otherFeesBottle??''))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="otherFeesBottle" onchange="updateInventoryProformaPrice('${poIdArg}','otherFeesBottle',this)"></label>
+      ${(() => {
+        const pricing=inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing;
+        const labCost=pricing?.totalLabCost??'';
+        const labCostPerBottle=inventoryLabCostPerBottle(pricing,r.originalPoBottles);
+        return `<label style="display:block;margin-top:8px">Total Lab Cost
+          <span style="display:flex;align-items:center;gap:5px">$<input type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${escapeHtml(String(labCost))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="totalLabCost" onchange="updateInventoryProformaPrice('${poIdArg}','totalLabCost',this)"></span>
+        </label><small>Lab cost per bottle: ${inventoryPriceMoney(labCostPerBottle)}</small>`;
+      })()}</td>
+    <td>${[false,true].map(licensed=>`<div style="min-width:170px;min-height:76px;margin:6px 0;display:flex;flex-direction:column;gap:8px">${licensed?'Licensed customer':'Non-licensed customer'}<b>${inventoryPriceMoney(inventoryRetailProfitPerBottle(inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.transportPerBottle,r.originalPoBottles,licensed))}</b></div>`).join('')}<small>Transportation: ${inventoryPriceMoney(r.transportPerBottle)} / bottle</small></td>
+    <td style="border-left:3px solid #64748b;min-width:180px">
+      ${[['availableSince','Available for sale since'],['soldOutOn','Sold out on']].map(([field,label])=>`<label style="display:block;margin-bottom:8px">${label}
+        <input type="date" value="${escapeHtml(sales[field]||'')}" onchange="updateInventorySalesDate('${keyArg}','${field}',this)">
+      </label>`).join('')}
+      <small>Selling period: ${months===null?'—':months.toFixed(2)+' months'}</small>
+    </td>
+    <td>${salesByCustomer.map(({label,count})=>`<div style="min-width:175px;margin-bottom:12px">${label}<br><b>${count.toLocaleString()}</b> cases sold<br><small>${months===null?'—':(count/months).toFixed(2)} cases/month</small></div>`).join('')}</td>
+    <td>${salesByCustomer.map(({label,profit})=>`<div style="min-width:175px;margin-bottom:12px">${label}<br><b>${inventoryPriceMoney(profit)}</b> total<br><small>${inventoryPriceMoney(months===null||profit===null?null:profit/months)} / month</small></div>`).join('')}</td>
    </tr>`;
- }).join('')||'<tr><td colspan="19">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
+ }).join('')||'<tr><td colspan="22">No non-TENDER POs are currently marked Arrived in Canada.</td></tr>';
 
  if(k){
    let totalCases=0,totalBottles=0;
@@ -11917,7 +12008,11 @@ setTimeout(applyNormalSubPageNames,0);
     th.style.width=width+'px';th.style.minWidth=width+'px';th.style.maxWidth=width+'px';
    });
    clone.appendChild(copied);clone.style.transform='translateX(-'+wrap.scrollLeft+'px)';
-   overlay.replaceChildren(clone);overlay.style.display='block';break;
+   overlay.replaceChildren(clone);overlay.style.display='block';
+   const pinned=head.querySelector('.inventory-pinned-product');
+   const pinnedCopy=copied.querySelector('.inventory-pinned-product');
+   if(pinned&&pinnedCopy)pinnedCopy.style.left=(pinned.getBoundingClientRect().left-pinnedCopy.getBoundingClientRect().left)+'px';
+   break;
   }
  }
  function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;update();});}
