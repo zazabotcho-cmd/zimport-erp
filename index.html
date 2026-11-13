@@ -909,7 +909,6 @@ body{padding-bottom:24px;overflow-x:hidden}
 :is(#transportation,#transportation-records) td[rowspan]{vertical-align:top!important;}
 </style>
 <style>.supplier-transport-pricing-row{display:grid;grid-template-columns:minmax(0,3fr) minmax(120px,1fr);gap:14px;margin-top:14px;}@media(max-width:600px){.supplier-transport-pricing-row{grid-template-columns:1fr;}}</style>
-<style>.statistics-status-grid{display:flex;flex-wrap:wrap;gap:12px 22px;margin-top:14px;}.statistics-status-option{display:flex;align-items:center;gap:8px;}.statistics-status-option input{width:auto;}.statistics-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:20px 0;}.statistics-breakdowns{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;}@media(max-width:800px){.statistics-cards{grid-template-columns:1fr 1fr;}}@media(max-width:500px){.statistics-cards{grid-template-columns:1fr;}}</style>
 <style>[data-section-nav="heads-page"] .heads-nav-separator{display:inline-block;align-self:stretch;width:2px;min-height:30px;background:#94a3b8;margin:0 18px;flex:0 0 2px;border-radius:2px;}</style>
 <style>option.cargo-only-status-option, select.global-status-control option:disabled{color:#9ca3af !important;background:#f1f1f1 !important;}</style>
 </head>
@@ -948,7 +947,6 @@ body{padding-bottom:24px;overflow-x:hidden}
   <button class="tab" data-tab="all-invoices">ALL INVOICES</button>
   <button class="tab" data-tab="inventory-stock">Inventory Stock</button>
   
-  <button class="tab" data-tab="entire-statistics">Entire Statistics</button>
 <button class="tab" data-tab="profit-each-project">Profit Each Non-Tender Project</button>
   <span class="heads-nav-separator" aria-hidden="true"></span>
   <button class="tab" data-tab="heads-recycle-bin">Head's Recycling Bin</button>
@@ -994,18 +992,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 <main>
 
 <section id="profit-each-project" class="panel"><div class="box"><h2>Profit Each Non-Tender Project</h2><div id="profitProjectsApp"></div></div></section>
-<section id="entire-statistics" class="panel"><div class="box"><div class="section-head"><div><h2>Entire Statistics</h2><p class="note">Bottle imports and transportation payments across active and archived records.</p></div></div>
-<div class="form-grid three"><label>From date<input id="statisticsFrom" type="date" onchange="renderEntireStatistics()"></label><label>To date<input id="statisticsTo" type="date" onchange="renderEntireStatistics()"></label><label>Bottle statistics date<select id="statisticsDateBasis" onchange="renderEntireStatistics()"><option value="delivery">Delivery / Canada arrival date</option><option value="pickup">Pickup date</option><option value="status">Status date</option></select></label></div>
-<fieldset class="item-group" style="margin-top:16px"><legend>Mark transportation statuses to include</legend><div class="inline-actions"><button type="button" class="secondary small" onclick="markStatisticsStatuses(true)">Mark All</button><button type="button" class="secondary small" onclick="markStatisticsStatuses(false)">Clear All</button><button type="button" class="secondary small" onclick="resetEntireStatistics()">Reset Filters</button></div><div id="statisticsStatusOptions" class="statistics-status-grid"></div></fieldset>
-<p class="note">Both dates are included. Leave dates blank for all time. Payment totals use <b>PAY DATE</b> and the same marked statuses, independently of the bottle date filter. Imported bottles are those with status Arrived in Canada, Cleared Out from the Warehouse, or LCBO Paid.</p><p id="statisticsNotice" role="status" class="note" style="color:#9a3412"></p>
-<div class="inline-actions" style="margin:12px 0"><button type="button" class="secondary" onclick="statisticsYearToDate()">This Year to Today</button></div>
-<div id="statisticsResults"><h3>Earned Profit — LCBO Arrival Date</h3><p class="note">Sales are included when goods arrive at and are accepted by LCBO. Supplier and transportation costs for those goods are deducted regardless of payment date. Profit always uses the LCBO arrival date and marked arrived statuses, independently of the bottle date selector. All amounts below are CAD. This is order profit before income tax and any business overhead not entered in the invoices.</p>
-<div class="statistics-cards"><div class="card"><span>LCBO revenue earned</span><strong id="statisticsRevenue">CAD 0.00</strong></div><div class="card"><span>Supplier cost</span><strong id="statisticsSupplier">CAD 0.00</strong></div><div class="card"><span>Related transportation cost</span><strong id="statisticsRelatedTransport">CAD 0.00</strong></div><div class="card"><span>Other recorded order expenses</span><strong id="statisticsExpenses">CAD 0.00</strong></div><div class="card"><span>Earned order profit before tax</span><strong id="statisticsProfit">CAD 0.00</strong></div></div><p id="statisticsProfitNotice" class="note" role="status"></p>
-<div class="table-wrap"><table><thead><tr><th>PO #</th><th>LCBO arrival date</th><th>Transportation</th><th>Revenue CAD</th><th>Supplier CAD</th><th>Transportation CAD</th><th>Other expenses CAD</th><th>Profit CAD</th><th>Calculation status</th></tr></thead><tbody id="statisticsProfitRows"></tbody></table></div>
-<div class="statistics-cards"><div class="card"><span>Imported bottles</span><strong id="statisticsImportedTotal">0</strong></div><div class="card"><span>Bottles in selected statuses</span><strong id="statisticsBottleTotal">0</strong></div><div class="card"><span>Transportations in bottle period</span><strong id="statisticsTransportTotal">0</strong></div><div class="card"><span>Transportation amount paid</span><strong id="statisticsPaidTotal">CAD 0.00</strong></div></div>
-<div class="statistics-breakdowns"><div><h3>Bottles by transportation status</h3><div class="table-wrap"><table><thead><tr><th>Status</th><th>Bottles</th></tr></thead><tbody id="statisticsStatusRows"></tbody></table></div></div><div><h3>Bottles by vendor/producer</h3><div class="table-wrap"><table><thead><tr><th>Vendor/Producer</th><th>Bottles</th></tr></thead><tbody id="statisticsVendorRows"></tbody></table></div></div></div>
-<h3>Transportations included in bottle statistics</h3><div class="table-wrap"><table><thead><tr><th>Transportation</th><th>Selected date</th><th>Status</th><th>POs</th><th>Bottles</th><th>Pallets</th><th>Payment status</th></tr></thead><tbody id="statisticsTransportRows"></tbody></table></div>
-<h3>Transportation payments in the selected dates</h3><p id="statisticsCurrencyTotals" class="note"></p><p class="note">Paid invoice amounts come from the transportation’s Cost of Shipment. Records marked Other or Not Paid are excluded. CAD conversion uses each transportation’s saved exchange rate.</p><div class="table-wrap"><table><thead><tr><th>Transportation</th><th>Transport company</th><th>Pay date</th><th>Amount paid</th><th>Amount in CAD</th></tr></thead><tbody id="statisticsPaymentRows"></tbody></table></div></div></div></section>
+
 
 
 
@@ -1346,7 +1333,6 @@ body{padding-bottom:24px;overflow-x:hidden}
   
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
-<div class="invoice-page-row"><span id="financialProfitDynamicTabs"></span><button type="button" class="secondary invoice-page-tab" onclick="addFinancialProfitPage()">+ Profit Calulator REGU/SEAS/OTHER</button></div>
 </div></section>
 <section id="inventory-archived" class="panel"><div class="box">
 <div class="invoice-page-row"><button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button><button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock-office','heads-page')">Inventory in stock office/warehouse</button><button type="button" class="invoice-page-tab active" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button></div>
@@ -1394,7 +1380,6 @@ body{padding-bottom:24px;overflow-x:hidden}
   <tbody id="officeInventoryRows"></tbody>
  </table></div>
 </div></section>
-<div id="financialProfitDynamicPages"></div>
 
 
 <section id="all-invoices" class="panel"><div class="box"><div class="section-head"><div><h2>All Invoices</h2><p class="note">Select an invoice page below.</p></div></div><div class="invoice-page-row">
@@ -2042,7 +2027,6 @@ function safeRefreshCall(fn){
  try{if(typeof fn==='function')fn()}catch(err){console.error('View refresh failed:',err)}
 }
 function refreshProgramViews(){
- if(typeof renderEntireStatistics==='function')safeRefreshCall(renderEntireStatistics);
  prepareProgramNewestFirst();
  // Core program pages.
  safeRefreshCall(renderAll);
@@ -5482,7 +5466,7 @@ function editAgency(id){openAgency(id)}
 function closeAgency(){$('#agencyModal').classList.add('hidden')}
 function renderCalculator(r=defaults()){const f=[['productType','Product Type','select','Wine|Sparkling Wine|Fortified Wine|Dessert Wine|Sake|Vodka|Whisky|Brandy|Gin|Rum|Liqueur|Tequila|Cooler RTD|Beer|Craft Beer|Keg Beer|Gift Pack Wine|Gift Pack Spirit|Other'],['offeredQuoteCurrency','Offered Quote Currency','select','CAD|USD|GBP|EUR'],['offeredQuote','Offered Quote / Case','number'],['bottles','Bottles in Case','number'],['unitLitres','Bottle Size Litres','number'],['freight','Transportation / Freight CAD per Case','number']];$('#calcForm').innerHTML=f.map(([k,l,t,o])=>`<label>${l}${t==='select'?`<select id="c_${k}">${o.split('|').map(v=>`<option ${v===r[k]?'selected':''}>${v}</option>`).join('')}</select>`:`<input id="c_${k}" type="number" step="any" value="${r[k]??0}">`}</label>`).join('');showCalc(r)}
 function showCalc(r){const x=calculateLCBO(r);$('#calcResults').innerHTML=[['Case Quote',x.quote],['Transportation / Freight',x.freight],['Landed Cost',x.landed],['LCBO Markup',x.markup],['Wine / Volume Levy',x.levy],['Basic Price / Bottle',x.basic],['HST',x.tax],['Container Deposit',x.deposit],['Estimated Final ERP',x.finalRetail]].map(([k,v],i)=>`<div class="row ${i===8?'total':''}"><span>${k}</span><b>${money(v)}</b></div>`).join('')}
-function isAdminOnlyTab(tab){if(tab==='users')return true;if(window.ZimportOnline?.profile?.allowed_pages&&window.ZimportPermissions?.canPage(window.ZimportOnline.profile,tab))return false;return ['entire-statistics','dashboard','all-proposals','all-invoices','financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices','head-performance-bonuses','heads-recycle-bin','settings','program-settings'].includes(tab)}
+function isAdminOnlyTab(tab){if(tab==='users')return true;if(window.ZimportOnline?.profile?.allowed_pages&&window.ZimportPermissions?.canPage(window.ZimportOnline.profile,tab))return false;return ['dashboard','all-proposals','all-invoices','financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices','head-performance-bonuses','heads-recycle-bin','settings','program-settings'].includes(tab)}
 function canManageProgramBackups(){const profile=window.ZimportOnline?.profile;return profile?.role==='admin'&&profile.active!==false;}
 function isAdminUser(){return (window.ZIMPORT_CURRENT_ROLE||'readonly')==='admin'}
 function activate(tab,preferredSection=''){
@@ -5511,7 +5495,7 @@ function activate(tab,preferredSection=''){
       $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
     }
   }
-  const panel=$('#'+tab);if(panel)panel.classList.add('active');if(tab==='entire-statistics'&&typeof renderEntireStatistics==='function')renderEntireStatistics();if(tab==='price-list')renderPriceList();if(tab==='inventory-archived')window.renderArchivedInventory?.();if(tab==='inventory-in-stock-office')window.renderOfficeInventory?.();if(tab==='inventory-in-stock')window.renderHeadInventory?.();if(tab==='transportation'||tab==='transportation-records')renderShipments();if(tab==='archived-transportation'||tab==='archived-transportation-records')window.renderArchivedShipments?.();
+  const panel=$('#'+tab);if(panel)panel.classList.add('active');if(tab==='price-list')renderPriceList();if(tab==='inventory-archived')window.renderArchivedInventory?.();if(tab==='inventory-in-stock-office')window.renderOfficeInventory?.();if(tab==='inventory-in-stock')window.renderHeadInventory?.();if(tab==='transportation'||tab==='transportation-records')renderShipments();if(tab==='archived-transportation'||tab==='archived-transportation-records')window.renderArchivedShipments?.();
   if(preferredSection==='heads-page' && (['inventory-in-stock','inventory-in-stock-office','inventory-archived','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
     $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav==='heads-page'));
     $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section==='heads-page'));
@@ -12437,7 +12421,6 @@ function deleteTenderSupplierItem(id){
  state.archivedCountryCandidates=state.archivedCountryCandidates.filter(x=>String(x.id)!==String(id));save();renderTenderSupplierItems();return true;
 }
 </script>
-<script src="entire-statistics.js"></script>
 <script src="profit-project-template.js"></script>
 <script>
 /* Non-Tender Project worksheet bundled here to avoid stale external scripts. */
