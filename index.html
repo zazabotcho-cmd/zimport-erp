@@ -1922,6 +1922,7 @@ if(settings.rateDirection!=='CAD_TO_FOREIGN'){settings.usd=settings.usd?1/num(se
 settings={usd:settings.usd??0.70,gbp:settings.gbp??0.54,eur:settings.eur??0.65,rateDirection:'CAD_TO_FOREIGN',defaultCurrency:['CAD','USD','GBP','EUR'].includes(settings.defaultCurrency)?settings.defaultCurrency:'CAD',company:settings.company||'WINGLOBAL PROGRAM',recycleBinClearOnce20260926:settings.recycleBinClearOnce20260926===true,targetShipmentRemovalComplete20260926:settings.targetShipmentRemovalComplete20260926===true};
 const defaultAgencies=[{id:'agency-zimport',name:'Zimport Global Corporation',short:'142858',notes:'Primary agency'},{id:'agency-golden',name:'Golden Maple Marketing Inc.',short:'',notes:'Additional agency'}];
 const seedRecord={id:'seed-old-marani',productNeeds:'VINTAGES',tenderId:'1001',tenderName:'Emerging Europe Tender',tenderDate:'2026-07-30',agencyId:'agency-zimport',supplier:'OLD MARANI',brand:'GURJAANI',itemName:'OLD MARANI KINDZMARAULI',registered:'Yes',year:2024,award1:'87 WA',link1:'',award2:'',link2:'',award3:'',link3:'',extraAwards:[],productType:'Wine',productSubtype:'Wine',caseKg:18.9,currency:'USD',exchangeRate:1.42,supplierPrice:2.88,bottles:12,offeredQuoteCurrency:settings.defaultCurrency||'CAD',offeredQuote:88.80,erpManual:18.60,transportExpense:.75,potentialCases:715,sampleProvideDate:'',stage1Decision:'Accepted',sampleStatus:'Requested to Supplier',documentsToProvideStatus:'Not Ready',finalDecision:'Declined',finalOrderedQty:0,comments:'Tenderistvis om kindzmaraulis fasi dasvi 18.5 rom iyos daxlebze'};
+window.getProgramSaveSnapshot=()=>({state,settings});
 let state=JSON.parse(safeStorage.getItem(DATA_KEY)||'null')||{agencies:defaultAgencies,records:[seedRecord],items:[],tenders:[],suppliers:[]};
 state.tenders=(state.tenders||[]).filter(t=>!(String(t.code||'').trim()==='2546' && String(t.name||'').trim().toLowerCase().includes('italy north'))).map(t=>({...t,workItems:(Array.isArray(t.workItems)?t.workItems:[]).map(w=>({...w,status:w.status==='Registered'?'Registered in LCBO NISS':(w.status==='Completed'?'In Progress':(w.status||'To Submit'))}))}));
 state.records=(state.records||[]).map(r=>{const specific=r.productSubtype&&r.productSubtype!=='Wine'?r.productSubtype:r.productType;let migratedFinal=r.finalDecision==='Approved'?'Winner':r.finalDecision;const finalDecision=r.registered==='No'?'Not Registered':(['In Progress','Winner','Declined','Not Registered'].includes(migratedFinal)?migratedFinal:'In Progress');return {...r,ntpStatus:r.ntpStatus||'Not Issued',ntpFileName:r.ntpFileName||'',poStatus:r.poStatus||'Not Issued',poNumber:r.poNumber||'',poFileName:r.poFileName||'',submissionNumber:r.submissionNumber||'',productNeeds:r.productNeeds||'VINTAGES',tenderId:r.tenderId||'',productType:(['Red Wine','White Wine','Rosé Wine','Rose Wine','Wine'].includes(specific)?'Wine':(specific||'Wine')),offeredQuoteCurrency:r.offeredQuoteCurrency||'CAD',stage1Decision:r.stage1Decision||(r.sampleRequested==='Yes'?'Sample Requested':(r.stage1==='Declined'?'Declined':'Accepted')),finalDecision};});
@@ -6240,7 +6241,13 @@ function enhanceDateInput(input){
   display.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();commitDisplay();display.blur()}});
   input.addEventListener('input',syncFromNative);
   input.addEventListener('change',syncFromNative);
-  picker.addEventListener('click',()=>{try{input.showPicker()}catch{input.click()}});
+  picker.addEventListener('click',()=>{
+    if(input.dataset.inventorySalesDate!==undefined&&window.openProjectCalendar){
+      window.openProjectCalendar(input,()=>input.dispatchEvent(new Event('change',{bubbles:true})));
+      return;
+    }
+    try{input.showPicker()}catch{input.click()}
+  });
 }
 function enhanceAllDateInputs(root=document){root.querySelectorAll?.('input[type="date"]').forEach(enhanceDateInput)}
 enhanceAllDateInputs();
@@ -9809,7 +9816,7 @@ window.renderHeadInventory=()=>{
     <td>${[false,true].map(licensed=>`<div style="min-width:170px;min-height:76px;margin:6px 0;display:flex;flex-direction:column;gap:8px">${licensed?'Licensed customer':'Non-licensed customer'}<b>${inventoryPriceMoney(inventoryRetailProfitPerBottle(inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.transportPerBottle,r.originalPoBottles,licensed))}</b></div>`).join('')}<small>Transportation: ${inventoryPriceMoney(r.transportPerBottle)} / bottle</small></td>
     <td style="border-left:3px solid #64748b;min-width:180px">
       ${[['availableSince','Available for sale since'],['soldOutOn','Sold out on']].map(([field,label])=>`<label style="display:block;margin-bottom:8px">${label}
-        <input type="date" value="${escapeHtml(sales[field]||'')}" onchange="updateInventorySalesDate('${keyArg}','${field}',this)">
+        <input type="date" data-inventory-sales-date value="${escapeHtml(sales[field]||'')}" onchange="updateInventorySalesDate('${keyArg}','${field}',this)">
       </label>`).join('')}
       <small>Selling period: ${months===null?'—':months.toFixed(2)+' months'}</small>
     </td>
@@ -12573,6 +12580,7 @@ function openProjectCalendar(input,commit){
  }draw();document.body.append(dialog);if(dialog.showModal)dialog.showModal();else dialog.setAttribute('open','');
  dialog.onclick=e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)close();}};dialog.oncancel=()=>dialog.remove();
 }
+window.openProjectCalendar=openProjectCalendar;
 function exportWorksheet(){const cells=materialize(active),get=evaluator(cells);const rows=[['1 CAD exchange rates',...['USD','EUR','GBP'].map(c=>c+': '+supplierRates(active)[c])],visibleColumns.map(({label})=>label),visibleColumns.map(({c})=>({19:'Approximate maximum months',24:'Actual maximum months'}[c]||''))];for(let r=3;r<active.items.length+4;r++)rows.push(visibleColumns.map(({c})=>{const k=col(c),item=active.items[r-4],raw=c===5&&item?String(item.F??'')+' '+(item.supplierCurrency||'USD'):c===10&&item?(item.proformaBase??item.K??''):cells[k+r]??'';return typeof raw==='string'&&raw.startsWith('=')?get(k+r):raw;}));download('project-worksheet.csv','\ufeff'+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n'),'text/csv;charset=utf-8');}
 function openTransportationImport(project){
  if(typeof window.getNonTenderProjectTransportations!=='function'){alert('Transportation data is not available. Reload the program.');return;}
