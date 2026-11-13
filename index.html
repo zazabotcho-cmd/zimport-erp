@@ -1338,28 +1338,37 @@ body{padding-bottom:24px;overflow-x:hidden}
 <section id="inventory-stock" class="panel"><div class="box">
  <div class="section-head"><div><h2>Inventory Stock</h2><p class="note">Select an inventory page below.</p></div></div>
  <div class="invoice-page-row">
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   
   
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
 </div></section>
+<section id="total-inventory" class="panel"><div class="box">
+ <div class="invoice-page-row">
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-stock','heads-page')">Inventory Stock</button>
+ </div>
+ <div class="section-head"><div><h2>Inventory in stock LCBO Trillium/office/storage</h2></div></div>
+ <div class="invoice-page-row">
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">In Stock Transportation: KTL26083598</button>
+ </div>
+</div></section>
 <section id="inventory-archived" class="panel"><div class="box">
-<div class="invoice-page-row"><button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button><button type="button" class="invoice-page-tab active" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button></div>
+<div class="invoice-page-row"><button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button><button type="button" class="invoice-page-tab active" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button></div>
 <div class="section-head"><div><h2>Archived Inventory</h2><p class="note">Archived LCBO Trillium and office/warehouse inventory. Restore a record to return it to its original inventory page.</p></div></div>
 <div class="toolbar"><input id="archivedInventorySearch" type="search" placeholder="Search location, PO, vendor or product" oninput="renderArchivedInventory()"></div>
 <div class="table-wrap"><table><thead><tr><th>Location</th><th>PO #</th><th>Vendor/Producer</th><th>Item #</th><th>Product</th><th>Cases</th><th>Bottles / Case</th><th>Total Bottles</th><th>Archived Date</th><th>Actions</th></tr></thead><tbody id="archivedInventoryRows"></tbody></table></div>
 </div></section>
 <section id="inventory-in-stock" class="panel"><div class="box">
  <div class="invoice-page-row inventory-sticky-nav">
-  <button type="button" class="invoice-page-tab active" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   
   
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
  <div class="section-head">
   <div>
-   <h2>Inventory in stock LCBO Trillium warehouse</h2>
+   <h2>In Stock Transportation: KTL26083598</h2>
    <p class="note">Automatically includes every non-TENDER PO that is marked <b>Arrived in Canada</b>, including POs whose Transportation shipment is marked Arrived in Canada.</p>
   </div>
  </div>
@@ -4666,8 +4675,16 @@ function linkedSubmissionForPo(poNo){
   return (state.records||[]).find(r=>String(r.poNumber||'').trim().toLowerCase()===String(poNo||'').trim().toLowerCase())||null;
 }
 
+function invoiceOrderNumber(value){
+  return String(value??'').trim().toLowerCase().replace(/^0+(?=\d+$)/,'');
+}
+function isTenderInvoiceOrder(po,poNumber=po?.number){
+  const number=invoiceOrderNumber(poNumber);
+  return String(po?.program||'').trim().toUpperCase()==='TENDER'||number==='822253'||
+    !!number&&(state.records||[]).some(record=>record.finalDecision==='Winner'&&invoiceOrderNumber(record.poNumber)===number);
+}
 function tenderPoArrivedInCanada(po){
-  if(!po||String(po.program||'').toUpperCase()!=='TENDER')return false;
+  if(!po||!isTenderInvoiceOrder(po))return false;
   const poStatus=normalizeSharedShipmentStatus(po.poStatus||'');
   if(poStatus==='Arrived in Canada')return true;
   return allTransportationRecords().some(sh=>
@@ -4779,21 +4796,21 @@ window.syncTenderInvoiceDueDate=syncTenderInvoiceDueDate;
 
 function syncAllArrivedTenderPoInvoices(){
   (state.purchaseOrders||[])
-    .filter(po=>String(po.program||'').toUpperCase()==='TENDER')
+    .filter(po=>isTenderInvoiceOrder(po))
     .forEach(syncArrivedTenderPoInvoice);
   (state.financialInvoices||[]).forEach(syncTenderInvoiceDueDate);
 }
 window.syncAllArrivedTenderPoInvoices=syncAllArrivedTenderPoInvoices;
 
 function ensureTenderInvoiceForPo(po){
-  if(!po||String(po.program||'').toUpperCase()!=='TENDER')return;
+  if(!po||!isTenderInvoiceOrder(po))return;
   // Tender invoices are created/filled only after the linked Transportation arrives in Canada.
   if(tenderPoArrivedInCanada(po))syncArrivedTenderPoInvoice(po);
 }
 function ensureInvoiceForPo(po){
   if(!po)return;
   const program=String(po.program||'').toUpperCase();
-  if(program==='TENDER'){
+  if(isTenderInvoiceOrder(po)){
     ensureTenderInvoiceForPo(po);
   }else if(['REGU','SEAS','OTHER'].includes(program)){
     ensureReguSeasOtherInvoiceForPo(po);
@@ -4810,7 +4827,7 @@ function totalPoQuotedValue(po){
 window.totalPoQuotedValue=totalPoQuotedValue;
 
 function ensureReguSeasOtherInvoiceForPo(po){
-  if(!po)return;
+  if(!po||isTenderInvoiceOrder(po))return;
   const program=String(po.program||'').toUpperCase();
   if(!['REGU','SEAS','OTHER'].includes(program))return;
   if(!Array.isArray(state.otherInvoices))state.otherInvoices=[];
@@ -5256,7 +5273,13 @@ function syncRsoInvoiceStatusFromPo(po){
     }
   });
 }
-function renderOtherInvoices(){const body=$('#otherInvoiceRows');if(!body)return;(state.otherInvoices||[]).forEach(syncRsoInvoiceAmountFromLinkedPo);const otherInvoiceQuery=$('#otherInvoicePageSearch')?.value||'';body.innerHTML=(state.otherInvoices||[]).filter(x=>pageSearchMatches(x,otherInvoiceQuery)).map(x=>`<tr><td><b>${escapeHtml(x.name||'—')}</b>${invoicePoItemNamesHtml(x)}</td><td><button type="button" class="invoice-number-link" onclick="openGenericInvoiceDetails('other','${x.id}')">${escapeHtml(x.number||'—')}</button></td><td>${escapeHtml(x.date||'—')}</td><td>${escapeHtml(x.currency||'CAD')} ${num(x.amount).toFixed(2)}</td><td><span class="status ${x.paidStatus==='Fully Paid'?'green':'yellow'}">${escapeHtml(x.paidStatus||'Not Paid')}</span>${x.upcomingPaymentCalculatedDate?`<br><small>Calculated payment date: <b>${escapeHtml(x.upcomingPaymentCalculatedDate)}</b></small>${x.stockOutDate?`<br><small>Stock-Out Date: ${escapeHtml(x.stockOutDate)}</small>`:''}`:''}</td><td>${x.fileName?`<button type="button" class="file-link" onclick="openSavedOtherInvoiceFile('${x.id}')">${escapeHtml(x.fileName)}</button>`:'—'}</td><td>${escapeHtml(x.notes||'—')}</td><td><button type="button" onclick="openOtherInvoiceEditor('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('SEAS/REGU/OTHER TO AGENT','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="deleteOtherInvoice('${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="9" class="note">No other invoices created. Click + Create Invoice.</td></tr>'}
+function isTenderOrderLinkedToOtherInvoice(invoice){
+  const number=invoiceOrderNumber(invoice.poNumber);
+  const po=(state.purchaseOrders||[]).find(order=>order.id===invoice.sourcePoId||
+    (number&&invoiceOrderNumber(order.number)===number));
+  return isTenderInvoiceOrder(po,po?.number||invoice.poNumber);
+}
+function renderOtherInvoices(){const body=$('#otherInvoiceRows');if(!body)return;(state.otherInvoices||[]).forEach(syncRsoInvoiceAmountFromLinkedPo);const otherInvoiceQuery=$('#otherInvoicePageSearch')?.value||'';body.innerHTML=(state.otherInvoices||[]).filter(x=>!isTenderOrderLinkedToOtherInvoice(x)&&pageSearchMatches(x,otherInvoiceQuery)).map(x=>`<tr><td><b>${escapeHtml(x.name||'—')}</b>${invoicePoItemNamesHtml(x)}</td><td><button type="button" class="invoice-number-link" onclick="openGenericInvoiceDetails('other','${x.id}')">${escapeHtml(x.number||'—')}</button></td><td>${escapeHtml(x.date||'—')}</td><td>${escapeHtml(x.currency||'CAD')} ${num(x.amount).toFixed(2)}</td><td><span class="status ${x.paidStatus==='Fully Paid'?'green':'yellow'}">${escapeHtml(x.paidStatus||'Not Paid')}</span>${x.upcomingPaymentCalculatedDate?`<br><small>Calculated payment date: <b>${escapeHtml(x.upcomingPaymentCalculatedDate)}</b></small>${x.stockOutDate?`<br><small>Stock-Out Date: ${escapeHtml(x.stockOutDate)}</small>`:''}`:''}</td><td>${x.fileName?`<button type="button" class="file-link" onclick="openSavedOtherInvoiceFile('${x.id}')">${escapeHtml(x.fileName)}</button>`:'—'}</td><td>${escapeHtml(x.notes||'—')}</td><td><button type="button" onclick="openOtherInvoiceEditor('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('SEAS/REGU/OTHER TO AGENT','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="deleteOtherInvoice('${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="9" class="note">No other invoices created. Click + Create Invoice.</td></tr>'}
 function renderOtherInvoiceFileStatus(message=''){const el=$('#otherInvoiceFileStatus');if(el)el.textContent=message||(otherInvoicePendingFile?.name||'No invoice attached')}
 function readOtherInvoiceFile(file){if(!file)return;if(file.size>10*1024*1024){alert('Maximum invoice file size is 10 MB.');return}const r=new FileReader();r.onload=()=>{otherInvoicePendingFile={name:file.name,type:file.type||'application/octet-stream',data:r.result};renderOtherInvoiceFileStatus();const id=$('#otherInvoiceId').value,x=(state.otherInvoices||[]).find(v=>v.id===id);if(x){x.file=otherInvoicePendingFile;x.fileName=otherInvoicePendingFile.name;save();renderOtherInvoiceFileStatus(otherInvoicePendingFile.name+' — saved automatically')}};r.readAsDataURL(file)}
 function openOtherInvoiceFile(){if(!otherInvoicePendingFile?.data){alert('No invoice is attached.');return}openShipmentAttachmentBlob(otherInvoicePendingFile,'invoice-file')}
@@ -5493,7 +5516,7 @@ function activate(tab,preferredSection=''){
     }
   }
   const panel=$('#'+tab);if(panel)panel.classList.add('active');if(tab==='price-list')renderPriceList();if(tab==='inventory-archived')window.renderArchivedInventory?.();if(tab==='inventory-in-stock')window.renderHeadInventory?.();if(tab==='transportation'||tab==='transportation-records')renderShipments();if(tab==='archived-transportation'||tab==='archived-transportation-records')window.renderArchivedShipments?.();
-  if(preferredSection==='heads-page' && (['inventory-in-stock','inventory-archived','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
+  if(preferredSection==='heads-page' && (['total-inventory','inventory-in-stock','inventory-archived','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
     $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav==='heads-page'));
     $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section==='heads-page'));
     const hubTab=$('.subnav[data-section-nav="heads-page"] .tab[data-tab="inventory-stock"]');if(hubTab)hubTab.classList.add('active');
@@ -9445,7 +9468,7 @@ function financialProfitPageHtml(p){
   const pid=financialProfitPageId(p);
   return `<section id="${pid}" class="panel"><div class="box">
     <div class="invoice-page-row inventory-sticky-nav">
-      <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">Inventory in stock LCBO Trillium warehouse</button>
+      <button type="button" class="invoice-page-tab" onclick="activate('inventory-in-stock','heads-page')">In Stock Transportation: KTL26083598</button>
       
       
     </div>
@@ -9804,7 +9827,7 @@ window.renderHeadInventory=()=>{
     <td><b>${inventoryPriceMoney(inventoryProformaBalanceOwing(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc))}</b></td>
     <td>${inventoryProformaCaseSellingPrice(inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc)}</td>
     <td style="border-left:3px solid #64748b">${['nonLicensed','licensed'].map(type=>{const field=type==='licensed'?'licensedRetailBottle':'finalRetailBottle',label=type==='licensed'?'Licensed customer':'Non-licensed customer';return `<label style="display:flex;flex-direction:column;gap:8px;min-width:170px;min-height:76px;margin:6px 0">${label}<span style="display:flex;align-items:center;gap:5px">$<input type="number" min="0" step="0.01" inputmode="decimal" aria-label="${label} final retail price including TAX/HST" placeholder="Enter retail price" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.[field]??''))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="${field}" onchange="updateInventoryProformaPrice('${poIdArg}','${field}',this)"></span></label>`;}).join('')}</td>
-    <td><label style="display:flex;align-items:center;gap:5px;min-width:135px"><span>$</span><input type="number" min="0" step="0.01" inputmode="decimal" aria-label="Other fees per bottle" placeholder="0.00" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.otherFeesBottle??''))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="otherFeesBottle" onchange="updateInventoryProformaPrice('${poIdArg}','otherFeesBottle',this)"></label>
+    <td><label style="display:block;min-width:135px">Other Fees per Bottle<span style="display:flex;align-items:center;gap:5px"><span>$</span><input type="number" min="0" step="0.01" inputmode="decimal" aria-label="Other fees per bottle" placeholder="0.00" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.otherFeesBottle??''))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="otherFeesBottle" onchange="updateInventoryProformaPrice('${poIdArg}','otherFeesBottle',this)"></span></label>
       ${(() => {
         const pricing=inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing;
         const labCost=pricing?.totalLabCost??'';
