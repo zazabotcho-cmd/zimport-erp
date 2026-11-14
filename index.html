@@ -1377,7 +1377,7 @@ body{padding-bottom:24px;overflow-x:hidden}
  <div class="table-wrap"><table>
   <thead><tr>
    <th>PO #</th><th>Vendor/Producer</th><th>LCBO Item #</th><th class="inventory-pinned-product">Product Name</th>
-   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Inventory in stock office/warehouse</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Other Fees per Bottle</th><th>Profit per Bottle (TAX/HST incl.)</th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>Total cases sold / Cases sold per month</th><th>Total profit / Monthly profit</th>
+   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Inventory in stock office/warehouse</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Other Fees per Bottle</th><th>Profit per Bottle (TAX/HST incl.) /<br>Profit total item (TAX/HST incl.)</th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>Total cases sold / Cases sold per month</th><th>Total profit / Monthly profit</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -9796,6 +9796,7 @@ window.renderHeadInventory=()=>{
       itemNo:line.itemNo||'—',
       product:line.yearProductName||'—',
       totalQuotedValue,
+      originalCases,
       originalPoBottles,
       quoteCurrency:po.currency||po.quotationCurrency||po.supplierCurrency||'',
       cases,
@@ -9872,7 +9873,15 @@ window.renderHeadInventory=()=>{
           <span style="display:flex;align-items:center;gap:5px">$<input type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${escapeHtml(String(labCost))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="totalLabCost" onchange="updateInventoryProformaPrice('${poIdArg}','totalLabCost',this)"></span>
         </label><small>Lab cost per bottle: ${inventoryPriceMoney(labCostPerBottle)}</small>`;
       })()}</td>
-    <td>${[false,true].map(licensed=>`<div style="min-width:170px;min-height:76px;margin:6px 0;display:flex;flex-direction:column;gap:8px">${licensed?'Licensed customer':'Non-licensed customer'}<b>${inventoryPriceMoney(inventoryRetailProfitPerBottle(inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.transportPerBottle,r.originalPoBottles,licensed))}</b></div>`).join('')}<small>Transportation: ${inventoryPriceMoney(r.transportPerBottle)} / bottle</small></td>
+    <td>${[false,true].map(licensed=>{
+      const pricing=inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing;
+      const perBottle=inventoryRetailProfitPerBottle(pricing,r.transportPerBottle,r.originalPoBottles,licensed);
+      const totalItem=perBottle==='—'||r.bpc<=0?null:Number(perBottle)*r.originalCases*r.bpc;
+      return `<div style="min-width:170px;min-height:76px;margin:6px 0;display:flex;flex-direction:column;gap:8px">
+        ${licensed?'Licensed customer':'Non-licensed customer'}
+        <b>${inventoryPriceMoney(perBottle)} / ${inventoryPriceMoney(totalItem)}</b>
+      </div>`;
+    }).join('')}<small>Transportation: ${inventoryPriceMoney(r.transportPerBottle)} / bottle</small></td>
     <td style="border-left:3px solid #64748b;min-width:180px">
       ${[['availableSince','Available for sale since'],['soldOutOn','Sold out on']].map(([field,label])=>`<label style="display:block;margin-bottom:8px">${label}
         <input type="date" data-inventory-sales-date value="${escapeHtml(sales[field]||'')}" onchange="updateInventorySalesDate('${keyArg}','${field}',this)">
