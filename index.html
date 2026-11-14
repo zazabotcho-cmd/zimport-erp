@@ -1377,7 +1377,7 @@ body{padding-bottom:24px;overflow-x:hidden}
  <div class="table-wrap"><table>
   <thead><tr>
    <th>PO #</th><th>Vendor/Producer</th><th>LCBO Item #</th><th class="inventory-pinned-product">Product Name</th>
-   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Inventory in stock office/warehouse</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Other Fees per Bottle</th><th>Profit per Bottle (TAX/HST incl.) / Profit total item (TAX/HST incl.) / <span style="white-space:nowrap">TTL PROFIT</span></th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>Total cases sold / Cases sold per month</th><th>Total profit / Monthly profit</th>
+   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Inventory in stock office/warehouse</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Other Fees per Bottle</th><th>Profit per Bottle (TAX/HST incl.) /<br>Profit total item (TAX/HST incl.) <span id="inventoryTotalItemProfit" style="white-space:nowrap" aria-live="polite">(TTL PROFIT —)</span></th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>Total cases sold / Cases sold per month</th><th>Total profit / Monthly profit</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -9739,6 +9739,26 @@ function inventorySalesProfit(sales,pricing,transportPerBottle,originalPoBottles
  return {salesByCustomer,totalSalesProfit};
 }
 
+function inventoryItemProfits(row,pricing){
+ return [false,true].map(licensed=>{
+   const perBottle=inventoryRetailProfitPerBottle(pricing,row.transportPerBottle,row.originalPoBottles,licensed);
+   const totalItem=perBottle==='—'||row.bpc<=0?null:Number(perBottle)*row.originalCases*row.bpc;
+   return {label:licensed?'Licensed customer':'Non-licensed customer',perBottle,totalItem};
+ });
+}
+
+function inventoryTotalItemProfit(rows,draft){
+ let total=null;
+ for(const row of rows){
+   const saved=inventoryProformaPo(row.poId)?.inventoryProformaPricing||row.proformaPricing;
+   const pricing=draft?.poId===String(row.poId)?{...saved,[draft.field]:draft.value}:saved;
+   for(const {totalItem} of inventoryItemProfits(row,pricing)){
+     if(totalItem!==null)total=(total??0)+totalItem;
+   }
+ }
+ return total;
+}
+
 window.renderHeadInventory=()=>{
  const body=document.getElementById('headInventoryRows'),k=document.getElementById('headInventoryKpis');
  if(!body)return;
@@ -9750,6 +9770,7 @@ window.renderHeadInventory=()=>{
  document.getElementById('inventoryTransportationHeading').textContent=selected?
    'In Stock Transportation: '+(selected.shipment.name||selectedInventoryTransportationId):'In Stock Transportation';
  const rows=[];
+ const projectRows=[];
  let projectTotalProfit=0;
  let hasMissingProfit=false;
 
@@ -9785,9 +9806,7 @@ window.renderHeadInventory=()=>{
       transportPerBottle,originalPoBottles,bpc);
     if(salesProfit.totalSalesProfit===null)hasMissingProfit=true;
     else projectTotalProfit+=salesProfit.totalSalesProfit;
-    if(q&&!hay.includes(q))return;
-
-    rows.push({
+    const row={
       salesProfit,
       poNumber,
       poId,
@@ -9810,7 +9829,9 @@ window.renderHeadInventory=()=>{
       shipment:shipment?.name||po.sourceShipmentName||'—',
       statusDate,
       deletedFromPoPage:!!po.inventoryDeletedFromPoPage
-    });
+    };
+    projectRows.push(row);
+    if(!q||hay.includes(q))rows.push(row);
    });
   }
  });
@@ -9873,20 +9894,10 @@ window.renderHeadInventory=()=>{
           <span style="display:flex;align-items:center;gap:5px">$<input type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${escapeHtml(String(labCost))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="totalLabCost" onchange="updateInventoryProformaPrice('${poIdArg}','totalLabCost',this)"></span>
         </label><small>Lab cost per bottle: ${inventoryPriceMoney(labCostPerBottle)}</small>`;
       })()}</td>
-    <td>${(() => {
-      const pricing=inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing;
-      const profits=[false,true].map(licensed=>{
-        const perBottle=inventoryRetailProfitPerBottle(pricing,r.transportPerBottle,r.originalPoBottles,licensed);
-        const totalItem=perBottle==='—'||r.bpc<=0?null:Number(perBottle)*r.originalCases*r.bpc;
-        return {label:licensed?'Licensed customer':'Non-licensed customer',perBottle,totalItem};
-      });
-      const ttlProfit=profits.some(({totalItem})=>totalItem===null)?null:
-        profits.reduce((sum,{totalItem})=>sum+totalItem,0);
-      return profits.map(({label,perBottle,totalItem},index)=>`<div style="min-width:170px;min-height:76px;margin:6px 0;display:flex;flex-direction:column;gap:8px">
-        ${label}
-        <b style="white-space:nowrap">${inventoryPriceMoney(perBottle)} / ${inventoryPriceMoney(totalItem)}${index===0?` / TTL PROFIT ${inventoryPriceMoney(ttlProfit)}`:''}</b>
-      </div>`).join('');
-    })()}<small>Transportation: ${inventoryPriceMoney(r.transportPerBottle)} / bottle</small></td>
+    <td>${inventoryItemProfits(r,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing).map(({label,perBottle,totalItem})=>`<div style="min-width:170px;min-height:76px;margin:6px 0;display:flex;flex-direction:column;gap:8px">
+      ${label}
+      <b style="white-space:nowrap">${inventoryPriceMoney(perBottle)} / ${inventoryPriceMoney(totalItem)}</b>
+    </div>`).join('')}<small>Transportation: ${inventoryPriceMoney(r.transportPerBottle)} / bottle</small></td>
     <td style="border-left:3px solid #64748b;min-width:180px">
       ${[['availableSince','Available for sale since'],['soldOutOn','Sold out on']].map(([field,label])=>`<label style="display:block;margin-bottom:8px">${label}
         <input type="date" data-inventory-sales-date value="${escapeHtml(sales[field]||'')}" onchange="updateInventorySalesDate('${keyArg}','${field}',this)">
@@ -9972,6 +9983,23 @@ window.renderHeadInventory=()=>{
        <strong>${inventoryPriceMoney(totalOtherFees)}</strong>
      </div>`;
  }
+ const total=document.getElementById('inventoryTotalItemProfit');
+ const renderTotalProfit=draft=>{
+   if(total)total.textContent=`(TTL PROFIT ${inventoryPriceMoney(inventoryTotalItemProfit(projectRows,draft))})`;
+ };
+ renderTotalProfit();
+
+ body.oninput=event=>{
+   const input=event.target;
+   const {inventoryPricePo,inventoryPriceField}=input.dataset;
+   if(!inventoryPriceField||inventoryPricePo===undefined||!input.validity.valid)return;
+   const draft={
+     poId:decodeURIComponent(inventoryPricePo),
+     field:inventoryPriceField,
+     value:input.value===''?(inventoryPriceField==='hstPercent'?13:''):Number(input.value)
+   };
+   renderTotalProfit(draft);
+ };
 };
 
 function renderHeadOfficeProposals(){
