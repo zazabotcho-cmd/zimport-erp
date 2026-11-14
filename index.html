@@ -1377,7 +1377,7 @@ body{padding-bottom:24px;overflow-x:hidden}
  <div class="table-wrap"><table>
   <thead><tr>
    <th>PO #</th><th>Vendor/Producer</th><th>LCBO Item #</th><th class="inventory-pinned-product">Product Name</th>
-   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Inventory in stock office/warehouse</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Other Fees per Bottle</th><th>Profit per Bottle (TAX/HST incl.) /<br>Profit total item (TAX/HST incl.) <span id="inventoryTotalItemProfit" style="white-space:nowrap" aria-live="polite">(TTL PROFIT —)</span></th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>Total cases sold / Cases sold per month</th><th>Total profit / Monthly profit</th>
+   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Inventory in stock office/warehouse</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Other Fees per Bottle</th><th>Profit per Bottle (TAX/HST incl.) /<br>Profit total item (TAX/HST incl.) <span id="inventoryTotalItemProfit" style="white-space:nowrap" aria-live="polite">(Expected TTL Profit —)</span></th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>Total cases sold / Cases sold per month</th><th>Total profit / Monthly profit</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -9985,7 +9985,7 @@ window.renderHeadInventory=()=>{
  }
  const total=document.getElementById('inventoryTotalItemProfit');
  const renderTotalProfit=draft=>{
-   if(total)total.textContent=`(TTL PROFIT ${inventoryPriceMoney(inventoryTotalItemProfit(projectRows,draft))})`;
+   if(total)total.textContent=`(Expected TTL Profit ${inventoryPriceMoney(inventoryTotalItemProfit(projectRows,draft))})`;
  };
  renderTotalProfit();
 
