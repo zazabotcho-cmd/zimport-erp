@@ -7,6 +7,78 @@
   let latestState=null,latestSettings=null,baseline=new Map();
   let cloudLoadComplete=false; // Never synchronize an incomplete or empty startup snapshot.
   let cloudShipmentIds=new Set();
+  let pendingSave=null, inFlight=null, retryDelay=500, saveRevision=0, loading=false, baselineReady=false;
+  const saveKey=()=>['winglobal-pending-save',cfg.supabaseUrl,cfg.organizationId,user.id].join(':');
+  const isObject=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+  function equal(a,b){
+    if(a===b)return true;
+    if(Array.isArray(a)&&Array.isArray(b))return a.length===b.length&&a.every((value,i)=>equal(value,b[i]));
+    if(!isObject(a)||!isObject(b))return false;
+    return Object.keys(a).length===Object.keys(b).length&&Object.keys(a).every(key=>Object.hasOwn(b,key)&&equal(a[key],b[key]));
+  }
+  function mergePending(before,after,cloud,...fallback){
+    const sent=mergeChangedFields(fallback.length?fallback[0]:before,after,cloud);
+    return mergeChangedFields(before,after,sent);
+  }
+  function mergeChangedFields(before,after,cloud){
+    if(equal(before,after))return cloud;
+    if(!isObject(after)||!isObject(cloud)||(!isObject(before)&&before!==undefined))return after;
+    before=before??{};
+    const merged={...cloud};
+    for(const field of new Set([...Object.keys(before),...Object.keys(after)])){
+      const value=mergeChangedFields(
+        Object.hasOwn(before,field)?before[field]:undefined,
+        Object.hasOwn(after,field)?after[field]:undefined,
+        Object.hasOwn(cloud,field)?cloud[field]:undefined
+      );
+      if(value===undefined)delete merged[field];
+      else Object.defineProperty(merged,field,{value,enumerable:true,writable:true,configurable:true});
+    }
+    return merged;
+  }
+  function stashPending(save){
+    pendingSave=save;
+    try{
+      if(save)localStorage.setItem(saveKey(),JSON.stringify(save));
+      else localStorage.removeItem(saveKey());
+      return true;
+    }catch(error){
+      console.error('Browser could not store the pending save',error);
+      return false;
+    }
+  }
+  function canSyncTable(table){
+    return !window.ZimportPermissions||window.ZimportPermissions.canTable(profile,table);
+  }
+  function collectPending(flat,workspaces){
+    const rows=[];
+    for(const [table,records] of Object.entries(flat)){
+      if(!canSyncTable(table))continue;
+      const current=new Map(records.map(row=>[String(row.id),cleanData(row)]));
+      const sending=inFlight?.rows[table]||new Map();
+      const original=new Map([...baseline].filter(([k])=>k.startsWith(table+':'))
+        .map(([k,b])=>[k.slice(table.length+1),b.data]));
+      for(const id of new Set([...original.keys(),...current.keys(),...sending.keys()])){
+        const before=sending.has(id)?sending.get(id):original.get(id);
+        const after=current.get(id);
+        if(!equal(before,after)||!equal(original.get(id),after))
+          rows.push({table,id,before,after,...(sending.has(id)?{fallback:original.get(id),hasFallback:true}:{})});
+      }
+    }
+    return rows.length||workspaces.length?{rows,workspaces}:null;
+  }
+  function restorePendingTable(table,rows){
+    const restored=new Map(rows.map(row=>[String(row.id),row]));
+    for(const entry of pendingSave?.rows||[]){
+      if(entry.table!==table)continue;
+      const cloud=restored.get(entry.id);
+      const data=cleanData(cloud);
+      const merged=mergePending(entry.before,entry.after,cloud?data:undefined,entry.hasFallback?entry.fallback:entry.before);
+      if(merged===undefined)restored.delete(entry.id);
+      else restored.set(entry.id,{...cloud,...merged,id:entry.id});
+    }
+    return [...restored.values()];
+  }
   const $=id=>document.getElementById(id);
   const collectionMap={agencies:'agencies',suppliers:'suppliers',items:'items',tenders:'tenders',purchaseOrders:'purchase_orders',shipments:'shipments'};
   const inventoryStateFields=['inventoryCaseOverrides','inventorySaleAvailability','inventorySalesMetrics',
@@ -19,7 +91,6 @@
   const allTables=['agencies','suppliers','items','tenders','worker_submissions','submitted_items','winners','archived_tenders','purchase_orders','shipments','supplier_invoices','settings','recycle_bin'];
   function status(text,type=''){const el=$('onlineStatus');if(el){el.textContent=text;el.className='online-status '+type}const b=$('onlineSyncBanner');if(b){b.textContent=text;b.className='sync-banner '+(type==='connected'?'':'offline')}const c=$('cloudSettingsStatus');if(c)c.textContent=text;}
   function cleanData(row){const d={...(row||{})};delete d._audit;delete d._cloudVersion;return d;}
-  function stable(v){return JSON.stringify(v,Object.keys(v||{}).sort());}
   function key(table,id){return `${table}:${id}`;}
   function partitionRecords(records){const active=[],winners=[],archived=[];(records||[]).forEach(r=>{if(r.completedPO||r.stage1Decision==='Declined'||r.finalDecision==='Declined')archived.push(r);else if(r.finalDecision==='Winner')winners.push(r);else active.push(r)});return {active,winners,archived};}
   function flatten(state,settings){const out={};for(const [k,t] of Object.entries(collectionMap))out[t]=(state[k]||[]).filter(Boolean);
@@ -47,7 +118,7 @@
         if(existing.data){
           const b={data:existing.data.data||{},version:existing.data.version||1,updatedAt:existing.data.updated_at};
           baseline.set(key(table,row.id),b);
-          if(JSON.stringify(cleanData(row))!==JSON.stringify(b.data))await updateRow(table,row,b);
+          if(!equal(cleanData(row),b.data))await updateRow(table,row,b);
           return;
         }
       }
@@ -58,21 +129,47 @@
   }
   async function updateRow(table,row,base){const nextVersion=(base?.version||1)+1;const q=await client.from(table).update({data:cleanData(row),updated_by:user.id,version:nextVersion}).eq('organization_id',cfg.organizationId).eq('id',String(row.id)).eq('version',base.version).select('version,updated_at');if(q.error)throw q.error;if(!q.data?.length){const e=new Error('CONFLICT');e.code='CONFLICT';e.table=table;e.id=row.id;throw e;}baseline.set(key(table,row.id),{data:cleanData(row),version:q.data[0].version,updatedAt:q.data[0].updated_at});await log('UPDATE',table,row.id,{fromVersion:base.version,toVersion:nextVersion});}
   async function deleteRow(table,id,base){const q=await client.from(table).delete().eq('organization_id',cfg.organizationId).eq('id',String(id)).eq('version',base.version).select('id');if(q.error)throw q.error;if(!q.data?.length){const e=new Error('CONFLICT');e.code='CONFLICT';e.table=table;e.id=id;throw e;}baseline.delete(key(table,id));await log('DELETE',table,id,{version:base.version});}
-  async function syncState(state,settings){if(!configured()||!user||syncing)return;
+  async function syncState(state,settings){if(!configured()||!user||syncing||loading)return;
     if(!cloudLoadComplete){status('Sync blocked: cloud data has not finished loading','error');return;}
-    if(profile?.role==='readonly'){status('Read-only account','error');return;}syncing=true;dirty=false;status('Saving changes…');try{
-    if(profile?.role==='partner_supplier'){await window.ZimportWorkspaces.save(state);status('Assigned supplier changes saved','connected');return;}
-    const flat=structuredClone(flatten(state,settings));
+    if(profile?.role==='readonly'){status('Read-only account','error');return;}
+    const revision=saveRevision, account=user.id;
+    const flat=profile?.role==='partner_supplier'?{}:structuredClone(flatten(state,settings));
+    const workspaces=window.ZimportWorkspaces.changes(state);
+    inFlight={rows:Object.fromEntries(Object.entries(flat).map(([table,rows])=>[table,
+      new Map([...baseline.keys()].filter(k=>k.startsWith(table+':')).map(k=>[k.slice(table.length+1),undefined])
+        .concat(rows.map(row=>[String(row.id),cleanData(row)])))])),workspaces};
+    syncing=true;dirty=false;status('Saving changes…');
+    let reload=false;
+    try{
     for(const table of Object.keys(flat)){
-      if(window.ZimportPermissions&&!window.ZimportPermissions.canTable(profile,table))continue;
+      if(!canSyncTable(table))continue;
       const rows=flat[table],current=new Map(rows.map(r=>[String(r.id),r]));
-      for(const row of rows){const b=baseline.get(key(table,row.id));if(!b)await insertRow(table,row);else if(JSON.stringify(cleanData(row))!==JSON.stringify(b.data))await updateRow(table,row,b);}
-      for(const [k,b] of [...baseline]){const [bt,id]=k.split(':');if(bt===table&&!current.has(id)){await deleteRow(table,id,b);}}
+      for(const row of rows){const b=baseline.get(key(table,row.id));if(!b)await insertRow(table,row);else if(!equal(cleanData(row),b.data))await updateRow(table,row,b);}
+      for(const [k,b] of [...baseline]){const prefix=table+':';if(k.startsWith(prefix)&&!current.has(k.slice(prefix.length)))await deleteRow(table,k.slice(prefix.length),b);}
     }
-    cloudShipmentIds=new Set((flat.shipments||[]).map(x=>String(x.id)));
-    await window.ZimportWorkspaces.save(state);
+    if(flat.shipments)cloudShipmentIds=new Set(flat.shipments.map(x=>String(x.id)));
+    await window.ZimportWorkspaces.save(workspaces);
+    if(user?.id!==account)return;
+    retryDelay=500;
+    if(revision===saveRevision){
+      if(!stashPending(null)){status('Changes synced, but the browser could not clear the pending save','error');return;}
+    }
     status(dirty?'Saving changes…':'Changes synced to cloud',dirty?'':'connected');
-  }catch(e){console.error(e);if(e.code==='CONFLICT'){status('Conflict detected — reloading latest data','error');alert('Another user changed the same record before your save. The latest cloud version will now load. Please review and enter your change again.');await loadState();}else if(String(e.code||'')==='23505'){status('Sync error: duplicate cloud record detected. Reloading shared data…','error');await loadState();}else status('Sync error: '+(e.message||'Unknown error'),'error');}finally{syncing=false;if(dirty&&user&&cloudLoadComplete)scheduleSync();}
+    }catch(error){
+      if(user?.id!==account)return;
+      console.error(error);
+      retryDelay=Math.min(retryDelay*2,30000);
+      reload=error.code==='CONFLICT'||error.code==='23505'||error.code==='WORKSPACE_CONFLICT';
+      dirty=true;
+      status('Cloud save pending: '+(error.message||'Unknown error'),'error');
+    }finally{
+      syncing=false;
+      inFlight=null;
+      if(user?.id===account&&dirty){
+        if(reload)await loadState();
+        scheduleSync(retryDelay);
+      }
+    }
   }
   async function deleteShipmentRecord(id){
     if(!configured())return;
@@ -91,8 +188,8 @@
     await deleteRow('shipments',shipmentId,base);
     cloudShipmentIds.delete(shipmentId);
   }
-  async function loadTable(table){
-    if(window.ZimportPermissions&&!window.ZimportPermissions.canTable(profile,table))return [];
+  async function loadTable(table,targetBaseline=baseline){
+    if(!canSyncTable(table))return [];
     const rows=[];let offset=0;
     while(true){
       const r=await client.from(table).select('id,data,created_by,created_at,updated_by,updated_at,deleted_by,restore_date,version',{count:'exact'}).eq('organization_id',cfg.organizationId).order('id',{ascending:true}).range(offset,offset+999);
@@ -101,27 +198,89 @@
       if(!page.length||(r.count!=null&&rows.length>=r.count)||(r.count==null&&page.length<1000))break;
       offset+=page.length;
     }
-    return rows.map(x=>{baseline.set(key(table,x.id),{data:x.data||{},version:x.version||1,updatedAt:x.updated_at});return {...x.data,id:x.id,_cloudVersion:x.version||1,_audit:{createdBy:x.created_by,createdAt:x.created_at,updatedBy:x.updated_by,updatedAt:x.updated_at,deletedBy:x.deleted_by,restoreDate:x.restore_date}};});
+    return rows.map(x=>{targetBaseline.set(key(table,x.id),{data:structuredClone(x.data||{}),version:x.version||1,updatedAt:x.updated_at});return {...x.data,id:x.id,_cloudVersion:x.version||1,_audit:{createdBy:x.created_by,createdAt:x.created_at,updatedBy:x.updated_by,updatedAt:x.updated_at,deletedBy:x.deleted_by,restoreDate:x.restore_date}};});
   }
-  async function loadState(){if(syncing)return;cloudLoadComplete=false;status('Loading shared data…');try{
-    if(profile?.role==='partner_supplier'){
-     const scoped=await window.ZimportWorkspaces.load();window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:scoped,replaceState:true,settings:{defaultCurrency:'CAD'}}}));cloudLoadComplete=true;status('Assigned supplier workspaces loaded','connected');window.ZimportPermissions.apply();return;
-    }baseline=new Map();const out={};for(const [k,t] of Object.entries(collectionMap))out[k]=await loadTable(t);
-    out.archivedShipments=(out.shipments||[]).filter(x=>x.archived);out.shipments=(out.shipments||[]).filter(x=>!x.archived);
-    // One-time cleanup of erroneous tender requested by Head Office: 2546 — Italy North.
-    const badTenders=(out.tenders||[]).filter(t=>String(t.code||'').trim()==='2546' && String(t.name||'').trim().toLowerCase().includes('italy north'));
-    for(const t of badTenders){
-      const b=baseline.get(key('tenders',t.id));
-      if(b){try{await deleteRow('tenders',t.id,b);}catch(e){console.warn('Could not delete erroneous tender 2546 from cloud yet:',e);}}
+  async function loadState(){
+    if(syncing||loading||!user)return;
+    clearTimeout(syncTimer);
+    loading=true;
+    const account=user.id;
+    status('Loading shared data…');
+    const nextBaseline=new Map();
+    try{
+      const restoreWorkspaces=()=>window.ZimportWorkspaces.load(()=>pendingSave?.workspaces||[],mergePending);
+      if(profile?.role==='partner_supplier'){
+        const scoped=await restoreWorkspaces();
+        if(user?.id!==account)return;
+        cloudLoadComplete=baselineReady=true;
+        window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:scoped,replaceState:true,settings:{defaultCurrency:'CAD'}}}));
+        finishLoad('Assigned supplier workspaces loaded');
+        window.ZimportPermissions.apply();
+        return;
+      }
+
+      const tables=allTables.filter(table=>canSyncTable(table));
+      const loaded=await Promise.all(tables.map(async table=>[table,await loadTable(table,nextBaseline)]));
+      const workspaces=await restoreWorkspaces();
+      if(user?.id!==account)return;
+      const data=Object.fromEntries(loaded.map(([table,rows])=>[table,restorePendingTable(table,rows)]));
+      const out=Object.fromEntries(Object.entries(collectionMap).map(([field,table])=>[field,data[table]||[]]));
+      out.archivedShipments=out.shipments.filter(row=>row.archived);
+      out.shipments=out.shipments.filter(row=>!row.archived);
+      // Keep the existing one-time removal of the erroneous 2546 Italy North tender.
+      const badTenders=out.tenders.filter(t=>String(t.code||'').trim()==='2546'&&String(t.name||'').trim().toLowerCase().includes('italy north'));
+      for(const tender of badTenders){
+        const rowKey=key('tenders',tender.id), base=nextBaseline.get(rowKey);
+        if(base){
+          try{await deleteRow('tenders',tender.id,base);nextBaseline.delete(rowKey);}
+          catch(error){console.warn('Could not delete erroneous tender 2546:',error);}
+        }
+      }
+      out.tenders=out.tenders.filter(t=>!badTenders.includes(t));
+      out.standaloneSubmissions=(data.worker_submissions||[]).filter(row=>!row.tenderRecordId);
+      for(const [field,value] of Object.entries(workspaces)){
+        if(!['countrySourcingCountries','countryPortfolioSuppliers','tenders'].includes(field))out[field]=value;
+      }
+      out.records=[...(data.submitted_items||[]),...(data.winners||[]),...(data.archived_tenders||[])];
+      out.recycleBin=data.recycle_bin||[];
+      for(const field of ['financialInvoices','supplierPaymentInvoices','supplierPaymentInvoices2','otherInvoices']){
+        out[field]=(data.supplier_invoices||[]).filter(row=>row.invoice_group===field);
+      }
+      const settings=(data.settings||[]).find(row=>row.id==='main')||{};
+      Object.assign(out,inventoryState(settings.inventoryState||{}));
+      out.recycleRetentionDays=settings.recycleRetentionDays||90;
+      if(Array.isArray(settings.countrySourcingCountries))out.countrySourcingCountries=settings.countrySourcingCountries;
+      if(Array.isArray(settings.countryPortfolioSuppliers))out.countryPortfolioSuppliers=settings.countryPortfolioSuppliers;
+      cloudShipmentIds=new Set([...(nextBaseline.keys())].filter(k=>k.startsWith('shipments:')).map(k=>k.slice('shipments:'.length)));
+      baseline=nextBaseline;
+      cloudLoadComplete=baselineReady=true;
+      window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:out,settings:settings.settings||{}}}));
+      finishLoad('Cloud connected · '+cloudShipmentIds.size+' shipment(s) loaded');
+    }catch(error){
+      if(user?.id!==account)return;
+      console.error(error);
+      cloudLoadComplete=false;
+      status('Load error: '+(error.message||'')+' · pending changes kept on this browser','error');
+      try{
+        const shipments=await loadTable('shipments',new Map());
+        if(shipments.length&&user?.id===account){
+          window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:{shipments:shipments.filter(x=>!x.archived),archivedShipments:shipments.filter(x=>x.archived)},partialRecovery:true}}));
+        }
+      }catch(recoveryError){console.error('Shipment recovery failed',recoveryError);}
+    }finally{
+      loading=false;
+      if(user?.id===account&&dirty)scheduleSync(retryDelay);
     }
-    out.tenders=(out.tenders||[]).filter(t=>!(String(t.code||'').trim()==='2546' && String(t.name||'').trim().toLowerCase().includes('italy north')));
-    // worker_submissions are already represented inside tender.workItems in the app state,
-    // but their cloud rows must still be loaded so sync knows they already exist.
-    out.standaloneSubmissions=(await loadTable('worker_submissions')).filter(w=>!w.tenderRecordId);
-    const [a,w,ar,inv,rec,set]=await Promise.all([loadTable('submitted_items'),loadTable('winners'),loadTable('archived_tenders'),loadTable('supplier_invoices'),loadTable('recycle_bin'),loadTable('settings')]);const workspaces=await window.ZimportWorkspaces.load();for(const [k,v] of Object.entries(workspaces))if(!['countrySourcingCountries','countryPortfolioSuppliers','tenders'].includes(k)&&((Array.isArray(v)&&v.length)||(!Array.isArray(v)&&Object.keys(v).length)))out[k]=v;out.records=[...a,...w,...ar];out.recycleBin=rec;out.financialInvoices=inv.filter(x=>x.invoice_group==='financialInvoices');out.supplierPaymentInvoices=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices');out.supplierPaymentInvoices2=inv.filter(x=>x.invoice_group==='supplierPaymentInvoices2');out.otherInvoices=inv.filter(x=>x.invoice_group==='otherInvoices');const s=set.find(x=>x.id==='main')||{};Object.assign(out,inventoryState(s.inventoryState||{}));out.recycleRetentionDays=s.recycleRetentionDays||90;if(Array.isArray(s.countrySourcingCountries))out.countrySourcingCountries=s.countrySourcingCountries;if(Array.isArray(s.countryPortfolioSuppliers))out.countryPortfolioSuppliers=s.countryPortfolioSuppliers;cloudShipmentIds=new Set([...(out.shipments||[]),...(out.archivedShipments||[])].map(x=>String(x.id)));window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:out,settings:s.settings||{}}}));cloudLoadComplete=true;status('Cloud connected · '+cloudShipmentIds.size+' shipment(s) loaded','connected');}catch(e){console.error(e);status('Load error: '+(e.message||'')+' — synchronization disabled','error');
-      // Recover the shipment list independently if another table prevents full startup.
-      try{const recovered=await loadTable('shipments');cloudShipmentIds=new Set(recovered.map(x=>String(x.id)));if(recovered.length){window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:{shipments:recovered.filter(x=>!x.archived),archivedShipments:recovered.filter(x=>x.archived)},partialRecovery:true}}));status('Recovered '+recovered.length+' cloud shipment(s); other cloud data did not finish loading. Sync disabled.','error');}}catch(recoveryError){console.error('Shipment recovery failed',recoveryError);}
-    }}
+  }
+  function finishLoad(message){
+    if(pendingSave){
+      const snapshot=window.getProgramSaveSnapshot();
+      latestState=snapshot.state;
+      latestSettings=snapshot.settings;
+      dirty=true;
+      scheduleSync(retryDelay);
+    }else status(message,'connected');
+  }
   function scheduleRealtimeReload(){if(syncing||dirty)return;clearTimeout(realtimeTimer);realtimeTimer=setTimeout(loadState,700);}
   function subscribeRealtime(){
     if(realtimeChannel){try{client.removeChannel(realtimeChannel);}catch(e){console.warn('Could not remove old realtime channel:',e);}}
@@ -141,17 +300,24 @@
     if(loginInFlight)return loginInFlight;
     loginInFlight=(async()=>{
       user=nextUser;
+      pendingSave=null;
+      try{pendingSave=JSON.parse(localStorage.getItem(saveKey())||'null');}
+      catch(error){console.error('Browser could not read the pending save',error);}
       await getProfile();
       if(invitationLanding)document.getElementById('accountPasswordPanel')?.classList.remove('hidden');
-      $('onlineLoginGate')?.classList.add('hidden');
       if($('onlineSignOut'))$('onlineSignOut').style.display='';
       await loadState();
+      if(cloudLoadComplete)$('onlineLoginGate')?.classList.add('hidden');
+      else{
+        if($('onlineSetupMessage'))$('onlineSetupMessage').textContent='Shared data could not load. Click Retry connection to reopen the program.';
+        addRetryButton();
+      }
       loadedUserId=nextUser.id;
       subscribeRealtime();
     })();
     try{return await loginInFlight;}finally{loginInFlight=null;}
   }
-  function showLogin(){clearTimeout(syncTimer);latestState=null;latestSettings=null;dirty=false;user=null;profile=null;loadedUserId=null;$('onlineLoginGate')?.classList.remove('hidden');if($('onlineSignOut'))$('onlineSignOut').style.display='none';if($('onlineUserLabel'))$('onlineUserLabel').textContent='';window.ZIMPORT_CURRENT_ROLE='readonly';window.ZimportPermissions?.apply();status(configured()?'Sign in required':'Supabase not configured');}
+  function showLogin(){clearTimeout(syncTimer);clearTimeout(realtimeTimer);cloudLoadComplete=baselineReady=false;latestState=null;latestSettings=null;pendingSave=null;dirty=false;user=null;profile=null;loadedUserId=null;$('onlineLoginGate')?.classList.remove('hidden');if($('onlineSignOut'))$('onlineSignOut').style.display='none';if($('onlineUserLabel'))$('onlineUserLabel').textContent='';window.ZIMPORT_CURRENT_ROLE='readonly';window.ZimportPermissions?.apply();status(configured()?'Sign in required':'Supabase not configured');}
   function clearStaleLocalAuthSession(){
     try{
       const host=new URL(cfg.supabaseUrl).hostname;
@@ -243,7 +409,7 @@
         if(event==='PASSWORD_RECOVERY')document.getElementById('accountPasswordPanel')?.classList.remove('hidden');
         if(event==='SIGNED_OUT'||!s){showLogin();return;}
         // A token refresh is normal and must not trigger a full database reload.
-        if(event==='TOKEN_REFRESHED'){user=s.user||user;setTimeout(()=>getProfile().then(loadState).catch(()=>showLogin()),0);return;}
+        if(event==='TOKEN_REFRESHED'){user=s.user||user;return;}
         // Run outside the auth callback so auth-state notifications cannot
         // block other Supabase work, and afterLogin de-duplicates same-user events.
         setTimeout(()=>afterLogin(s).catch(err=>{console.error(err);showLogin();}),0);
@@ -270,16 +436,36 @@
     }else clean=`${cfg.organizationId}/${path}`.replace(/[^a-zA-Z0-9._\/-]/g,'_');const r=await client.storage.from(cfg.storageBucket).upload(clean,file,{upsert:true});if(r.error)throw r.error;if(profile.role!=='partner_supplier')await log('UPLOAD_FILE','storage',clean,{name:file.name,size:file.size,type:file.type});return clean;}
   async function deleteFile(path){const r=await client.storage.from(cfg.storageBucket).remove([path]);if(r.error)throw r.error;await log('DELETE_FILE','storage',path);}
   async function signedFileUrl(path,seconds=600){const r=await client.storage.from(cfg.storageBucket).createSignedUrl(path,seconds);if(r.error)throw r.error;return r.data.signedUrl;}
-  function scheduleSync(){
+  function scheduleSync(delay=500){
     clearTimeout(syncTimer);
-    syncTimer=setTimeout(()=>syncState(latestState,latestSettings),500);
+    if(cloudLoadComplete)syncTimer=setTimeout(()=>syncState(latestState,latestSettings),delay);
   }
-  window.ZimportOnline={configured,init,deleteShipmentRecord,queueSync:(s,se)=>{latestState=s;latestSettings=se;dirty=true;scheduleSync();},syncNow:()=>{
+  function queueSync(state,settings){
+    if(!user||!profile||profile.role==='readonly')return;
+    if(!baselineReady){status('Cloud data unavailable · changes can only be kept in this browser for now','error');return;}
+    clearTimeout(realtimeTimer);
+    latestState=state;
+    latestSettings=settings;
+    saveRevision++;
+    const flat=profile.role==='partner_supplier'?{}:flatten(state,settings);
+    const changes=window.ZimportWorkspaces.changes(state,inFlight?.workspaces);
+    const saved=stashPending(collectPending(flat,changes));
+    dirty=true;
+    status(saved?'Saved on this browser · cloud sync pending':'Browser storage unavailable · cloud sync pending',saved?'':'error');
+    scheduleSync();
+  }
+  window.addEventListener('online',()=>{
+    if(user&&pendingSave){
+      if(cloudLoadComplete)scheduleSync(0);
+      else loadState();
+    }
+  });
+  window.ZimportOnline={configured,init,deleteShipmentRecord,queueSync,syncNow:()=>{
+    if(!cloudLoadComplete||loading)return loadState();
     const snapshot=window.getProgramSaveSnapshot?.();
     if(!snapshot)return Promise.resolve();
-    latestState=snapshot.state;
-    latestSettings=snapshot.settings;
-    if(syncing){dirty=true;return Promise.resolve();}
+    queueSync(snapshot.state,snapshot.settings);
+    clearTimeout(syncTimer);
     return syncState(latestState,latestSettings);
   },loadNow:loadState,uploadFile,deleteFile,signedFileUrl,get client(){return client},get user(){return user},get profile(){return profile}};
   window.addEventListener('DOMContentLoaded',init);
