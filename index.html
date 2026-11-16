@@ -166,9 +166,9 @@
 .other-invoice-totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:14px 0}
 .other-invoice-total{border:1px solid var(--line);border-radius:10px;padding:12px 15px}
 .other-invoice-paid-badge{display:inline-block;padding:4px 9px;border-radius:999px;font-weight:700}
-.other-invoice-total.status-notpaid,.other-invoice-paid-badge.status-notpaid{background:#f1f5f9}
-.other-invoice-total.status-upcoming,.other-invoice-paid-badge.status-upcoming{background:#fff3bf}
-.other-invoice-total.status-paid,.other-invoice-paid-badge.status-paid{background:#dff3e2}
+.other-invoice-total.status-notpaid,.other-invoice-paid-badge.status-notpaid,.rso-status-select.status-notpaid{background:#f1f5f9}
+.other-invoice-total.status-upcoming,.other-invoice-paid-badge.status-upcoming,.rso-status-select.status-upcoming{background:#fff3bf}
+.other-invoice-total.status-paid,.other-invoice-paid-badge.status-paid,.rso-status-select.status-paid{background:#dff3e2}
 .other-invoice-amount{min-width:190px}
 .other-invoice-amount span,.other-invoice-amount strong{display:block}
 .other-invoice-payable{margin-top:5px;font-size:17px;font-variant-numeric:tabular-nums}
@@ -177,7 +177,7 @@
 .supplier-payment-grid{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:14px}.supplier-payment-card{border:1px solid var(--line);border-radius:10px;padding:15px;background:#fbfdff}.supplier-payment-card h3{margin:0 0 12px;color:var(--navy)}.supplier-payment-card.full{grid-column:1/-1}.payment-installment{display:grid;grid-template-columns:150px 150px minmax(180px,.7fr) 1fr;gap:10px;align-items:end;border-top:1px solid var(--line);padding-top:12px;margin-top:12px}.payment-comment-compact{min-height:38px!important;height:38px!important;resize:vertical;padding:8px}.payment-file-status{font-size:12px;color:#52606d;word-break:break-word;margin-top:5px}.supplier-paid-other.hidden{display:none!important}@media(max-width:850px){.supplier-payment-grid,.payment-installment{grid-template-columns:1fr}.supplier-payment-card.full{grid-column:auto}}
 
 .supplier-balance{display:inline-block;min-width:105px;padding:7px 10px;border-radius:8px;font-weight:800;text-align:center}.supplier-balance.yellow{background:#fff3bf;color:#7a5a00;border:1px solid #f0d86b}.supplier-balance.green{background:#d3f9d8;color:#1b6b2a;border:1px solid #8ce99a}
-.po-inline-status{min-width:220px;padding:7px 8px;border:1px solid #bdc9d6;border-radius:7px;background:#fff;font-weight:700}.shipment-inline-status{min-width:190px;padding:7px 8px;border-radius:7px;font-weight:700;border:1px solid #bdc9d6}.shipment-inline-status.status-yellow{background:#fff3bf;color:#6b5200}.shipment-inline-status.status-green{background:#dff3e2;color:#1f6225}.shipment-inline-status.status-blue{background:#dbeafe;color:#1e40af}.invoice-status-notpaid{display:inline-block;padding:5px 9px;border-radius:999px;background:#f1f5f9;color:#334155;font-weight:700}.invoice-status-upcoming{display:inline-block;padding:5px 9px;border-radius:999px;background:#fff3bf;color:#7a5b00;font-weight:700;border:1px solid #e0a800}.invoice-status-paid{display:inline-block;padding:5px 9px;border-radius:999px;background:#d3f9d8;color:#176b2c;font-weight:700;border:1px solid #8ce99a}.invoice-inline-status{min-width:220px;padding:7px;border:1px solid #bdc9d6;border-radius:7px;font-weight:700}.tender-payment-select{min-width:225px;padding:7px 8px;border-radius:7px;font-weight:800}.tender-payment-select.status-upcoming{background:#fff3bf!important;border:2px solid #e0a800!important;color:#6b5200!important}.tender-payment-select.status-paid{background:#dff3e2!important;border:2px solid #2e7d32!important;color:#1f6225!important}.tender-payment-select.status-notpaid{background:#fff!important;border:1px solid #bdc9d6!important;color:#334155!important}.rso-status-select{min-width:220px;padding:7px 8px;border-radius:7px;font-weight:800}.rso-status-select.status-upcoming{background:#fff3bf!important;border:2px solid #e0a800!important;color:#6b5200!important}.rso-status-select.status-paid{background:#dff3e2!important;border:2px solid #2e7d32!important;color:#1f6225!important}.rso-status-select.status-notpaid{background:#fff!important;border:1px solid #bdc9d6!important;color:#334155!important}
+.po-inline-status{min-width:220px;padding:7px 8px;border:1px solid #bdc9d6;border-radius:7px;background:#fff;font-weight:700}.shipment-inline-status{min-width:190px;padding:7px 8px;border-radius:7px;font-weight:700;border:1px solid #bdc9d6}.shipment-inline-status.status-yellow{background:#fff3bf;color:#6b5200}.shipment-inline-status.status-green{background:#dff3e2;color:#1f6225}.shipment-inline-status.status-blue{background:#dbeafe;color:#1e40af}.invoice-status-notpaid{display:inline-block;padding:5px 9px;border-radius:999px;background:#f1f5f9;color:#334155;font-weight:700}.invoice-status-upcoming{display:inline-block;padding:5px 9px;border-radius:999px;background:#fff3bf;color:#7a5b00;font-weight:700;border:1px solid #e0a800}.invoice-status-paid{display:inline-block;padding:5px 9px;border-radius:999px;background:#d3f9d8;color:#176b2c;font-weight:700;border:1px solid #8ce99a}.invoice-inline-status{min-width:220px;padding:7px;border:1px solid #bdc9d6;border-radius:7px;font-weight:700}.tender-payment-select{min-width:225px;padding:7px 8px;border-radius:7px;font-weight:800}.tender-payment-select.status-upcoming{background:#fff3bf!important;border:2px solid #e0a800!important;color:#6b5200!important}.tender-payment-select.status-paid{background:#dff3e2!important;border:2px solid #2e7d32!important;color:#1f6225!important}.tender-payment-select.status-notpaid{background:#fff!important;border:1px solid #bdc9d6!important;color:#334155!important}.rso-status-select{min-width:220px;padding:7px 8px;border-radius:7px;font-weight:800}.rso-status-select.status-upcoming{border:2px solid #e0a800!important;color:#6b5200!important}.rso-status-select.status-paid{border:2px solid #2e7d32!important;color:#1f6225!important}.rso-status-select.status-notpaid{border:1px solid #bdc9d6!important;color:#334155!important}
 .italy-source-price-row{grid-column:1/-1;display:grid;grid-template-columns:minmax(220px,1.3fr) 150px 95px minmax(190px,1fr);gap:10px;align-items:end}
 .italy-price-stack{display:grid;grid-template-columns:1fr;gap:10px}
 .italy-submission-stack{display:grid;grid-template-columns:1fr;gap:10px}
@@ -1440,7 +1440,7 @@ body{padding-bottom:24px;overflow-x:hidden}
     <label>Invoice Must Be Paid By<input id="finNext60DaysPaymentDate" type="date" readonly></label>
   </div>
   <div class="financial-group"><h3>Transportation Invoice</h3>
-    <label>PO TRANSPORTATION INVOICE NAME<input id="finTransportInvoiceName" placeholder="Enter transportation invoice name"></label>
+    <label>Transportation Name (TR order number)<input id="finTransportInvoiceName" placeholder="Linked Transportation" readonly></label>
     <label>Total Transported Bottles<input id="finTotalBottles" type="number" readonly></label>
     <label>Cost per Bottle CAD<input id="finCostPerBottle" type="number" readonly></label>
     <label>PO Bottle Quantity<input id="finPoBottleQuantity" type="number" readonly></label>
@@ -4898,13 +4898,23 @@ function tenderPoArrivedInCanada(po){
 }
 window.tenderPoArrivedInCanada=tenderPoArrivedInCanada;
 
+function tenderTransportationArrivalDate(poIds){
+  const dates=financialLinkedTransportations(poIds).map(transportation=>{
+    if(normalizeSharedShipmentStatus(transportation.status)==='Arrived in Canada'&&transportation.statusDate){
+      return transportation.statusDate;
+    }
+    return transportation.statusHistory?.findLast(entry=>
+      normalizeSharedShipmentStatus(entry.status)==='Arrived in Canada'&&entry.date)?.date||'';
+  });
+  return dates.sort().at(-1)||'';
+}
 function tenderPoAutoInvoiceValues(po,existing={}){
   const lines=po.lines||[];
   const bottleQty=poInvoiceBottleQty(po);
   const number=invoiceOrderNumber(po.number);
   const linkedRecord=(state.records||[]).find(record=>invoiceOrderNumber(record.poNumber)===number);
   const shipment=splitPoLinkedShipments(po.id).find(record=>normalizeSharedShipmentStatus(record.status)==='Arrived in Canada');
-  const arrivalDate=shipment?.statusDate||po.inventoryArrivalStatusDate||existing.arrivedInCanadaDate||'';
+  const arrivalDate=tenderTransportationArrivalDate(new Set([po.id]))||existing.arrivedInCanadaDate||'';
   const quotedValue=totalPoQuotedValue(po);
   return {
     poNumber:String(po.number||'').trim(),
@@ -4915,7 +4925,7 @@ function tenderPoAutoInvoiceValues(po,existing={}){
     lcboApproxDate:existing.lcboApproxDate||'',
     lcboPayDate:existing.lcboPayDate||'',
     lcboPaidStatus:existing.lcboPaidStatus?normalizeTenderInvoicePaymentStatus(existing.lcboPaidStatus):'Next 60 Days Upcoming Payment',
-    transportInvoiceName:existing.transportInvoiceName||shipment?.name||'',
+    transportInvoiceName:financialTransportationNames(po.number),
     totalBottles:bottleQty,
     poBottleQuantity:bottleQty,
     supplierItemPrice:existing.supplierItemPrice??'',
@@ -4977,7 +4987,17 @@ function syncAllArrivedTenderPoInvoices(){
   for(const po of [...(state.purchaseOrders||[]),...(state.manuallyArchivedPurchaseOrders||[])]){
     syncArrivedTenderPoInvoice(po);
   }
-  return (state.financialInvoices||[]).some(invoice=>!before.has(invoice));
+  const orders=[...(state.purchaseOrders||[]),...(state.manuallyArchivedPurchaseOrders||[])]
+    .filter(po=>String(po.program||'').trim().toUpperCase()==='TENDER');
+  state.financialInvoices=(state.financialInvoices||[]).map(invoice=>{
+    const numbers=new Set(invoicePoNumbers(invoice).map(invoiceOrderNumber));
+    const poIds=new Set(orders.filter(po=>po.id&&(po.id===invoice.sourcePoId||numbers.has(invoiceOrderNumber(po.number)))).map(po=>po.id));
+    const date=tenderTransportationArrivalDate(poIds);
+    const due=tenderInvoiceDatePlusDays(date,60);
+    if(!date||(date===invoice.arrivedInCanadaDate&&due===invoice.next60DaysPaymentDate))return invoice;
+    return {...invoice,arrivedInCanadaDate:date,next60DaysPaymentDate:due};
+  });
+  return state.financialInvoices.some(invoice=>!before.has(invoice));
 }
 window.syncAllArrivedTenderPoInvoices=syncAllArrivedTenderPoInvoices;
 
@@ -5194,6 +5214,22 @@ function updateTenderInvoiceStatusFromRow(id,status){
   renderFinancial();
 }
 window.updateTenderInvoiceStatusFromRow=updateTenderInvoiceStatusFromRow;
+function financialLinkedTransportations(poIds){
+  if(!poIds.size)return [];
+  return allTransportationRecords().filter(shipment=>{
+    if(shipment.recordKind!=='transportation')return false;
+    const links=shipment.cargoLinks?.length?cargoLinksPoLinks(shipment.cargoLinks):shipment.poLinks||[];
+    return links.some(link=>poIds.has(link.poId));
+  });
+}
+function financialTransportationNames(poNumber){
+  const numbers=new Set(invoicePoNumbers({poNumber}).map(invoiceOrderNumber));
+  if(!numbers.size)return '';
+  const orders=[...(state.purchaseOrders||[]),...(state.manuallyArchivedPurchaseOrders||[])];
+  const poIds=new Set(orders.filter(po=>numbers.has(invoiceOrderNumber(po.number))).map(po=>po.id).filter(Boolean));
+  const names=financialLinkedTransportations(poIds).map(shipment=>String(shipment.name||'').trim()).filter(Boolean);
+  return [...new Set(names)].join('; ');
+}
 function financialTransportationData(poNumber=''){
  const numbers=invoicePoNumbers({poNumber});
  if(numbers.length>1){
@@ -5206,11 +5242,14 @@ function financialTransportationData(poNumber=''){
   const key=String(poNumber||'').trim().toLowerCase();
   const po=(state.purchaseOrders||[]).find(p=>String(p.number||'').trim().toLowerCase()===key);
   if(!po)return {po:null,shipment:null,totalBottles:0,poBottles:0,costPerBottle:0,poTransportationCost:0};
-  const shipment=allTransportationRecords().find(sh=>(sh.poLinks||[]).some(link=>link.poId===po.id));
-  const totals=shipment?shipmentTotals(shipment):{totalBottles:0,cost:0,costPerBottle:0};
+  const shipments=splitPoLinkedShipments(po.id);
+  const cargo=shipments.find(sh=>sh.recordKind!=='transportation');
+  const shipment=shipments.find(sh=>sh.recordKind==='transportation')||
+    (cargo?cargoDateSourceTransportation(cargo)||cargo:null);
+  const totals=shipment?shipmentTotals(shipment):null;
   const poBottles=poBottleCount(po);
-  const costPerBottle=totals.costPerBottle||0;
-  return {po,shipment,totalBottles:totals.totalBottles||0,poBottles,costPerBottle,poTransportationCost:poBottles*costPerBottle};
+  const costPerBottle=totals?.costPerBottleCad||0;
+  return {po,shipment,totalBottles:totals?.totalBottles||0,poBottles,costPerBottle,poTransportationCost:poBottles*costPerBottle};
 }
 
 function totalAdvertisingExpenses(data={}){
@@ -5324,7 +5363,7 @@ function financialDetailSections(x){const c=financialCalculations(x),currency=x.
  ['Invoice Identification',[['PO #',x.poNumber],['Invoice Number',x.invoiceNumber],['Arrived in Canada Date',x.arrivedInCanadaDate],['Invoice Must Be Paid By',x.next60DaysPaymentDate],['Submission #',x.submissionNumber],['Arrival Status',x.poStatus]]],
  ...tenderInvoicePoDetails(x),
  ['LCBO Invoice',[['Total PO Quoted Value *',`${currency} ${num(x.lcboInvoiceCad).toFixed(2)}`],['LCBO Invoice Approximate Date',x.lcboApproxDate],['LCBO Invoice Pay Date Confirmed',x.lcboPayDate],['LCBO PAYMENT STATUS',x.lcboPaidStatus||'No']]],
- ['Transportation Invoice',[['PO Transportation Invoice Name',x.transportInvoiceName],['Total Transported Bottles',c.totalBottles],['Cost per Bottle CAD',`CAD ${c.costPerBottle.toFixed(4)}`],['PO Bottle Quantity',c.poBottles],['PO Transportation Cost CAD',money(c.transportCad)]]],
+ ['Transportation Invoice',[['Transportation Name (TR order number)',financialTransportationNames(x.poNumber)],['Total Transported Bottles',c.totalBottles],['Cost per Bottle CAD',`CAD ${c.costPerBottle.toFixed(4)}`],['PO Bottle Quantity',c.poBottles],['PO Transportation Cost CAD',money(c.transportCad)]]],
  ['Supplier Payment',[['Supplier Item Price',`${supplierCurrency} ${num(x.supplierItemPrice).toFixed(4)}`],['Items in Case',num(x.supplierItemsInCase)],['Supplier Case Price',`${supplierCurrency} ${c.supplierCasePrice.toFixed(4)}`],['CAD to Supplier Currency',`1 CAD = ${supplierCurrency==='CAD'?'1':num(x.supplierRate)} ${supplierCurrency}`],['Supplier Item Price CAD',`CAD ${c.supplierItemCad.toFixed(4)}`],['Total Supplier Payment Amount',money(c.supplierTotalCad)]]],
  ['Netted Expenses',[['Netted Amount 1',money(x.nettedAmount1)],['Description 1',x.nettedDescription1],['Netted Amount 2',money(x.nettedAmount2)],['Description 2',x.nettedDescription2],['Netted Amount 3',money(x.nettedAmount3)],['Description 3',x.nettedDescription3],['Total Netted Expenses',money(c.nettedExpenses)]]],
  ['Advertising Expenses',[['Advertising Amount 1',money(x.adAmount1)],['Description 1',x.adDescription1],['Advertising Amount 2',money(x.adAmount2)],['Description 2',x.adDescription2],['Advertising Amount 3',money(x.adAmount3)],['Description 3',x.adDescription3],['Advertising Amount 4',money(x.adAmount4)],['Description 4',x.adDescription4],['Advertising Amount 5',money(x.adAmount5)],['Description 5',x.adDescription5],['Advertising Amount 6',money(x.adAmount6)],['Description 6',x.adDescription6],['Total Advertising Expenses',money(c.advertisingExpenses)]]],
@@ -5335,7 +5374,7 @@ function closeFinancialInvoiceDetails(){$('#financialInvoiceDetails').classList.
 function copyAllFinancialInvoiceDetails(){const x=(state.financialInvoices||[]).find(v=>v.id===currentFinancialDetailId);if(!x)return;const text=financialDetailSections(x).flatMap(([title,fields])=>[title,...fields.map(([label,value])=>`${label}: ${value===undefined||value===null||value===''?'—':value}`),'']).join('\n');copyText(text);}
 
 function populateFinancialPoOptions(){const list=$('#financialPoNumbers');if(list)list.innerHTML=(state.purchaseOrders||[]).map(po=>`<option value="${escapeHtml(po.number||'')}" label="${escapeHtml(invoicePoOptionLabel(po))}">${escapeHtml(invoicePoOptionLabel(po))}</option>`).join('')}
-function syncFinancialPoDetails(){const poNo=$('#finPoNumber')?.value||'';const record=(state.records||[]).find(r=>String(r.poNumber||'').trim().toLowerCase()===String(poNo).trim().toLowerCase());if(record&&$('#finSubmissionNumber')&&!$('#finSubmissionNumber').value.trim())$('#finSubmissionNumber').value=record.submissionNumber||'';updateFinancialCalculations()}
+function syncFinancialPoDetails(){const poNo=$('#finPoNumber')?.value||'';const transportation=$('#finTransportInvoiceName');if(transportation)transportation.value=financialTransportationNames(poNo);const record=(state.records||[]).find(r=>String(r.poNumber||'').trim().toLowerCase()===String(poNo).trim().toLowerCase());if(record&&$('#finSubmissionNumber')&&!$('#finSubmissionNumber').value.trim())$('#finSubmissionNumber').value=record.submissionNumber||'';updateFinancialCalculations()}
 
 function syncTenderInvoiceTotalPoQuotedValue(inv){
   if(!inv)return inv;
@@ -5363,7 +5402,7 @@ function syncTenderInvoiceTotalPoQuotedValue(inv){
 window.syncTenderInvoiceTotalPoQuotedValue=syncTenderInvoiceTotalPoQuotedValue;
 
 let currentFinancialInvoiceEditId='';
-function openFinancialInvoiceEditor(id=''){currentFinancialInvoiceEditId=id||'';const existingInvoice=id?(state.financialInvoices||[]).find(x=>x.id===id):null;if(id&&!existingInvoice){alert('This Tender invoice could not be found. Refresh the page and try again.');return}const d=syncTenderInvoiceTotalPoQuotedValue(existingInvoice)||{id:'',poNumber:'',invoiceNumber:'',submissionNumber:'',lcboCurrency:'CAD',lcboPaidStatus:'Not Paid',supplierCurrency:'USD'};if(d.lcboPaidStatus==='Yes'||d.lcboPaidStatus==='Paid by LCBO')d.lcboPaidStatus='Fully Paid';if(d.lcboPaidStatus==='No'||d.lcboPaidStatus==='Unpaid by LCBO'||!d.lcboPaidStatus)d.lcboPaidStatus='Not Paid';if(d.supplierItemPrice===undefined&&d.supplierItemUsd!==undefined)d.supplierItemPrice=d.supplierItemUsd;if(!d.supplierCurrency)d.supplierCurrency='USD';if(d.nettedAmount1===undefined&&d.otherExpenses!==undefined)d.nettedAmount1=d.otherExpenses;if(d.adAmount1===undefined&&d.advertising!==undefined)d.adAmount1=d.advertising;if(d.failedSalesPercent===undefined&&d.failedSalesExpenses!==undefined&&num(d.lcboInvoiceCad)>0)d.failedSalesPercent=(num(d.failedSalesExpenses)/num(d.lcboInvoiceCad))*100;Object.entries(financialFieldMap).forEach(([k,fieldId])=>{const e=$('#'+fieldId);if(e)e.value=d[k]??'';});if($('#finArrivedInCanadaDate'))$('#finArrivedInCanadaDate').value=d.arrivedInCanadaDate||'';if($('#finNext60DaysPaymentDate'))$('#finNext60DaysPaymentDate').value=d.next60DaysPaymentDate||'';if(d.autoCreatedFromTenderPo||d.sourcePoId){if($('#finLcboInvoiceCad'))$('#finLcboInvoiceCad').readOnly=true;if($('#finLcboCurrency'))$('#finLcboCurrency').disabled=true;}else{if($('#finLcboInvoiceCad'))$('#finLcboInvoiceCad').readOnly=false;if($('#finLcboCurrency'))$('#finLcboCurrency').disabled=false;}mountInvoicePoPicker('fin',d);$('#financialEditorTitle').textContent=id?'Edit Invoice':'Create Invoice';$('#deleteFinancialInvoice').style.visibility=id?'visible':'hidden';$('#financialInvoiceList').classList.add('hidden');$('#financialInvoiceDetails').classList.add('hidden');$('#financialInvoiceEditor').classList.remove('hidden');updateFinancialCalculations();;loadInvoiceOtherFiles('fin', 'financialInvoices', id);}
+function openFinancialInvoiceEditor(id=''){currentFinancialInvoiceEditId=id||'';const existingInvoice=id?(state.financialInvoices||[]).find(x=>x.id===id):null;if(id&&!existingInvoice){alert('This Tender invoice could not be found. Refresh the page and try again.');return}const d=syncTenderInvoiceTotalPoQuotedValue(existingInvoice)||{id:'',poNumber:'',invoiceNumber:'',submissionNumber:'',lcboCurrency:'CAD',lcboPaidStatus:'Not Paid',supplierCurrency:'USD'};if(d.lcboPaidStatus==='Yes'||d.lcboPaidStatus==='Paid by LCBO')d.lcboPaidStatus='Fully Paid';if(d.lcboPaidStatus==='No'||d.lcboPaidStatus==='Unpaid by LCBO'||!d.lcboPaidStatus)d.lcboPaidStatus='Not Paid';if(d.supplierItemPrice===undefined&&d.supplierItemUsd!==undefined)d.supplierItemPrice=d.supplierItemUsd;if(!d.supplierCurrency)d.supplierCurrency='USD';if(d.nettedAmount1===undefined&&d.otherExpenses!==undefined)d.nettedAmount1=d.otherExpenses;if(d.adAmount1===undefined&&d.advertising!==undefined)d.adAmount1=d.advertising;if(d.failedSalesPercent===undefined&&d.failedSalesExpenses!==undefined&&num(d.lcboInvoiceCad)>0)d.failedSalesPercent=(num(d.failedSalesExpenses)/num(d.lcboInvoiceCad))*100;Object.entries(financialFieldMap).forEach(([k,fieldId])=>{const e=$('#'+fieldId);if(e)e.value=d[k]??'';});if($('#finArrivedInCanadaDate'))$('#finArrivedInCanadaDate').value=d.arrivedInCanadaDate||'';if($('#finNext60DaysPaymentDate'))$('#finNext60DaysPaymentDate').value=d.next60DaysPaymentDate||'';if(d.autoCreatedFromTenderPo||d.sourcePoId){if($('#finLcboInvoiceCad'))$('#finLcboInvoiceCad').readOnly=true;if($('#finLcboCurrency'))$('#finLcboCurrency').disabled=true;}else{if($('#finLcboInvoiceCad'))$('#finLcboInvoiceCad').readOnly=false;if($('#finLcboCurrency'))$('#finLcboCurrency').disabled=false;}mountInvoicePoPicker('fin',d);syncFinancialPoDetails();$('#financialEditorTitle').textContent=id?'Edit Invoice':'Create Invoice';$('#deleteFinancialInvoice').style.visibility=id?'visible':'hidden';$('#financialInvoiceList').classList.add('hidden');$('#financialInvoiceDetails').classList.add('hidden');$('#financialInvoiceEditor').classList.remove('hidden');loadInvoiceOtherFiles('fin', 'financialInvoices', id);}
 function closeFinancialInvoiceEditor(){currentFinancialInvoiceEditId='';$('#financialInvoiceEditor').classList.add('hidden');$('#financialInvoiceList').classList.remove('hidden');renderFinancial();}
 function saveFinancialInvoice(){
  const d=readFinancialForm();d.otherFiles=invoiceOtherFiles.fin||[null,null,null];
@@ -5480,8 +5519,9 @@ window.openSupplierPayment2InvoiceEditor=openSupplierPayment2InvoiceEditor;windo
 let otherInvoicePendingFile=null;
 
 function normalizeRsoInvoiceStatus(v){
-  if(v==='Fully Paid'||v==='Yes')return 'Fully Paid';
-  if(v==='Upcoming Payment in Next 14 Days')return v;
+  const status=String(v||'').trim().toLowerCase();
+  if(['fully paid','paid','yes'].includes(status))return 'Fully Paid';
+  if(['upcoming payment','upcoming payment in next 14 days'].includes(status))return 'Upcoming Payment in Next 14 Days';
   return 'Not Paid';
 }
 function rsoInvoiceStatusClass(v){
