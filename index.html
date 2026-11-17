@@ -171,7 +171,7 @@
 .other-invoice-total.status-paid,.other-invoice-paid-badge.status-paid,.rso-status-select.status-paid{background:#dff3e2}
 .other-invoice-amount{min-width:190px}
 .other-invoice-amount span,.other-invoice-amount strong{display:block}
-#financialInvoiceList .tender-column-total{display:block;margin-top:5px;font-size:12px;font-weight:700;white-space:normal}
+#financialInvoiceList .tender-column-total{display:block;margin-top:5px;font-size:12px;font-weight:700;white-space:pre-line}
 #financialInvoiceList .financial-transport-divider{border-right:2px solid #94a3b8}
 .other-invoice-payable{margin-top:5px;font-size:17px;font-variant-numeric:tabular-nums}
 .other-invoice-total h3{margin:0 0 6px;font-size:14px}
@@ -5369,8 +5369,8 @@ function renderTenderInvoiceColumnTotals(rows){
   }
   const payable=[...payableByCurrency].sort(([a],[b])=>a.localeCompare(b))
     .map(([currency,cents])=>`${currency} ${formatOtherInvoiceCents(cents)}`).join(' · ');
-  $('#tenderTotalPayable').textContent=`( Total Payable: ${payable||'CAD 0.00'} )`;
-  $('#tenderTotalNetProfit').textContent=`( Total Net Profit: CAD ${formatOtherInvoiceCents(profitCents)} )`;
+  $('#tenderTotalPayable').textContent=`( Total Payable:\n${payable||'CAD 0.00'} )`;
+  $('#tenderTotalNetProfit').textContent=`( Total Net Profit:\nCAD ${formatOtherInvoiceCents(profitCents)} )`;
 }
 function renderFinancial(){(state.financialInvoices||[]).forEach(x=>{syncTenderInvoiceTotalPoQuotedValue(x);syncTenderInvoiceDueDate(x)});if(!$('#financialInvoiceRows'))return;renderInvoicePaymentTotals(
   $('#tenderInvoiceTotals'),state.financialInvoices||[],
