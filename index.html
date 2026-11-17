@@ -168,6 +168,7 @@
 .other-invoice-paid-badge{display:inline-block;padding:4px 9px;border-radius:999px;font-weight:700}
 .other-invoice-total.status-notpaid,.other-invoice-paid-badge.status-notpaid,.rso-status-select.status-notpaid{background:#f1f5f9}
 .other-invoice-total.status-upcoming,.other-invoice-paid-badge.status-upcoming,.rso-status-select.status-upcoming{background:#fff3bf}
+.other-invoice-total.status-outstanding{background:#e0ecfb}
 .other-invoice-total.status-paid,.other-invoice-paid-badge.status-paid,.rso-status-select.status-paid{background:#dff3e2}
 .other-invoice-amount{min-width:190px}
 .other-invoice-amount span,.other-invoice-amount strong{display:block}
@@ -5618,18 +5619,24 @@ function renderInvoicePaymentTotals(container,invoices,getStatus,getPayable){
   const groups=new Map([
     ['Upcoming Payment in Next 14 Days',{label:'Upcoming Payments',amounts:new Map()}],
     ['Not Paid',{label:'Not Paid',amounts:new Map()}],
+    ['outstanding',{label:'Upcoming Payments + Not Paid',amounts:new Map()}],
     ['Fully Paid',{label:'Paid',amounts:new Map()}]
   ]);
   for(const invoice of invoices){
-    const {amounts}=groups.get(getStatus(invoice));
+    const status=getStatus(invoice);
+    const {amounts}=groups.get(status);
     const {currency,payableCents}=getPayable(invoice);
     amounts.set(currency,(amounts.get(currency)||0)+payableCents);
+    if(status!=='Fully Paid'){
+      const outstanding=groups.get('outstanding').amounts;
+      outstanding.set(currency,(outstanding.get(currency)||0)+payableCents);
+    }
   }
   container.innerHTML=Array.from(groups,([status,{label,amounts}])=>{
     const totals=Array.from(amounts).sort(([a],[b])=>a.localeCompare(b))
       .map(([currency,cents])=>`<strong>${escapeHtml(currency)} ${formatOtherInvoiceCents(cents)}</strong>`)
       .join('')||'<strong>0.00</strong>';
-    return `<div class="other-invoice-total ${rsoInvoiceStatusClass(status)}"><h3>${label}</h3>${totals}</div>`;
+    return `<div class="other-invoice-total ${status==='outstanding'?'status-outstanding':rsoInvoiceStatusClass(status)}"><h3>${label}</h3>${totals}</div>`;
   }).join('');
 }
 function renderOtherInvoiceTotals(invoices){
