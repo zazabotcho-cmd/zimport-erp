@@ -8,6 +8,8 @@
 
 .dashboard-detail{margin-top:20px}.dashboard-table{min-width:3300px;border-collapse:separate;border-spacing:0}
 .dashboard-table .dashboard-product-description{position:sticky;left:0;white-space:normal;overflow-wrap:anywhere;width:clamp(130px,30vw,260px);max-width:clamp(130px,30vw,260px);box-shadow:1px 0 0 var(--line)}
+.dashboard-table .dashboard-financial-divider{border-right:2px solid var(--line)}
+.dashboard-table .winner-case-quantity,.dashboard-table .supplier-po-quote{font-size:1.125em;font-weight:700}
 .dashboard-table th.dashboard-product-description{z-index:3}
 .dashboard-table td.dashboard-product-description{z-index:2;background:#fff}
 .dashboard-table tr:hover td.dashboard-product-description{background:#f8fbff}
@@ -1112,9 +1114,9 @@ body{padding-bottom:24px;overflow-x:hidden}
   <div class="box dashboard-detail">
     <div class="section-head"><h2>Winner Items Financial Dashboard</h2><span class="note">Each winner item is shown on its own row.</span></div>
     <div class="table-wrap"><table class="dashboard-table"><thead><tr>
-      <th>Tender Name & Date</th><th>Agency</th><th class="dashboard-product-description" scope="col">Product Description</th><th scope="col">WINNER CASE QTTY / BOTTLES PER CASE /<br>Winner Cases</th>
-      <th title="(LCBO offered case price − supplier case price − transportation per bottle × items per case) ÷ items per case, converted to CAD. Complete supplier pricing and enter 0 transportation if the supplier delivers.">Agency Fee CAD / Btl</th><th scope="col">Approximate Transportation<br>Cost per Bottle</th><th>Offered Quote Per Case /<br>Total Invoice Quote</th><th>ERP CAD / Btl</th>
-      <th scope="col">STORE RELEASE DATE</th><th>Net Profit Total</th><th>Advertising Budget CAD</th><th>Date</th>
+      <th>Tender Name & Date</th><th>Agency</th><th class="dashboard-product-description" scope="col">Product Description</th><th scope="col" class="dashboard-financial-divider">WINNER CASE QTTY / BOTTLES PER CASE /<br>Winner Cases</th><th>Offered Quote Per Case /<br>Total Invoice Quote</th><th scope="col">Supplier Quote per Case / Bottle /<br>Total PO Quote</th><th>Advertising Budget CAD</th><th scope="col" class="dashboard-financial-divider">Net Profit Total</th><th>ERP CAD / Btl</th><th scope="col">STORE RELEASE DATE</th>
+      <th title="(LCBO offered case price − supplier case price − transportation per bottle × items per case) ÷ items per case, converted to CAD. Complete supplier pricing and enter 0 transportation if the supplier delivers.">Agency Fee CAD / Btl</th><th scope="col">Approximate Transportation<br>Cost per Bottle</th>
+      <th scope="col">Tender Pre-Submission Date</th>
     </tr></thead><tbody id="dashboardRows"></tbody></table></div>
   </div>
   <div class="box dashboard-detail">
@@ -2906,7 +2908,18 @@ function winnerTenderAgencyFee(item,bottlesPerCase){
 
 function winnerDashboardItem(r){
   const item=state.items.find(i=>i.id===r.itemId)||{};
-  const tender=currentTenderForRecord(r)||{};
+  const tenders=state.tenders||[];
+  const linkedSubmission=tenders.flatMap(tender=>(tender.workItems||[]).map(work=>({tender,work})))
+    .find(({work})=>(r.sourceLcboSubmissionWorkId&&String(work.id)===String(r.sourceLcboSubmissionWorkId))
+      ||(r.id&&work.submissionId&&String(work.submissionId)===String(r.id)));
+  const tenderCode=String(r.tenderId??'').trim();
+  const tender=(r.tenderRecordId&&tenders.find(entry=>String(entry.id)===String(r.tenderRecordId)))
+    || linkedSubmission?.tender
+    || (tenderCode&&tenders.find(entry=>String(entry.code??'').trim()===tenderCode))
+    || {};
+  const agencyIds=[r.agencyId,linkedSubmission?.work.agencyId].filter(Boolean).map(String);
+  const agencyName=agencyIds.map(id=>(state.agencies||[]).find(agency=>String(agency.id)===id)?.name)
+    .find(Boolean)||'Unassigned';
   const merged={
     ...r,
     brand:r.brand||item.brandName||item.brand||'',
@@ -2917,29 +2930,45 @@ function winnerDashboardItem(r){
     offeredQuoteCurrency:item.quotationCurrency||r.offeredQuoteCurrency||'CAD',
     erpManual:num(r.erpManual)||num(item.estimatedRetailPrice),
     potentialCases:num(r.potentialCases)||num(item.limitedCaseQty),
-    tenderName:r.tenderName||tender.name||'',
-    tenderDate:r.tenderDate||tender.presubDate||tender.tastingDate||''
+    tenderName:tender.name||r.tenderName||'',
+    tenderDate:tender.presubDate||tender.tastingDate||r.tenderDate||''
   };
   const d=derive(merged);
   const fee=winnerTenderAgencyFee(item,merged.bottles);
   d.agencyFee=fee;d.netProfit=fee;d.offeredQuoteCad=num(merged.offeredQuote)*currencyToCadRate(merged.offeredQuoteCurrency);
   const finalCases=num(r.finalOrderedQty)||num(r.finalCaseOrderQuantity)||num(merged.potentialCases);
   const winnerBottles=finalCases*num(merged.bottles);
-  return {r,item,tender,merged,d,finalCases,winnerBottles,totalProfit:d.netProfit===null?null:d.netProfit*winnerBottles,advertisingBudget:num(r.advertisingBudget)||num(item.advertisingBudget)};
+  return {r,item,tender,agencyName,merged,d,finalCases,winnerBottles,totalProfit:d.netProfit===null?null:d.netProfit*winnerBottles,advertisingBudget:num(r.advertisingBudget)||num(item.advertisingBudget)};
+}
+function tenderReleasePoNumber(value){
+  return invoiceOrderNumber(String(value??'').trim().replace(/^(?:TENDER\s+)?PO(?:\s+(?:NO\.?|NUMBER))?(?:\s*#\s*|\s*:\s*|\s+)/i,''));
+}
+function formatStoreReleaseDate(value){
+  const parts=/^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if(!parts)return value;
+  const [,year,month,day]=parts;
+  const date=new Date(value+'T00:00:00Z');
+  if(!Number.isFinite(date.getTime())||date.toISOString().slice(0,10)!==value)return value;
+  const monthName=date.toLocaleString('en-CA',{month:'long',timeZone:'UTC'});
+  return `${Number(day)}.${monthName}.${year}`;
 }
 function winnerStoreReleaseDate(record){
-  const poNumber=invoiceOrderNumber(record.poNumber);
-  if(!poNumber)return '';
-  const po=(state.purchaseOrders||[]).find(order=>order.program==='TENDER'&&invoiceOrderNumber(order.number)===poNumber);
-  return po ? (po.storeReleaseDate??record.storeReleaseDate??'') : '';
+  const poNumbers=new Set(invoicePoNumbers(record).map(tenderReleasePoNumber).filter(Boolean));
+  const orders=[...(state.purchaseOrders||[]),...(state.manuallyArchivedPurchaseOrders||[])];
+  const dates=orders
+    .filter(po=>String(po.program??'').trim().toUpperCase()==='TENDER'&&poNumbers.has(tenderReleasePoNumber(po.number)))
+    .map(po=>String(po.storeReleaseDate??'').trim())
+    .filter(Boolean);
+  return [...new Set(dates)].sort().map(formatStoreReleaseDate).join(' / ')
+    ||formatStoreReleaseDate(String(record.storeReleaseDate??'').trim());
 }
 function renderDashboardRows(){
   const winnerItems=state.records.filter(r=>String(r.finalDecision||'').trim().toLowerCase()==='winner').map(winnerDashboardItem);
   const rows=winnerItems.map(x=>{
-    const {r,item,merged,d,finalCases,winnerBottles,totalProfit,advertisingBudget}=x;
+    const {r,item,tender,agencyName,merged,d,finalCases,winnerBottles,totalProfit,advertisingBudget}=x;
     const erp=num(merged.erpManual)||d.estimatedErp;
     const description=descriptionWithItemSize(merged.itemName||item.productDescription||'—',item,r);
-    const date=merged.tenderDate||r.storeReleaseDate||'—';
+    const preSubmissionDate=formatStoreReleaseDate(String(tender.presubDate??'').trim());
     const storeReleaseDate=winnerStoreReleaseDate(r);
     const caseQuantity=finalCases.toLocaleString();
     const bottlesPerCase=num(merged.bottles).toLocaleString();
@@ -2948,9 +2977,20 @@ function renderDashboardRows(){
     const transportCurrency=item.supplierConsolidationTransportCurrency||item.quotationCurrency||'CAD';
     const quotePerCase=num(merged.offeredQuote);
     const totalInvoiceQuote=(quotePerCase*finalCases).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
-    return `<tr data-record-id="${escapeHtml(r.id)}"><td><b>${escapeHtml(merged.tenderName||'—')}</b><br><small>${escapeHtml(date)}</small></td><td>${escapeHtml(agencyName(r.agencyId)||'—')}</td><td class="dashboard-product-description"><b>${escapeHtml(description)}</b>${merged.supplier?`<br><small>${escapeHtml(merged.supplier)}</small>`:''}</td><td>${caseQuantity} Cases / ${bottlesPerCase}<br><small>${caseQuantity} × ${bottlesPerCase} = ${bottleQuantity} Bottles</small></td><td class="${d.agencyFee>=0?'positive':'negative'}">${d.agencyFee===null?'—':money(d.agencyFee)}</td><td>${transportCost!==''&&Number.isFinite(Number(transportCost))?'<span class="currency-tag">'+escapeHtml(transportCurrency)+'</span> '+escapeHtml(transportCost):'—'}</td><td><span class="currency-tag">${escapeHtml(merged.offeredQuoteCurrency||'CAD')}</span> ${quotePerCase.toFixed(2)}<br><strong title="Total Invoice Quote">${totalInvoiceQuote}</strong></td><td>${money(erp)}</td><td>${escapeHtml(storeReleaseDate||'—')}</td><td class="${totalProfit>=0?'positive':'negative'}">${totalProfit===null?'—':money(totalProfit)}</td><td><input class="advertising-budget-input" type="number" min="0" step="0.01" value="${advertisingBudget||''}" placeholder="0.00" onchange="updateWinnerAdvertisingBudget('${r.id}',this.value)"></td><td>${escapeHtml(date)}</td></tr>`;
+    const supplierQuote=String(item.supplierPricePerOfferedCase??'').trim();
+    const supplierQuotePerCase=Number(supplierQuote);
+    const supplierQuoteAvailable=supplierQuote!==''&&Number.isFinite(supplierQuotePerCase);
+    const formatQuote=value=>value.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const unitsPerCase=num(merged.bottles);
+    const supplierQuotePerBottle=unitsPerCase>0
+      ? (supplierQuotePerCase/unitsPerCase).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:4})
+      : '—';
+    const supplierQuoteCell=supplierQuoteAvailable
+      ? `<span class="currency-tag">${escapeHtml(item.quotationCurrency||'CAD')}</span> ${formatQuote(supplierQuotePerCase)} / ${supplierQuotePerBottle}<br><strong class="supplier-po-quote" title="Total PO Quote">${formatQuote(supplierQuotePerCase*finalCases)}</strong>`
+      : '—';
+    return `<tr data-record-id="${escapeHtml(r.id)}"><td><b>${escapeHtml(merged.tenderName||'—')}</b><br><small>${escapeHtml(merged.tenderDate||'—')}</small></td><td>${escapeHtml(agencyName)}</td><td class="dashboard-product-description"><b>${escapeHtml(description)}</b>${merged.supplier?`<br><small>${escapeHtml(merged.supplier)}</small>`:''}</td><td class="dashboard-financial-divider"><strong class="winner-case-quantity">${caseQuantity} Cases</strong> / ${bottlesPerCase}<br><small>${caseQuantity} × ${bottlesPerCase} = ${bottleQuantity} Bottles</small></td><td><span class="currency-tag">${escapeHtml(merged.offeredQuoteCurrency||'CAD')}</span> ${quotePerCase.toFixed(2)}<br><strong title="Total Invoice Quote">${totalInvoiceQuote}</strong></td><td>${supplierQuoteCell}</td><td><input class="advertising-budget-input" type="number" min="0" step="0.01" value="${advertisingBudget||''}" placeholder="0.00" onchange="updateWinnerAdvertisingBudget('${r.id}',this.value)"></td><td class="dashboard-financial-divider ${totalProfit>=0?'positive':'negative'}">${totalProfit===null?'—':money(totalProfit)}</td><td>${money(erp)}</td><td>${escapeHtml(storeReleaseDate||'—')}</td><td class="${d.agencyFee>=0?'positive':'negative'}">${d.agencyFee===null?'—':money(d.agencyFee)}</td><td>${transportCost!==''&&Number.isFinite(Number(transportCost))?'<span class="currency-tag">'+escapeHtml(transportCurrency)+'</span> '+escapeHtml(transportCost):'—'}</td><td>${escapeHtml(preSubmissionDate||'—')}</td></tr>`;
   }).join('');
-  $('#dashboardRows').innerHTML=rows||'<tr><td colspan="12">No winner items found.</td></tr>';
+  $('#dashboardRows').innerHTML=rows||'<tr><td colspan="13">No winner items found.</td></tr>';
 }
 function updateWinnerAdvertisingBudget(recordId,value){
   const r=state.records.find(x=>x.id===recordId);if(!r)return;
@@ -4814,9 +4854,9 @@ async function openPoEditor(id=''){
   if(!Array.isArray(state.purchaseOrders))state.purchaseOrders=[];
   const po=(state.purchaseOrders||[]).find(x=>x.id===id)||null;
   populatePoAgencySelect(po?.agencyId||'',po?.agencyName||'');
-  const poNumber=po?.program==='TENDER' ? invoiceOrderNumber(po.number) : '';
+  const poNumber=po?.program==='TENDER' ? tenderReleasePoNumber(po.number) : '';
   const legacyReleaseDates=new Set(poNumber ? (state.records||[])
-    .filter(record=>invoiceOrderNumber(record.poNumber)===poNumber&&record.storeReleaseDate)
+    .filter(record=>record.storeReleaseDate&&invoicePoNumbers(record).some(number=>tenderReleasePoNumber(number)===poNumber))
     .map(record=>record.storeReleaseDate) : []);
   $('#poStoreReleaseDateInput').value=po?.storeReleaseDate??(legacyReleaseDates.size===1 ? [...legacyReleaseDates][0] : '');
   $('#poRecordId').value=po?.id||'';$('#poModalTitle').textContent=po?'Edit PO':'Create New PO';$('#poNumberInput').value=po?.number||'';$('#poProgramInput').value=po?.program||'REGU';$('#poDateInput').value=po?.poDate||'';$('#poProgramOtherInput').value=po?.programOther||'';syncPoProgramFields();renderPoVendorChoices(po?.vendors||po?.supplierNames||(po?.vendor?[po.vendor]:[]),po?.vendorSupplierIds||po?.supplierIds||[]);$('#poSameProducerSelect').value=(po&&po.producerSameVendor===false)||po?.sameProducer==='No'?'No':'Yes';syncPoProducerControls();if($('#poSameProducerSelect').value==='No')$('#poProducerSelect').value=(po?.producerSupplierIds||[])[0]||'';$('#poItemLines').innerHTML='';const totalInput=$('#poGrandTotalInput');totalInput.value='0.00';(po?.lines?.length?po.lines:[{}]).forEach(addPoLine);calculatePoTotals();$('#poNotesInput').value=po?.notes||'';poPendingFile=null;renderPoFileStatus(po?.fileName||'');$('#deletePoBtn').style.visibility=po?'visible':'hidden';$('#poModal').classList.remove('hidden');
