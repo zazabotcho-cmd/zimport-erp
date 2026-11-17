@@ -1420,7 +1420,7 @@ body{padding-bottom:24px;overflow-x:hidden}
   <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments-2','heads-page')">Suppliers to Agent Fee Payment</button>
   <button type="button" class="invoice-page-tab" onclick="activate('archived-invoices','heads-page')">Archived Invoices</button>
 </div><div class="section-head"><div><h2>LCBO to Agent Tender Invoices</h2><p class="note">Create and manage separate financial invoice records by PO number and invoice number.</p></div><button type="button" id="createFinancialInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleFinancialSearch">Search</button><div class="page-search-panel" id="financialSearchPanel"><label>Search Invoices<input id="financialPageSearch" type="search" placeholder="PO, invoice, submission, status, amount or currency"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearFinancialPageSearch">Clear Search</button></div></div>
-<div id="financialInvoiceList"><div class="table-wrap"><table><thead><tr><th>PO #</th><th>Invoice Number</th><th>Submission #</th><th>Total Supplier Payment Amount CAD</th><th class="financial-transport-divider">Transportation Cost CAD</th><th>Arrived in Canada Date</th><th>LCBO PAYMENT STATUS</th><th>Total PO Quoted Value * /<br>Total Payable</th><th>Failed Sales LCBO Rebate</th><th>NET PROFIT CAD</th><th>Actions</th><th>Notes</th></tr></thead><tbody id="financialInvoiceRows"></tbody></table></div></div>
+<div id="financialInvoiceList"><div id="tenderInvoiceTotals" class="other-invoice-totals" aria-label="Tender invoice payment totals"></div><div class="table-wrap"><table><thead><tr><th>PO #</th><th>Invoice Number</th><th>Submission #</th><th>Total Supplier Payment Amount CAD</th><th class="financial-transport-divider">Transportation Cost CAD</th><th>Arrived in Canada Date</th><th>LCBO PAYMENT STATUS</th><th class="financial-transport-divider">Total PO Quoted Value * /<br>Total Payable</th><th>Failed Sales LCBO Rebate</th><th>NET PROFIT CAD</th><th>Actions</th><th>Notes</th></tr></thead><tbody id="financialInvoiceRows"></tbody></table></div></div>
 <div id="financialInvoiceDetails" class="hidden"><div class="invoice-detail-actions"><button type="button" class="secondary" id="backFromFinancialDetails">Back to Invoice List</button><button type="button" class="secondary" id="copyAllFinancialDetails">Copy All Invoice Information</button><button type="button" id="editFromFinancialDetails">Edit Invoice</button></div><div id="financialInvoiceDetailsContent"></div></div>
 <div id="financialInvoiceEditor" class="hidden">
 <div class="section-head"><div><h2 id="financialEditorTitle">Create Invoice</h2><p class="note">Select the PO, enter the invoice details, and review the automatically calculated transportation cost.</p></div><button type="button" class="secondary" id="backToFinancialList">Back to Invoice List</button></div>
@@ -4965,7 +4965,7 @@ function syncTenderInvoiceDueDate(inv){
   if(!inv)return inv;
   if(inv.arrivedInCanadaDate){
     inv.next60DaysPaymentDate=tenderInvoiceDatePlusDays(inv.arrivedInCanadaDate,60);
-    if(normalizeTenderInvoicePaymentStatus(inv.lcboPaidStatus)!=='Fully Paid'){
+    if(!inv.lcboPaidStatus){
       inv.lcboPaidStatus='Next 60 Days Upcoming Payment';
     }
   }
@@ -5256,6 +5256,16 @@ function totalAdvertisingExpenses(data={}){
   return [1,2,3,4,5,6].reduce((sum,n)=>sum+num(data['adAmount'+n]),0);
 }
 window.totalAdvertisingExpenses=totalAdvertisingExpenses;
+function tenderInvoicePayableAmounts(invoice,nettedExpenses){
+  const currency=String(invoice.lcboCurrency||'CAD').trim().toUpperCase()||'CAD';
+  const rate=cadToForeignRate(currency);
+  const quotedCents=Math.round(num(invoice.lcboInvoiceCad)*100);
+  const nettedCents=Math.round(nettedExpenses*rate*100);
+  return {currency,rate,quotedCents,nettedCents,payableCents:quotedCents-nettedCents};
+}
+function invoiceNettedExpenses(invoice){
+  return num(invoice.nettedAmount1)+num(invoice.nettedAmount2)+num(invoice.nettedAmount3);
+}
 function financialCalculations(data={}){
   const td=financialTransportationData(data.poNumber),transportCad=td.poTransportationCost,costPerBottle=td.costPerBottle;
   const supplierCurrency=data.supplierCurrency||'CAD';
@@ -5265,13 +5275,16 @@ function financialCalculations(data={}){
   const supplierRate=supplierCurrency==='CAD'?1:num(data.supplierRate);
   const supplierItemCad=supplierCurrency==='CAD'?supplierItemPrice:(supplierRate>0?supplierItemPrice/supplierRate:0);
   const supplierTotalCad=supplierItemCad*td.poBottles;
-  const nettedExpenses=num(data.nettedAmount1)+num(data.nettedAmount2)+num(data.nettedAmount3);
+  const nettedExpenses=invoiceNettedExpenses(data);
   const advertisingExpenses=totalAdvertisingExpenses(data);
-  const failedSalesAmount=num(data.lcboInvoiceCad)*num(data.failedSalesPercent)/100;
+  const payable=tenderInvoicePayableAmounts(data,nettedExpenses);
+  const failedSalesAmount=payable.quotedCents/payable.rate*num(data.failedSalesPercent)/10000;
   const otherExpenses=num(data.otherExpenseAmount);
   const expenses=nettedExpenses+advertisingExpenses+failedSalesAmount+otherExpenses;
-  const netProfit=num(data.lcboInvoiceCad)-transportCad-supplierTotalCad-expenses;
-  return {transportCad,costPerBottle,transportCostPerItem:costPerBottle,poTransportationCost:transportCad,totalBottles:td.totalBottles,poBottles:td.poBottles,supplierCurrency,supplierItemPrice,supplierItemsInCase,supplierCasePrice,supplierItemCad,supplierTotalCad,nettedExpenses,advertisingExpenses,failedSalesAmount,otherExpenses,expenses,netProfit};
+  const payableCadCents=Math.round(payable.payableCents/payable.rate);
+  const netProfit=(payableCadCents-Math.round(transportCad*100)-
+    Math.round(supplierTotalCad*100)-Math.round(failedSalesAmount*100))/100;
+  return {transportCad,costPerBottle,transportCostPerItem:costPerBottle,poTransportationCost:transportCad,totalBottles:td.totalBottles,poBottles:td.poBottles,supplierCurrency,supplierItemPrice,supplierItemsInCase,supplierCasePrice,supplierItemCad,supplierTotalCad,nettedExpenses,advertisingExpenses,failedSalesAmount,otherExpenses,expenses,payable,netProfit};
 }
 function readFinancialForm(){const d={};Object.entries(financialFieldMap).forEach(([k,id])=>{const e=$('#'+id);if(e)d[k]=financialTextFields.has(id)?e.value:(e.value===''?'':num(e.value));});d.poNumbers=invoicePoNumbers(d);return d;}
 function updateFinancialCalculations(){if(!$('#finNetProfit')||$('#financialInvoiceEditor').classList.contains('hidden'))return;const d=readFinancialForm(),savedInvoice=(state.financialInvoices||[]).find(invoice=>invoice.id===currentFinancialInvoiceEditId),c=financialCalculations({...savedInvoice,...d});$('#finTotalBottles').value=c.totalBottles||'';$('#finPoBottleQuantity').value=c.poBottles||'';$('#finCostPerBottle').value=c.costPerBottle.toFixed(4);$('#finPoTransportationCost').value=c.poTransportationCost.toFixed(2);$('#finSupplierCasePrice').value=c.supplierCasePrice.toFixed(4);$('#finSupplierCaseCurrency').value=c.supplierCurrency;$('#finSupplierRateCurrency').textContent=c.supplierCurrency;$('#finSupplierRate').disabled=c.supplierCurrency==='CAD';if(c.supplierCurrency==='CAD')$('#finSupplierRate').value='1';$('#finSupplierItemCad').value=c.supplierItemCad.toFixed(4);$('#finSupplierTotalCad').value=c.supplierTotalCad.toFixed(2);if($('#finFailedSalesAmount'))$('#finFailedSalesAmount').value=c.failedSalesAmount.toFixed(2);$('#finSummaryTransport').textContent=money(c.transportCad);$('#finSummarySupplier').textContent=money(c.supplierTotalCad);$('#finSummaryExpenses').textContent=money(c.expenses);$('#finNetProfit').textContent=money(c.netProfit);$('#finNetProfit').classList.toggle('negative',c.netProfit<0);$('#finNetProfit').classList.toggle('positive',c.netProfit>=0);}
@@ -5339,16 +5352,20 @@ function invoicePoItemNamesHtml(invoice={}){
  if(!names.length)return '';
  return '<div class="invoice-po-items" style="margin-top:4px;font-size:12px;line-height:1.4;white-space:normal;overflow-wrap:anywhere">'+[...new Set(names.map(n=>String(n).trim()).filter(Boolean))].map(name=>'<div>'+escapeHtml(name)+'</div>').join('')+'</div>';
 }
-function renderTenderInvoicePayable(invoice,nettedExpenses){
-  const currency=String(invoice.lcboCurrency||'CAD').trim().toUpperCase()||'CAD';
+function renderTenderInvoicePayable({currency,quotedCents,nettedCents,payableCents}){
   const code=escapeHtml(currency);
-  const quotedCents=Math.round(num(invoice.lcboInvoiceCad)*100);
-  const nettedCents=Math.round(nettedExpenses*cadToForeignRate(currency)*100);
   return `<span>${code} ${formatOtherInvoiceCents(quotedCents)}</span>
     <span class="note">Netted Expenses ${code} ${formatOtherInvoiceCents(-nettedCents||0)}</span>
-    <strong class="other-invoice-payable">Payable ${code} ${formatOtherInvoiceCents(quotedCents-nettedCents)}</strong>`;
+    <strong class="other-invoice-payable">Payable ${code} ${formatOtherInvoiceCents(payableCents)}</strong>`;
 }
-function renderFinancial(){(state.financialInvoices||[]).forEach(x=>{syncTenderInvoiceTotalPoQuotedValue(x);syncTenderInvoiceDueDate(x)});if(!$('#financialInvoiceRows'))return;const financialQuery=$('#financialPageSearch')?.value||'';$('#financialInvoiceRows').innerHTML=(state.financialInvoices||[]).filter(x=>pageSearchMatches(x,financialQuery)).map(x=>{const c=financialCalculations(x);return `<tr><td>${invoicePoRowsHtml(x)}</td><td><button type="button" class="invoice-number-link" onclick="openFinancialInvoiceDetails('${x.id}')">${escapeHtml(x.invoiceNumber||'—')}</button></td><td>${escapeHtml(x.submissionNumber||'—')}</td><td>${money(c.supplierTotalCad)}</td><td class="financial-transport-divider">${money(c.transportCad)}</td><td>${escapeHtml(x.arrivedInCanadaDate||'—')}</td><td><span class="status ${x.lcboPaidStatus==='Yes'?'green':'yellow'}"><select class="invoice-inline-status" onchange="updateTenderInvoiceStatusFromRow('${x.id}',this.value)"><option value="Not Paid" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Not Paid'?'selected':''}>Not Paid</option><option value="Next 60 Days Upcoming Payment" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Next 60 Days Upcoming Payment'?'selected':''}>Next 60 Days Upcoming Payment</option><option value="Fully Paid" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Fully Paid'?'selected':''}>Fully Paid</option></select></span></td><td class="other-invoice-amount">${renderTenderInvoicePayable(x,c.nettedExpenses)}</td><td>${money(c.failedSalesAmount)}</td><td><strong class="${c.netProfit<0?'negative':'positive'}">${money(c.netProfit)}</strong></td><td><div><button type="button" onclick="editFinancialInvoice('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('Tender','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="removeFinancialInvoice('${x.id}')">Delete</button></div></td><td class="comments-cell"><div style="white-space:pre-wrap">${escapeHtml(x.notes||'—')}</div>${x.poStatus==='Arrived in Canada'?'<span class="invoice-status-paid">Arrived in Canada</span>':''}</td></tr>`}).join('')||'<tr><td colspan="12" class="note">No financial invoices created. Click + Create Invoice.</td></tr>';}
+function renderFinancial(){(state.financialInvoices||[]).forEach(x=>{syncTenderInvoiceTotalPoQuotedValue(x);syncTenderInvoiceDueDate(x)});if(!$('#financialInvoiceRows'))return;renderInvoicePaymentTotals(
+  $('#tenderInvoiceTotals'),state.financialInvoices||[],
+  invoice=>{
+    const status=normalizeTenderInvoicePaymentStatus(invoice.lcboPaidStatus);
+    return status==='Next 60 Days Upcoming Payment'?'Upcoming Payment in Next 14 Days':status;
+  },
+  invoice=>tenderInvoicePayableAmounts(invoice,invoiceNettedExpenses(invoice))
+);const financialQuery=$('#financialPageSearch')?.value||'';$('#financialInvoiceRows').innerHTML=(state.financialInvoices||[]).filter(x=>pageSearchMatches(x,financialQuery)).map(x=>{const c=financialCalculations(x);return `<tr><td>${invoicePoRowsHtml(x)}</td><td><button type="button" class="invoice-number-link" onclick="openFinancialInvoiceDetails('${x.id}')">${escapeHtml(x.invoiceNumber||'—')}</button></td><td>${escapeHtml(x.submissionNumber||'—')}</td><td>${money(c.supplierTotalCad)}</td><td class="financial-transport-divider">${money(c.transportCad)}</td><td>${escapeHtml(x.arrivedInCanadaDate||'—')}</td><td><span class="status ${x.lcboPaidStatus==='Yes'?'green':'yellow'}"><select class="invoice-inline-status" onchange="updateTenderInvoiceStatusFromRow('${x.id}',this.value)"><option value="Not Paid" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Not Paid'?'selected':''}>Not Paid</option><option value="Next 60 Days Upcoming Payment" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Next 60 Days Upcoming Payment'?'selected':''}>Next 60 Days Upcoming Payment</option><option value="Fully Paid" ${normalizeTenderInvoicePaymentStatus(x.lcboPaidStatus)==='Fully Paid'?'selected':''}>Fully Paid</option></select></span></td><td class="other-invoice-amount financial-transport-divider">${renderTenderInvoicePayable(c.payable)}</td><td>${money(c.failedSalesAmount)}</td><td><strong class="${c.netProfit<0?'negative':'positive'}">${money(c.netProfit)}</strong></td><td><div><button type="button" onclick="editFinancialInvoice('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('Tender','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="removeFinancialInvoice('${x.id}')">Delete</button></div></td><td class="comments-cell"><div style="white-space:pre-wrap">${escapeHtml(x.notes||'—')}</div>${x.poStatus==='Arrived in Canada'?'<span class="invoice-status-paid">Arrived in Canada</span>':''}</td></tr>`}).join('')||'<tr><td colspan="12" class="note">No financial invoices created. Click + Create Invoice.</td></tr>';}
 let currentFinancialDetailId='';
 function financialDetailField(label,value){const text=value===undefined||value===null||value===''?'—':String(value);return `<div class="detail-row"><span>${escapeHtml(label)}</span><b>${escapeHtml(text)}</b><button type="button" class="secondary small" onclick='copyText(${JSON.stringify(text)})'>Copy</button></div>`}
 function tenderInvoicePoDetails(invoice){
@@ -5582,24 +5599,29 @@ function renderOtherInvoiceAmount(invoice){
     <span class="note">Expenses ${formatOtherInvoiceCents(-expenseCents||0)}</span>
     <strong class="other-invoice-payable">Payable ${currency} ${formatOtherInvoiceCents(payableCents)}</strong>`;
 }
-function renderOtherInvoiceTotals(invoices){
+function renderInvoicePaymentTotals(container,invoices,getStatus,getPayable){
+  if(!container)return;
   const groups=new Map([
     ['Upcoming Payment in Next 14 Days',{label:'Upcoming Payments',amounts:new Map()}],
     ['Not Paid',{label:'Not Paid',amounts:new Map()}],
     ['Fully Paid',{label:'Paid',amounts:new Map()}]
   ]);
   for(const invoice of invoices){
-    const status=normalizeRsoInvoiceStatus(invoice.paidStatus||invoice.invoicePaidStatus);
-    const {amounts}=groups.get(status);
-    const currency=String(invoice.currency||'CAD').trim().toUpperCase()||'CAD';
-    amounts.set(currency,(amounts.get(currency)||0)+otherInvoiceAmounts(invoice).payableCents);
+    const {amounts}=groups.get(getStatus(invoice));
+    const {currency,payableCents}=getPayable(invoice);
+    amounts.set(currency,(amounts.get(currency)||0)+payableCents);
   }
-  $('#otherInvoiceTotals').innerHTML=Array.from(groups,([status,{label,amounts}])=>{
+  container.innerHTML=Array.from(groups,([status,{label,amounts}])=>{
     const totals=Array.from(amounts).sort(([a],[b])=>a.localeCompare(b))
       .map(([currency,cents])=>`<strong>${escapeHtml(currency)} ${formatOtherInvoiceCents(cents)}</strong>`)
       .join('')||'<strong>0.00</strong>';
     return `<div class="other-invoice-total ${rsoInvoiceStatusClass(status)}"><h3>${label}</h3>${totals}</div>`;
   }).join('');
+}
+function renderOtherInvoiceTotals(invoices){
+  renderInvoicePaymentTotals($('#otherInvoiceTotals'),invoices,
+    invoice=>normalizeRsoInvoiceStatus(invoice.paidStatus||invoice.invoicePaidStatus),
+    invoice=>({...otherInvoiceAmounts(invoice),currency:String(invoice.currency||'CAD').trim().toUpperCase()||'CAD'}));
 }
 function renderOtherInvoices(){
   const body=$('#otherInvoiceRows');if(!body)return;
