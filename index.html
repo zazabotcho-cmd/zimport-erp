@@ -5370,7 +5370,7 @@ function renderTenderInvoiceColumnTotals(rows){
   const payable=[...payableByCurrency].sort(([a],[b])=>a.localeCompare(b))
     .map(([currency,cents])=>`${currency} ${formatOtherInvoiceCents(cents)}`).join(' · ');
   $('#tenderTotalPayable').textContent=`( Total Payable:\n${payable||'CAD 0.00'} )`;
-  $('#tenderTotalNetProfit').textContent=`( Total Net Profit:\nCAD ${formatOtherInvoiceCents(profitCents)} )`;
+  $('#tenderTotalNetProfit').textContent=`(\u00a0Total\u00a0Net\u00a0Profit:\nCAD ${formatOtherInvoiceCents(profitCents)} )`;
 }
 function renderFinancial(){(state.financialInvoices||[]).forEach(x=>{syncTenderInvoiceTotalPoQuotedValue(x);syncTenderInvoiceDueDate(x)});if(!$('#financialInvoiceRows'))return;renderInvoicePaymentTotals(
   $('#tenderInvoiceTotals'),state.financialInvoices||[],
