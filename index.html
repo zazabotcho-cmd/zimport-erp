@@ -343,7 +343,7 @@ label[data-retrieved-locked="1"] textarea{
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="online-config.js"></script>
-<script src="online-adapter-bulk-enabled.js?v=20261118-inventory-journal"></script>
+<script src="online-adapter-bulk-enabled.js?v=20261118-warehouse-po-sync"></script>
 <script src="user-permissions.js" defer></script>
 <script src="supplier-workspaces.js?v=20261115-persistence" defer></script>
 <script src="admin-management.js" defer></script>
@@ -1381,10 +1381,6 @@ body{padding-bottom:24px;overflow-x:hidden}
   <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
  </div>
  <div class="section-head"><div><h2>Office/Warehouse Stock Inventory</h2></div></div>
- <div id="officeInventoryRecovery" class="toolbar" hidden>
-  <span id="officeInventoryRecoveryMessage"></span>
-  <button class="secondary" type="button" onclick="restoreWarehouseCheckpoint()">Restore Saved Inventory</button>
- </div>
  <div class="cards" id="officeInventoryKpis"></div>
  <div class="table-wrap"><table><thead><tr>
   <th>Item Description / Item #</th><th>Supplier</th><th>Cases in Stock / Bottles per Case</th><th>Cases in Office / Cases in Storage</th>
@@ -2426,26 +2422,13 @@ function readWarehouseCheckpoint(){
  try{return JSON.parse(safeStorage.getItem(warehouseCheckpointKey())||'null');}
  catch(error){console.warn('Could not read the saved warehouse inventory',error);return null;}
 }
-function restoreWarehouseCheckpoint(){
- const checkpoint=readWarehouseCheckpoint();
- if(!warehouseInventoryHasRows(checkpoint?.officeInventory)||warehouseInventoryHasRows(state.officeInventory))return;
- if(!confirm('Restore the saved warehouse records and their linked transportation quantities, sales and prices?'))return;
- const savedIds=new Set(checkpoint.officeInventory.map(row=>row.id));
- state.officeInventory=[...(state.officeInventory||[]).filter(row=>!savedIds.has(row.id)),...checkpoint.officeInventory];
- for(const field of ['inventoryCaseOverrides','inventorySaleAvailability','inventorySalesMetrics','inventoryStockOutDates']){
-  const current=state[field]??={};
-  for(const {inventoryKey} of checkpoint.officeInventory){
-   if(Object.hasOwn(checkpoint[field],inventoryKey))current[inventoryKey]=checkpoint[field][inventoryKey];
-   else delete current[inventoryKey];
-  }
+window.getWarehouseMigrationSnapshot=()=>{
+ const cached=state.officeInventory;
+ if(warehouseInventoryHasRows(cached)){
+  rememberWarehouseCheckpoint(state);
  }
- for(const po of [...(state.purchaseOrders||[]),...(state.manuallyArchivedPurchaseOrders||[]),...(state.inventoryDeletedPoSnapshots||[])]){
-  const id=String(po.originalPoId||po.id);
-  if(Object.hasOwn(checkpoint.pricing,id))po.inventoryProformaPricing={...checkpoint.pricing[id]};
- }
- save();
- renderOfficeInventory();
-}
+ return readWarehouseCheckpoint();
+};
 function save(){
  removeRequestedGeorgiaWineCandidate();
  repairReguInvoices();
@@ -10471,15 +10454,6 @@ function renderOfficeInventory(){
   const body=document.getElementById('officeInventoryRows');
   const cards=document.getElementById('officeInventoryKpis');
   if(!body||!cards)return;
-  const recovery=document.getElementById('officeInventoryRecovery');
-  if(recovery){
-    const checkpoint=readWarehouseCheckpoint();
-    recovery.hidden=warehouseInventoryHasRows(state.officeInventory)||!warehouseInventoryHasRows(checkpoint?.officeInventory);
-    if(!recovery.hidden){
-      document.getElementById('officeInventoryRecoveryMessage').textContent=
-        'The shared inventory is empty. A saved copy is available in this browser.';
-    }
-  }
   const grouped=new Map();
   for(const record of state.officeInventory||[]){
     if(record.inventoryArchived||!record.inventoryKey)continue;

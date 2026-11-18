@@ -88,12 +88,46 @@
     return Object.fromEntries(inventoryStateFields.filter(field=>state[field]!==undefined)
       .map(field=>[field,state[field]]));
   }
+  const warehouseLinkedFields=['inventoryCaseOverrides','inventorySaleAvailability','inventorySalesMetrics','inventoryStockOutDates'];
+  const warehousePoKey=po=>encodeURIComponent(String(po.originalPoId||po.id));
+  const warehouseRecordPoKey=row=>String(row.inventoryKey||'').split('::')[0];
+  function warehousePurchaseOrders(orders,state){
+    const byPo=new Map();
+    for(const row of state.officeInventory||[]){
+      const key=warehouseRecordPoKey(row);
+      if(!byPo.has(key))byPo.set(key,[]);
+      byPo.get(key).push(row);
+    }
+    return orders.map(po=>{
+      const key=warehousePoKey(po);
+      const records=byPo.get(key)||[];
+      if(!records.length&&!po.warehouseInventory)return po;
+      const linked=Object.fromEntries(warehouseLinkedFields.map(field=>[field,
+        Object.fromEntries(Object.entries(state[field]||{}).filter(([id])=>id.startsWith(key+'::')))]));
+      return {...po,warehouseInventory:{records,...linked}};
+    });
+  }
+  function loadWarehousePurchaseOrders(orders,inventory){
+    const stored=orders.filter(po=>po.warehouseInventory);
+    if(!stored.length)return inventory;
+    const poKeys=new Set(stored.map(warehousePoKey));
+    const merged={...inventory,officeInventory:[
+      ...(inventory.officeInventory||[]).filter(row=>!poKeys.has(warehouseRecordPoKey(row))),
+      ...stored.flatMap(po=>po.warehouseInventory.records||[])
+    ]};
+    for(const field of warehouseLinkedFields){
+      merged[field]=Object.fromEntries(Object.entries(inventory[field]||{}).filter(([id])=>!poKeys.has(id.split('::')[0])));
+      for(const po of stored)Object.assign(merged[field],po.warehouseInventory[field]||{});
+    }
+    return merged;
+  }
   const allTables=['agencies','suppliers','items','tenders','worker_submissions','submitted_items','winners','archived_tenders','purchase_orders','shipments','supplier_invoices','settings','recycle_bin'];
   function status(text,type=''){const el=$('onlineStatus');if(el){el.textContent=text;el.className='online-status '+type}const b=$('onlineSyncBanner');if(b){b.textContent=text;b.className='sync-banner '+(type==='connected'?'':'offline')}const c=$('cloudSettingsStatus');if(c)c.textContent=text;}
   function cleanData(row){const d={...(row||{})};delete d._audit;delete d._cloudVersion;return d;}
   function key(table,id){return `${table}:${id}`;}
   function partitionRecords(records){const active=[],winners=[],archived=[];(records||[]).forEach(r=>{if(r.completedPO||r.stage1Decision==='Declined'||r.finalDecision==='Declined')archived.push(r);else if(r.finalDecision==='Winner')winners.push(r);else active.push(r)});return {active,winners,archived};}
   function flatten(state,settings){const out={};for(const [k,t] of Object.entries(collectionMap))out[t]=(state[k]||[]).filter(Boolean);
+    out.purchase_orders=warehousePurchaseOrders(out.purchase_orders,state);
     out.shipments=[...(state.shipments||[]).map(x=>({...x,archived:false})),...(state.archivedShipments||[]).map(x=>({...x,archived:true}))];
     const workers=[];(state.tenders||[]).forEach(t=>(t.workItems||[]).forEach(w=>workers.push({...w,id:w.id||`${t.id}-${w.itemId}`,tenderRecordId:t.id})));out.worker_submissions=[...workers,...(state.standaloneSubmissions||[]).map(w=>({...w,tenderRecordId:''}))];
     const p=partitionRecords(state.records||[]);out.submitted_items=p.active;out.winners=p.winners;out.archived_tenders=p.archived;
@@ -254,15 +288,36 @@
       }
       const settings=(data.settings||[]).find(row=>row.id==='main')||{};
       const journal=readInventoryJournal();
-      const sharedInventory=inventoryState(settings.inventoryState||{});
-      Object.assign(out,applyInventoryJournal(sharedInventory,journal));
+      const sharedInventory=loadWarehousePurchaseOrders(out.purchaseOrders,inventoryState(settings.inventoryState||{}));
+      const inventory=applyInventoryJournal(sharedInventory,journal);
+      // Older builds kept warehouse records in Settings or only in the browser.
+      const hasWarehouseData=out.purchaseOrders.some(po=>po.warehouseInventory)||inventory.officeInventory?.length;
+      const cachedWarehouse=hasWarehouseData||!canSyncTable('purchase_orders')?null:window.getWarehouseMigrationSnapshot?.();
+      if(cachedWarehouse?.officeInventory?.length){
+        const availablePoKeys=new Set(out.purchaseOrders.map(warehousePoKey));
+        const records=cachedWarehouse.officeInventory.filter(row=>availablePoKeys.has(warehouseRecordPoKey(row)));
+        const keys=new Set(records.map(row=>row.inventoryKey));
+        if(records.length){
+          inventory.officeInventory=records;
+          for(const po of out.purchaseOrders){
+            const savedPricing=cachedWarehouse.pricing?.[po.originalPoId||po.id];
+            if(savedPricing)po.inventoryProformaPricing={...savedPricing,...po.inventoryProformaPricing};
+          }
+          for(const field of warehouseLinkedFields){
+            inventory[field]={...inventory[field],...Object.fromEntries(Object.entries(cachedWarehouse[field]||{}).filter(([id])=>keys.has(id)))};
+          }
+        }
+      }
+      Object.assign(out,inventory);
+      const migrateWarehouse=canSyncTable('purchase_orders')&&out.officeInventory?.some(row=>
+        out.purchaseOrders.some(po=>!po.warehouseInventory&&warehousePoKey(po)===warehouseRecordPoKey(row)));
       out.recycleRetentionDays=settings.recycleRetentionDays||90;
       if(Array.isArray(settings.countrySourcingCountries))out.countrySourcingCountries=settings.countrySourcingCountries;
       if(Array.isArray(settings.countryPortfolioSuppliers))out.countryPortfolioSuppliers=settings.countryPortfolioSuppliers;
       cloudShipmentIds=new Set([...(nextBaseline.keys())].filter(k=>k.startsWith('shipments:')).map(k=>k.slice('shipments:'.length)));
       baseline=nextBaseline;
       cloudLoadComplete=baselineReady=true;
-      window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:out,settings:settings.settings||{}}}));
+      window.dispatchEvent(new CustomEvent('zimport-online-state-loaded',{detail:{state:out,settings:settings.settings||{},repairSync:migrateWarehouse}}));
       finishLoad('Cloud connected · '+cloudShipmentIds.size+' shipment(s) loaded');
     }catch(error){
       if(user?.id!==account)return;
