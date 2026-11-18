@@ -1,0 +1,16 @@
+OFFICE/WAREHOUSE STOCK INVENTORY FIX (2026-11-18)
+
+1. Page appeared empty after refresh
+   The data was saved, but the page's drawing function was hidden inside a private
+   script block, so opening the page after a refresh failed silently and showed an
+   empty table. It is now exposed to the page tabs and startup render.
+   (The "Total Inventory" tab had the same problem and is fixed too.)
+
+2. Updates from other users/devices being overwritten
+   The browser keeps a backup of unsaved inventory edits until the cloud confirms them.
+   The confirmation compared rows by position; the cloud returns them grouped by PO, so
+   the backup was never cleared and was re-applied on every refresh, overwriting newer
+   changes made elsewhere. The check now compares the rows themselves.
+
+Files changed: index.html, online-adapter-bulk-enabled.js, online-adapter.js
+Upload all three together (same as before).

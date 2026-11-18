@@ -343,7 +343,7 @@ label[data-retrieved-locked="1"] textarea{
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="online-config.js"></script>
-<script src="online-adapter-bulk-enabled.js?v=20261118-warehouse-verify-reload"></script>
+<script src="online-adapter-bulk-enabled.js?v=20261118-office-inventory-render-fix"></script>
 <script src="user-permissions.js" defer></script>
 <script src="supplier-workspaces.js?v=20261115-persistence" defer></script>
 <script src="admin-management.js" defer></script>
@@ -5946,7 +5946,7 @@ function safeStartupRender(){
     ['renderHeadBonuses',()=>{if(typeof window.renderHeadBonuses==='function')window.renderHeadBonuses()}],
     ['renderSourcingCountryControls',()=>{if(typeof window.renderSourcingCountryControls==='function')window.renderSourcingCountryControls()}],
     ['renderSettings',()=>renderSettings()],
-    ['renderOfficeInventory',()=>renderOfficeInventory()],
+    ['renderOfficeInventory',()=>window.renderOfficeInventory?.()],
     ['renderHeadInventory',()=>{if(typeof renderHeadInventory==='function')renderHeadInventory()}],
     ['renderProfitItemCalculator',()=>{if(typeof renderProfitItemCalculator==='function')renderProfitItemCalculator()}],
     ['applySharedCurrencyOptions',()=>{if(typeof applySharedCurrencyOptions==='function')applySharedCurrencyOptions()}]
@@ -6024,7 +6024,7 @@ function activate(tab,preferredSection=''){
       $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
     }
   }
-  const panel=$('#'+tab);if(panel)panel.classList.add('active');if(tab==='price-list')renderPriceList();if(tab==='inventory-archived')window.renderArchivedInventory?.();if(tab==='total-inventory')renderInventoryTransportationPages();if(tab==='inventory-in-stock')window.renderHeadInventory?.();if(tab==='inventory-in-stock-office')renderOfficeInventory();if(tab==='transportation'||tab==='transportation-records')renderShipments();if(tab==='archived-transportation'||tab==='archived-transportation-records')window.renderArchivedShipments?.();
+  const panel=$('#'+tab);if(panel)panel.classList.add('active');if(tab==='price-list')renderPriceList();if(tab==='inventory-archived')window.renderArchivedInventory?.();if(tab==='total-inventory')window.renderInventoryTransportationPages?.();if(tab==='inventory-in-stock')window.renderHeadInventory?.();if(tab==='inventory-in-stock-office')window.renderOfficeInventory?.();if(tab==='transportation'||tab==='transportation-records')renderShipments();if(tab==='archived-transportation'||tab==='archived-transportation-records')window.renderArchivedShipments?.();
   if(preferredSection==='heads-page' && (['total-inventory','inventory-in-stock','inventory-in-stock-office','inventory-archived','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
     $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav==='heads-page'));
     $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section==='heads-page'));
@@ -10529,6 +10529,9 @@ function renderOfficeInventory(){
     <div class="card"><span>Sold to Licensed Customers</span><strong>${totalLicensed.toLocaleString()} cases</strong></div>`;
 }
 
+// Office/Warehouse page is opened from other script blocks (page tabs, startup render).
+window.renderOfficeInventory=renderOfficeInventory;
+window.renderInventoryTransportationPages=renderInventoryTransportationPages;
 window.renderHeadInventory=()=>{
  if(document.getElementById('inventory-in-stock-office')?.classList.contains('active'))renderOfficeInventory();
  const body=document.getElementById('headInventoryRows'),k=document.getElementById('headInventoryKpis');
