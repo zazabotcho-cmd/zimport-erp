@@ -148,6 +148,13 @@
   }
   const allTables=['agencies','suppliers','items','tenders','worker_submissions','submitted_items','winners','archived_tenders','purchase_orders','shipments','supplier_invoices','settings','recycle_bin'];
   function status(text,type=''){const el=$('onlineStatus');if(el){el.textContent=text;el.className='online-status '+type}const b=$('onlineSyncBanner');if(b){b.textContent=text;b.className='sync-banner '+(type==='connected'?'':'offline')}const c=$('cloudSettingsStatus');if(c)c.textContent=text;}
+  function cloudHasInventoryEdits(journal){
+    const orders=[...baseline.entries()]
+      .filter(([id])=>id.startsWith('purchase_orders:')).map(([,entry])=>entry.data);
+    const shared=baseline.get('settings:main')?.data?.inventoryState||{};
+    const persisted=loadWarehousePurchaseOrders(orders,shared);
+    return equal(applyInventoryJournal(persisted,journal),persisted);
+  }
   function cleanData(row){const d={...(row||{})};delete d._audit;delete d._cloudVersion;return d;}
   function key(table,id){return `${table}:${id}`;}
   function partitionRecords(records){const active=[],winners=[],archived=[];(records||[]).forEach(r=>{if(r.completedPO||r.stage1Decision==='Declined'||r.finalDecision==='Declined')archived.push(r);else if(r.finalDecision==='Winner')winners.push(r);else active.push(r)});return {active,winners,archived};}
@@ -213,11 +220,11 @@
     retryDelay=500;
     if(revision===saveRevision){
       if(!stashPending(null)){status('Changes synced, but the browser could not clear the pending save','error');return;}
-      if(inventoryJournal&&canSyncTable('settings')&&equal(inventoryJournal,readInventoryJournal())){
+      if(inventoryJournal&&cloudHasInventoryEdits(inventoryJournal)&&equal(inventoryJournal,readInventoryJournal())){
         storeInventoryJournal(null);
       }
     }
-    if(inventoryJournal&&!canSyncTable('settings'))status('Inventory edits saved in this browser · shared inventory sync unavailable','error');
+    if(inventoryJournal&&!cloudHasInventoryEdits(inventoryJournal))status('Inventory edits saved in this browser · cloud confirmation pending','error');
     else status(dirty?'Saving changes…':'Changes synced to cloud',dirty?'':'connected');
     }catch(error){
       if(user?.id!==account)return;
@@ -343,7 +350,7 @@
     }
   }
   function finishLoad(message){
-    if(pendingSave||(profile.role!=='partner_supplier'&&canSyncTable('settings')&&readInventoryJournal())){
+    if(pendingSave||(profile.role!=='partner_supplier'&&profile.role!=='readonly'&&(canSyncTable('settings')||canSyncTable('purchase_orders'))&&readInventoryJournal())){
       const snapshot=window.getProgramSaveSnapshot();
       latestState=snapshot.state;
       latestSettings=snapshot.settings;
@@ -571,7 +578,7 @@
     return localSaved;
   }
   function rememberInventoryChanges(state,previousSave){
-    if(!previousSave||profile.role==='partner_supplier')return true;
+    if(previousSave===undefined||profile.role==='partner_supplier')return true;
     let previousState;
     try{previousState=JSON.parse(previousSave||'{}');}
     catch{return false;}
@@ -609,7 +616,7 @@
     scheduleSync();
   }
   window.addEventListener('online',()=>{
-    if(user&&pendingSave){
+    if(user&&(pendingSave||readInventoryJournal())){
       if(cloudLoadComplete)scheduleSync(0);
       else loadState();
     }
