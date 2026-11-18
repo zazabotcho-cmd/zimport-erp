@@ -148,10 +148,12 @@
   }
   const allTables=['agencies','suppliers','items','tenders','worker_submissions','submitted_items','winners','archived_tenders','purchase_orders','shipments','supplier_invoices','settings','recycle_bin'];
   function status(text,type=''){const el=$('onlineStatus');if(el){el.textContent=text;el.className='online-status '+type}const b=$('onlineSyncBanner');if(b){b.textContent=text;b.className='sync-banner '+(type==='connected'?'':'offline')}const c=$('cloudSettingsStatus');if(c)c.textContent=text;}
-  function cloudHasInventoryEdits(journal){
-    const orders=[...baseline.entries()]
-      .filter(([id])=>id.startsWith('purchase_orders:')).map(([,entry])=>entry.data);
-    const shared=baseline.get('settings:main')?.data?.inventoryState||{};
+  function cloudHasInventoryEdits(journal,readBaseline=baseline){
+    const prefix='purchase_orders:';
+    const orders=[...readBaseline.entries()]
+      .filter(([id])=>id.startsWith(prefix))
+      .map(([id,entry])=>({...entry.data,id:id.slice(prefix.length)}));
+    const shared=readBaseline.get('settings:main')?.data?.inventoryState||{};
     const persisted=loadWarehousePurchaseOrders(orders,shared);
     return equal(applyInventoryJournal(persisted,journal),persisted);
   }
@@ -220,9 +222,6 @@
     retryDelay=500;
     if(revision===saveRevision){
       if(!stashPending(null)){status('Changes synced, but the browser could not clear the pending save','error');return;}
-      if(inventoryJournal&&cloudHasInventoryEdits(inventoryJournal)&&equal(inventoryJournal,readInventoryJournal())){
-        storeInventoryJournal(null);
-      }
     }
     if(inventoryJournal&&!cloudHasInventoryEdits(inventoryJournal))status('Inventory edits saved in this browser · cloud confirmation pending','error');
     else status(dirty?'Saving changes…':'Changes synced to cloud',dirty?'':'connected');
@@ -318,7 +317,12 @@
         out[field]=(data.supplier_invoices||[]).filter(row=>row.invoice_group===field);
       }
       const settings=(data.settings||[]).find(row=>row.id==='main')||{};
-      const journal=readInventoryJournal();
+      let journal=readInventoryJournal();
+      // A successful write response does not prove the next session can read the new inventory.
+      if(journal&&cloudHasInventoryEdits(journal,nextBaseline)){
+        storeInventoryJournal(null);
+        journal=null;
+      }
       const sharedInventory=loadWarehousePurchaseOrders(out.purchaseOrders,inventoryState(settings.inventoryState||{}));
       const inventory=applyInventoryJournal(sharedInventory,journal);
       const cachedWarehouse=window.getWarehouseMigrationSnapshot?.();
