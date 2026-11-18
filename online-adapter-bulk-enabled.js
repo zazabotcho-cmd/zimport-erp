@@ -440,9 +440,33 @@
     clearTimeout(syncTimer);
     if(cloudLoadComplete)syncTimer=setTimeout(()=>syncState(latestState,latestSettings),delay);
   }
-  function queueSync(state,settings){
+  function stashInventoryBeforeCloudLoad(state,previousSave){
+    if(!previousSave||profile.role==='partner_supplier'||!canSyncTable('settings'))return false;
+    let previousState;
+    try{previousState=JSON.parse(previousSave);}catch{return false;}
+    if(!isObject(previousState))return false;
+    const previous=inventoryState(previousState), current=inventoryState(state);
+    if(equal(previous,current))return false;
+    const rows=pendingSave?.rows||[];
+    const existing=rows.find(row=>row.table==='settings'&&row.id==='main');
+    // Keep the first cached value for each edited field as the merge base.
+    const before={...previous,...existing?.before?.inventoryState};
+    for(const field of inventoryStateFields){
+      if(Object.hasOwn(existing?.after?.inventoryState||{},field)&&!Object.hasOwn(existing?.before?.inventoryState||{},field))delete before[field];
+    }
+    const after=mergeChangedFields(previous,current,existing?.after?.inventoryState||previous);
+    const entry={...existing,table:'settings',id:'main',
+      before:{...existing?.before,inventoryState:before},
+      after:{...existing?.after,inventoryState:after}};
+    return stashPending({rows:[...rows.filter(row=>row!==existing),entry],workspaces:pendingSave?.workspaces||[]});
+  }
+  function queueSync(state,settings,previousSave){
     if(!user||!profile||profile.role==='readonly')return;
-    if(!baselineReady){status('Cloud data unavailable · changes can only be kept in this browser for now','error');return;}
+    if(!baselineReady){
+      const queued=stashInventoryBeforeCloudLoad(state,previousSave);
+      status(queued?'Inventory saved on this browser · cloud sync pending':'Cloud data unavailable · changes can only be kept in this browser for now',queued?'':'error');
+      return;
+    }
     clearTimeout(realtimeTimer);
     latestState=state;
     latestSettings=settings;

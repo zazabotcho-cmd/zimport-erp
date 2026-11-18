@@ -343,7 +343,7 @@ label[data-retrieved-locked="1"] textarea{
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="online-config.js"></script>
-<script src="online-adapter-bulk-enabled.js?v=20261115-persistence"></script>
+<script src="online-adapter-bulk-enabled.js?v=20261118-inventory-persistence"></script>
 <script src="user-permissions.js" defer></script>
 <script src="supplier-workspaces.js?v=20261115-persistence" defer></script>
 <script src="admin-management.js" defer></script>
@@ -2405,6 +2405,7 @@ function save(){
  updateAutomaticTenderStatuses();
  syncWinnerPickedUpFromTransportation();
  prepareProgramNewestFirst();
+ const previousSave=safeStorage.getItem(DATA_KEY);
  safeStorage.setItem(DATA_KEY,JSON.stringify(state));
  safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
 
@@ -2412,7 +2413,7 @@ function save(){
    refreshProgramViews();
    scheduleProgramRefresh();
  }finally{
-   window.ZimportOnline?.queueSync?.(state,settings);
+   window.ZimportOnline?.queueSync?.(state,settings,previousSave);
  }
 }
 function buildFields(){
@@ -9409,12 +9410,26 @@ window.markInventoryAvailableForSale=(encodedKey,currentCases)=>{
   save();renderHeadInventory();
 };
 
+function inventorySaleReturnKey(location,licensed){
+  return location+(licensed?'Licensed':'NonLicensed');
+}
 function inventorySaleButton(keyArg,cases,available,location,licensed){
   const customer=licensed?'Licensed customer':'Non-licensed customer';
   return `<button type="button" class="secondary small" onclick="sellInventoryToCustomer('${keyArg}',${cases},'${location}',${licensed})" ${available<=0?'disabled':''}>Sold to the ${customer}</button>`;
 }
+function returnableInventoryCases(metrics,location,licensed){
+  const total=num(metrics?.[licensed?'licensedCasesSold':'nonLicensedCasesSold']);
+  const office=num(metrics?.[licensed?'officeLicensedCasesSold':'officeNonLicensedCasesSold']);
+  return Math.max(0,location==='office'?office:total-office);
+}
+function inventoryReturnButton(keyArg,cases,location){
+  const metrics=state.inventorySalesMetrics?.[decodeURIComponent(keyArg)];
+  const available=returnableInventoryCases(metrics,location,false)+returnableInventoryCases(metrics,location,true);
+  return `<button type="button" class="secondary small" onclick="returnInventorySale('${keyArg}',${cases},'${location}')" ${available<=0?'disabled':''}>Return</button>`;
+}
 function inventorySaleButtons(keyArg,cases,available,location){
-  return [false,true].map(licensed=>inventorySaleButton(keyArg,cases,available,location,licensed)).join(' ');
+  const sales=[false,true].map(licensed=>inventorySaleButton(keyArg,cases,available,location,licensed));
+  return [...sales,inventoryReturnButton(keyArg,cases,location)].join(' ');
 }
 function officeInventoryRecords(key){
   return (state.officeInventory||[]).filter(record=>
@@ -9440,16 +9455,17 @@ function deductOfficeInventoryCases(officeRecords,qty){
     if(remaining<=0)return;
   }
 }
-window.updateOfficeStorageCases=(input)=>{
+window.updateOfficeStorageCases=(input,editingOffice=false)=>{
   const records=officeInventoryRecords(input.dataset.officeInventoryKey);
   const totalCases=records.reduce((sum,record)=>sum+num(record.cases),0);
   const value=input.valueAsNumber;
   if(!Number.isFinite(value)||value<0||value>totalCases){
-    alert('Enter a storage quantity from 0 to '+totalCases+'.');
-    input.value=records.reduce((sum,record)=>sum+storageCasesForRecord(record),0);
+    alert('Enter a quantity from 0 to '+totalCases+'.');
+    const storageCases=records.reduce((sum,record)=>sum+storageCasesForRecord(record),0);
+    input.value=editingOffice?totalCases-storageCases:storageCases;
     return;
   }
-  let remaining=value;
+  let remaining=editingOffice?totalCases-value:value;
   for(const record of records){
     record.storageCases=Math.min(num(record.cases),remaining);
     remaining-=record.storageCases;
@@ -9496,8 +9512,14 @@ window.sellInventoryToCustomer=(encodedKey,availableCases,location,licensed)=>{
   const qty=Number(entered);
   if(!Number.isFinite(qty)||qty<=0){alert('Enter a valid quantity greater than 0.');return;}
   if(qty>saleAvailable){alert('Quantity cannot exceed available cases ('+saleAvailable+').');return;}
+  let allocations=[];
   if(office){
+    const before=officeRecords.map(record=>({...record}));
     deductOfficeInventoryCases(officeRecords,qty);
+    allocations=before.map((record,index)=>({
+      record,cases:num(record.cases)-num(officeRecords[index].cases),
+      storageCases:storageCasesForRecord(record)-storageCasesForRecord(officeRecords[index])
+    })).filter(allocation=>allocation.cases>0);
   }else{
     state.inventorySaleAvailability[key]=saleAvailable-qty;
     if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};
@@ -9510,6 +9532,99 @@ window.sellInventoryToCustomer=(encodedKey,availableCases,location,licensed)=>{
     const officeField=licensed?'officeLicensedCasesSold':'officeNonLicensedCasesSold';
     metrics[officeField]=num(metrics[officeField])+qty;
   }
+  if(office){
+    const returnKey=inventorySaleReturnKey(location,licensed);
+    const sales=(metrics.returnableSales??={})[returnKey]??=[];
+    if(metrics.lastSales?.[returnKey]){
+      sales.push(metrics.lastSales[returnKey]);
+      delete metrics.lastSales[returnKey];
+    }
+    sales.push({qty,allocations});
+  }
+  save();
+  renderHeadInventory();
+};
+
+function restoreOfficeReturn(key,record,cases,storageCases){
+  const active=state.officeInventory.find(row=>row.id===record.id&&row.inventoryKey===key&&!row.inventoryArchived);
+  if(active){
+    active.storageCases=storageCasesForRecord(active)+storageCases;
+    active.cases=num(active.cases)+cases;
+  }else{
+    state.officeInventory.push({...record,id:uid(),inventoryArchived:false,cases,storageCases});
+  }
+}
+function chooseInventoryReturnCustomer(nonLicensedMax,licensedMax){
+  const dialog=document.createElement('dialog');
+  dialog.innerHTML=`<form method="dialog">
+    <h3>Original Sale Customer Type</h3>
+    <button value="non-licensed" ${nonLicensedMax<=0?'disabled':''}>Non-Licensed</button>
+    <button value="licensed" ${licensedMax<=0?'disabled':''}>Licensed</button>
+    <button value="cancel" class="secondary" autofocus>Cancel</button>
+  </form>`;
+  return new Promise(resolve=>{
+    dialog.addEventListener('close',()=>{
+      const choice=dialog.returnValue;
+      dialog.remove();
+      resolve(choice==='licensed'||choice==='non-licensed'?choice:null);
+    },{once:true});
+    document.body.append(dialog);
+    dialog.showModal();
+  });
+}
+window.returnInventorySale=async(encodedKey,displayedCases,location)=>{
+  const key=decodeURIComponent(encodedKey);
+  const metrics=state.inventorySalesMetrics?.[key];
+  if(!metrics)return;
+  const entered=prompt('Number of cases to return:', '');
+  if(entered===null)return;
+  const qty=Number(entered);
+  if(!Number.isFinite(qty)||qty<=0){alert('Enter a valid quantity greater than 0.');return;}
+  const nonLicensedMax=returnableInventoryCases(metrics,location,false);
+  const licensedMax=returnableInventoryCases(metrics,location,true);
+  const choice=await chooseInventoryReturnCustomer(nonLicensedMax,licensedMax);
+  if(!choice||state.inventorySalesMetrics?.[key]!==metrics)return;
+  const licensed=choice==='licensed';
+  const limit=returnableInventoryCases(metrics,location,licensed);
+  if(qty>limit){alert('The return cannot exceed '+limit+' cases for this customer type and location.');return;}
+  if(location==='office'){
+    state.officeInventory??=[];
+    const returnKey=inventorySaleReturnKey(location,licensed);
+    const records=(metrics.returnableSales??={})[returnKey]??=[];
+    if(metrics.lastSales?.[returnKey]){
+      records.push(metrics.lastSales[returnKey]);
+      delete metrics.lastSales[returnKey];
+    }
+    const fallback=state.officeInventory.find(row=>row.inventoryKey===key&&!row.inventoryArchived)
+      ||state.officeInventory.find(row=>row.inventoryKey===key)
+      ||records[0]?.allocations[0]?.record;
+    if(!fallback){alert('No office/warehouse stock record is available for this item.');return;}
+    let remaining=qty;
+    while(remaining>0&&records.length){
+      const sale=records[records.length-1];
+      while(remaining>0&&sale.allocations.length){
+        const allocation=sale.allocations[0];
+        const cases=Math.min(remaining,allocation.cases);
+        const storageCases=Math.max(0,cases-(allocation.cases-allocation.storageCases));
+        restoreOfficeReturn(key,allocation.record,cases,storageCases);
+        allocation.cases-=cases;
+        allocation.storageCases-=storageCases;
+        remaining-=cases;
+        if(allocation.cases<=0)sale.allocations.shift();
+      }
+      if(!sale.allocations.length)records.pop();
+    }
+    if(remaining>0)restoreOfficeReturn(key,fallback,remaining,0);
+    const officeField=licensed?'officeLicensedCasesSold':'officeNonLicensedCasesSold';
+    metrics[officeField]-=qty;
+  }else{
+    const current=num(state.inventoryCaseOverrides?.[key]??displayedCases);
+    const available=inventoryAvailableForSale(key,current);
+    (state.inventoryCaseOverrides??={})[key]=current+qty;
+    (state.inventorySaleAvailability??={})[key]=available+qty;
+  }
+  const countField=licensed?'licensedCasesSold':'nonLicensedCasesSold';
+  metrics[countField]-=qty;
   save();
   renderHeadInventory();
 };
@@ -10344,7 +10459,10 @@ function renderOfficeInventory(){
       <td><b>${escapeHtml(record.product||'—')}</b><br><small>Item # ${escapeHtml(record.itemNo||'—')}</small></td>
       <td>${escapeHtml(record.vendor||'—')}</td>
       <td><b>${cases.toLocaleString()}</b> / ${bpc.toLocaleString()}<br><small>${bottles.toLocaleString()} bottles in stock</small></td>
-      <td><strong>${(cases-storageCases).toLocaleString()}</strong> /
+      <td><input type="number" min="0" max="${cases}" step="any" inputmode="decimal" style="width:90px"
+          aria-label="Cases in Office for ${escapeHtml(record.product||record.itemNo||'item')}"
+          value="${cases-storageCases}" data-office-inventory-key="${escapeHtml(key)}"
+          onchange="updateOfficeStorageCases(this,true)" ${cases<=0?'disabled':''}> /
         <input type="number" min="0" max="${cases}" step="any" inputmode="decimal" style="width:90px"
           aria-label="Cases in Storage for ${escapeHtml(record.product||record.itemNo||'item')}"
           value="${storageCases}" data-office-inventory-key="${escapeHtml(key)}"
@@ -10352,7 +10470,7 @@ function renderOfficeInventory(){
       </td>
       <td>${prices}</td><td>${itemRetailValues}</td>
       <td><b>${nonLicensed.toLocaleString()}</b> cases<br>${nonLicensedButton}</td>
-      <td><b>${licensed.toLocaleString()}</b> cases<br>${licensedButton}</td>
+      <td><b>${licensed.toLocaleString()}</b> cases<br>${licensedButton}<br>${inventoryReturnButton(keyArg,cases,'office')}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="8">No office/warehouse stock yet. Move cases from In Stock Transportation.</td></tr>';
   cards.innerHTML=`
