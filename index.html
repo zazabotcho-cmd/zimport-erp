@@ -1381,6 +1381,10 @@ body{padding-bottom:24px;overflow-x:hidden}
   <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
  </div>
  <div class="section-head"><div><h2>Office/Warehouse Stock Inventory</h2></div></div>
+ <div id="officeInventoryRecovery" class="toolbar" hidden>
+  <span id="officeInventoryRecoveryMessage"></span>
+  <button class="secondary" type="button" onclick="restoreWarehouseCheckpoint()">Restore Saved Inventory</button>
+ </div>
  <div class="cards" id="officeInventoryKpis"></div>
  <div class="table-wrap"><table><thead><tr>
   <th>Item Description / Item #</th><th>Supplier</th><th>Cases in Stock / Bottles per Case</th><th>Cases in Office / Cases in Storage</th>
@@ -2395,6 +2399,53 @@ function removeRequestedGeorgiaWineCandidate(){
  return changed||removedTender||removedSix||removedListedHeads;
 }
 
+function warehouseInventoryHasRows(records){
+ return Array.isArray(records)&&records.some(row=>!row.inventoryArchived&&row.inventoryKey);
+}
+function warehouseCheckpointKey(){
+ return DATA_KEY+':warehouse-checkpoint';
+}
+function rememberWarehouseCheckpoint(source){
+ if(DATA_KEY.endsWith(':signed-out')||!warehouseInventoryHasRows(source?.officeInventory))return;
+ const keys=new Set(source.officeInventory.filter(row=>!row.inventoryArchived).map(row=>row.inventoryKey));
+ const checkpoint={officeInventory:source.officeInventory.filter(row=>keys.has(row.inventoryKey)&&!row.inventoryArchived)};
+ for(const field of ['inventoryCaseOverrides','inventorySaleAvailability','inventorySalesMetrics','inventoryStockOutDates']){
+  checkpoint[field]=Object.fromEntries(Object.entries(source[field]||{}).filter(([key])=>keys.has(key)));
+ }
+ const poIds=new Set(checkpoint.officeInventory.map(row=>row.poId||decodeURIComponent(row.inventoryKey.split('::')[0])));
+ checkpoint.pricing=Object.fromEntries(
+  [...(source.inventoryDeletedPoSnapshots||[]),...(source.manuallyArchivedPurchaseOrders||[]),...(source.purchaseOrders||[])]
+   .filter(po=>po.inventoryProformaPricing&&poIds.has(String(po.originalPoId||po.id)))
+   .map(po=>[po.originalPoId||po.id,po.inventoryProformaPricing])
+ );
+ const serialized=JSON.stringify(checkpoint);
+ if(safeStorage.getItem(warehouseCheckpointKey())!==serialized)safeStorage.setItem(warehouseCheckpointKey(),serialized);
+}
+function readWarehouseCheckpoint(){
+ if(DATA_KEY.endsWith(':signed-out'))return null;
+ try{return JSON.parse(safeStorage.getItem(warehouseCheckpointKey())||'null');}
+ catch(error){console.warn('Could not read the saved warehouse inventory',error);return null;}
+}
+function restoreWarehouseCheckpoint(){
+ const checkpoint=readWarehouseCheckpoint();
+ if(!warehouseInventoryHasRows(checkpoint?.officeInventory)||warehouseInventoryHasRows(state.officeInventory))return;
+ if(!confirm('Restore the saved warehouse records and their linked transportation quantities, sales and prices?'))return;
+ const savedIds=new Set(checkpoint.officeInventory.map(row=>row.id));
+ state.officeInventory=[...(state.officeInventory||[]).filter(row=>!savedIds.has(row.id)),...checkpoint.officeInventory];
+ for(const field of ['inventoryCaseOverrides','inventorySaleAvailability','inventorySalesMetrics','inventoryStockOutDates']){
+  const current=state[field]??={};
+  for(const {inventoryKey} of checkpoint.officeInventory){
+   if(Object.hasOwn(checkpoint[field],inventoryKey))current[inventoryKey]=checkpoint[field][inventoryKey];
+   else delete current[inventoryKey];
+  }
+ }
+ for(const po of [...(state.purchaseOrders||[]),...(state.manuallyArchivedPurchaseOrders||[]),...(state.inventoryDeletedPoSnapshots||[])]){
+  const id=String(po.originalPoId||po.id);
+  if(Object.hasOwn(checkpoint.pricing,id))po.inventoryProformaPricing={...checkpoint.pricing[id]};
+ }
+ save();
+ renderOfficeInventory();
+}
 function save(){
  removeRequestedGeorgiaWineCandidate();
  repairReguInvoices();
@@ -2405,6 +2456,7 @@ function save(){
  updateAutomaticTenderStatuses();
  syncWinnerPickedUpFromTransportation();
  prepareProgramNewestFirst();
+ rememberWarehouseCheckpoint(state);
  const previousSave=safeStorage.getItem(DATA_KEY);
  safeStorage.setItem(DATA_KEY,JSON.stringify(state));
  safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
@@ -6296,6 +6348,14 @@ const initialTenderInvoiceSync=syncAllArrivedTenderPoInvoices();
 if(initialRequestedWineRemoval||initialReguInvoiceRepair||initialReceivedInvoiceSync||initialTenderInvoiceSync)safeStorage.setItem(DATA_KEY,JSON.stringify(state));
 if(initialArchiveChange||initialShipmentRemoval)safeStorage.setItem(DATA_KEY,JSON.stringify(state));
 buildFields();buildItemFields();syncTenderItemCategoriesFromItems();
+window.addEventListener('zimport-online-state-loaded',e=>{
+ if(!e.detail?.state||e.detail.replaceState||e.detail.partialRecovery)return;
+ // Preserve the same account's cached inventory before replacing it with a cloud snapshot.
+ try{
+  const cached=JSON.parse(safeStorage.getItem(DATA_KEY)||'null');
+  rememberWarehouseCheckpoint(cached);
+ }catch(error){console.warn('Could not preserve cached warehouse inventory',error);}
+});
 window.addEventListener('zimport-online-state-loaded',e=>{if(e.detail?.state){const localCountrySourcingCountries=Array.isArray(state.countrySourcingCountries)?state.countrySourcingCountries:[];const localCountryPortfolioSuppliers=Array.isArray(state.countryPortfolioSuppliers)?state.countryPortfolioSuppliers:[];state=e.detail.replaceState?{...e.detail.state}:{...state,...e.detail.state};if(!e.detail.replaceState&&(!Array.isArray(e.detail.state.countrySourcingCountries)||!e.detail.state.countrySourcingCountries.length))state.countrySourcingCountries=localCountrySourcingCountries.length?localCountrySourcingCountries:['Italy','Portugal','Spain','France'];if(!e.detail.replaceState&&(!Array.isArray(e.detail.state.countryPortfolioSuppliers)||(!e.detail.state.countryPortfolioSuppliers.length&&localCountryPortfolioSuppliers.length)))state.countryPortfolioSuppliers=localCountryPortfolioSuppliers;if(!e.detail.partialRecovery)settings=e.detail.settings||settings;const archivedNow=archiveRequestedTransportations();const removedShipmentNow=removeRequestedShipment(!e.detail.partialRecovery);const removedWineNow=removeRequestedGeorgiaWineCandidate();const repairedInvoicesNow=!e.detail.partialRecovery&&repairReguInvoices();const receivedInvoicesNow=!e.detail.partialRecovery&&syncReceivedRsoInvoices();const arrivedTenderInvoicesNow=!e.detail.partialRecovery&&syncAllArrivedTenderPoInvoices();const removedNow=removedShipmentNow||removedWineNow||repairedInvoicesNow||receivedInvoicesNow||arrivedTenderInvoicesNow;const clearedNow=!e.detail.partialRecovery&&clearMainRecycleBinOnce();safeStorage.setItem(DATA_KEY,JSON.stringify(state));safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));renderShipments();window.renderArchivedShipments?.();safeStartupRender();if(((archivedNow||removedNow||clearedNow)&&!e.detail.partialRecovery)||e.detail.repairSync)setTimeout(()=>window.ZimportOnline?.queueSync?.(state,settings),0);}});
 window.addEventListener('zimport-online-role',e=>{
  window.ZIMPORT_CURRENT_ROLE=e.detail?.role||'readonly';
@@ -10411,6 +10471,15 @@ function renderOfficeInventory(){
   const body=document.getElementById('officeInventoryRows');
   const cards=document.getElementById('officeInventoryKpis');
   if(!body||!cards)return;
+  const recovery=document.getElementById('officeInventoryRecovery');
+  if(recovery){
+    const checkpoint=readWarehouseCheckpoint();
+    recovery.hidden=warehouseInventoryHasRows(state.officeInventory)||!warehouseInventoryHasRows(checkpoint?.officeInventory);
+    if(!recovery.hidden){
+      document.getElementById('officeInventoryRecoveryMessage').textContent=
+        'The shared inventory is empty. A saved copy is available in this browser.';
+    }
+  }
   const grouped=new Map();
   for(const record of state.officeInventory||[]){
     if(record.inventoryArchived||!record.inventoryKey)continue;
