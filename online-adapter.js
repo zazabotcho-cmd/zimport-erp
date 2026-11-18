@@ -133,6 +133,7 @@
     if(!cloudLoadComplete){status('Sync blocked: cloud data has not finished loading','error');return;}
     if(profile?.role==='readonly'){status('Read-only account','error');return;}
     const revision=saveRevision, account=user.id;
+    const inventoryJournal=profile.role==='partner_supplier'?null:readInventoryJournal();
     const flat=profile?.role==='partner_supplier'?{}:structuredClone(flatten(state,settings));
     const workspaces=window.ZimportWorkspaces.changes(state);
     inFlight={rows:Object.fromEntries(Object.entries(flat).map(([table,rows])=>[table,
@@ -153,8 +154,13 @@
     retryDelay=500;
     if(revision===saveRevision){
       if(!stashPending(null)){status('Changes synced, but the browser could not clear the pending save','error');return;}
+      if(inventoryJournal&&canSyncTable('settings')&&equal(inventoryJournal,readInventoryJournal())){
+        try{localStorage.removeItem(inventoryJournalKey());}
+        catch(error){console.error('Could not clear synchronized inventory edits',error);}
+      }
     }
-    status(dirty?'Saving changes…':'Changes synced to cloud',dirty?'':'connected');
+    if(inventoryJournal&&!canSyncTable('settings'))status('Inventory edits saved in this browser · shared inventory sync unavailable','error');
+    else status(dirty?'Saving changes…':'Changes synced to cloud',dirty?'':'connected');
     }catch(error){
       if(user?.id!==account)return;
       console.error(error);
@@ -247,7 +253,9 @@
         out[field]=(data.supplier_invoices||[]).filter(row=>row.invoice_group===field);
       }
       const settings=(data.settings||[]).find(row=>row.id==='main')||{};
-      Object.assign(out,inventoryState(settings.inventoryState||{}));
+      const journal=readInventoryJournal();
+      const sharedInventory=inventoryState(settings.inventoryState||{});
+      Object.assign(out,applyInventoryJournal(sharedInventory,journal));
       out.recycleRetentionDays=settings.recycleRetentionDays||90;
       if(Array.isArray(settings.countrySourcingCountries))out.countrySourcingCountries=settings.countrySourcingCountries;
       if(Array.isArray(settings.countryPortfolioSuppliers))out.countryPortfolioSuppliers=settings.countryPortfolioSuppliers;
@@ -273,12 +281,14 @@
     }
   }
   function finishLoad(message){
-    if(pendingSave){
+    if(pendingSave||(profile.role!=='partner_supplier'&&canSyncTable('settings')&&readInventoryJournal())){
       const snapshot=window.getProgramSaveSnapshot();
       latestState=snapshot.state;
       latestSettings=snapshot.settings;
       dirty=true;
       scheduleSync(retryDelay);
+    }else if(profile.role!=='partner_supplier'&&readInventoryJournal()){
+      status('Inventory edits saved in this browser · shared inventory sync unavailable','error');
     }else status(message,'connected');
   }
   function scheduleRealtimeReload(){if(syncing||dirty)return;clearTimeout(realtimeTimer);realtimeTimer=setTimeout(loadState,700);}
@@ -440,31 +450,38 @@
     clearTimeout(syncTimer);
     if(cloudLoadComplete)syncTimer=setTimeout(()=>syncState(latestState,latestSettings),delay);
   }
-  function stashInventoryBeforeCloudLoad(state,previousSave){
-    if(!previousSave||profile.role==='partner_supplier'||!canSyncTable('settings'))return false;
+  const inventoryJournalKey=()=>saveKey()+':inventory';
+  function readInventoryJournal(){
+    try{return JSON.parse(localStorage.getItem(inventoryJournalKey())||'null');}
+    catch(error){console.error('Could not read inventory saves',error);return null;}
+  }
+  function rememberInventoryChanges(state,previousSave){
+    if(!previousSave||profile.role==='partner_supplier')return true;
     let previousState;
-    try{previousState=JSON.parse(previousSave);}catch{return false;}
+    try{previousState=JSON.parse(previousSave||'{}');}
+    catch{return false;}
     if(!isObject(previousState))return false;
-    const previous=inventoryState(previousState), current=inventoryState(state);
-    if(equal(previous,current))return false;
-    const rows=pendingSave?.rows||[];
-    const existing=rows.find(row=>row.table==='settings'&&row.id==='main');
-    // Keep the first cached value for each edited field as the merge base.
-    const before={...previous,...existing?.before?.inventoryState};
-    for(const field of inventoryStateFields){
-      if(Object.hasOwn(existing?.after?.inventoryState||{},field)&&!Object.hasOwn(existing?.before?.inventoryState||{},field))delete before[field];
-    }
-    const after=mergeChangedFields(previous,current,existing?.after?.inventoryState||previous);
-    const entry={...existing,table:'settings',id:'main',
-      before:{...existing?.before,inventoryState:before},
-      after:{...existing?.after,inventoryState:after}};
-    return stashPending({rows:[...rows.filter(row=>row!==existing),entry],workspaces:pendingSave?.workspaces||[]});
+    const previous=inventoryState(previousState);
+    const current=inventoryState(state);
+    if(equal(previous,current))return true;
+    const existing=readInventoryJournal();
+    // Apply only the edits made in this browser over the next cloud snapshot.
+    const before=existing?.before||previous;
+    const after=mergeChangedFields(previous,current,existing?.after||previous);
+    try{
+      localStorage.setItem(inventoryJournalKey(),JSON.stringify({before,after}));
+      return true;
+    }catch(error){console.error('Could not save inventory changes in the browser',error);return false;}
+  }
+  function applyInventoryJournal(cloudInventory,journal){
+    if(!journal)return cloudInventory;
+    return mergeChangedFields(journal.before,journal.after,cloudInventory);
   }
   function queueSync(state,settings,previousSave){
     if(!user||!profile||profile.role==='readonly')return;
+    const inventorySaved=rememberInventoryChanges(state,previousSave);
     if(!baselineReady){
-      const queued=stashInventoryBeforeCloudLoad(state,previousSave);
-      status(queued?'Inventory saved on this browser · cloud sync pending':'Cloud data unavailable · changes can only be kept in this browser for now',queued?'':'error');
+      status(inventorySaved?'Saved on this browser · cloud sync pending':'Browser storage unavailable · inventory save pending','error');
       return;
     }
     clearTimeout(realtimeTimer);
@@ -475,7 +492,7 @@
     const changes=window.ZimportWorkspaces.changes(state,inFlight?.workspaces);
     const saved=stashPending(collectPending(flat,changes));
     dirty=true;
-    status(saved?'Saved on this browser · cloud sync pending':'Browser storage unavailable · cloud sync pending',saved?'':'error');
+    status(saved&&inventorySaved?'Saved on this browser · cloud sync pending':'Browser storage unavailable · cloud sync pending',saved&&inventorySaved?'':'error');
     scheduleSync();
   }
   window.addEventListener('online',()=>{
