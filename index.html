@@ -1383,8 +1383,8 @@ body{padding-bottom:24px;overflow-x:hidden}
  <div class="section-head"><div><h2>Office/Warehouse Stock Inventory</h2></div></div>
  <div class="cards" id="officeInventoryKpis"></div>
  <div class="table-wrap"><table><thead><tr>
-  <th>Item Description / Item #</th><th>Supplier</th><th>Cases in Stock / Bottles per Case</th>
-  <th>Final Retail Price per Bottle (CAD, TAX/HST incl.)</th><th>Total Retail Value in Stock</th>
+  <th>Item Description / Item #</th><th>Supplier</th><th>Cases in Stock / Bottles per Case</th><th>Cases in Office / Cases in Storage</th>
+  <th>Final Retail Price per Bottle (CAD, TAX/HST incl.)</th><th>Item total retail value</th>
   <th>Sold to Non-Licensed Customers</th><th>Sold to Licensed Customers</th>
  </tr></thead><tbody id="officeInventoryRows"></tbody></table></div>
 </div></section>
@@ -9421,15 +9421,42 @@ function officeInventoryRecords(key){
     !record.inventoryArchived&&String(record.inventoryKey)===key&&num(record.cases)>0
   );
 }
+function storageCasesForRecord(record){
+  return Math.min(num(record.cases),Math.max(0,num(record.storageCases)));
+}
 function deductOfficeInventoryCases(officeRecords,qty){
   let remaining=qty;
   for(const record of officeRecords){
-    const deducted=Math.min(num(record.cases),remaining);
+    const deducted=Math.min(num(record.cases)-storageCasesForRecord(record),remaining);
     record.cases=num(record.cases)-deducted;
     remaining-=deducted;
-    if(remaining<=0)break;
+    if(remaining<=0)return;
+  }
+  for(const record of officeRecords){
+    const deducted=Math.min(storageCasesForRecord(record),remaining);
+    record.cases=num(record.cases)-deducted;
+    record.storageCases=storageCasesForRecord(record);
+    remaining-=deducted;
+    if(remaining<=0)return;
   }
 }
+window.updateOfficeStorageCases=(input)=>{
+  const records=officeInventoryRecords(input.dataset.officeInventoryKey);
+  const totalCases=records.reduce((sum,record)=>sum+num(record.cases),0);
+  const value=input.valueAsNumber;
+  if(!Number.isFinite(value)||value<0||value>totalCases){
+    alert('Enter a storage quantity from 0 to '+totalCases+'.');
+    input.value=records.reduce((sum,record)=>sum+storageCasesForRecord(record),0);
+    return;
+  }
+  let remaining=value;
+  for(const record of records){
+    record.storageCases=Math.min(num(record.cases),remaining);
+    remaining-=record.storageCases;
+  }
+  save();
+  renderOfficeInventory();
+};
 window.moveInventoryBackToTrillium=(encodedKey,trilliumCases)=>{
   const key=decodeURIComponent(encodedKey);
   const officeRecords=officeInventoryRecords(key);
@@ -10273,13 +10300,18 @@ function renderOfficeInventory(){
   for(const record of state.officeInventory||[]){
     if(record.inventoryArchived||!record.inventoryKey)continue;
     const key=record.inventoryKey;
-    const row=grouped.get(key)||{record,cases:0};
+    const row=grouped.get(key)||{record,cases:0,storageCases:0};
     row.cases+=num(record.cases);
+    row.storageCases+=storageCasesForRecord(record);
     grouped.set(key,row);
   }
-  let totalCases=0,totalBottles=0,totalRetailCents=0,unpricedBottles=0;
+  let totalCases=0,totalBottles=0;
+  const retailTotals=[
+    {field:'finalRetailBottle',label:'Non-Licensed',heading:'Stock Total Retail Value (Non-Licensed Price)',cents:0,unpricedBottles:0},
+    {field:'licensedRetailBottle',label:'Licensed',heading:'Total Retail Value (Licensed Price)',cents:0,unpricedBottles:0}
+  ];
   let totalNonLicensed=0,totalLicensed=0;
-  body.innerHTML=[...grouped].map(([key,{record,cases}])=>{
+  body.innerHTML=[...grouped].map(([key,{record,cases,storageCases}])=>{
     const sales=state.inventorySalesMetrics?.[key]||{};
     const nonLicensed=num(sales.officeNonLicensedCasesSold);
     const licensed=num(sales.officeLicensedCasesSold);
@@ -10287,13 +10319,16 @@ function renderOfficeInventory(){
     const bpc=num(record.bpc);
     const bottles=cases*bpc;
     const pricing=officeInventoryPricing(record);
-    const retail=pricing.finalRetailBottle;
-    const priced=retail!==''&&retail!=null&&Number.isFinite(Number(retail));
-    const retailCents=priced?Math.round(num(retail)*100)*bottles:0;
+    const itemRetailValues=retailTotals.map(total=>{
+      const price=pricing[total.field];
+      const priced=price!==''&&price!=null&&Number.isFinite(Number(price));
+      const cents=priced?Math.round(Number(price)*100)*bottles:null;
+      total.cents+=cents??0;
+      if(!priced)total.unpricedBottles+=bottles;
+      return `<div>${total.label}: <b>${inventoryPriceMoney(cents===null?null:cents/100)}</b></div>`;
+    }).join('');
     totalCases+=cases;
     totalBottles+=bottles;
-    totalRetailCents+=retailCents;
-    if(!priced)unpricedBottles+=bottles;
     totalNonLicensed+=nonLicensed;
     totalLicensed+=licensed;
     const prices=[['finalRetailBottle','Non-licensed'],['licensedRetailBottle','Licensed']].map(([field,label])=>
@@ -10309,16 +10344,22 @@ function renderOfficeInventory(){
       <td><b>${escapeHtml(record.product||'—')}</b><br><small>Item # ${escapeHtml(record.itemNo||'—')}</small></td>
       <td>${escapeHtml(record.vendor||'—')}</td>
       <td><b>${cases.toLocaleString()}</b> / ${bpc.toLocaleString()}<br><small>${bottles.toLocaleString()} bottles in stock</small></td>
-      <td>${prices}</td><td>${inventoryPriceMoney(priced?retailCents/100:null)}</td>
+      <td><strong>${(cases-storageCases).toLocaleString()}</strong> /
+        <input type="number" min="0" max="${cases}" step="any" inputmode="decimal" style="width:90px"
+          aria-label="Cases in Storage for ${escapeHtml(record.product||record.itemNo||'item')}"
+          value="${storageCases}" data-office-inventory-key="${escapeHtml(key)}"
+          onchange="updateOfficeStorageCases(this)" ${cases<=0?'disabled':''}>
+      </td>
+      <td>${prices}</td><td>${itemRetailValues}</td>
       <td><b>${nonLicensed.toLocaleString()}</b> cases<br>${nonLicensedButton}</td>
       <td><b>${licensed.toLocaleString()}</b> cases<br>${licensedButton}</td>
     </tr>`;
-  }).join('')||'<tr><td colspan="7">No office/warehouse stock yet. Move cases from In Stock Transportation.</td></tr>';
+  }).join('')||'<tr><td colspan="8">No office/warehouse stock yet. Move cases from In Stock Transportation.</td></tr>';
   cards.innerHTML=`
     <div class="card"><span>Cases in Stock</span><strong>${totalCases.toLocaleString()}</strong></div>
     <div class="card"><span>Bottles in Stock</span><strong>${totalBottles.toLocaleString()}</strong></div>
-    <div class="card"><span>Total Retail Value (Non-Licensed Price)</span><strong>${inventoryPriceMoney(totalRetailCents/100)}</strong>
-      ${unpricedBottles?`<small>${unpricedBottles.toLocaleString()} bottles without a retail price</small>`:''}</div>
+    ${retailTotals.map(({heading,cents,unpricedBottles})=>`<div class="card"><span>${heading}</span><strong>${inventoryPriceMoney(cents/100)}</strong>
+      ${unpricedBottles?`<small>${unpricedBottles.toLocaleString()} bottles without a retail price</small>`:''}</div>`).join('')}
     <div class="card"><span>Sold to Non-Licensed Customers</span><strong>${totalNonLicensed.toLocaleString()} cases</strong></div>
     <div class="card"><span>Sold to Licensed Customers</span><strong>${totalLicensed.toLocaleString()} cases</strong></div>`;
 }
