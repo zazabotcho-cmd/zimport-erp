@@ -104,11 +104,15 @@
       if(!records.length&&!po.warehouseInventory)return po;
       const linked=Object.fromEntries(warehouseLinkedFields.map(field=>[field,
         Object.fromEntries(Object.entries(state[field]||{}).filter(([id])=>id.startsWith(key+'::')))]));
-      return {...po,warehouseInventory:{records,...linked}};
+      return {...po,warehouseInventory:{records,...linked,
+        cleared:records.length===0&&(po.warehouseInventory?.cleared===true||!!po.warehouseInventory?.records?.length)}};
     });
   }
+  function hasStoredWarehouseInventory(po){
+    return !!(po.warehouseInventory?.records?.length||po.warehouseInventory?.cleared===true);
+  }
   function loadWarehousePurchaseOrders(orders,inventory){
-    const stored=orders.filter(po=>po.warehouseInventory);
+    const stored=orders.filter(hasStoredWarehouseInventory);
     if(!stored.length)return inventory;
     const poKeys=new Set(stored.map(warehousePoKey));
     const merged={...inventory,officeInventory:[
@@ -123,7 +127,7 @@
   }
   function mergeCachedWarehouseInventory(orders,inventory,cached){
     if(!cached?.officeInventory?.length)return inventory;
-    const syncedPoKeys=new Set(orders.filter(po=>po.warehouseInventory).map(warehousePoKey));
+    const syncedPoKeys=new Set(orders.filter(hasStoredWarehouseInventory).map(warehousePoKey));
     const loadedKeys=new Set((inventory.officeInventory||[]).map(row=>row.inventoryKey));
     const records=cached.officeInventory.filter(row=>
       !syncedPoKeys.has(warehouseRecordPoKey(row))&&!loadedKeys.has(row.inventoryKey));
@@ -314,7 +318,7 @@
       const cachedWarehouse=window.getWarehouseMigrationSnapshot?.();
       Object.assign(out,mergeCachedWarehouseInventory(out.purchaseOrders,inventory,cachedWarehouse));
       const migrateWarehouse=canSyncTable('purchase_orders')&&out.officeInventory?.some(row=>
-        out.purchaseOrders.some(po=>!po.warehouseInventory&&warehousePoKey(po)===warehouseRecordPoKey(row)));
+        out.purchaseOrders.some(po=>!hasStoredWarehouseInventory(po)&&warehousePoKey(po)===warehouseRecordPoKey(row)));
       out.recycleRetentionDays=settings.recycleRetentionDays||90;
       if(Array.isArray(settings.countrySourcingCountries))out.countrySourcingCountries=settings.countrySourcingCountries;
       if(Array.isArray(settings.countryPortfolioSuppliers))out.countryPortfolioSuppliers=settings.countryPortfolioSuppliers;
