@@ -2432,26 +2432,26 @@ window.getWarehouseMigrationSnapshot=()=>{
  }catch(error){console.warn('Could not read cached warehouse inventory',error);}
  return readWarehouseCheckpoint();
 };
-function save(){
- removeRequestedGeorgiaWineCandidate();
- repairReguInvoices();
- syncTransportationCargoRecords();
- syncReceivedRsoInvoices();
- syncAllArrivedTenderPoInvoices();
- renderPriceList();
- updateAutomaticTenderStatuses();
- syncWinnerPickedUpFromTransportation();
- prepareProgramNewestFirst();
- rememberWarehouseCheckpoint(state);
+function save({inventoryOnly=false}={}){
+ if(!inventoryOnly){
+   removeRequestedGeorgiaWineCandidate();
+   repairReguInvoices();
+   syncTransportationCargoRecords();
+   syncReceivedRsoInvoices();
+   syncAllArrivedTenderPoInvoices();
+   renderPriceList();
+   updateAutomaticTenderStatuses();
+   syncWinnerPickedUpFromTransportation();
+   prepareProgramNewestFirst();
+ }
  const previousSave=safeStorage.getItem(DATA_KEY);
+ rememberWarehouseCheckpoint(state);
  safeStorage.setItem(DATA_KEY,JSON.stringify(state));
  safeStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
-
- try{
+ window.ZimportOnline?.queueSync?.(state,settings,previousSave);
+ if(!inventoryOnly){
    refreshProgramViews();
    scheduleProgramRefresh();
- }finally{
-   window.ZimportOnline?.queueSync?.(state,settings,previousSave);
  }
 }
 function buildFields(){
@@ -5946,6 +5946,7 @@ function safeStartupRender(){
     ['renderHeadBonuses',()=>{if(typeof window.renderHeadBonuses==='function')window.renderHeadBonuses()}],
     ['renderSourcingCountryControls',()=>{if(typeof window.renderSourcingCountryControls==='function')window.renderSourcingCountryControls()}],
     ['renderSettings',()=>renderSettings()],
+    ['renderOfficeInventory',()=>renderOfficeInventory()],
     ['renderHeadInventory',()=>{if(typeof renderHeadInventory==='function')renderHeadInventory()}],
     ['renderProfitItemCalculator',()=>{if(typeof renderProfitItemCalculator==='function')renderProfitItemCalculator()}],
     ['applySharedCurrencyOptions',()=>{if(typeof applySharedCurrencyOptions==='function')applySharedCurrencyOptions()}]
@@ -9702,7 +9703,8 @@ window.moveInventoryToOffice=(encodedKey,availableCases,encodedMeta)=>{
   }else{
     state.officeInventory.push({id:uid(),inventoryKey:key,cases:qty,movedAt:new Date().toISOString(),...meta});
   }
-  save();
+  save({inventoryOnly:true});
+  renderOfficeInventory();
   renderHeadInventory();
 };
 
