@@ -13,13 +13,14 @@
   if(id.startsWith('country-')&&Array.isArray(profile.allowed_countries)&&!profile.allowed_countries.length)return false;
   if(profile.role==='partner_supplier'&&!id.startsWith('country-')&&id!=='invoice-calculator')return false;
   if(Array.isArray(profile.allowed_pages)){
+   if(id==='inventory-in-stock-office')id='inventory-in-stock';
    if(id.startsWith('financial-profit-'))id='inventory-financial-regu-seas-other';
    return profile.allowed_pages.includes(id)||
     (id==='total-inventory'&&profile.allowed_pages.includes('inventory-in-stock'))||
     (id==='inventory-stock'&&['inventory-in-stock','inventory-archived','inventory-financial-regu-seas-other'].some(x=>profile.allowed_pages.includes(x)))||
     (id==='all-invoices'&&['financial','all-other-invoices','other-invoices-new','archived-invoices','supplier-payments','supplier-payments-2'].some(x=>profile.allowed_pages.includes(x)));
   }
-  if(id==='total-inventory')return false;
+  if(['total-inventory','inventory-in-stock-office'].includes(id))return false;
   if(catalog.find(p=>p.id===id)?.group==='heads-page')return false;
   return !['dashboard','all-proposals','all-invoices','financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices'].includes(id);
  }
@@ -38,6 +39,7 @@
    el.classList.toggle('permission-hidden',!allowed);
    if(allowed&&el.dataset.section==='heads-page')el.style.display='';
   });
+  document.querySelectorAll('[data-office-inventory-link]').forEach(el=>{el.hidden=!canPage(profile,'inventory-in-stock-office');});
   document.querySelectorAll('.panel').forEach(el=>{
    if(el.id==='no-page-access')return;
    el.classList.toggle('permission-hidden',!canPage(profile,el.id));
