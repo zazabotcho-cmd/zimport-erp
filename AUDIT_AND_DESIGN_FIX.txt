@@ -1,0 +1,26 @@
+WINGLOBAL AUDIT + DESIGN UPDATE (2026-11-18)
+Only index.html changed. Upload it to replace the current one.
+
+BUGS FIXED
+1. New Transportation status did not reach its Cargo.
+   Saving a NEW transportation (e.g. "Arrived in Canada") left its cargo on
+   "Cargo not ready for pick up", so every PO showed "Arrived in Canada (PARTIALLY)".
+   Editing an existing transportation worked; creating one did not. Fixed.
+2. PO page status read "Received in Lcbosplit Across 2 Transportation Records".
+   The automatic status colouring merged a two-line cell into one badge, and the
+   count treated a PO's own cargo + transportation as a "split". Both fixed.
+3. Copy buttons in the supplier detail popup did nothing (function not reachable,
+   and values with quotes broke the button). Fixed.
+4. The program wrote a second full copy of all data into browser storage
+   ("zimport_tender_app") that was never read. It wasted the ~5 MB browser limit;
+   when full, local saves silently fail. Removed, and the old copy is cleaned up.
+
+DESIGN (same look, made consistent)
+- Main menu fits on one row (SETTING no longer drops to a second line).
+- Profit Each Non-Tender Project page now uses the standard program buttons and
+  cards (the purple/teal/navy buttons are gone; Delete project is red like other deletes).
+- Currency rate boxes on that page no longer overlap.
+- Inventory pages share the same 3-link sub-menu with the current page highlighted.
+- Consistent focus/hover feedback on inputs and buttons; table action buttons stay in their column.
+All design changes are one block at the top: <style id="winglobalDesignLayer">.
+Delete that block to return to the old styling.

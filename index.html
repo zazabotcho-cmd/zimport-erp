@@ -943,6 +943,45 @@ body{padding-bottom:24px;overflow-x:hidden}
 <style>.supplier-transport-pricing-row{display:grid;grid-template-columns:minmax(0,3fr) minmax(120px,1fr);gap:14px;margin-top:14px;}@media(max-width:600px){.supplier-transport-pricing-row{grid-template-columns:1fr;}}</style>
 <style>[data-section-nav="heads-page"] .heads-nav-separator{display:inline-block;align-self:stretch;width:2px;min-height:30px;background:#94a3b8;margin:0 18px;flex:0 0 2px;border-radius:2px;}</style>
 <style>option.cargo-only-status-option, select.global-status-control option:disabled{color:#9ca3af !important;background:#f1f1f1 !important;}</style>
+<style id="winglobalDesignLayer">
+/* ===== WINGLOBAL unified design layer (2026-11-18) =====
+   Keeps the existing look; brings outlier pages and controls in line with it.
+   Delete this whole <style> block to return to the previous styling. */
+
+/* Main menu: fit on one row on normal desktop screens. */
+.main-sections{gap:6px;padding:10px 20px}
+.main-section-btn{padding:10px 12px;font-size:13px;letter-spacing:.2px;border-radius:8px}
+.main-section-btn:not(.active):hover{background:#eef3f8;color:var(--blue)}
+
+/* Consistent focus and hover feedback. */
+input:focus,select:focus,textarea:focus{outline:none;border-color:#2f80ed;box-shadow:0 0 0 3px rgba(47,128,237,.16)}
+button:focus-visible,.button:focus-visible,a:focus-visible{outline:2px solid #2f80ed;outline-offset:2px}
+button.secondary:not(:disabled):hover,.button.secondary:hover{background:#f2f6fb}
+button:disabled{opacity:.55;cursor:not-allowed}
+
+/* Table action buttons stay inside their column. */
+td button{max-width:100%;white-space:normal;overflow-wrap:break-word}
+td > button + button{margin-top:4px}
+
+/* Sub-page menus: same spacing everywhere. */
+.invoice-page-row{margin-bottom:16px}
+
+/* Profit Each Non-Tender Project: use the program's standard buttons and cards. */
+body #profitProjectsApp .pp-top-tools button,
+body #profitProjectsApp .pp-lower-tools button{background:#fff;color:var(--blue);border:1px solid var(--line)}
+body #profitProjectsApp .pp-top-tools button:hover,
+body #profitProjectsApp .pp-lower-tools button:hover{background:#f2f6fb;color:var(--blue)}
+body #profitProjectsApp .pp-top-tools .pp-create-project{background:#2f80ed;color:#fff;border-color:#2f80ed}
+body #profitProjectsApp .pp-top-tools .pp-create-project:hover{background:#1f6fd6;border-color:#1f6fd6;color:#fff}
+body #profitProjectsApp .pp-lower-tools button.danger{background:var(--red);color:#fff;border-color:var(--red)}
+body #profitProjectsApp .pp-lower-tools button.danger:hover{background:#951f19;color:#fff}
+body #profitProjectsApp .pp-project-buttons button{background:#fff;color:#4b5a69;border:1px solid var(--line)}
+body #profitProjectsApp .pp-project-buttons button:hover{background:#f2f6fb;color:var(--blue)}
+body #profitProjectsApp .pp-project-buttons .pp-project-active{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:none}
+body #profitProjectsApp .pp-stat-card{background:#fff;box-shadow:0 3px 12px rgba(20,45,75,.06)}
+body #profitProjectsApp .pp-currency-rates{gap:16px}
+body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0}
+</style>
 </head>
 <body>
 <div id="onlineLoginGate">
@@ -1366,19 +1405,19 @@ body{padding-bottom:24px;overflow-x:hidden}
  </div>
 </div></section>
 <section id="total-inventory" class="panel"><div class="box">
- <div class="invoice-page-row">
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-stock','heads-page')">Inventory Stock</button>
- </div>
- <div class="section-head"><div><h2>Inventory in stock LCBO Trillium/office/storage</h2></div></div>
- <div class="invoice-page-row">
+ <div class="invoice-page-row invoice-subnav">
+  <button type="button" class="invoice-page-tab active" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   <button type="button" class="invoice-page-tab" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Office/Warehouse Stock Inventory</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
+ <div class="section-head"><div><h2>Inventory in stock LCBO Trillium/office/storage</h2><p class="note">Choose a transportation to open its stock.</p></div></div>
  <div class="invoice-page-row" id="inventoryTransportationPages"></div>
 </div></section>
 <section id="inventory-in-stock-office" class="panel"><div class="box">
- <div class="invoice-page-row">
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-stock','heads-page')">Inventory Stock</button>
+ <div class="invoice-page-row invoice-subnav">
   <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
+  <button type="button" class="invoice-page-tab active" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Office/Warehouse Stock Inventory</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
  <div class="section-head"><div><h2>Office/Warehouse Stock Inventory</h2></div></div>
  <div class="cards" id="officeInventoryKpis"></div>
@@ -1396,7 +1435,7 @@ body{padding-bottom:24px;overflow-x:hidden}
 </div></section>
 <section id="inventory-in-stock" class="panel"><div class="box">
  <div class="invoice-page-row inventory-sticky-nav">
-  <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
+  <button type="button" class="invoice-page-tab active" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   <button type="button" class="invoice-page-tab" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Office/Warehouse Stock Inventory</button>
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
@@ -1944,6 +1983,8 @@ window.addEventListener("error", function(e){console.error(e.error||e.message);}
 const sessionCacheIdentity=(()=>{try{const ref=new URL(window.ZIMPORT_ONLINE_CONFIG.supabaseUrl).hostname.split('.')[0];const auth=JSON.parse(localStorage.getItem('sb-'+ref+'-auth-token')||'null');return auth?.user?.id||'signed-out';}catch{return 'signed-out';}})();
 let DATA_KEY='zimportSubmissionProgramV5:user:'+sessionCacheIdentity, SETTINGS_KEY='zimportSubmissionSettingsV5:user:'+sessionCacheIdentity;
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+// Remove an unused full-program copy that older versions wrote; it only consumed browser storage.
+try{localStorage.removeItem('zimport_tender_app');}catch(e){}
 const memoryStorage={};
 const safeStorage={
   getItem(key){if(Object.hasOwn(memoryStorage,key))return memoryStorage[key];try{return window.localStorage.getItem(key)}catch(e){return null}},
@@ -4137,6 +4178,8 @@ function saveShipment(){
 
  const i=state.shipments.findIndex(x=>x.id===id);
  if(i>=0)state.shipments[i]=sh;else state.shipments.push(sh);
+ // A new transportation is only findable after it is stored; pass its status to its cargo now.
+ if(sh.recordKind==='transportation')syncExplicitTransportationStatus(sh);
  syncTransportationCargoRecords();
  updateIncludedPoStatusesForShipment(sh,sh.status);
  if(['Arrived in Canada','Received in LCBO'].includes(normalizeSharedShipmentStatus(sh.status||''))){
@@ -4272,7 +4315,9 @@ function poStatusSelect(po){
   if(!linked.length)return '<span class="status-yellow">Not Assigned to Shipment</span>';
   const value=splitPoAggregateStatus(po)||'Cargo Ready For Pick up';
   const cls=value.includes('(PARTIALLY)')?'status-yellow':(['Delivered to Consolidation','Arrived in Canada','Received in LCBO'].includes(value)?'status-green':'status-yellow');
-  return `<span class="${cls}">${escapeHtml(value)}</span>${linked.length>1?`<br><small>Split across ${linked.length} Transportation records</small>`:''}`;
+  // A PO sits in its cargo and in that cargo's transportation; only more than one of either is a real split.
+  const splitCount=Math.max(linked.filter(sh=>sh.recordKind==='transportation').length,linked.filter(sh=>(sh.recordKind||'cargo')==='cargo').length);
+  return `<span class="${cls}">${escapeHtml(value)}</span>${splitCount>1?`<br><small>Split across ${splitCount} Transportation records</small>`:''}`;
 }
 function poAgencyDisplayName(po){
   const registered=(state.agencies||[]).find(a=>a.id===po.agencyId);
@@ -5290,7 +5335,7 @@ function applySharedCurrencyOptions(){
     select.value=currencies.includes(current)?current:(settings.defaultCurrency||'CAD');
   });
 }
-function populateWinnerAgencySearch(){const e=$('#winnerAgencySearch');if(!e)return;const current=e.value;e.innerHTML='<option value="">All registered agencies</option>'+state.agencies.map(a=>`<option value="${escapeHtml(a.name)}">${escapeHtml(a.name)}</option>`).join('');e.value=[...e.options].some(o=>o.value===current)?current:'';}function syncTenderItemCategoriesFromItems(){let changed=false;(state.items||[]).forEach(x=>{const linked=linkedSupplierItemForTenderItem(x);if(linked){const category=normalizeProductCategory(linked.productCategory||linked.productType||x.productCategory||'Wine');if(x.productCategory!==category){x.productCategory=category;changed=true;}}});if(changed)safeStorage.setItem('zimport_tender_app',JSON.stringify(state));}
+function populateWinnerAgencySearch(){const e=$('#winnerAgencySearch');if(!e)return;const current=e.value;e.innerHTML='<option value="">All registered agencies</option>'+state.agencies.map(a=>`<option value="${escapeHtml(a.name)}">${escapeHtml(a.name)}</option>`).join('');e.value=[...e.options].some(o=>o.value===current)?current:'';}function syncTenderItemCategoriesFromItems(){let changed=false;(state.items||[]).forEach(x=>{const linked=linkedSupplierItemForTenderItem(x);if(linked){const category=normalizeProductCategory(linked.productCategory||linked.productType||x.productCategory||'Wine');if(x.productCategory!==category){x.productCategory=category;changed=true;}}});}
 
 const financialFieldMap={
   id:'finInvoiceId',poNumber:'finPoNumber',invoiceNumber:'finInvoiceNumber',submissionNumber:'finSubmissionNumber',lcboInvoiceCad:'finLcboInvoiceCad',lcboCurrency:'finLcboCurrency',lcboApproxDate:'finLcboApproxDate',lcboPayDate:'finLcboPayDate',lcboPaidStatus:'finLcboPaidStatus',
@@ -11932,6 +11977,7 @@ window.closeTenderSupplierItemDetail=()=>{
  show('tenderSupplierItemDetailModal',false);
 };
 
+window.copyTenderSupplierItemText=copyTenderSupplierItemText;
 async function copyTenderSupplierItemText(text){
  try{
    if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(text);
@@ -12035,7 +12081,7 @@ window.openTenderSupplierItemSupplierFallback=id=>{
    grid.innerHTML=entries.map(([label,value])=>`<div class="head-detail-field">
      <div class="head-detail-label">${esc(label)}</div>
      <div class="head-detail-value">${esc(String(value??'').trim()||'—')}</div>
-     <button type="button" class="secondary small" onclick="copyTenderSupplierItemText(${JSON.stringify(String(value??'').trim())})">Copy</button>
+     <button type="button" class="secondary small" onclick="copyTenderSupplierItemText(${esc(JSON.stringify(String(value??'').trim()))})">Copy</button>
    </div>`).join('');
  }
  const copyAllBtn=document.querySelector('#tenderSupplierDetailModal .head-detail-toolbar button');
@@ -12541,6 +12587,8 @@ function styleGlobalPlainStatusCells(){
        const td=tr.children[index];
        if(!td||td.dataset.globalStatusCell==='1'||td.classList.contains('inventory-transport-status-cell'))return;
        if(td.querySelector('select,input,textarea,button,a'))return;
+       // Multi-line cells (badge + note) are already styled; flattening them merges the lines.
+       if(td.querySelector('br,small,div,p'))return;
 
        const raw=String(td.textContent||'').replace(/\s+/g,' ').trim();
        if(!raw||raw==='—'||raw==='-')return;
@@ -13527,7 +13575,7 @@ function openSupplierItemImport(target){
 }
 function render(){list.replaceChildren();detail.replaceChildren();const bar=el('div');bar.className='pp-tools pp-project-buttons';list.append(bar);projects.forEach(p=>{const b=button(p.name,()=>{active=p;render();},bar);b.className=p===active?'pp-project-button pp-project-active':'pp-project-button';b.setAttribute('aria-pressed',p===active?'true':'false');});if(!projects.length)list.append(el('p','Enter a name to create your first project.'));if(!active&&projects.length)active=projects[0];if(!active){if(window.dispatchEvent)window.dispatchEvent(new Event('winglobal-profit-projects-saved'));return;}detail.append(el('h3',active.name));const actions=el('div');actions.className='pp-tools pp-lower-tools';detail.append(actions);
 button('Rename project',()=>{const n=prompt('Project name',active.name);if(n?.trim()){active.name=n.trim();save();render();}},actions);
-button('Delete project',()=>{if(confirm('Delete project “'+active.name+'”?')){projects=projects.filter(p=>p!==active);active=null;save();render();}},actions);
+button('Delete project',()=>{if(confirm('Delete project “'+active.name+'”?')){projects=projects.filter(p=>p!==active);active=null;save();render();}},actions).classList.add('danger');
 
 button('Add item row',()=>{active.items.push({A:'',B:'',supplierCurrency:'USD',F:'',H:'',I:active.transport,J:12,K:'',M:0,Q:0,S:0,T:'',V:'',X:''});save();render();},actions);
 button('Import from Transportation',()=>openTransportationImport(active),actions);
