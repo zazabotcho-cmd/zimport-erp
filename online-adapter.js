@@ -155,19 +155,7 @@
       .map(([id,entry])=>({...entry.data,id:id.slice(prefix.length)}));
     const shared=readBaseline.get('settings:main')?.data?.inventoryState||{};
     const persisted=loadWarehousePurchaseOrders(orders,shared);
-    return equal(comparableInventory(applyInventoryJournal(persisted,journal)),comparableInventory(persisted));
-  }
-  // The cloud rebuilds office/warehouse rows grouped by PO, so their order can differ
-  // from this browser's order. Compare the rows themselves, not their position;
-  // otherwise saved edits never clear and later overwrite other users' updates.
-  function comparableInventory(inventory){
-    let copy;
-    try{copy=JSON.parse(JSON.stringify(inventory??null));}catch{return inventory;}
-    if(isObject(copy)&&Array.isArray(copy.officeInventory)){
-      const rowKey=row=>JSON.stringify([String(row?.id??''),String(row?.inventoryKey??'')]);
-      copy.officeInventory.sort((a,b)=>rowKey(a)<rowKey(b)?-1:rowKey(a)>rowKey(b)?1:0);
-    }
-    return copy;
+    return equal(applyInventoryJournal(persisted,journal),persisted);
   }
   function cleanData(row){const d={...(row||{})};delete d._audit;delete d._cloudVersion;return d;}
   function key(table,id){return `${table}:${id}`;}
