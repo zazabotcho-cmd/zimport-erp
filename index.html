@@ -343,7 +343,7 @@ label[data-retrieved-locked="1"] textarea{
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="online-config.js"></script>
-<script src="online-adapter-bulk-enabled.js?v=20261118-warehouse-empty-sync"></script>
+<script src="online-adapter-bulk-enabled.js?v=20261118-warehouse-durable-refresh"></script>
 <script src="user-permissions.js" defer></script>
 <script src="supplier-workspaces.js?v=20261115-persistence" defer></script>
 <script src="admin-management.js" defer></script>
@@ -1946,9 +1946,9 @@ let DATA_KEY='zimportSubmissionProgramV5:user:'+sessionCacheIdentity, SETTINGS_K
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const memoryStorage={};
 const safeStorage={
-  getItem(key){try{return window.localStorage.getItem(key)}catch(e){return Object.prototype.hasOwnProperty.call(memoryStorage,key)?memoryStorage[key]:null}},
-  setItem(key,value){try{window.localStorage.setItem(key,value)}catch(e){memoryStorage[key]=String(value)}},
-  removeItem(key){try{window.localStorage.removeItem(key)}catch(e){delete memoryStorage[key]}}
+  getItem(key){if(Object.hasOwn(memoryStorage,key))return memoryStorage[key];try{return window.localStorage.getItem(key)}catch(e){return null}},
+  setItem(key,value){try{window.localStorage.setItem(key,value);delete memoryStorage[key]}catch(e){memoryStorage[key]=String(value)}},
+  removeItem(key){delete memoryStorage[key];try{window.localStorage.removeItem(key)}catch(e){}}
 };
 const num=v=>Number(v)||0, round=(v,d=2)=>Number((num(v)).toFixed(d));
 const money=v=>new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD'}).format(num(v));

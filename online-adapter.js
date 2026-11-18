@@ -214,8 +214,7 @@
     if(revision===saveRevision){
       if(!stashPending(null)){status('Changes synced, but the browser could not clear the pending save','error');return;}
       if(inventoryJournal&&canSyncTable('settings')&&equal(inventoryJournal,readInventoryJournal())){
-        try{localStorage.removeItem(inventoryJournalKey());}
-        catch(error){console.error('Could not clear synchronized inventory edits',error);}
+        storeInventoryJournal(null);
       }
     }
     if(inventoryJournal&&!canSyncTable('settings'))status('Inventory edits saved in this browser · shared inventory sync unavailable','error');
@@ -377,6 +376,7 @@
       try{pendingSave=JSON.parse(localStorage.getItem(saveKey())||'null');}
       catch(error){console.error('Browser could not read the pending save',error);}
       await getProfile();
+      if(profile.role!=='partner_supplier')await loadInventoryJournal();
       if(invitationLanding)document.getElementById('accountPasswordPanel')?.classList.remove('hidden');
       if($('onlineSignOut'))$('onlineSignOut').style.display='';
       await loadState();
@@ -514,9 +514,61 @@
     if(cloudLoadComplete)syncTimer=setTimeout(()=>syncState(latestState,latestSettings),delay);
   }
   const inventoryJournalKey=()=>saveKey()+':inventory';
+  const inventoryJournals=new Map();
+  let inventoryDatabase, inventoryWrites=Promise.resolve();
+  function inventoryJournalTransaction(mode,action){
+    inventoryDatabase??=new Promise((resolve,reject)=>{
+      const request=indexedDB.open('winglobal-inventory-saves',1);
+      request.onupgradeneeded=()=>request.result.createObjectStore('pending');
+      request.onsuccess=()=>resolve(request.result);
+      request.onerror=()=>reject(request.error);
+      request.onblocked=()=>reject(new Error('Inventory browser storage is blocked'));
+    });
+    return inventoryDatabase.then(db=>new Promise((resolve,reject)=>{
+      const transaction=db.transaction('pending',mode);
+      const request=action(transaction.objectStore('pending'));
+      transaction.oncomplete=()=>resolve(request.result);
+      transaction.onabort=()=>reject(transaction.error);
+      transaction.onerror=()=>reject(transaction.error);
+    }));
+  }
   function readInventoryJournal(){
-    try{return JSON.parse(localStorage.getItem(inventoryJournalKey())||'null');}
+    const key=inventoryJournalKey();
+    if(inventoryJournals.has(key))return inventoryJournals.get(key);
+    try{return JSON.parse(localStorage.getItem(key)||'null');}
     catch(error){console.error('Could not read inventory saves',error);return null;}
+  }
+  async function loadInventoryJournal(){
+    const key=inventoryJournalKey();
+    try{
+      await inventoryWrites;
+      const saved=await inventoryJournalTransaction('readonly',store=>store.get(key));
+      if(saved&&!inventoryJournals.has(key)){
+        const local=readInventoryJournal();
+        if(!local||!local.savedAt||saved.savedAt>=local.savedAt){
+          inventoryJournals.set(key,saved);
+        }
+      }
+    }catch(error){console.warn('Could not open inventory browser storage',error);}
+  }
+  function storeInventoryJournal(journal){
+    const key=inventoryJournalKey();
+    inventoryJournals.set(key,journal);
+    let localSaved=false;
+    try{
+      if(journal)localStorage.setItem(key,JSON.stringify(journal));
+      else localStorage.removeItem(key);
+      localSaved=true;
+    }catch(error){console.warn('Inventory local storage unavailable',error);}
+    inventoryWrites=inventoryWrites.then(()=>inventoryJournalTransaction('readwrite',store=>
+      journal?store.put(journal,key):store.delete(key)
+    )).catch(error=>{
+      console.error('Inventory browser database write failed',error);
+      if(!localSaved&&journal&&user&&inventoryJournalKey()===key){
+        status('Inventory save pending · browser storage unavailable','error');
+      }
+    });
+    return localSaved;
   }
   function rememberInventoryChanges(state,previousSave){
     if(!previousSave||profile.role==='partner_supplier')return true;
@@ -531,11 +583,9 @@
     // Apply only the edits made in this browser over the next cloud snapshot.
     const before=existing?.before||previous;
     const after=mergeChangedFields(previous,current,existing?.after||previous);
-    try{
-      localStorage.setItem(inventoryJournalKey(),JSON.stringify({before,after}));
-      return true;
-    }catch(error){console.error('Could not save inventory changes in the browser',error);return false;}
+    return storeInventoryJournal({before,after,savedAt:Date.now()});
   }
+
   function applyInventoryJournal(cloudInventory,journal){
     if(!journal)return cloudInventory;
     return mergeChangedFields(journal.before,journal.after,cloudInventory);
