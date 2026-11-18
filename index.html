@@ -9491,17 +9491,20 @@ window.moveInventoryToOffice=(encodedKey,availableCases,encodedMeta)=>{
   const key=decodeURIComponent(String(encodedKey||''));
   let meta={};
   try{meta=JSON.parse(decodeURIComponent(String(encodedMeta||'')))}catch(e){meta={}}
-  const saleAvailable=inventoryAvailableForSale(key,Number(state.inventoryCaseOverrides?.[key]??availableCases));
-  if(saleAvailable<=0){alert('Mark cases as Available for Sale before selling or moving them.');return;}
-  const entered=prompt('Move quantity to Inventory in stock office/warehouse:', '');
+  const currentCases=Math.max(0,num(state.inventoryCaseOverrides?.[key]??availableCases));
+  if(currentCases<=0){alert('There are no cases in stock to move.');return;}
+  const entered=prompt('Cases to move to Office/Warehouse Stock Inventory (up to '+currentCases+'):', '');
   if(entered===null)return;
   const qty=Number(entered);
-  if(!Number.isFinite(qty)||qty<=0){alert('Enter a valid quantity greater than 0.');return;}
-  if(qty>Number(state.inventoryCaseOverrides?.[key]??availableCases??0)){alert('Move quantity cannot be greater than Cases in Stock.');return;}
-  if(qty>saleAvailable){alert('Quantity cannot exceed Available for Sale ('+saleAvailable+').');return;}
-  state.inventorySaleAvailability[key]=saleAvailable-qty;
-  if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};
-  state.inventoryCaseOverrides[key]=Math.max(0,Number(state.inventoryCaseOverrides?.[key]??availableCases??0)-qty);
+  if(!Number.isFinite(qty)||qty<=0||qty>currentCases){
+    alert('Enter a quantity greater than 0 and no more than '+currentCases+'.');
+    return;
+  }
+  const saleAvailable=inventoryAvailableForSale(key,currentCases);
+  state.inventorySaleAvailability??={};
+  state.inventorySaleAvailability[key]=Math.max(0,saleAvailable-qty);
+  state.inventoryCaseOverrides??={};
+  state.inventoryCaseOverrides[key]=currentCases-qty;
   if(!Array.isArray(state.officeInventory))state.officeInventory=[];
   const existing=state.officeInventory.find(x=>x.inventoryKey===key&&!x.inventoryArchived);
   if(existing){
@@ -9513,6 +9516,7 @@ window.moveInventoryToOffice=(encodedKey,availableCases,encodedMeta)=>{
   }
   save();
   renderHeadInventory();
+  activate('inventory-in-stock-office','heads-page');
 };
 
 
@@ -10432,7 +10436,7 @@ window.renderHeadInventory=()=>{
     <td><b>${r.bottles.toLocaleString()} Btls${r.bottleSize?'/'+escapeHtml(r.bottleSize):''}</b></td>
     <td>${escapeHtml(r.shipment)}</td>
     <td class="inventory-transport-status-cell" data-global-status-cell="1"><div class="inventory-transport-status"><span class="global-status-badge inventory-transport-status-label">${escapeHtml(r.transportStatus)}</span><div class="inventory-transport-status-date"><small>Updated</small><time datetime="${escapeHtml(r.statusDate||'')}">${escapeHtml(r.statusDate?formatTransportationDate(r.statusDate):'Date not recorded')}</time></div></div></td>
-    <td><b>${r.cases.toLocaleString()}</b> <button type="button" class="secondary small" onclick="updateInventoryCases('${keyArg}',${r.cases})">Update</button><div style="margin:8px 0"><b>Available for Sale: ${saleAvailable.toLocaleString()}</b><br><small>${saleAvailable>0?'Available for sale':'Not available for sale'}</small> <button type="button" class="secondary small" onclick="markInventoryAvailableForSale('${keyArg}',${r.cases})">Set Available for Sale</button></div> <button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${inventoryActionArg(JSON.stringify({poId:r.poId,poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${saleAvailable<=0?'disabled':''}>Move to Inventory in stock office/warehouse</button> <div>${inventorySaleButtons(keyArg,r.cases,saleAvailable,'trillium')}</div> <button type="button" class="secondary small" onclick="archiveLcboInventory('${encodeURIComponent(JSON.stringify(r))}')">Archive</button>${zeroControls}</td>
+    <td><b>${r.cases.toLocaleString()}</b> <button type="button" class="secondary small" onclick="updateInventoryCases('${keyArg}',${r.cases})">Update</button><div style="margin:8px 0"><b>Available for Sale: ${saleAvailable.toLocaleString()}</b><br><small>${saleAvailable>0?'Available for sale':'Not available for sale'}</small> <button type="button" class="secondary small" onclick="markInventoryAvailableForSale('${keyArg}',${r.cases})">Set Available for Sale</button></div> <button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${inventoryActionArg(JSON.stringify({poId:r.poId,poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${r.cases<=0?'disabled':''}>Move to Office/Warehouse Stock</button> <div>${inventorySaleButtons(keyArg,r.cases,saleAvailable,'trillium')}</div> <button type="button" class="secondary small" onclick="archiveLcboInventory('${encodeURIComponent(JSON.stringify(r))}')">Archive</button>${zeroControls}</td>
     <td><b>${officeCases.toLocaleString()}</b><div><button type="button" class="secondary small" onclick="moveInventoryBackToTrillium('${keyArg}',${r.cases})" ${officeCases<=0?'disabled':''}>Move Back to Trillium</button></div><div>${inventorySaleButtons(keyArg,officeCases,officeCases,'office')}</div></td>
     <td>${inventoryProformaPriceCell(r.poId,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)}</td>
     <td><b>${inventoryPriceMoney(inventoryProformaTotal(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc))}</b></td>
