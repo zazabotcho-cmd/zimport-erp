@@ -121,6 +121,27 @@
     }
     return merged;
   }
+  function mergeCachedWarehouseInventory(orders,inventory,cached){
+    if(!cached?.officeInventory?.length)return inventory;
+    const syncedPoKeys=new Set(orders.filter(po=>po.warehouseInventory).map(warehousePoKey));
+    const loadedKeys=new Set((inventory.officeInventory||[]).map(row=>row.inventoryKey));
+    const records=cached.officeInventory.filter(row=>
+      !syncedPoKeys.has(warehouseRecordPoKey(row))&&!loadedKeys.has(row.inventoryKey));
+    if(!records.length)return inventory;
+    const keys=new Set(records.map(row=>row.inventoryKey));
+    const merged={...inventory,officeInventory:[...(inventory.officeInventory||[]),...records]};
+    for(const field of warehouseLinkedFields){
+      merged[field]={...Object.fromEntries(Object.entries(cached[field]||{}).filter(([id])=>keys.has(id))),...inventory[field]};
+    }
+    const recoveredPoKeys=new Set(records.map(warehouseRecordPoKey));
+    for(const po of orders){
+      const savedPricing=cached.pricing?.[po.originalPoId||po.id];
+      if(recoveredPoKeys.has(warehousePoKey(po))&&savedPricing){
+        po.inventoryProformaPricing={...savedPricing,...po.inventoryProformaPricing};
+      }
+    }
+    return merged;
+  }
   const allTables=['agencies','suppliers','items','tenders','worker_submissions','submitted_items','winners','archived_tenders','purchase_orders','shipments','supplier_invoices','settings','recycle_bin'];
   function status(text,type=''){const el=$('onlineStatus');if(el){el.textContent=text;el.className='online-status '+type}const b=$('onlineSyncBanner');if(b){b.textContent=text;b.className='sync-banner '+(type==='connected'?'':'offline')}const c=$('cloudSettingsStatus');if(c)c.textContent=text;}
   function cleanData(row){const d={...(row||{})};delete d._audit;delete d._cloudVersion;return d;}
@@ -290,25 +311,8 @@
       const journal=readInventoryJournal();
       const sharedInventory=loadWarehousePurchaseOrders(out.purchaseOrders,inventoryState(settings.inventoryState||{}));
       const inventory=applyInventoryJournal(sharedInventory,journal);
-      // Older builds kept warehouse records in Settings or only in the browser.
-      const hasWarehouseData=out.purchaseOrders.some(po=>po.warehouseInventory)||inventory.officeInventory?.length;
-      const cachedWarehouse=hasWarehouseData||!canSyncTable('purchase_orders')?null:window.getWarehouseMigrationSnapshot?.();
-      if(cachedWarehouse?.officeInventory?.length){
-        const availablePoKeys=new Set(out.purchaseOrders.map(warehousePoKey));
-        const records=cachedWarehouse.officeInventory.filter(row=>availablePoKeys.has(warehouseRecordPoKey(row)));
-        const keys=new Set(records.map(row=>row.inventoryKey));
-        if(records.length){
-          inventory.officeInventory=records;
-          for(const po of out.purchaseOrders){
-            const savedPricing=cachedWarehouse.pricing?.[po.originalPoId||po.id];
-            if(savedPricing)po.inventoryProformaPricing={...savedPricing,...po.inventoryProformaPricing};
-          }
-          for(const field of warehouseLinkedFields){
-            inventory[field]={...inventory[field],...Object.fromEntries(Object.entries(cachedWarehouse[field]||{}).filter(([id])=>keys.has(id)))};
-          }
-        }
-      }
-      Object.assign(out,inventory);
+      const cachedWarehouse=window.getWarehouseMigrationSnapshot?.();
+      Object.assign(out,mergeCachedWarehouseInventory(out.purchaseOrders,inventory,cachedWarehouse));
       const migrateWarehouse=canSyncTable('purchase_orders')&&out.officeInventory?.some(row=>
         out.purchaseOrders.some(po=>!po.warehouseInventory&&warehousePoKey(po)===warehouseRecordPoKey(row)));
       out.recycleRetentionDays=settings.recycleRetentionDays||90;

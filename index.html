@@ -343,7 +343,7 @@ label[data-retrieved-locked="1"] textarea{
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="online-config.js"></script>
-<script src="online-adapter-bulk-enabled.js?v=20261118-warehouse-po-sync"></script>
+<script src="online-adapter-bulk-enabled.js?v=20261118-warehouse-refresh-sync"></script>
 <script src="user-permissions.js" defer></script>
 <script src="supplier-workspaces.js?v=20261115-persistence" defer></script>
 <script src="admin-management.js" defer></script>
@@ -2423,10 +2423,13 @@ function readWarehouseCheckpoint(){
  catch(error){console.warn('Could not read the saved warehouse inventory',error);return null;}
 }
 window.getWarehouseMigrationSnapshot=()=>{
- const cached=state.officeInventory;
- if(warehouseInventoryHasRows(cached)){
-  rememberWarehouseCheckpoint(state);
- }
+ try{
+  const cached=JSON.parse(safeStorage.getItem(DATA_KEY)||'null');
+  if(Array.isArray(cached?.officeInventory)){
+   if(warehouseInventoryHasRows(cached.officeInventory))rememberWarehouseCheckpoint(cached);
+   else if(cached.officeInventory.length)return null;
+  }
+ }catch(error){console.warn('Could not read cached warehouse inventory',error);}
  return readWarehouseCheckpoint();
 };
 function save(){
