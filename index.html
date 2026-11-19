@@ -1403,6 +1403,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  <div class="invoice-page-row">
   <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   <button type="button" class="invoice-page-tab" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Office/Warehouse Stock Inventory</button>
+  <button type="button" class="invoice-page-tab" data-inventory-statistics-link onclick="activate('inventory-stock-statistics','heads-page')">Inventory Stock Statistics</button>
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
 </div></section>
@@ -1410,6 +1411,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  <div class="invoice-page-row invoice-subnav">
   <button type="button" class="invoice-page-tab active" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   <button type="button" class="invoice-page-tab" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Office/Warehouse Stock Inventory</button>
+  <button type="button" class="invoice-page-tab" data-inventory-statistics-link onclick="activate('inventory-stock-statistics','heads-page')">Inventory Stock Statistics</button>
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
  <div class="section-head"><div><h2>Inventory in stock LCBO Trillium/office/storage</h2><p class="note">Choose a transportation to open its stock.</p></div></div>
@@ -1419,15 +1421,53 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  <div class="invoice-page-row invoice-subnav">
   <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   <button type="button" class="invoice-page-tab active" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Office/Warehouse Stock Inventory</button>
+  <button type="button" class="invoice-page-tab" data-inventory-statistics-link onclick="activate('inventory-stock-statistics','heads-page')">Inventory Stock Statistics</button>
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
- <div class="section-head"><div><h2>Office/Warehouse Stock Inventory</h2></div></div>
+ <div class="section-head"><div><h2>Office/Warehouse Stock Inventory</h2></div>
+  <button type="button" onclick="openOfficeInventoryAdd()">+ Add Inventory</button>
+ </div>
+ <div id="officeInventoryAddModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="officeInventoryAddTitle">
+  <form id="officeInventoryAddForm" class="modal-card" style="max-width:620px" onsubmit="addOfficeInventory(event)">
+   <div class="modal-head">
+    <h2 id="officeInventoryAddTitle">Add Office/Warehouse Inventory</h2>
+    <button type="button" class="icon" aria-label="Close" onclick="show('officeInventoryAddModal',false)">×</button>
+   </div>
+   <div class="form-grid">
+    <label class="full">Item Description <input name="product" required></label>
+    <label>Item # <input name="itemNo"></label>
+    <label>Supplier <input name="vendor"></label>
+    <label>Cases in Stock <input name="cases" type="number" min="1" step="1" required></label>
+    <label>Bottles per Case <input name="bpc" type="number" min="1" step="1" required></label>
+    <label>Non-Licensed Retail per Bottle (CAD, TAX/HST incl.) <input name="finalRetailBottle" type="number" min="0" step="0.01"></label>
+    <label>Licensed Retail per Bottle (CAD, TAX/HST incl.) <input name="licensedRetailBottle" type="number" min="0" step="0.01"></label>
+   </div>
+   <div class="actions">
+    <button type="button" class="secondary" onclick="show('officeInventoryAddModal',false)">Cancel</button>
+    <button type="submit">Add Inventory</button>
+   </div>
+  </form>
+ </div>
  <div class="cards" id="officeInventoryKpis"></div>
  <div class="table-wrap"><table><thead><tr>
   <th>Item Description / Item #</th><th>Supplier</th><th>Cases in Stock / Bottles per Case</th><th>Cases in Office / Cases in Storage</th>
   <th>Final Retail Price per Bottle (CAD, TAX/HST incl.)</th><th>Item total retail value</th>
   <th>Sold to Non-Licensed Customers</th><th>Sold to Licensed Customers</th>
  </tr></thead><tbody id="officeInventoryRows"></tbody></table></div>
+</div></section>
+<section id="inventory-stock-statistics" class="panel"><div class="box">
+ <div class="invoice-page-row inventory-sticky-nav">
+  <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
+  <button type="button" class="invoice-page-tab" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Office/Warehouse Stock Inventory</button>
+  <button type="button" class="invoice-page-tab active" aria-current="page">Inventory Stock Statistics</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
+ </div>
+ <h2>Inventory Stock Statistics</h2>
+ <div class="cards" id="combinedInventoryStatistics"></div>
+ <h3>All In Stock Transportations</h3>
+ <div class="cards" id="transportationInventoryStatistics"></div>
+ <h3>Office/Warehouse Stock Inventory</h3>
+ <div class="cards" id="officeInventoryStatistics"></div>
 </div></section>
 <section id="inventory-archived" class="panel"><div class="box">
 <div class="invoice-page-row"><button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button><button type="button" class="invoice-page-tab active" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button></div>
@@ -1439,6 +1479,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  <div class="invoice-page-row inventory-sticky-nav">
   <button type="button" class="invoice-page-tab active" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   <button type="button" class="invoice-page-tab" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Office/Warehouse Stock Inventory</button>
+  <button type="button" class="invoice-page-tab" data-inventory-statistics-link onclick="activate('inventory-stock-statistics','heads-page')">Inventory Stock Statistics</button>
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
  <div class="section-head">
@@ -6097,8 +6138,8 @@ function activate(tab,preferredSection=''){
       $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section===section));
     }
   }
-  const panel=$('#'+tab);if(panel)panel.classList.add('active');if(tab==='price-list')renderPriceList();if(tab==='inventory-archived')window.renderArchivedInventory?.();if(tab==='total-inventory')window.renderInventoryTransportationPages?.();if(tab==='inventory-in-stock')window.renderHeadInventory?.();if(tab==='inventory-in-stock-office')window.renderOfficeInventory?.();if(tab==='transportation'||tab==='transportation-records')renderShipments();if(tab==='archived-transportation'||tab==='archived-transportation-records')window.renderArchivedShipments?.();
-  if(preferredSection==='heads-page' && (['total-inventory','inventory-in-stock','inventory-in-stock-office','inventory-archived','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
+  const panel=$('#'+tab);if(panel)panel.classList.add('active');if(tab==='price-list')renderPriceList();if(tab==='inventory-archived')window.renderArchivedInventory?.();if(tab==='total-inventory')window.renderInventoryTransportationPages?.();if(tab==='inventory-in-stock')window.renderHeadInventory?.();if(tab==='inventory-in-stock-office')window.renderOfficeInventory?.();if(tab==='inventory-stock-statistics')window.renderInventoryStockStatistics?.();if(tab==='transportation'||tab==='transportation-records')renderShipments();if(tab==='archived-transportation'||tab==='archived-transportation-records')window.renderArchivedShipments?.();
+  if(preferredSection==='heads-page' && (['total-inventory','inventory-in-stock','inventory-in-stock-office','inventory-stock-statistics','inventory-archived','inventory-financial-regu-seas-other'].includes(tab)||String(tab).startsWith('financial-profit-'))){
     $$('.subnav').forEach(x=>x.classList.toggle('active',x.dataset.sectionNav==='heads-page'));
     $$('.main-section-btn').forEach(x=>x.classList.toggle('active',x.dataset.section==='heads-page'));
     const hubTab=$('.subnav[data-section-nav="heads-page"] .tab[data-tab="inventory-stock"]');if(hubTab)hubTab.classList.add('active');
@@ -10528,10 +10569,47 @@ window.updateOfficeRetailPrice=(input)=>{
   save();
   renderOfficeInventory();
 };
-function renderOfficeInventory(){
-  const body=document.getElementById('officeInventoryRows');
-  const cards=document.getElementById('officeInventoryKpis');
-  if(!body||!cards)return;
+window.openOfficeInventoryAdd=()=>{
+  const form=document.getElementById('officeInventoryAddForm');
+  form.reset();
+  show('officeInventoryAddModal');
+  form.elements.product.focus();
+};
+window.addOfficeInventory=event=>{
+  event.preventDefault();
+  const form=event.currentTarget;
+  const fields=form.elements;
+  const product=fields.product.value.trim();
+  if(!product){
+    fields.product.value='';
+    fields.product.reportValidity();
+    return;
+  }
+  if(!form.reportValidity())return;
+  const id=uid();
+  (state.officeInventory??=[]).push({
+    id,
+    inventoryKey:'manual-office::'+id,
+    product,
+    itemNo:fields.itemNo.value.trim(),
+    vendor:fields.vendor.value.trim(),
+    cases:fields.cases.valueAsNumber,
+    bpc:fields.bpc.valueAsNumber,
+    storageCases:0,
+    retailPricing:{
+      finalRetailBottle:fields.finalRetailBottle.value===''?'':fields.finalRetailBottle.valueAsNumber,
+      licensedRetailBottle:fields.licensedRetailBottle.value===''?'':fields.licensedRetailBottle.valueAsNumber
+    }
+  });
+  save({inventoryOnly:true});
+  show('officeInventoryAddModal',false);
+  form.reset();
+  renderOfficeInventory();
+};
+function renderOfficeInventory(statisticsCards){
+  const body=statisticsCards?null:document.getElementById('officeInventoryRows');
+  const cards=statisticsCards||document.getElementById('officeInventoryKpis');
+  if(!cards||(!statisticsCards&&!body))return;
   const grouped=new Map();
   for(const record of state.officeInventory||[]){
     if(record.inventoryArchived||!record.inventoryKey)continue;
@@ -10547,7 +10625,7 @@ function renderOfficeInventory(){
     {field:'licensedRetailBottle',label:'Licensed',heading:'Total Retail Value (Licensed Price)',cents:0,unpricedBottles:0}
   ];
   let totalNonLicensed=0,totalLicensed=0;
-  body.innerHTML=[...grouped].map(([key,{record,cases,storageCases}])=>{
+  const officeRows=[...grouped].map(([key,{record,cases,storageCases}])=>{
     const sales=state.inventorySalesMetrics?.[key]||{};
     const nonLicensed=num(sales.officeNonLicensedCasesSold);
     const licensed=num(sales.officeLicensedCasesSold);
@@ -10567,6 +10645,7 @@ function renderOfficeInventory(){
     totalBottles+=bottles;
     totalNonLicensed+=nonLicensed;
     totalLicensed+=licensed;
+    if(!body)return '';
     const prices=[['finalRetailBottle','Non-licensed'],['licensedRetailBottle','Licensed']].map(([field,label])=>
       `<label style="display:block;margin-bottom:6px">${label}
         <input type="number" min="0" step="0.01" inputmode="decimal" style="width:105px"
@@ -10593,7 +10672,8 @@ function renderOfficeInventory(){
       <td><b>${nonLicensed.toLocaleString()}</b> cases<br>${nonLicensedButton}</td>
       <td><b>${licensed.toLocaleString()}</b> cases<br>${licensedButton}<br>${inventoryReturnButton(keyArg,cases,'office')}</td>
     </tr>`;
-  }).join('')||'<tr><td colspan="8">No office/warehouse stock yet. Move cases from In Stock Transportation.</td></tr>';
+  }).join('');
+  if(body)body.innerHTML=officeRows||'<tr><td colspan="8">No office/warehouse stock yet. Add inventory or move cases from In Stock Transportation.</td></tr>';
   cards.innerHTML=`
     <div class="card"><span>Cases in Stock</span><strong>${totalCases.toLocaleString()}</strong></div>
     <div class="card"><span>Bottles in Stock</span><strong>${totalBottles.toLocaleString()}</strong></div>
@@ -10601,29 +10681,43 @@ function renderOfficeInventory(){
       ${unpricedBottles?`<small>${unpricedBottles.toLocaleString()} bottles without a retail price</small>`:''}</div>`).join('')}
     <div class="card"><span>Sold to Non-Licensed Customers</span><strong>${totalNonLicensed.toLocaleString()} cases</strong></div>
     <div class="card"><span>Sold to Licensed Customers</span><strong>${totalLicensed.toLocaleString()} cases</strong></div>`;
+  return {totalCases,totalBottles,retailTotals};
 }
 
 // Office/Warehouse page is opened from other script blocks (page tabs, startup render).
 window.renderOfficeInventory=renderOfficeInventory;
 window.renderInventoryTransportationPages=renderInventoryTransportationPages;
 window.renderHeadInventory=()=>{
+ if(document.getElementById('inventory-stock-statistics')?.classList.contains('active'))window.renderInventoryStockStatistics();
+ renderTransportationInventory();
+};
+function renderTransportationInventory(statisticsCards){
+ const aggregate=Boolean(statisticsCards);
  if(document.getElementById('inventory-in-stock-office')?.classList.contains('active'))renderOfficeInventory();
- const body=document.getElementById('headInventoryRows'),k=document.getElementById('headInventoryKpis');
- if(!body)return;
- const q=(document.getElementById('headInventorySearch')?.value||'').trim().toLowerCase();
+ const body=aggregate?null:document.getElementById('headInventoryRows');
+ const k=statisticsCards||document.getElementById('headInventoryKpis');
+ if(!aggregate&&!body)return;
+ const q=aggregate?'':(document.getElementById('headInventorySearch')?.value||'').trim().toLowerCase();
  const groups=inventoryTransportationGroups();
- renderInventoryTransportationPages(groups);
+ if(!aggregate)renderInventoryTransportationPages(groups);
  const selected=groups.get(selectedInventoryTransportationId);
- const pos=selected?.pos||[];
- document.getElementById('inventoryTransportationHeading').textContent=selected?
+ const shipments=aggregate?[...groups.values()]:selected?[selected]:[];
+ if(aggregate)shipments.sort((a,b)=>String(b.shipment.statusDate||'').localeCompare(String(a.shipment.statusDate||'')));
+ const orders=new Map();
+ for(const {shipment,pos} of shipments){
+   for(const po of pos){
+     const id=String(po.originalPoId||po.id);
+     if(!orders.has(id))orders.set(id,{po,shipment});
+   }
+ }
+ if(!aggregate)document.getElementById('inventoryTransportationHeading').textContent=selected?
    'In Stock Transportation: '+(selected.shipment.name||selectedInventoryTransportationId):'In Stock Transportation';
  const rows=[];
  const projectRows=[];
  let projectTotalProfit=0;
  let hasMissingProfit=false;
 
- pos.forEach(po=>{
-  const shipment=selected.shipment;
+ orders.forEach(({po,shipment})=>{
   const statusShipment=shipment?.recordKind==='transportation'?shipment:(shipment?cargoDateSourceTransportation(shipment):null)||shipment;
   const transportCosts=statusShipment?.recordKind==='transportation'?shipmentTotals(statusShipment):(shipment?cargoTransportationCostTotals(shipment):null);
   const transportPerBottle=transportCosts?.costPerBottleCad??0;
@@ -10692,7 +10786,7 @@ window.renderHeadInventory=()=>{
    const key=String(record.inventoryKey);
    officeCasesByInventoryKey.set(key,(officeCasesByInventoryKey.get(key)||0)+cases);
  }
- body.innerHTML=rows.map(r=>{
+ if(body)body.innerHTML=rows.map(r=>{
    const officeCases=officeCasesByInventoryKey.get(String(r.inventoryKey))||0;
    const keyArg=inventoryActionArg(r.inventoryKey);
    const saleAvailable=inventoryAvailableForSale(r.inventoryKey,r.cases);
@@ -10759,14 +10853,15 @@ window.renderHeadInventory=()=>{
    </tr>`;
  }).join('')||'<tr><td colspan="22">No non-tender inventory rows for this transportation.</td></tr>';
 
+ let totalCases=0,totalBottles=0;
  if(k){
-   let totalCases=0,totalBottles=0,officeStockCases=0,officeStockBottles=0;
+   let officeStockCases=0,officeStockBottles=0;
    let projectCases=0,projectBottles=0,projectBalanceCents=0;
    let projectTransportation=0,totalLabCost=0,totalOtherFees=0;
    let projectSellOutMonths=null,projectCasesPerMonth=0;
-   pos.forEach(po=>{
+   orders.forEach(({po,shipment})=>{
      const pricing=inventoryProformaPo(po.originalPoId||po.id)?.inventoryProformaPricing||po.inventoryProformaPricing;
-     const transportationPerBottle=nonTenderPoTransportationCad(po,selected.shipment);
+     const transportationPerBottle=nonTenderPoTransportationCad(po,shipment);
      let poHasActiveInventory=false;
      (po.lines||[]).forEach((line,index)=>{
        if(state.archivedLcboInventory?.[inventoryLineKey(po,line,index)])return;
@@ -10805,22 +10900,26 @@ window.renderHeadInventory=()=>{
    const projectBudgetCents=projectBalanceCents+Math.round(projectTransportation*100)
      +Math.round(totalLabCost*100)+Math.round(totalOtherFees*100);
    k.innerHTML=`<div class="card"><span>Total Project Budget (CAD, Supplier Costs Not Included)</span><strong>${inventoryPriceMoney(projectBudgetCents/100)}</strong>
-       <span style="margin-top:8px">Project Total Profit / Project Monthly Profit</span>
-       <strong>${inventoryPriceMoney(hasMissingProfit?null:projectTotalProfit)} / ${inventoryPriceMoney(hasMissingProfit||!projectSellOutMonths?null:projectTotalProfit/projectSellOutMonths)}</strong>
+       ${aggregate||selected?`<div id="transportationProjectRetailValues${aggregate?'All':''}"></div>`:''}
      </div>
      <div class="card">
-       <span>Project Sell-Out Months / Total Cases Sold per Month</span>
+       <span>${aggregate?'Longest Project Sell-Out Period (Months)':'Project Sell-Out Months'} / Total Cases Sold per Month</span>
        <strong>${projectSellOutMonths===null?'—':projectSellOutMonths.toLocaleString('en-CA',{maximumFractionDigits:2})} / ${projectSellOutMonths!==null?projectCasesPerMonth.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong>
+       <span style="margin-top:8px">Project Total Profit / Project Monthly Profit</span>
+       <strong>${inventoryPriceMoney(hasMissingProfit?null:projectTotalProfit)} / ${inventoryPriceMoney(hasMissingProfit||!projectSellOutMonths?null:projectTotalProfit/projectSellOutMonths)}</strong>
+       ${aggregate?`<span style="margin-top:8px">Approximate Stock Profit — Non-Licensed</span>
+       <strong>${inventoryPriceMoney(inventoryTotalItemProfit(projectRows))}</strong>`:''}
      </div>
-     <div class="card"><span>POs in Inventory</span><strong>${pos.length}</strong>
-       ${selected?'<div id="transportationLiveRetailValues"></div>':''}
+     <div class="card"><span>POs in Inventory</span><strong>${orders.size}</strong>
+       ${aggregate?`<span style="margin-top:8px">In Stock Transportations</span><strong>${shipments.length}</strong>`:''}
+       ${aggregate||selected?`<div id="transportationLiveRetailValues${aggregate?'All':''}"></div>`:''}
      </div>
      <div class="card">
        <span>Total Project Cases / Total Project Bottles</span>
        <strong>${projectCases.toLocaleString()} / ${projectBottles.toLocaleString()}</strong>
        <span style="margin-top:8px">Total Cases in Stock / Total Bottles in Stock</span>
        <strong>${totalCases.toLocaleString()} / ${totalBottles.toLocaleString()}</strong>
-       <span style="margin-top:8px">Office/Warehouse Cases / Bottles in Stock</span>
+       <span style="margin-top:8px">Office/Warehouse Cases / Bottles in Stock${aggregate?' (Transportation POs)':''}</span>
        <strong>${officeStockCases.toLocaleString()} / ${officeStockBottles.toLocaleString()}</strong>
      </div>
      <div class="card">
@@ -10838,14 +10937,13 @@ window.renderHeadInventory=()=>{
        <strong>${inventoryPriceMoney(totalOtherFees)}</strong>
      </div>`;
  }
- const total=document.getElementById('inventoryTotalItemProfit');
+ const total=aggregate?null:document.getElementById('inventoryTotalItemProfit');
  const renderTotalProfit=draft=>{
    if(total)total.textContent=`(aprox ttl. profit non lc,cst only ${inventoryPriceMoney(inventoryTotalItemProfit(projectRows,draft))})`;
  };
- const retailValues=document.getElementById('transportationLiveRetailValues');
- const renderRetailValues=draft=>{
-   if(!retailValues)return;
-   retailValues.innerHTML=[
+ const renderRetailValues=(element,heading,bottleCount,draft)=>{
+   if(!element)return;
+   const totals=[
      ['finalRetailBottle','Non-Licensed'],
      ['licensedRetailBottle','Licensed']
    ].map(([field,label])=>{
@@ -10853,19 +10951,32 @@ window.renderHeadInventory=()=>{
      for(const row of projectRows){
        const pricing=inventoryProformaPo(row.poId)?.inventoryProformaPricing||row.proformaPricing;
        const price=draft?.field===field&&draft.poId===String(row.poId)?draft.value:pricing[field];
+       const bottles=bottleCount(row);
        if(price!==''&&price!=null&&Number.isFinite(Number(price))){
-         cents+=Math.round(Number(price)*100)*row.bottles;
+         cents+=Math.round(Number(price)*100)*bottles;
        }else{
-         unpricedBottles+=row.bottles;
+         unpricedBottles+=bottles;
        }
      }
-     return `<span style="margin-top:8px">Live Retail Value — ${label} (TAX/HST incl.)</span>
+     return {label,cents,unpricedBottles};
+   });
+   element.innerHTML=totals.map(({label,cents,unpricedBottles})=>
+     `<span style="margin-top:8px">${heading} — ${label} (TAX/HST incl.)</span>
        <strong>${inventoryPriceMoney(cents/100)}</strong>
-       ${unpricedBottles?`<small>${unpricedBottles.toLocaleString()} bottles without a retail price</small>`:''}`;
-   }).join('');
+       ${unpricedBottles?`<small>${unpricedBottles.toLocaleString()} bottles without a retail price</small>`:''}`
+   ).join('');
+   return totals;
+ };
+ const liveRetailValues=document.getElementById('transportationLiveRetailValues'+(aggregate?'All':''));
+ const projectRetailValues=document.getElementById('transportationProjectRetailValues'+(aggregate?'All':''));
+ const updateRetailValues=draft=>{
+   const liveTotals=renderRetailValues(liveRetailValues,'Live Retail Value',row=>row.bottles,draft);
+   renderRetailValues(projectRetailValues,'Total Project Retail Value',row=>row.originalCases*row.bpc,draft);
+   return liveTotals;
  };
  renderTotalProfit();
- renderRetailValues();
+ const retailTotals=updateRetailValues();
+ if(aggregate)return {totalCases,totalBottles,retailTotals};
 
  body.oninput=event=>{
    const input=event.target;
@@ -10877,8 +10988,26 @@ window.renderHeadInventory=()=>{
      value:input.value===''?(inventoryPriceField==='hstPercent'?13:''):Number(input.value)
    };
    renderTotalProfit(draft);
-   if(draft.field==='finalRetailBottle'||draft.field==='licensedRetailBottle')renderRetailValues(draft);
+   if(draft.field==='finalRetailBottle'||draft.field==='licensedRetailBottle')updateRetailValues(draft);
  };
+}
+
+window.renderInventoryStockStatistics=()=>{
+ const combined=document.getElementById('combinedInventoryStatistics');
+ if(!combined)return;
+ const transportation=renderTransportationInventory(document.getElementById('transportationInventoryStatistics'));
+ const office=renderOfficeInventory(document.getElementById('officeInventoryStatistics'));
+ combined.innerHTML=`
+   <div class="card"><span>Combined Cases / Bottles in Stock</span>
+     <strong>${(transportation.totalCases+office.totalCases).toLocaleString()} / ${(transportation.totalBottles+office.totalBottles).toLocaleString()}</strong>
+   </div>
+   ${transportation.retailTotals.map(({label,cents,unpricedBottles},index)=>{
+     const officeRetail=office.retailTotals[index];
+     const missing=unpricedBottles+officeRetail.unpricedBottles;
+     return `<div class="card"><span>Combined Live Retail Value — ${label} (TAX/HST incl.)</span>
+       <strong>${inventoryPriceMoney((cents+officeRetail.cents)/100)}</strong>
+       ${missing?`<small>${missing.toLocaleString()} bottles without a retail price</small>`:''}</div>`;
+   }).join('')}`;
 };
 
 function renderHeadOfficeProposals(){
