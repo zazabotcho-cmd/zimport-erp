@@ -19,7 +19,7 @@
 
 /* LCBO-style item form corrections */
 .supplier-producer-grid,.pricing-layout{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:start}
-.info-column{display:grid;grid-template-columns:1fr;gap:12px}.info-column h3{margin:0 0 2px;color:var(--navy);font-size:16px}.producer-column{border-left:1px solid var(--line);padding-left:28px}.section-note{font-size:12px;color:#66788a;line-height:1.45;margin:-2px 0 4px}.pricing-left,.pricing-right{display:grid;grid-template-columns:1fr;gap:13px}.pricing-left{max-width:520px}.pricing-right{max-width:420px}.pickup-compact{grid-column:span 2;max-width:640px}.pickup-compact textarea{min-height:54px}.field-hidden{display:none!important}.conditional-lcbo-item{transition:.15s}.item-group .pricing-layout label,.item-group .supplier-producer-grid label{display:block}.item-group .pricing-layout input,.item-group .pricing-layout select{max-width:100%}
+.info-column{display:grid;grid-template-columns:1fr;gap:12px}.info-column h3{margin:0 0 2px;color:var(--navy);font-size:16px}.producer-column{border-left:1px solid var(--line);padding-left:28px}.section-note{font-size:12px;color:#66788a;line-height:1.45;margin:-2px 0 4px}.pricing-left,.pricing-right{display:grid;grid-template-columns:1fr;gap:13px}.pricing-left{max-width:520px}.offered-quote-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,110px);gap:10px;align-items:end}.offered-quote-row label{min-width:0}.offered-quote-row input,.offered-quote-row select{width:100%;min-width:0}.pricing-right{max-width:420px}.pickup-compact{grid-column:span 2;max-width:640px}.pickup-compact textarea{min-height:54px}.field-hidden{display:none!important}.conditional-lcbo-item{transition:.15s}.item-group .pricing-layout label,.item-group .supplier-producer-grid label{display:block}.item-group .pricing-layout input,.item-group .pricing-layout select{max-width:100%}
 .clickable-name{background:none;color:#145ca8;padding:0;border:0;text-decoration:underline;font:inherit;font-weight:700;cursor:pointer}.detail-row{display:grid;grid-template-columns:220px 1fr auto;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid #e7edf3}.detail-row span{font-size:12px;font-weight:700;color:#627386}.detail-row b{word-break:break-word}.supplier-card{display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid #edf1f5}.supplier-card small{color:#6b7785}.supplier-items-table{min-width:1100px}.supplier-item-form{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0;padding:14px;background:#f6f9fc;border:1px solid var(--line);border-radius:9px}.supplier-item-form .full{grid-column:1/-1}@media(max-width:900px){.supplier-item-form{grid-template-columns:1fr 1fr}.detail-row{grid-template-columns:1fr auto}.detail-row span{grid-column:1/-1}}
 @media(max-width:900px){.supplier-producer-grid,.pricing-layout{grid-template-columns:1fr;gap:18px}.producer-column{border-left:0;border-top:1px solid var(--line);padding-left:0;padding-top:18px}.pickup-compact{max-width:none}}
 
@@ -1724,6 +1724,8 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
         <label>PO #<input id="spi2PoNumber" placeholder="Enter PO number"></label>
         <label>Submission #<input id="spi2SubmissionNumber" placeholder="Enter submission number"></label>
         <label>Supplier *<select id="spi2SupplierId"><option value="">Select supplier</option></select></label>
+        <div id="spi2ItemRows"></div>
+        <button type="button" class="secondary small" onclick="addAgencyFeeInvoiceItemRow()">+ Add Another Item</button>
         <label>Invoice Number *<input id="spi2InvoiceNumber" placeholder="Enter supplier invoice number"></label>
         <label>Invoice Date<input id="spi2InvoiceDate" type="date"></label>
         <div class="amount-currency-row"><label>Invoice Amount<input id="spi2InvoiceAmount" type="number" min="0" step="0.01"></label><label class="currency-mini">Currency<select id="spi2Currency"><option>CAD</option><option>USD</option><option>EUR</option><option>GBP</option></select></label></div>
@@ -2796,7 +2798,7 @@ function renderSubmissionTable(targetId='submissionRows',mode='active',useFilter
     const tr=currentTenderForRecord(r),preDate=tr?.presubDate||r.tenderDate||'',year=preDate?String(preDate).slice(0,4):String(r.year||'');
     if(mode==='archived'){
       const item=state.items.find(x=>x.id===r.itemId)||{};
-      const quote=num(item.quotePerCase||r.offeredQuote),erp=num(item.estimatedRetailPrice||r.erpManual),currency=item.quotationCurrency||r.offeredQuoteCurrency||'CAD';
+      const quote=num(item.quotePerCase||r.offeredQuote),erp=num(item.estimatedRetailPrice||r.erpManual),currency=item.offeredQuoteCurrency||item.quotationCurrency||r.offeredQuoteCurrency||'CAD';
       if(archivedTender&&!String(r.tenderName||tr?.name||'').toLowerCase().includes(archivedTender))return false;
       if(archivedYear&&!year.toLowerCase().includes(archivedYear))return false;
       if(archivedItem&&![r.brand,r.itemName].join(' ').toLowerCase().includes(archivedItem))return false;
@@ -2858,7 +2860,7 @@ function renderSubmissionTable(targetId='submissionRows',mode='active',useFilter
       const dateCell=`<td>${escapeHtml(preDate||'—')}</td>`;
       base=compactProductNeedCells(values)+dateCell+base.replace(/^<td>[\s\S]*?<\/td><td>[\s\S]*?<\/td><td>[\s\S]*?<\/td>/,'');
     }
-    if(mode==='archived')return `<tr data-record-id="${r.id}"><td><input type="checkbox" class="archived-submission-mark" style="width:auto" aria-label="Mark submission" data-record-id="${escapeHtml(r.id)}" ${markedArchivedSubmissionIds.has(r.id)?'checked':''} onchange="markArchivedSubmission('${r.id}',this.checked)"></td>${base}${productSubmissionCell(r)}<td><span class="${decisionClass(stage)}">${escapeHtml(stage)}</span></td><td><span class="${decisionClass(forced)}">${escapeHtml(forced)}</span></td><td>${num(item.quotePerCase||r.offeredQuote).toFixed(2)}</td><td>${escapeHtml(item.quotationCurrency||r.offeredQuoteCurrency||'CAD')}</td><td>${escapeHtml(item.sellingUnitsPerShippingCase||r.bottles||'—')}</td><td>${num(item.estimatedRetailPrice||r.erpManual).toFixed(2)}</td><td>${escapeHtml(item.quoteType||'FOB')}</td><td>${escapeHtml(item.sellingUnitSizeMl||'—')}</td><td>${escapeHtml(item.limitedCaseQty||'—')}</td><td><div class="action-buttons"><button type="button" class="secondary small" onclick="moveBackToAllSubmitted('${r.id}')">Restore</button><button type="button" class="danger small" onclick="permanentlyDeleteArchivedSubmissions(['${r.id}'])">Delete Permanently</button></div></td></tr>`;
+    if(mode==='archived')return `<tr data-record-id="${r.id}"><td><input type="checkbox" class="archived-submission-mark" style="width:auto" aria-label="Mark submission" data-record-id="${escapeHtml(r.id)}" ${markedArchivedSubmissionIds.has(r.id)?'checked':''} onchange="markArchivedSubmission('${r.id}',this.checked)"></td>${base}${productSubmissionCell(r)}<td><span class="${decisionClass(stage)}">${escapeHtml(stage)}</span></td><td><span class="${decisionClass(forced)}">${escapeHtml(forced)}</span></td><td>${num(item.quotePerCase||r.offeredQuote).toFixed(2)}</td><td>${escapeHtml(item.offeredQuoteCurrency||item.quotationCurrency||r.offeredQuoteCurrency||'CAD')}</td><td>${escapeHtml(item.sellingUnitsPerShippingCase||r.bottles||'—')}</td><td>${num(item.estimatedRetailPrice||r.erpManual).toFixed(2)}</td><td>${escapeHtml(item.quoteType||'FOB')}</td><td>${escapeHtml(item.sellingUnitSizeMl||'—')}</td><td>${escapeHtml(item.limitedCaseQty||'—')}</td><td><div class="action-buttons"><button type="button" class="secondary small" onclick="moveBackToAllSubmitted('${r.id}')">Restore</button><button type="button" class="danger small" onclick="permanentlyDeleteArchivedSubmissions(['${r.id}'])">Delete Permanently</button></div></td></tr>`;
     if(mode==='winner'){
       const transport=winnerTransportationInfo(r);const ref=transport.ref||'—';
       const workItem=linkedWorkItemForSubmission(r);
@@ -3072,7 +3074,7 @@ function winnerDashboardItem(r){
     supplier:r.supplier||item.supplierName||item.supplier||'',
     bottles:num(item.supplierItemsPerCase)||num(item.sellingUnitsPerShippingCase)||num(r.bottles)||num(item.bottlesPerCase),
     offeredQuote:item.quotePerCase!==undefined&&item.quotePerCase!==''?num(item.quotePerCase):num(r.offeredQuote),
-    offeredQuoteCurrency:item.quotationCurrency||r.offeredQuoteCurrency||'CAD',
+    offeredQuoteCurrency:item.offeredQuoteCurrency||item.quotationCurrency||r.offeredQuoteCurrency||'CAD',
     erpManual:num(r.erpManual)||num(item.estimatedRetailPrice),
     potentialCases:num(r.potentialCases)||num(item.limitedCaseQty),
     tenderName:tender.name||r.tenderName||'',
@@ -3237,7 +3239,7 @@ function updateLcboListStatus(tenderId,itemId,status){
  const isSubmitted=status==='Registered in LCBO NISS';const isRegistered=isSubmitted;
  let matches=state.records.filter(r=>r.sourceLcboSubmissionWorkId===w.id||r.id===w.submissionId||(!r.sourceLcboSubmissionWorkId&&r.tenderRecordId===tenderId&&r.itemId===w.itemId&&String(r.agencyId||'')===String(w.agencyId||'')&&(t.workItems||[]).filter(other=>other.itemId===w.itemId&&String(other.agencyId||'')===String(w.agencyId||'')).length===1));
  if(isSubmitted&&!matches.length){
-   const i=findDatabaseItem(w),r=defaults();r.id=uid();r.sourceLcboSubmissionWorkId=w.id;r.tenderRecordId=t.id;r.tenderId=t.code||'';r.tenderName=t.name||'';r.tenderDate=t.presubDate||'';r.productNeeds=w.productNeeds||t.productNeeds||'VINTAGES';r.productNeedId=w.productNeedId||'';r.productNeedItems=w.productNeedItems||'';r.productNeedItemsId=w.productNeedItemsId||'';r.agencyId=w.agencyId||state.agencies[0]?.id||'';r.itemId=w.itemId||'';r.itemName=i?.productDescription||w.itemName||'';r.supplier=i?.supplierName||'';r.brand=i?.brandName||'';r.year=i?.vintage||new Date().getFullYear();r.productType=i?.productType||'Wine';r.caseKg=num(i?.caseWeightKg)||18.9;r.bottles=num(i?.sellingUnitsPerShippingCase||i?.unitsPerSellingPack)||12;r.offeredQuoteCurrency=w.currency||i?.quotationCurrency||'CAD';r.offeredQuote=num(w.offeredPrice);r.erpManual=num(i?.estimatedRetailPrice);r.registered='Yes';r.finalDecision='In Progress';r.submissionNumber=w.submissionNumber||'';state.records.push(r);matches=[r];
+   const i=findDatabaseItem(w),r=defaults();r.id=uid();r.sourceLcboSubmissionWorkId=w.id;r.tenderRecordId=t.id;r.tenderId=t.code||'';r.tenderName=t.name||'';r.tenderDate=t.presubDate||'';r.productNeeds=w.productNeeds||t.productNeeds||'VINTAGES';r.productNeedId=w.productNeedId||'';r.productNeedItems=w.productNeedItems||'';r.productNeedItemsId=w.productNeedItemsId||'';r.agencyId=w.agencyId||state.agencies[0]?.id||'';r.itemId=w.itemId||'';r.itemName=i?.productDescription||w.itemName||'';r.supplier=i?.supplierName||'';r.brand=i?.brandName||'';r.year=i?.vintage||new Date().getFullYear();r.productType=i?.productType||'Wine';r.caseKg=num(i?.caseWeightKg)||18.9;r.bottles=num(i?.sellingUnitsPerShippingCase||i?.unitsPerSellingPack)||12;r.offeredQuoteCurrency=w.currency||i?.offeredQuoteCurrency||i?.quotationCurrency||'CAD';r.offeredQuote=num(w.offeredPrice);r.erpManual=num(i?.estimatedRetailPrice);r.registered='Yes';r.finalDecision='In Progress';r.submissionNumber=w.submissionNumber||'';state.records.push(r);matches=[r];
  }
  matches.forEach(r=>{if(isSubmitted){r.registered='Yes';r.returnedToLcboSubmissionList=false;r.lcboSubmissionStatus=status;r.sourceLcboSubmissionWorkId=w.id;w.submissionId=r.id;for(const key of ['productNeeds','productNeedId','productNeedItems','productNeedItemsId'])r[key]=w[key]||'';r.itemId=w.itemId;r.itemName=w.itemName;r.agencyId=w.agencyId;r.offeredQuote=num(w.offeredPrice);r.offeredQuoteCurrency=w.currency;}r.submissionNumber=w.submissionNumber||r.submissionNumber||'';if(!isRegistered)r.finalDecision='In Progress';});
  save();
@@ -3571,7 +3573,7 @@ function updateWorkStatus(tenderId,itemId,status){
        r.productType=i?.productType||candidate.productType||candidate.category||'Wine';
        r.caseKg=num(i?.caseWeightKg)||18.9;
        r.bottles=num(i?.sellingUnitsPerShippingCase||i?.unitsPerSellingPack||candidate.bottlesPerCase)||12;
-       r.offeredQuoteCurrency=w.currency||candidate.currency||i?.quotationCurrency||'CAD';
+       r.offeredQuoteCurrency=w.currency||candidate.currency||i?.offeredQuoteCurrency||i?.quotationCurrency||'CAD';
        r.offeredQuote=num(w.offeredPrice||candidate.supplierPricePerOfferedCase||candidate.offeredPrice);
        r.erpManual=num(i?.estimatedRetailPrice||candidate.erp||candidate.estimatedRetailPrice);
        r.registered='Yes';
@@ -3617,7 +3619,7 @@ function updateWorkStatus(tenderId,itemId,status){
        r.productType=i?.productType||candidate.productType||candidate.category||'Wine';
        r.caseKg=num(i?.caseWeightKg)||18.9;
        r.bottles=num(i?.sellingUnitsPerShippingCase||i?.unitsPerSellingPack||candidate.bottlesPerCase)||12;
-       r.offeredQuoteCurrency=w.currency||candidate.currency||i?.quotationCurrency||'CAD';
+       r.offeredQuoteCurrency=w.currency||candidate.currency||i?.offeredQuoteCurrency||i?.quotationCurrency||'CAD';
        r.offeredQuote=num(w.offeredPrice||candidate.supplierPricePerOfferedCase||candidate.offeredPrice);
        r.erpManual=num(i?.estimatedRetailPrice||candidate.erp||candidate.estimatedRetailPrice);
        r.registered='Yes';
@@ -3659,7 +3661,7 @@ function updateWorkStatus(tenderId,itemId,status){
  const isSubmitted=['Submitted','Registered in LCBO NISS'].includes(status);const isRegistered=status==='Registered in LCBO NISS';
  let matches=state.records.filter(r=>r.tenderRecordId===tenderId&&r.itemId===w.itemId&&(!w.agencyId||r.agencyId===w.agencyId));
  if(isSubmitted&&!matches.length){
-   const i=findDatabaseItem(w),r=defaults();r.id=uid();r.tenderRecordId=t.id;r.tenderId=t.code||'';r.tenderName=t.name||'';r.tenderDate=t.presubDate||'';r.productNeeds=w.productNeeds||t.productNeeds||'VINTAGES';r.productNeedId=w.productNeedId||'';r.productNeedItems=w.productNeedItems||'';r.productNeedItemsId=w.productNeedItemsId||'';r.agencyId=w.agencyId||state.agencies[0]?.id||'';r.itemId=w.itemId||'';r.itemName=i?.productDescription||w.itemName||'';r.supplier=i?.supplierName||'';r.brand=i?.brandName||'';r.year=i?.vintage||new Date().getFullYear();r.productType=i?.productType||'Wine';r.caseKg=num(i?.caseWeightKg)||18.9;r.bottles=num(i?.sellingUnitsPerShippingCase||i?.unitsPerSellingPack)||12;r.offeredQuoteCurrency=w.currency||i?.quotationCurrency||'CAD';r.offeredQuote=num(w.offeredPrice);r.erpManual=num(i?.estimatedRetailPrice);r.registered='Yes';r.finalDecision='In Progress';r.submissionNumber=w.submissionNumber||'';state.records.push(r);matches=[r];
+   const i=findDatabaseItem(w),r=defaults();r.id=uid();r.tenderRecordId=t.id;r.tenderId=t.code||'';r.tenderName=t.name||'';r.tenderDate=t.presubDate||'';r.productNeeds=w.productNeeds||t.productNeeds||'VINTAGES';r.productNeedId=w.productNeedId||'';r.productNeedItems=w.productNeedItems||'';r.productNeedItemsId=w.productNeedItemsId||'';r.agencyId=w.agencyId||state.agencies[0]?.id||'';r.itemId=w.itemId||'';r.itemName=i?.productDescription||w.itemName||'';r.supplier=i?.supplierName||'';r.brand=i?.brandName||'';r.year=i?.vintage||new Date().getFullYear();r.productType=i?.productType||'Wine';r.caseKg=num(i?.caseWeightKg)||18.9;r.bottles=num(i?.sellingUnitsPerShippingCase||i?.unitsPerSellingPack)||12;r.offeredQuoteCurrency=w.currency||i?.offeredQuoteCurrency||i?.quotationCurrency||'CAD';r.offeredQuote=num(w.offeredPrice);r.erpManual=num(i?.estimatedRetailPrice);r.registered='Yes';r.finalDecision='In Progress';r.submissionNumber=w.submissionNumber||'';state.records.push(r);matches=[r];
  }
  matches.forEach(r=>{if(isSubmitted)r.registered='Yes';r.submissionNumber=w.submissionNumber||r.submissionNumber||'';if(!isRegistered)r.finalDecision='In Progress';});
  save();if(typeof renderItalySourcing==='function')renderItalySourcing();
@@ -5778,6 +5780,27 @@ function autoSaveSupplierInvoice2Attachment(){const id=$('#spi2Id')?.value;if(!i
 function readSupplierInvoice2File(file){if(!file)return;if(file.size>10*1024*1024){alert('Maximum invoice file size is 10 MB.');return}const reader=new FileReader();reader.onload=()=>{supplierInvoice2PendingFile={name:file.name,type:file.type||'application/octet-stream',data:reader.result};renderSupplierInvoice2FileStatus();autoSaveSupplierInvoice2Attachment()};reader.readAsDataURL(file)}
 function openSupplierInvoice2File(){const f=supplierInvoice2PendingFile;if(!f?.data){alert('No invoice is attached.');return}openShipmentAttachmentBlob(f,'invoice-file')}
 function removeSupplierInvoice2File(){supplierInvoice2PendingFile=null;autoSaveSupplierInvoice2Attachment();renderSupplierInvoice2FileStatus()}
+function addAgencyFeeInvoiceItemRow(item={}){
+ const rows=$('#spi2ItemRows');
+ const row=document.createElement('div');
+ row.style.cssText='display:flex;gap:6px;align-items:flex-end;margin:6px 0;flex-wrap:wrap';
+ row.innerHTML=`<label style="flex:2 1 130px">Item Name<input type="text" data-item-name></label>
+   <label style="flex:1 1 90px">Item Number<input type="text" data-item-number></label>
+   <button type="button" class="secondary small">Remove</button>`;
+ row.querySelector('[data-item-name]').value=item.itemName??'';
+ row.querySelector('[data-item-number]').value=item.itemNumber??'';
+ row.querySelector('button').onclick=()=>{
+   row.remove();
+   if(!rows.children.length)addAgencyFeeInvoiceItemRow();
+ };
+ rows.append(row);
+}
+function readAgencyFeeInvoiceItemRows(){
+ return Array.from($('#spi2ItemRows').children,row=>({
+   itemName:row.querySelector('[data-item-name]').value.trim(),
+   itemNumber:row.querySelector('[data-item-number]').value.trim()
+ })).filter(item=>item.itemName||item.itemNumber);
+}
 function agencyFeeInvoiceItems(invoice){
  const poNumbers=new Set(invoicePoNumbers(invoice).map(invoiceOrderNumber));
  const submission=invoiceOrderNumber(invoice.submissionNumber);
@@ -5791,7 +5814,7 @@ function agencyFeeInvoiceItems(invoice){
    (submission&&invoiceOrderNumber(record.submissionNumber)===submission)
  );
  const invoiceItems=[...(invoice.lines||[]),...(invoice.items||[]),invoice];
- for(const records of [orderItems,invoiceItems,submissionItems]){
+ for(const records of [invoice.invoiceItems||[],orderItems,invoiceItems,submissionItems]){
    const items=records.map(record=>{
      const item=record.itemId?(state.items||[]).find(entry=>String(entry.id)===String(record.itemId)):null;
      const name=record.yearProductName||record.itemDescription||record.productDescription||record.itemName||record.productName||item?.productDescription||item?.brandName||'';
@@ -5809,9 +5832,13 @@ function readSupplierPayment2File(file,n){if(!file)return;if(file.size>10*1024*1
 function openSupplierPayment2File(n){const f=supplierPayment2PendingFiles[n-1];if(!f?.data){alert('No payment file is attached.');return}openShipmentAttachmentBlob(f,'invoice-file')}
 function removeSupplierPayment2File(n){supplierPayment2PendingFiles[n-1]=null;renderSupplierPayment2FileStatuses()}
 function openSavedSupplierPayment2File(id,n){const x=(state.supplierPaymentInvoices2||[]).find(v=>v.id===id),f=x?.['payment'+n+'File'];if(!f?.data){alert('The payment file is not available.');return}openShipmentAttachmentBlob(f,'invoice-file')}
-function openSupplierPayment2InvoiceEditor(id=''){const x=(state.supplierPaymentInvoices2||[]).find(v=>v.id===id)||{};$('#spi2Id').value=x.id||'';const sel=$('#spi2SupplierId');const tenderSuppliers=(state.countryWineries||[]).filter(s=>s&&(s.supplierLegalFullName||s.name)).slice().sort(compareProgramNewestFirst);sel.innerHTML='<option value="">Select supplier</option>'+tenderSuppliers.map(s=>`<option value="${s.id}">${escapeHtml(s.supplierLegalFullName||s.name||'—')}</option>`).join('');sel.value=x.supplierId||'';['PoNumber','SubmissionNumber','InvoiceNumber','InvoiceDate','InvoiceAmount','Currency','InvoiceNotes','PaidStatus','PaidStatusOther'].forEach(k=>{const e=$('#spi2'+k);if(e)e.value=x[k.charAt(0).toLowerCase()+k.slice(1)]??(k==='Currency'?'CAD':k==='PaidStatus'?'Not Paid':'')});for(let n=1;n<=4;n++){ $('#spi2Payment'+n+'Date').value=x['payment'+n+'Date']||'';$('#spi2Payment'+n+'Amount').value=x['payment'+n+'Amount']??'';$('#spi2Payment'+n+'Comment').value=x['payment'+n+'Comment']||'';}supplierPayment2PendingFiles=[1,2,3,4].map(n=>x['payment'+n+'File']||null);supplierInvoice2PendingFile=x.invoiceFile||null;renderSupplierPayment2FileStatuses();renderSupplierInvoice2FileStatus();syncSupplierPaidOther2();$('#supplierPayment2EditorTitle').textContent=id?'Edit Agency Fee Invoice for the Supplier':'Create Agency Fee Invoice for the Supplier';$('#deleteSupplierPayment2Invoice').style.visibility=id?'visible':'hidden';$('#supplierPayment2InvoiceList').classList.add('hidden');$('#supplierPayment2InvoiceEditor').classList.remove('hidden');loadInvoiceOtherFiles('spi2', 'supplierPaymentInvoices2', id);mountInvoicePoPicker('spi2',x);}
+function openSupplierPayment2InvoiceEditor(id=''){const x=(state.supplierPaymentInvoices2||[]).find(v=>v.id===id)||{};$('#spi2Id').value=x.id||'';const sel=$('#spi2SupplierId');const tenderSuppliers=(state.countryWineries||[]).filter(s=>s&&(s.supplierLegalFullName||s.name)).slice().sort(compareProgramNewestFirst);sel.innerHTML='<option value="">Select supplier</option>'+tenderSuppliers.map(s=>`<option value="${s.id}">${escapeHtml(s.supplierLegalFullName||s.name||'—')}</option>`).join('');sel.value=x.supplierId||'';['PoNumber','SubmissionNumber','InvoiceNumber','InvoiceDate','InvoiceAmount','Currency','InvoiceNotes','PaidStatus','PaidStatusOther'].forEach(k=>{const e=$('#spi2'+k);if(e)e.value=x[k.charAt(0).toLowerCase()+k.slice(1)]??(k==='Currency'?'CAD':k==='PaidStatus'?'Not Paid':'')});for(let n=1;n<=4;n++){ $('#spi2Payment'+n+'Date').value=x['payment'+n+'Date']||'';$('#spi2Payment'+n+'Amount').value=x['payment'+n+'Amount']??'';$('#spi2Payment'+n+'Comment').value=x['payment'+n+'Comment']||'';}supplierPayment2PendingFiles=[1,2,3,4].map(n=>x['payment'+n+'File']||null);supplierInvoice2PendingFile=x.invoiceFile||null;renderSupplierPayment2FileStatuses();renderSupplierInvoice2FileStatus();syncSupplierPaidOther2();$('#supplierPayment2EditorTitle').textContent=id?'Edit Agency Fee Invoice for the Supplier':'Create Agency Fee Invoice for the Supplier';$('#deleteSupplierPayment2Invoice').style.visibility=id?'visible':'hidden';$('#supplierPayment2InvoiceList').classList.add('hidden');$('#supplierPayment2InvoiceEditor').classList.remove('hidden');loadInvoiceOtherFiles('spi2', 'supplierPaymentInvoices2', id);mountInvoicePoPicker('spi2',x);
+ $('#spi2ItemRows').replaceChildren();
+ const items=x.invoiceItems||[];
+ (items.length?items:[{}]).forEach(addAgencyFeeInvoiceItemRow);
+}
 function closeSupplierPayment2InvoiceEditor(){$('#supplierPayment2InvoiceEditor').classList.add('hidden');$('#supplierPayment2InvoiceList').classList.remove('hidden');renderSupplierPayment2Invoices()}
-function saveSupplierPayment2Invoice(){const supplierId=$('#spi2SupplierId').value,invoiceNumber=$('#spi2InvoiceNumber').value.trim();if(!supplierId){alert('Supplier is required.');return}if(!invoiceNumber){alert('Invoice Number is required.');return}const paidStatus=$('#spi2PaidStatus').value,paidStatusOther=$('#spi2PaidStatusOther').value.trim();if(paidStatus==='Other'&&!paidStatusOther){alert('Please enter comments for Other paid status.');return}const x={otherFiles:invoiceOtherFiles.spi2||[null,null,null],id:$('#spi2Id').value||uid(),poNumber:$('#spi2PoNumber').value.trim(),poNumbers:invoicePoNumbers({poNumber:$('#spi2PoNumber').value}),submissionNumber:$('#spi2SubmissionNumber').value.trim(),supplierId,invoiceNumber,invoiceDate:$('#spi2InvoiceDate').value,invoiceAmount:num($('#spi2InvoiceAmount').value),currency:$('#spi2Currency').value,invoiceNotes:$('#spi2InvoiceNotes').value.trim(),paidStatus,paidStatusOther:paidStatus==='Other'?paidStatusOther:'',invoiceFile:supplierInvoice2PendingFile,invoiceFileName:supplierInvoice2PendingFile?.name||''};for(let n=1;n<=4;n++){x['payment'+n+'Date']=$('#spi2Payment'+n+'Date').value;x['payment'+n+'Amount']=num($('#spi2Payment'+n+'Amount').value);x['payment'+n+'Comment']=$('#spi2Payment'+n+'Comment').value.trim();x['payment'+n+'File']=supplierPayment2PendingFiles[n-1];x['payment'+n+'FileName']=supplierPayment2PendingFiles[n-1]?.name||''}const i=state.supplierPaymentInvoices2.findIndex(v=>v.id===x.id);if(i>=0)state.supplierPaymentInvoices2[i]=x;else state.supplierPaymentInvoices2.push(x);save();closeSupplierPayment2InvoiceEditor();alert('Supplier invoice saved.')}
+function saveSupplierPayment2Invoice(){const supplierId=$('#spi2SupplierId').value,invoiceNumber=$('#spi2InvoiceNumber').value.trim();if(!supplierId){alert('Supplier is required.');return}if(!invoiceNumber){alert('Invoice Number is required.');return}const paidStatus=$('#spi2PaidStatus').value,paidStatusOther=$('#spi2PaidStatusOther').value.trim();if(paidStatus==='Other'&&!paidStatusOther){alert('Please enter comments for Other paid status.');return}const x={invoiceItems:readAgencyFeeInvoiceItemRows(),otherFiles:invoiceOtherFiles.spi2||[null,null,null],id:$('#spi2Id').value||uid(),poNumber:$('#spi2PoNumber').value.trim(),poNumbers:invoicePoNumbers({poNumber:$('#spi2PoNumber').value}),submissionNumber:$('#spi2SubmissionNumber').value.trim(),supplierId,invoiceNumber,invoiceDate:$('#spi2InvoiceDate').value,invoiceAmount:num($('#spi2InvoiceAmount').value),currency:$('#spi2Currency').value,invoiceNotes:$('#spi2InvoiceNotes').value.trim(),paidStatus,paidStatusOther:paidStatus==='Other'?paidStatusOther:'',invoiceFile:supplierInvoice2PendingFile,invoiceFileName:supplierInvoice2PendingFile?.name||''};for(let n=1;n<=4;n++){x['payment'+n+'Date']=$('#spi2Payment'+n+'Date').value;x['payment'+n+'Amount']=num($('#spi2Payment'+n+'Amount').value);x['payment'+n+'Comment']=$('#spi2Payment'+n+'Comment').value.trim();x['payment'+n+'File']=supplierPayment2PendingFiles[n-1];x['payment'+n+'FileName']=supplierPayment2PendingFiles[n-1]?.name||''}const i=state.supplierPaymentInvoices2.findIndex(v=>v.id===x.id);if(i>=0)state.supplierPaymentInvoices2[i]=x;else state.supplierPaymentInvoices2.push(x);save();closeSupplierPayment2InvoiceEditor();alert('Supplier invoice saved.')}
 function deleteSupplierPayment2Invoice(id){const x=(state.supplierPaymentInvoices2||[]).find(v=>v.id===id);if(!x||!confirm(`Move agency fee invoice ${x.invoiceNumber||''} to Head's Recycling Bin?`))return;moveToHeadsRecycleBin('supplierPaymentInvoice2','Suppliers to Agent Fee Payment',x,{collection:'supplierPaymentInvoices2'});state.supplierPaymentInvoices2=state.supplierPaymentInvoices2.filter(v=>v.id!==id);save();if(!$('#supplierPayment2InvoiceEditor').classList.contains('hidden'))closeSupplierPayment2InvoiceEditor();}
 window.openSupplierPayment2InvoiceEditor=openSupplierPayment2InvoiceEditor;window.deleteSupplierPayment2Invoice=deleteSupplierPayment2Invoice;window.openSupplierPayment2File=openSupplierPayment2File;window.removeSupplierPayment2File=removeSupplierPayment2File;window.openSavedSupplierPayment2File=openSavedSupplierPayment2File;
 
@@ -6261,7 +6288,7 @@ const itemGroups=[
   ['pickupPoint','Pickup Point *','textarea','pickup'],['pickupPhone','Pickup consolidation warehouse phone number in your area','text'],['leadTimeDays','Lead-time (days) to prepare PO','number'],['limitedCaseQty','Limited Case Quantity / Allotment','number'],['listedElsewhere','Is this product or previous vintage listed in Ontario or another province?','textarea','full'],['score','Offered vintage score only','text'],['scoreSource','Score Source — ★ indicates LCBO preferred source','scoreSelect'],['scoreSourceOther','Other Score Source','text'],['awards','Awards / Medals','textarea','full'],['pressCoverage','Press Coverage / Other Information (maximum 400 characters)','textarea','full'],['websites','Websites related to the submission','websites','full'],['attachments','Supporting Photos / Documents','attachments','full']
  ]},
  {title:'Pricing Information',layout:'pricing',fields:[
-  ['quotePerCase','LCBO Offered Quote per case (supplier + agency + other) *','number'],['sellingUnitsPerShippingCase','Selling Units Per Shipping Case *','number'],['estimatedRetailPrice','Estimated Retail Price *','number'],['quoteType','OFFERED QUOTE TYPE','select','FOB|EX-CELLAR'],['calculatedPricePerSellingUnit','Calculated Price Per Selling Unit','calculated']
+  ['quotePerCase','LCBO Offered Quote per case (supplier + agency + other) *','number'],['offeredQuoteCurrency','Offered Currency','select','CAD|USD|GBP|EUR'],['sellingUnitsPerShippingCase','Selling Units Per Shipping Case *','number'],['estimatedRetailPrice','Estimated Retail Price *','number'],['quoteType','OFFERED QUOTE TYPE','select','FOB|EX-CELLAR'],['calculatedPricePerSellingUnit','Calculated Price Per Selling Unit','calculated']
  ]},
  {title:'Selling Unit Information',fields:[
   ['sellingUnitSizeMl','Selling Unit Size (ml.) *','number'],['unitsPerSellingPack','# Units per Selling Pack *','number'],['containerType','Container Type *','select','BTL CLEAR|CANS-ALUMINUM|CERAMIC|GIFT - COLLECTORS ITEM|GLASS - COLOUR|PET(BAG IN BOX)|PET BOTTLE|PORCELAIN|STEEL|TETRA PACK'],['containerWeightG','Container Weight excluding liquid (gm.) *','number'],['packageMaterial','Package Material','select','ALUMINUM|BOXBOARD|CORRUGATED (BAG IN BOX)|GIFT - COLLECTORS ITEM|MULTIPLE MATERIALS|PET|STEEL'],['packageWeightG','Package Weight (gm.)','number'],['stopperType','Stopper Type *','text'],['stopperWeightG','Stopper Weight (gm.) *','number']
@@ -6309,17 +6336,20 @@ async function removePoFile(submissionId){if(!confirm('Remove the attached PO fi
 window.saveNtpAttachment=saveNtpAttachment;window.openNtpAttachment=openNtpAttachment;window.removeNtpFile=removeNtpFile;window.savePoAttachment=savePoAttachment;window.openPoAttachment=openPoAttachment;window.removePoFile=removePoFile;
 
 let currentAttachments=[];
-function buildItemFields(){
+function buildItemFields(descriptionFirst=false){
  const supplierIds=['lcboSupplierNumber','supplierName','supplierAddress1','supplierAddress2','supplierCity','supplierRegionCountry','supplierPostalCode','phoneNumber','faxNumber','emailAddress','paymentTerms'];
  const producerIds=['producerSameAsSupplier','producerName','producerAddress1','producerAddress2','producerCity','producerRegionCountry','producerPostalCode'];
- document.querySelector('#itemFields').innerHTML=itemGroups.map(g=>{
+ const descriptionField=itemGroups.find(group=>group.title==='Identification').fields
+   .find(([id])=>id==='productDescription');
+ const openingField=descriptionFirst?`<div class="form-grid">${itemFieldHtml(descriptionField)}</div>`:'';
+ document.querySelector('#itemFields').innerHTML=openingField+itemGroups.map(g=>{
   if(g.layout==='supplierPricing')return `<fieldset class="item-group"><legend>${g.title}</legend><div class="supplier-pricing-row">${g.fields.slice(0,4).map(itemFieldHtml).join('')}</div><div class="supplier-transport-pricing-row">${g.fields.slice(4).map(itemFieldHtml).join('')}</div></fieldset>`;
   if(g.title==='Identification'){
    const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
    return `<fieldset class="item-group"><legend>${g.title}</legend><div class="form-grid">
     ${itemFieldHtml(byId.previousSubmissionNumber)}
     ${itemFieldHtml(['lcboItemNumber','LCBO ITEM#','text','full'])}
-    ${itemFieldHtml(byId.productDescription)}
+    ${descriptionFirst?'':itemFieldHtml(byId.productDescription)}
     ${itemFieldHtml(byId.productCategory)}
     <div class="purchase-row full">${itemFieldHtml(byId.previouslyPurchased)}</div>
     ${itemFieldHtml(byId.upcNumber)}
@@ -6332,7 +6362,7 @@ function buildItemFields(){
   }
   if(g.layout==='pricing'){
    const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
-   return `<fieldset class="item-group"><legend>${g.title}</legend><div class="pricing-layout"><div class="pricing-left">${['quotePerCase','sellingUnitsPerShippingCase','estimatedRetailPrice'].map(id=>itemFieldHtml(byId[id])).join('')}</div><div class="pricing-right">${['quoteType','calculatedPricePerSellingUnit'].map(id=>itemFieldHtml(byId[id])).join('')}</div></div></fieldset>`;
+   return `<fieldset class="item-group"><legend>${g.title}</legend><div class="pricing-layout"><div class="pricing-left"><div class="offered-quote-row">${itemFieldHtml(byId.quotePerCase)}${itemFieldHtml(byId.offeredQuoteCurrency)}</div>${['sellingUnitsPerShippingCase','estimatedRetailPrice'].map(id=>itemFieldHtml(byId[id])).join('')}</div><div class="pricing-right">${['quoteType','calculatedPricePerSellingUnit'].map(id=>itemFieldHtml(byId[id])).join('')}</div></div></fieldset>`;
   }
   if(g.layout==='caseInfo'){
    const byId=Object.fromEntries(g.fields.map(f=>[f[0],f]));
@@ -6367,7 +6397,7 @@ function linkedSupplierItemForTenderItem(x){
  }
  return null;
 }
-async function editItem(id=''){buildItemFields();const x={...(state.items.find(i=>i.id===id)||itemDefaults())};x.supplierPricePerOfferedCase=x.supplierPricePerOfferedCase??x.supplierCasePriceReference??'';x.supplierItemsPerCase=x.supplierItemsPerCase??x.sellingUnitsPerShippingCase??'';x.supplierConsolidationTransportCurrency=x.supplierConsolidationTransportCurrency||x.quotationCurrency||'CAD';const linkedItem=linkedSupplierItemForTenderItem(x);if(linkedItem){x.productCategory=normalizeProductCategory(linkedItem.productCategory||linkedItem.productType||x.productCategory||'Wine');if(id){const saved=state.items.find(i=>i.id===id);if(saved)saved.productCategory=x.productCategory;}}if(!x.lcboSupplierNumber&&x.supplierNumber)x.lcboSupplierNumber=x.supplierNumber;$('#itemRecordId').value=x.id;itemGroups.forEach(g=>g.fields.forEach(([k,,t])=>{if(['calculated','websites','attachments'].includes(t))return;const el=$('#i_'+k);if(el)el.value=k==='productCategory'?normalizeProductCategory(x[k]??'Wine'):(x[k]??'')}));$('#websiteRows').innerHTML='';(x.websites||[]).forEach(addWebsiteRow);currentAttachments=x.id?await loadItemAttachments(x.id):[];renderAttachments(currentAttachments);calcCaseVolume();calcPricePerSellingUnit();syncProducerVisibility();syncLcboItemVisibility();if(x.quoteType==='EX CELLARS'||x.quoteType==='Ex-cellars'||x.quoteType==='EX-CELLARS')x.quoteType='EX-CELLAR';if(!x.quoteType)x.quoteType='FOB';const qt=$('#i_quoteType');if(qt)qt.value=x.quoteType;$('#itemModalTitle').textContent=x.id?'EDIT TENDER ITEM':'Add Tender Item';$('#deleteItem').style.visibility=x.id?'visible':'hidden';$('#itemModal').classList.remove('hidden')}
+async function editItem(id=''){buildItemFields(!id);const x={...(state.items.find(i=>i.id===id)||itemDefaults())};x.offeredQuoteCurrency=x.offeredQuoteCurrency||x.quotationCurrency||'CAD';x.supplierPricePerOfferedCase=x.supplierPricePerOfferedCase??x.supplierCasePriceReference??'';x.supplierItemsPerCase=x.supplierItemsPerCase??x.sellingUnitsPerShippingCase??'';x.supplierConsolidationTransportCurrency=x.supplierConsolidationTransportCurrency||x.quotationCurrency||'CAD';const linkedItem=linkedSupplierItemForTenderItem(x);if(linkedItem){x.productCategory=normalizeProductCategory(linkedItem.productCategory||linkedItem.productType||x.productCategory||'Wine');if(id){const saved=state.items.find(i=>i.id===id);if(saved)saved.productCategory=x.productCategory;}}if(!x.lcboSupplierNumber&&x.supplierNumber)x.lcboSupplierNumber=x.supplierNumber;$('#itemRecordId').value=x.id;itemGroups.forEach(g=>g.fields.forEach(([k,,t])=>{if(['calculated','websites','attachments'].includes(t))return;const el=$('#i_'+k);if(el)el.value=k==='productCategory'?normalizeProductCategory(x[k]??'Wine'):(x[k]??'')}));$('#websiteRows').innerHTML='';(x.websites||[]).forEach(addWebsiteRow);currentAttachments=x.id?await loadItemAttachments(x.id):[];renderAttachments(currentAttachments);calcCaseVolume();calcPricePerSellingUnit();syncProducerVisibility();syncLcboItemVisibility();if(x.quoteType==='EX CELLARS'||x.quoteType==='Ex-cellars'||x.quoteType==='EX-CELLARS')x.quoteType='EX-CELLAR';if(!x.quoteType)x.quoteType='FOB';const qt=$('#i_quoteType');if(qt)qt.value=x.quoteType;$('#itemModalTitle').textContent=x.id?'EDIT TENDER ITEM':'Add Tender Item';$('#deleteItem').style.visibility=x.id?'visible':'hidden';$('#itemModal').classList.remove('hidden')}
 function syncProducerFromSupplier(){if($('#i_producerSameAsSupplier')?.value!=='Yes')return;const pairs=[['supplierName','producerName'],['supplierAddress1','producerAddress1'],['supplierAddress2','producerAddress2'],['supplierCity','producerCity'],['supplierRegionCountry','producerRegionCountry'],['supplierPostalCode','producerPostalCode']];pairs.forEach(([s,p])=>{const source=$('#i_'+s),target=$('#i_'+p);if(source&&target)target.value=source.value;});}
 function syncProducerVisibility(){const same=$('#i_producerSameAsSupplier')?.value==='Yes';['producerName','producerAddress1','producerAddress2','producerCity','producerRegionCountry','producerPostalCode'].forEach(k=>{const el=$('#i_'+k);if(el){el.readOnly=same;el.closest('label')?.classList.toggle('copied-field',same)}});if(same)syncProducerFromSupplier();}
 function closeItemModal(){$('#itemModal').classList.add('hidden')}
@@ -6387,7 +6417,7 @@ function renderItemSelector(){const search=($('#itemSelectSearch')?.value||'').t
  $('#itemSelectRows').innerHTML=list.map(i=>`<tr><td><b>${escapeHtml(i.productDescription||'—')}</b></td><td>${escapeHtml(i.brandName||'—')}</td><td>${escapeHtml(i.vintage||'—')}</td><td>${escapeHtml(i.supplierName||'—')}</td><td>${escapeHtml(i.producerName||'—')}</td><td>${escapeHtml(i.lcboItemNumber||'—')}</td><td>${escapeHtml(i.productType||'—')}</td><td><button type="button" class="small" onclick="chooseItemForSubmission('${i.id}')">Select Item</button></td></tr>`).join('')||'<tr><td colspan="8"><b>No items found.</b><br><small>Add an item to the Tender Item Database first, then return to Add Submission.</small></td></tr>';
 }
 function chooseItemForSubmission(id){closeItemSelector();editRecord('',id);}
-function applyItemToSubmission(id){const i=state.items.find(x=>x.id===id);if(!i)return;const map={supplier:i.supplierName,brand:i.brandName,itemName:i.productDescription,registered:i.previouslyPurchased==='Yes'?'Yes':'No',year:i.vintage,productType:i.productType,caseKg:i.caseWeightKg,bottles:i.sellingUnitsPerShippingCase||i.unitsPerSellingPack,offeredQuoteCurrency:i.quotationCurrency||'CAD',offeredQuote:i.quotePerCase||0,erpManual:i.estimatedRetailPrice};Object.entries(map).forEach(([k,v])=>{const el=$('#f_'+k);if(el&&v!==undefined&&v!=='')el.value=v});}
+function applyItemToSubmission(id){const i=state.items.find(x=>x.id===id);if(!i)return;const map={supplier:i.supplierName,brand:i.brandName,itemName:i.productDescription,registered:i.previouslyPurchased==='Yes'?'Yes':'No',year:i.vintage,productType:i.productType,caseKg:i.caseWeightKg,bottles:i.sellingUnitsPerShippingCase||i.unitsPerSellingPack,offeredQuoteCurrency:i.offeredQuoteCurrency||i.quotationCurrency||'CAD',offeredQuote:i.quotePerCase||0,erpManual:i.estimatedRetailPrice};Object.entries(map).forEach(([k,v])=>{const el=$('#f_'+k);if(el&&v!==undefined&&v!=='')el.value=v});}
 
 let currentInfoItemId='';
 function infoValue(v){if(Array.isArray(v))return v.length?v.join(', '):'—';if(v===undefined||v===null||v==='')return '—';return String(v)}
@@ -11317,6 +11347,7 @@ function ensureApprovedCandidateTenderDatabaseItem(candidate,tender,workItem){
      productDescription:candidate.productDescription||candidate.name||workItem.itemName||'Untitled Item',
      supplierName:candidate.supplierName||candidate.producerName||workItem.supplierName||'',
      quotePerCase:offeredPrice,
+     offeredQuoteCurrency:offeredCurrency,
      quotationCurrency:offeredCurrency,
      score:candidate.score||workItem.candidateScore||'',
      scoreSource:candidate.scoreSource||candidate.scoreSourceOther||workItem.candidateScoreSource||'',
@@ -11334,6 +11365,7 @@ function ensureApprovedCandidateTenderDatabaseItem(candidate,tender,workItem){
    item.productDescription=candidate.productDescription||candidate.name||item.productDescription||workItem.itemName||'Untitled Item';
    item.supplierName=candidate.supplierName||candidate.producerName||item.supplierName||workItem.supplierName||'';
    item.quotePerCase=offeredPrice;
+   item.offeredQuoteCurrency=offeredCurrency;
    item.quotationCurrency=offeredCurrency;
    if(candidate.score)item.score=candidate.score;
    if(candidate.scoreSource||candidate.scoreSourceOther)item.scoreSource=candidate.scoreSource||candidate.scoreSourceOther;
