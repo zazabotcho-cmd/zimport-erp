@@ -10812,7 +10812,9 @@ window.renderHeadInventory=()=>{
        <span>Project Sell-Out Months / Total Cases Sold per Month</span>
        <strong>${projectSellOutMonths===null?'—':projectSellOutMonths.toLocaleString('en-CA',{maximumFractionDigits:2})} / ${projectSellOutMonths!==null?projectCasesPerMonth.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong>
      </div>
-     <div class="card"><span>POs in Inventory</span><strong>${pos.length}</strong></div>
+     <div class="card"><span>POs in Inventory</span><strong>${pos.length}</strong>
+       ${selected?'<div id="transportationLiveRetailValues"></div>':''}
+     </div>
      <div class="card">
        <span>Total Project Cases / Total Project Bottles</span>
        <strong>${projectCases.toLocaleString()} / ${projectBottles.toLocaleString()}</strong>
@@ -10840,7 +10842,30 @@ window.renderHeadInventory=()=>{
  const renderTotalProfit=draft=>{
    if(total)total.textContent=`(aprox ttl. profit non lc,cst only ${inventoryPriceMoney(inventoryTotalItemProfit(projectRows,draft))})`;
  };
+ const retailValues=document.getElementById('transportationLiveRetailValues');
+ const renderRetailValues=draft=>{
+   if(!retailValues)return;
+   retailValues.innerHTML=[
+     ['finalRetailBottle','Non-Licensed'],
+     ['licensedRetailBottle','Licensed']
+   ].map(([field,label])=>{
+     let cents=0,unpricedBottles=0;
+     for(const row of projectRows){
+       const pricing=inventoryProformaPo(row.poId)?.inventoryProformaPricing||row.proformaPricing;
+       const price=draft?.field===field&&draft.poId===String(row.poId)?draft.value:pricing[field];
+       if(price!==''&&price!=null&&Number.isFinite(Number(price))){
+         cents+=Math.round(Number(price)*100)*row.bottles;
+       }else{
+         unpricedBottles+=row.bottles;
+       }
+     }
+     return `<span style="margin-top:8px">Live Retail Value — ${label} (TAX/HST incl.)</span>
+       <strong>${inventoryPriceMoney(cents/100)}</strong>
+       ${unpricedBottles?`<small>${unpricedBottles.toLocaleString()} bottles without a retail price</small>`:''}`;
+   }).join('');
+ };
  renderTotalProfit();
+ renderRetailValues();
 
  body.oninput=event=>{
    const input=event.target;
@@ -10852,6 +10877,7 @@ window.renderHeadInventory=()=>{
      value:input.value===''?(inventoryPriceField==='hstPercent'?13:''):Number(input.value)
    };
    renderTotalProfit(draft);
+   if(draft.field==='finalRetailBottle'||draft.field==='licensedRetailBottle')renderRetailValues(draft);
  };
 };
 
