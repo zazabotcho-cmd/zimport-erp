@@ -1424,13 +1424,13 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
  </div>
  <div class="section-head"><div><h2>Office/Warehouse Stock Inventory</h2></div>
-  <button type="button" onclick="openOfficeInventoryAdd()">+ Add Inventory</button>
+  <button type="button" id="officeInventoryAddButton" onclick="openOfficeInventoryAdd()">+ Add Inventory</button>
  </div>
- <div id="officeInventoryAddModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="officeInventoryAddTitle">
+ <div id="officeInventoryAddModal" class="modal hidden" style="z-index:1200" role="dialog" aria-modal="true" aria-labelledby="officeInventoryAddTitle">
   <form id="officeInventoryAddForm" class="modal-card" style="max-width:620px" onsubmit="addOfficeInventory(event)">
    <div class="modal-head">
     <h2 id="officeInventoryAddTitle">Add Office/Warehouse Inventory</h2>
-    <button type="button" class="icon" aria-label="Close" onclick="show('officeInventoryAddModal',false)">×</button>
+    <button type="button" class="icon" aria-label="Close" onclick="closeOfficeInventoryAdd()">×</button>
    </div>
    <div class="form-grid">
     <label class="full">Item Description <input name="product" required></label>
@@ -1442,7 +1442,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
     <label>Licensed Retail per Bottle (CAD, TAX/HST incl.) <input name="licensedRetailBottle" type="number" min="0" step="0.01"></label>
    </div>
    <div class="actions">
-    <button type="button" class="secondary" onclick="show('officeInventoryAddModal',false)">Cancel</button>
+    <button type="button" class="secondary" onclick="closeOfficeInventoryAdd()">Cancel</button>
     <button type="submit">Add Inventory</button>
    </div>
   </form>
@@ -1675,7 +1675,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <button type="button" class="invoice-page-tab" onclick="activate('archived-invoices','heads-page')">Archived Invoices</button>
 </div>
   <div class="section-head"><div><h2>Paying to Suppliers Invoices</h2><p class="note">Create supplier invoices and record up to four payments, comments, dates, and payment files.</p></div><button type="button" id="createSupplierPaymentInvoiceBtn">+ Create Supplier Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleSupplierPaymentSearch">Search</button><div class="page-search-panel" id="supplierPaymentSearchPanel"><label>Search Supplier Invoices<input id="supplierPaymentPageSearch" type="search" placeholder="PO, submission, supplier, invoice, date, status or amount"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearSupplierPaymentPageSearch">Clear Search</button></div></div>
-  <div id="supplierPaymentInvoiceList"><div class="table-wrap"><table><thead><tr><th>PO #</th><th>Submission #</th><th>Supplier</th><th>Invoice Number</th><th>Invoice Date</th><th>Invoice Amount</th><th>Left to Pay</th><th>Paid Status</th><th>1st Payment</th><th>2nd Payment</th><th>3rd Payment</th><th>4th Payment</th><th>Actions</th></tr></thead><tbody id="supplierPaymentInvoiceRows"></tbody></table></div></div>
+  <div id="supplierPaymentInvoiceList"><div class="table-wrap"><table><thead><tr><th>PO #</th><th>Submission #</th><th>Supplier</th><th>Invoice Number</th><th>Invoice Date</th><th>Invoice Amount</th><th>Invoice Attachment</th><th>Left to Pay</th><th>Paid Status</th><th>1st Payment</th><th>2nd Payment</th><th>3rd Payment</th><th>4th Payment</th><th>Actions</th></tr></thead><tbody id="supplierPaymentInvoiceRows"></tbody></table></div></div>
   <div id="supplierPaymentInvoiceEditor" class="hidden">
     <div class="section-head"><div><h2 id="supplierPaymentEditorTitle">Create Supplier Invoice</h2><p class="note">Enter the invoice information and add each payment separately.</p></div><button type="button" class="secondary" id="backToSupplierPaymentList">Back to Invoice List</button></div>
     <input type="hidden" id="spiId">
@@ -5537,9 +5537,9 @@ function tenderPaymentSelectHtml(inv){
 function invoicePoNumbers(invoice={}){
  return [...new Set((Array.isArray(invoice.poNumbers)?invoice.poNumbers:String(invoice.poNumber||'').split(/\s*;\s*/)).map(n=>String(n).trim()).filter(Boolean))];
 }
-function invoicePoRowsHtml(invoice={}){
+function invoicePoRowsHtml(invoice={},showItemNumbers=false){
  const numbers=invoicePoNumbers(invoice);
- return numbers.length?numbers.map(number=>'<div style="margin-bottom:8px"><b>'+escapeHtml(number)+'</b>'+invoicePoItemNamesHtml({...invoice,poNumber:number,poNumbers:undefined,sourcePoId:numbers.length===1?invoice.sourcePoId:undefined})+'</div>').join(''):'—';
+ return numbers.length?numbers.map(number=>'<div style="margin-bottom:8px"><b>'+escapeHtml(number)+'</b>'+invoicePoItemNamesHtml({...invoice,poNumber:number,poNumbers:undefined,sourcePoId:numbers.length===1?invoice.sourcePoId:undefined},showItemNumbers)+'</div>').join(''):'—';
 }
 function invoicePoOptionLabel(po){
  return [po.number,poProgramLabel(po),(po.lines||[]).map(l=>l.yearProductName||l.itemDescription||l.productDescription||l.itemName||'').filter(Boolean).join(' / ')].filter(Boolean).join(' — ');
@@ -5574,20 +5574,26 @@ function mountInvoicePoPicker(prefix,invoice={}){
  // The Add button follows the rows, which also contain Remove buttons.
  box.children[1].onclick=()=>add();
 }
-function invoicePoItemNamesHtml(invoice={}){
+function invoicePoItemNamesHtml(invoice={},showItemNumbers=false){
  const poNumber=String(invoice.poNumber||'').trim().toLowerCase();
  const orders=[...(state.purchaseOrders||[]),...(state.manuallyArchivedPurchaseOrders||[])];
  const po=orders.find(p=>invoice.sourcePoId&&p.id===invoice.sourcePoId)||orders.find(p=>poNumber&&String(p.number||p.poNumber||'').trim().toLowerCase()===poNumber);
  const lineName=line=>line.yearProductName||line.itemDescription||line.productDescription||line.itemName||line.productName||line.description||'';
- let names=po?(po.lines||[]).map(lineName).filter(Boolean):[];
- if(!names.length){
+ const itemDetails=line=>({
+   name:String(lineName(line)).trim(),
+   number:showItemNumbers?String(line.itemNo||line.lcboItemNumber||line.itemNumber||'').trim():''
+ });
+ let items=(po?.lines||[]).map(itemDetails).filter(item=>item.name||item.number);
+ if(!items.length){
    const description=invoice.itemDescription||invoice.itemName||invoice.productDescription;
-   if(description)names=[description];
+   const item=itemDetails({...invoice,yearProductName:description});
+   if(item.name||item.number)items=[item];
  }
- if(!names.length)names=[...(invoice.lines||[]),...(invoice.items||[])].map(lineName).filter(Boolean);
- if(!names.length&&poNumber)names=(state.records||[]).filter(r=>String(r.poNumber||'').trim().toLowerCase()===poNumber).map(r=>r.itemName||r.productDescription||'').filter(Boolean);
- if(!names.length)return '';
- return '<div class="invoice-po-items" style="margin-top:4px;font-size:12px;line-height:1.4;white-space:normal;overflow-wrap:anywhere">'+[...new Set(names.map(n=>String(n).trim()).filter(Boolean))].map(name=>'<div>'+escapeHtml(name)+'</div>').join('')+'</div>';
+ if(!items.length)items=[...(invoice.lines||[]),...(invoice.items||[])].map(itemDetails).filter(item=>item.name||item.number);
+ if(!items.length&&poNumber)items=(state.records||[]).filter(r=>String(r.poNumber||'').trim().toLowerCase()===poNumber).map(itemDetails).filter(item=>item.name||item.number);
+ if(!items.length)return '';
+ const uniqueItems=new Map(items.map(item=>[JSON.stringify([item.name,item.number]),item]));
+ return '<div class="invoice-po-items" style="margin-top:4px;font-size:12px;line-height:1.4;white-space:normal;overflow-wrap:anywhere">'+[...uniqueItems.values()].map(({name,number})=>'<div>'+escapeHtml(name)+(number?'<small style="display:block">Item# '+escapeHtml(number)+'</small>':'')+'</div>').join('')+'</div>';
 }
 function renderTenderInvoicePayable({currency,quotedCents,nettedCents,payableCents}){
   const code=escapeHtml(currency);
@@ -5751,7 +5757,7 @@ function supplierPaymentStatusClass(status){return status==='Fully Paid'?'green'
 function supplierNameById(id){const s=(state.suppliers||[]).find(v=>String(v.id)===String(id));if(s)return s.name||s.supplierLegalFullName||'—';const ts=(state.countryWineries||[]).find(v=>String(v.id)===String(id));return ts?.supplierLegalFullName||ts?.name||'—'}
 function supplierInvoicePaidTotal(x){return [1,2,3,4].reduce((t,n)=>t+num(x['payment'+n+'Amount']),0)}
 function supplierInvoiceBalance(x){return Math.max(0,num(x.invoiceAmount)-supplierInvoicePaidTotal(x))}
-function renderSupplierPaymentInvoices(){const body=$('#supplierPaymentInvoiceRows');if(!body)return;const supplierPaymentQuery=$('#supplierPaymentPageSearch')?.value||'';body.innerHTML=(state.supplierPaymentInvoices||[]).filter(x=>pageSearchMatches(x,supplierPaymentQuery,supplierNameById(x.supplierId))).map(x=>{const balance=supplierInvoiceBalance(x),isPaid=balance<=0.005;return `<tr><td><button type="button" class="invoice-number-link" onclick="openGenericInvoiceDetails('supplier','${x.id}')">${invoicePoRowsHtml(x)}</button></td><td>${escapeHtml(x.submissionNumber||'—')}</td><td>${escapeHtml(supplierNameById(x.supplierId))}</td><td><button type="button" class="invoice-number-link" onclick="openGenericInvoiceDetails('supplier','${x.id}')">${escapeHtml(x.invoiceNumber||'—')}</button></td><td>${escapeHtml(x.invoiceDate||'—')}</td><td>${escapeHtml(x.currency||'CAD')} ${num(x.invoiceAmount).toFixed(2)}</td><td><span class="supplier-balance ${isPaid?'green':'yellow'}">${escapeHtml(x.currency||'CAD')} ${balance.toFixed(2)}</span></td><td><span class="status ${isPaid?'green':supplierPaymentStatusClass(x.paidStatus)}">${escapeHtml(isPaid?'Fully Paid':(x.paidStatus||'Not Paid'))}</span>${x.paidStatus==='Other'&&x.paidStatusOther?`<br><small>${escapeHtml(x.paidStatusOther)}</small>`:''}</td>${[1,2,3,4].map(n=>`<td>${escapeHtml(x['payment'+n+'Date']||'—')}${num(x['payment'+n+'Amount'])?`<br><b>${escapeHtml(x.currency||'CAD')} ${num(x['payment'+n+'Amount']).toFixed(2)}</b>`:''}${x['payment'+n+'FileName']?`<br><button type="button" class="file-link" onclick="openSavedSupplierPaymentFile('${x.id}',${n})">${escapeHtml(x['payment'+n+'FileName'])}</button>`:''}</td>`).join('')}<td><button type="button" onclick="openSupplierPaymentInvoiceEditor('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('Supplier Payment','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="deleteSupplierPaymentInvoice('${x.id}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="14" class="note">No supplier invoices created. Click + Create Supplier Invoice.</td></tr>'}
+function renderSupplierPaymentInvoices(){const body=$('#supplierPaymentInvoiceRows');if(!body)return;const supplierPaymentQuery=$('#supplierPaymentPageSearch')?.value||'';body.innerHTML=(state.supplierPaymentInvoices||[]).filter(x=>pageSearchMatches(x,supplierPaymentQuery,supplierNameById(x.supplierId))).map(x=>{const balance=supplierInvoiceBalance(x),isPaid=balance<=0.005;return `<tr><td><button type="button" class="invoice-number-link" onclick="openGenericInvoiceDetails('supplier','${x.id}')">${invoicePoRowsHtml(x,true)}</button></td><td>${escapeHtml(x.submissionNumber||'—')}</td><td>${escapeHtml(supplierNameById(x.supplierId))}</td><td><button type="button" class="invoice-number-link" onclick="openGenericInvoiceDetails('supplier','${x.id}')">${escapeHtml(x.invoiceNumber||'—')}</button></td><td>${escapeHtml(x.invoiceDate||'—')}</td><td>${escapeHtml(x.currency||'CAD')} ${formatMixedInvoiceAmount(num(x.invoiceAmount))}</td><td>${x.invoiceFile?.data?`<button type="button" class="file-link" data-supplier-invoice-attachment="${escapeHtml(x.id)}">${escapeHtml(x.invoiceFileName||x.invoiceFile.name||'Open invoice')}</button>`:'—'}</td><td><span class="supplier-balance ${isPaid?'green':'yellow'}">${escapeHtml(x.currency||'CAD')} ${formatMixedInvoiceAmount(balance)}</span></td><td><span class="status ${isPaid?'green':supplierPaymentStatusClass(x.paidStatus)}">${escapeHtml(isPaid?'Fully Paid':(x.paidStatus||'Not Paid'))}</span>${x.paidStatus==='Other'&&x.paidStatusOther?`<br><small>${escapeHtml(x.paidStatusOther)}</small>`:''}</td>${[1,2,3,4].map(n=>`<td>${escapeHtml(x['payment'+n+'Date']||'—')}${num(x['payment'+n+'Amount'])?`<br><b>${escapeHtml(x.currency||'CAD')} ${num(x['payment'+n+'Amount']).toFixed(2)}</b>`:''}${x['payment'+n+'FileName']?`<br><button type="button" class="file-link" onclick="openSavedSupplierPaymentFile('${x.id}',${n})">${escapeHtml(x['payment'+n+'FileName'])}</button>`:''}</td>`).join('')}<td><button type="button" onclick="openSupplierPaymentInvoiceEditor('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('Supplier Payment','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="deleteSupplierPaymentInvoice('${x.id}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="14" class="note">No supplier invoices created. Click + Create Supplier Invoice.</td></tr>'}
 function syncSupplierPaidOther(){const other=$('#spiPaidStatus')?.value==='Other';$('#spiPaidStatusOtherWrap')?.classList.toggle('hidden',!other)}
 function renderSupplierPaymentFileStatuses(){for(let n=1;n<=4;n++){const f=supplierPaymentPendingFiles[n-1],el=$('#spiPayment'+n+'FileStatus');if(el)el.textContent=f?.name||'No file attached'}}
 function renderSupplierInvoiceFileStatus(message=''){const el=$('#spiInvoiceFileStatus');if(el)el.textContent=message||(supplierInvoicePendingFile?.name||'No invoice attached')}
@@ -6821,6 +6827,12 @@ if($('#cancelSupplierPaymentInvoice'))$('#cancelSupplierPaymentInvoice').onclick
 if($('#saveSupplierPaymentInvoice'))$('#saveSupplierPaymentInvoice').onclick=saveSupplierPaymentInvoice;
 if($('#deleteSupplierPaymentInvoice'))$('#deleteSupplierPaymentInvoice').onclick=()=>deleteSupplierPaymentInvoice($('#spiId').value);
 if($('#spiPaidStatus'))$('#spiPaidStatus').onchange=syncSupplierPaidOther;
+$('#supplierPaymentInvoiceRows').addEventListener('click',event=>{
+ const button=event.target.closest('[data-supplier-invoice-attachment]');
+ if(!button)return;
+ const invoice=(state.supplierPaymentInvoices||[]).find(x=>String(x.id)===button.dataset.supplierInvoiceAttachment);
+ openShipmentAttachmentBlob(invoice?.invoiceFile,'invoice-file');
+});
 if($('#spiInvoiceFile'))$('#spiInvoiceFile').onchange=ev=>{readSupplierInvoiceFile(ev.target.files[0]);ev.target.value=''};
 for(let n=1;n<=4;n++){const e=$('#spiPayment'+n+'File');if(e)e.onchange=ev=>{readSupplierPaymentFile(ev.target.files[0],n);ev.target.value=''}}
 
@@ -10626,8 +10638,15 @@ window.updateOfficeRetailPrice=(input)=>{
 window.openOfficeInventoryAdd=()=>{
   const form=document.getElementById('officeInventoryAddForm');
   form.reset();
-  show('officeInventoryAddModal');
+  const modal=form.closest('.modal');
+  document.body.appendChild(modal);
+  modal.classList.remove('hidden');
   form.elements.product.focus();
+};
+window.closeOfficeInventoryAdd=()=>{
+  document.getElementById('officeInventoryAddModal').classList.add('hidden');
+  document.getElementById('officeInventoryAddForm').reset();
+  document.getElementById('officeInventoryAddButton').focus();
 };
 window.addOfficeInventory=event=>{
   event.preventDefault();
@@ -10656,8 +10675,7 @@ window.addOfficeInventory=event=>{
     }
   });
   save({inventoryOnly:true});
-  show('officeInventoryAddModal',false);
-  form.reset();
+  closeOfficeInventoryAdd();
   renderOfficeInventory();
 };
 function renderOfficeInventory(statisticsCards){
