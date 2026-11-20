@@ -1014,7 +1014,6 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
 <nav class="subnav" data-section-nav="invoice-calculator-section"><button class="tab" data-tab="invoice-calculator">Invoice Calculator</button></nav>
 <nav class="subnav active" data-section-nav="heads-page">
   <button class="tab active" data-tab="dashboard">Dashboard</button>
-  <button class="tab" data-tab="all-proposals">ALL PROPOSALS</button>
   <button class="tab" data-tab="all-invoices">ALL INVOICES</button>
   <button class="tab" data-tab="inventory-stock">Inventory Stock</button>
   
@@ -1106,44 +1105,6 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
 <div class="modal-actions"><span></span><button id="cancelPortfolioManagerNoteBtn" class="secondary" type="button">Cancel</button><button id="savePortfolioManagerNoteBtn" type="button">Save Note</button></div>
 </div></div>
 
-<section id="all-proposals" class="panel">
-  <div class="box">
-    <div class="section-head">
-      <div>
-        <h2>ALL PROPOSALS — Head Office Review</h2>
-        <p class="note">All wine candidates proposed by Country Portfolio &amp; Sourcing Representatives appear here for Head Office review. Every Head Office Action and comment is saved to the proposal history and is automatically visible in Wine Candidates.</p>
-      </div>
-      <span class="badge">ACTION REQUIRED</span>
-    </div>
-    <div class="cards" id="headProposalKpis"></div>
-    <div class="toolbar">
-      <input id="headProposalSearch" type="search" placeholder="Search country, wine, supplier or tender" oninput="renderHeadOfficeProposals()">
-      <select id="headProposalStatusFilter" onchange="renderHeadOfficeProposals()">
-        <option value="">All Statuses</option>
-        <option>Action Required</option>
-        <option value="In Progress">PROPOSED TO HEAD OFFICE</option>
-        <option>Updated Proposal to Head Office</option>
-        <option>Approved for LCBO Submission</option>
-        <option value="Additional Information Required">Additional Information Requested</option>
-        <option value="Tender Winner">Tender Winner</option>
-        <option value="Declined">Declined by head office</option>
-        <option value="Declined on Tenders First Stage">DECLINED ON TENDERS FIRST STAGE</option>
-        <option value="Declined on Tenders Final Decision">DECLINED ON TENDERS FINAL DECISION</option>
-      </select>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>Country</th><th>Wine Candidate</th><th>Tender</th><th>Product Needs</th><th>Supplier</th>
-          <th>Score</th><th>Score Source</th><th>Supplier Quote</th><th class="profit-manual-col">Supplier Currency</th>
-          <th>Agency to Register</th><th>Agency Margin</th><th>ERP CAD</th><th>Potential Winner Quantity</th>
-          <th>Offered to LCBO Case Price</th><th>Submission Status</th><th>Instructions</th><th>History</th>
-        </tr></thead>
-        <tbody id="headProposalRows"></tbody>
-      </table>
-    </div>
-  </div>
-</section>
 <section id="business-strategy-goals" class="panel">
  <div class="box">
   <div class="section-head"><h2>Business Strategy and Goals</h2></div>
@@ -6268,7 +6229,7 @@ $('#businessStrategyRows').onchange=event=>{
  if(editingBusinessStrategyId===id)businessStrategyForm.elements.status.value=select.value;
  saveBusinessStrategyEntries(businessStrategyEntries().map(entry=>entry.id===id?{...entry,status:select.value}:entry));
 };
-function isAdminOnlyTab(tab){if(tab==='users')return true;if(window.ZimportOnline?.profile?.allowed_pages&&window.ZimportPermissions?.canPage(window.ZimportOnline.profile,tab))return false;return ['dashboard','business-strategy-goals','all-proposals','all-invoices','financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices','head-performance-bonuses','heads-recycle-bin','settings','program-settings'].includes(tab)}
+function isAdminOnlyTab(tab){if(tab==='users')return true;if(window.ZimportOnline?.profile?.allowed_pages&&window.ZimportPermissions?.canPage(window.ZimportOnline.profile,tab))return false;return ['dashboard','business-strategy-goals','all-invoices','financial','all-other-invoices','other-invoices-new','supplier-payments','supplier-payments-2','archived-invoices','head-performance-bonuses','heads-recycle-bin','settings','program-settings'].includes(tab)}
 function canManageProgramBackups(){const profile=window.ZimportOnline?.profile;return profile?.role==='admin'&&profile.active!==false;}
 function isAdminUser(){return (window.ZIMPORT_CURRENT_ROLE||'readonly')==='admin'}
 function activate(tab,preferredSection=''){
