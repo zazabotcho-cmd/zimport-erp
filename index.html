@@ -1477,8 +1477,8 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  <div class="cards" id="headInventoryKpis"></div>
  <div class="table-wrap"><table>
   <thead><tr>
-   <th>PO #</th><th>Vendor/Producer</th><th>LCBO Item #</th><th class="inventory-pinned-product">Product Name</th>
-   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th scope="col">ACTION</th><th>Inventory in stock office/warehouse</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Other Fees per Bottle</th><th>Profit per Bottle (TAX/HST incl.) /<br>Profit total item (TAX/HST incl.) <span id="inventoryTotalItemProfit" style="white-space:nowrap" aria-live="polite">(aprox ttl. profit non lc,cst only —)</span></th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>Total cases sold / Cases sold per month</th><th>Total profit / Monthly profit</th>
+   <th>PO #</th><th>Vendor/Producer</th><th class="inventory-pinned-product">Product Name</th>
+   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th>Other Fees per Bottle</th><th scope="col">ACTION</th><th>Prime Cost per Bottle (TAX/HST incl.)</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Profit per Bottle (TAX/HST incl.) /<br>Profit total item (TAX/HST incl.) <span id="inventoryTotalItemProfit" style="white-space:nowrap" aria-live="polite">(aprox ttl. profit non lc,cst only —)</span></th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>Total cases sold / Cases sold per month</th><th>Total profit / Monthly profit</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -10690,10 +10690,24 @@ function inventoryLabCostPerBottle(pricing,originalPoBottles){
  const cost=pricing?.totalLabCost;
  return cost==null||cost===''||originalPoBottles<=0?null:num(cost)/originalPoBottles;
 }
+// Prime cost per bottle = proforma net bottle price + TAX/HST + other fees + transportation + lab cost per bottle.
+function inventoryPrimeCostPerBottle(pricing,transportPerBottle,originalPoBottles,licensed=false){
+ const bottleField=licensed?'licensedBottle':'nonLicensedBottle';
+ if(pricing?.[bottleField]===undefined||pricing[bottleField]===null||pricing[bottleField]==='')return null;
+ const net=num(pricing[bottleField]);
+ return net+inventoryProformaHst(net,num(pricing.bottleDeposit),pricing)+num(pricing.otherFeesBottle)+num(transportPerBottle)+(inventoryLabCostPerBottle(pricing,originalPoBottles)??0);
+}
 function inventoryRetailProfitPerBottle(pricing,transportPerBottle,originalPoBottles,licensed=false){
- const retailField=licensed?'licensedRetailBottle':'finalRetailBottle',bottleField=licensed?'licensedBottle':'nonLicensedBottle';
- if(pricing?.[retailField]===undefined||pricing[retailField]===null||pricing[retailField]===''||pricing?.[bottleField]===undefined||pricing[bottleField]===null||pricing[bottleField]==='')return '—';
- return (num(pricing[retailField])-(num(pricing[bottleField])+inventoryProformaHst(num(pricing[bottleField]),num(pricing.bottleDeposit),pricing)+num(pricing.otherFeesBottle)+num(transportPerBottle)+(inventoryLabCostPerBottle(pricing,originalPoBottles)??0))).toFixed(2);
+ const retailField=licensed?'licensedRetailBottle':'finalRetailBottle';
+ const primeCost=inventoryPrimeCostPerBottle(pricing,transportPerBottle,originalPoBottles,licensed);
+ if(pricing?.[retailField]===undefined||pricing[retailField]===null||pricing[retailField]===''||primeCost===null)return '—';
+ return (num(pricing[retailField])-primeCost).toFixed(2);
+}
+function inventoryPrimeCostCell(row,pricing){
+ return [false,true].map(licensed=>{
+  const cost=inventoryPrimeCostPerBottle(pricing,row.transportPerBottle,row.originalPoBottles,licensed);
+  return `<div style="min-width:170px;min-height:76px;margin:6px 0;display:flex;flex-direction:column;gap:8px">${licensed?'Licensed customer':'Non-licensed customer'}<b style="white-space:nowrap">${cost===null?'— <small style="font-weight:400">(enter proforma net price)</small>':inventoryPriceMoney(cost)}</b></div>`;
+ }).join('')+`<small>Net price + TAX/HST + other fees + transportation + lab cost, per bottle</small>`;
 }
 function inventoryProformaPriceCell(poId,pricing){
  const encoded=encodeURIComponent(poId||'');
@@ -11014,7 +11028,6 @@ function renderTransportationInventory(statisticsCards){
    return `<tr>
     <td><b>${escapeHtml(r.poNumber||'—')}</b><br><small>${escapeHtml(r.program)}</small>${r.deletedFromPoPage?'<br><small>PO deleted from PO page — retained in inventory</small>':''}</td>
     <td>${escapeHtml(r.vendor)}</td>
-    <td>${escapeHtml(r.itemNo)}</td>
     <td class="inventory-pinned-product"><b>${escapeHtml(r.product)}</b><br><small><b>LCBO Item #</b> ${escapeHtml(r.itemNo)}</small></td>
     <td><b>${r.totalQuotedValue?escapeHtml((r.quoteCurrency?r.quoteCurrency+' ':'')+'$'+r.totalQuotedValue.toFixed(2)):'—'}</b></td>
 
@@ -11034,9 +11047,6 @@ function renderTransportationInventory(statisticsCards){
       })()}</td>
     <td><b>${inventoryPriceMoney(inventoryProformaBalanceOwing(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc))}</b></td>
     <td>${inventoryProformaCaseSellingPrice(inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc)}</td>
-    <td><button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${inventoryActionArg(JSON.stringify({poId:r.poId,poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${r.cases<=0?'disabled':''}>Purchased</button><div>${inventorySaleButtons(keyArg,r.cases,saleAvailable,'trillium')}</div> <button type="button" class="secondary small" onclick="archiveLcboInventory('${encodeURIComponent(JSON.stringify(r))}')">Archive</button></td>
-    <td><b>${officeCases.toLocaleString()}</b>${officeCases>0?(()=>{const lic=officeLicensedByInventoryKey.get(String(r.inventoryKey))||0;return `<br><small>Non-Licensed: ${(officeCases-lic).toLocaleString()} · Licensed: ${lic.toLocaleString()}</small>`;})():''}<div><button type="button" class="secondary small" onclick="moveInventoryBackToTrillium('${keyArg}',${r.cases})" ${officeCases<=0?'disabled':''}>Move Back to Trillium</button></div><div>${inventorySaleButtons(keyArg,officeCases,officeCases,'office')}</div></td>
-    <td style="border-left:3px solid #64748b">${['nonLicensed','licensed'].map(type=>{const field=type==='licensed'?'licensedRetailBottle':'finalRetailBottle',label=type==='licensed'?'Licensed customer':'Non-licensed customer';return `<label style="display:flex;flex-direction:column;gap:8px;min-width:170px;min-height:76px;margin:6px 0">${label}<span style="display:flex;align-items:center;gap:5px">$<input type="number" min="0" step="0.01" inputmode="decimal" aria-label="${label} final retail price including TAX/HST" placeholder="Enter retail price" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.[field]??''))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="${field}" onchange="updateInventoryProformaPrice('${poIdArg}','${field}',this)"></span></label>`;}).join('')}</td>
     <td><label style="display:block;min-width:135px">Other Fees per Bottle<span style="display:flex;align-items:center;gap:5px"><span>$</span><input type="number" min="0" step="0.01" inputmode="decimal" aria-label="Other fees per bottle" placeholder="0.00" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.otherFeesBottle??''))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="otherFeesBottle" onchange="updateInventoryProformaPrice('${poIdArg}','otherFeesBottle',this)"></span></label>
       ${(() => {
         const pricing=inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing;
@@ -11046,6 +11056,9 @@ function renderTransportationInventory(statisticsCards){
           <span style="display:flex;align-items:center;gap:5px">$<input type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${escapeHtml(String(labCost))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="totalLabCost" onchange="updateInventoryProformaPrice('${poIdArg}','totalLabCost',this)"></span>
         </label><small>Lab cost per bottle: ${inventoryPriceMoney(labCostPerBottle)}</small>`;
       })()}</td>
+    <td><button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${inventoryActionArg(JSON.stringify({poId:r.poId,poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${r.cases<=0?'disabled':''}>Purchased</button><div>${inventoryReturnButton(keyArg,r.cases,'trillium')}</div></td>
+    <td>${inventoryPrimeCostCell(r,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)}</td>
+    <td style="border-left:3px solid #64748b">${['nonLicensed','licensed'].map(type=>{const field=type==='licensed'?'licensedRetailBottle':'finalRetailBottle',label=type==='licensed'?'Licensed customer':'Non-licensed customer';return `<label style="display:flex;flex-direction:column;gap:8px;min-width:170px;min-height:76px;margin:6px 0">${label}<span style="display:flex;align-items:center;gap:5px">$<input type="number" min="0" step="0.01" inputmode="decimal" aria-label="${label} final retail price including TAX/HST" placeholder="Enter retail price" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.[field]??''))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="${field}" onchange="updateInventoryProformaPrice('${poIdArg}','${field}',this)"></span></label>`;}).join('')}</td>
     <td>${[false,true].map(licensed=>inventoryItemProfit(r,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,licensed)).map(({label,perBottle,totalItem})=>`<div style="min-width:170px;min-height:76px;margin:6px 0;display:flex;flex-direction:column;gap:8px">
       ${label}
       <b style="white-space:nowrap">${inventoryPriceMoney(perBottle)} / ${inventoryPriceMoney(totalItem)}</b>
@@ -11061,7 +11074,7 @@ function renderTransportationInventory(statisticsCards){
     <td>${salesByCustomer.map(({label,profit})=>`<div style="min-width:175px;margin-bottom:12px">${label}<br><b>${inventoryPriceMoney(profit)}</b> total<br><small>${inventoryPriceMoney(months===null||profit===null?null:profit/months)} / month</small></div>`).join('')}
       <small>Combined total: ${inventoryPriceMoney(totalSalesProfit)}<br>${inventoryPriceMoney(months===null||totalSalesProfit===null?null:totalSalesProfit/months)} / month</small></td>
    </tr>`;
- }).join('')||'<tr><td colspan="23">No non-tender inventory rows for this transportation.</td></tr>';
+ }).join('')||'<tr><td colspan="22">No non-tender inventory rows for this transportation.</td></tr>';
 
  let totalCases=0,totalBottles=0;
  if(k){

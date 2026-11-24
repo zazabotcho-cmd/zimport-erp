@@ -22,3 +22,24 @@ Existing office stock (moved before this update) starts as Non-Licensed;
 change the Licensed number on its row if part of it is for licensed customers.
 
 Files changed: index.html only.
+
+UPDATE (same day)
+- In Stock Transportation, ACTION column: "Sold to the Non-licensed customer",
+  "Sold to the Licensed customer" and "Archive" buttons removed. Only "Purchased"
+  and "Return" remain.
+- In Stock Transportation: "Inventory in stock office/warehouse" column removed
+  (office stock is managed on the Office/Warehouse Stock Inventory page).
+
+UPDATE 2 (same day)
+- In Stock Transportation: "Other Fees per Bottle" column (with Total Lab Cost) now sits
+  right after ACTION, where the office/warehouse column used to be.
+- New column next to it: "Prime Cost per Bottle (TAX/HST incl.)", calculated automatically
+  for Non-licensed and Licensed customers:
+  proforma net bottle price + TAX/HST + other fees + transportation + lab cost per bottle.
+  Profit per Bottle = Final Retail Price - Prime Cost (same result as before).
+
+UPDATE 3 (same day)
+- Column order is now: ... | Other Fees per Bottle | ACTION | Prime Cost per Bottle | If Final Retail Price ... 
+
+UPDATE 4 (same day)
+- In Stock Transportation: "LCBO Item #" column removed. The item # still shows under the Product Name.
