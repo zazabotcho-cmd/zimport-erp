@@ -1,0 +1,24 @@
+PURCHASED / OFFICE-WAREHOUSE STOCK SPLIT (2026-11-24)
+
+In Stock Transportation
+- Action "Move to Office/Warehouse Stock" is renamed "Purchased".
+- Clicking it opens a box asking for two quantities:
+  Cases for Non-Licensed Customers and Cases for Licensed Customers.
+  The total is taken from LCBO Trillium stock and added to Office/Warehouse Stock
+  in the matching customer group.
+- The Office/Warehouse column on this page also shows the Non-Licensed / Licensed split.
+
+Office/Warehouse Stock Inventory
+- "Cases in Office / Cases in Storage" is removed.
+- New column "Office/Warehouse Stock" shows, on one row, the Non-Licensed and Licensed
+  case quantities (editable to move cases between the two groups; total stays the same).
+- "Sold to Non-Licensed Customer" takes cases only from the Non-Licensed stock,
+  "Sold to Licensed Customer" only from the Licensed stock. Returns go back to the
+  group they were sold from.
+- "+ Add Inventory" now asks Non-Licensed and Licensed case quantities.
+- New summary cards: Stock for Non-Licensed Customers / Stock for Licensed Customers.
+
+Existing office stock (moved before this update) starts as Non-Licensed;
+change the Licensed number on its row if part of it is for licensed customers.
+
+Files changed: index.html only.
