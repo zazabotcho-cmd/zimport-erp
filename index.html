@@ -10941,7 +10941,7 @@ function renderTransportationInventory(statisticsCards){
     <td><b>${escapeHtml(r.poNumber||'—')}</b><br><small>${escapeHtml(r.program)}</small>${r.deletedFromPoPage?'<br><small>PO deleted from PO page — retained in inventory</small>':''}</td>
     <td>${escapeHtml(r.vendor)}</td>
     <td>${escapeHtml(r.itemNo)}</td>
-    <td class="inventory-pinned-product"><b>${escapeHtml(r.product)}</b></td>
+    <td class="inventory-pinned-product"><b>${escapeHtml(r.product)}</b><br><small><b>LCBO Item #</b> ${escapeHtml(r.itemNo)}</small></td>
     <td><b>${r.totalQuotedValue?escapeHtml((r.quoteCurrency?r.quoteCurrency+' ':'')+'$'+r.totalQuotedValue.toFixed(2)):'—'}</b></td>
 
     <td>${r.bpc.toLocaleString()}</td>
