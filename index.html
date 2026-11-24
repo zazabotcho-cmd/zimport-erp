@@ -1422,8 +1422,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
     <label>Cases for Non-Licensed Customers <input name="nonLicensedCases" type="number" min="0" step="1" value="0" required></label>
     <label>Cases for Licensed Customers <input name="licensedCases" type="number" min="0" step="1" value="0" required></label>
     <label>Bottles per Case <input name="bpc" type="number" min="1" step="1" required></label>
-    <label>Non-Licensed Retail per Bottle (CAD, TAX/HST incl.) <input name="finalRetailBottle" type="number" min="0" step="0.01"></label>
-    <label>Licensed Retail per Bottle (CAD, TAX/HST incl.) <input name="licensedRetailBottle" type="number" min="0" step="0.01"></label>
+    <label>Final Retail Price per Bottle (CAD, TAX/HST incl.) <input name="finalRetailBottle" type="number" min="0" step="0.01"></label>
    </div>
    <div class="actions">
     <button type="button" class="secondary" onclick="closeOfficeInventoryAdd()">Cancel</button>
@@ -1434,8 +1433,8 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  <div class="cards" id="officeInventoryKpis"></div>
  <div class="table-wrap"><table><thead><tr>
   <th>Item Description / Item #</th><th>Supplier</th><th>Cases in Stock / Bottles per Case</th><th>Office/Warehouse Stock<br><small>Non-Licensed / Licensed cases</small></th>
-  <th>Final Retail Price per Bottle (CAD, TAX/HST incl.)</th><th>Item total retail value</th>
-  <th>Sold to Non-Licensed Customers</th><th>Sold to Licensed Customers</th>
+  <th>Prime Cost per Bottle (TAX/HST incl.)</th><th>Final Retail Price per Bottle (CAD, TAX/HST incl.)</th><th>Item total retail value</th>
+  <th>Sold to</th>
  </tr></thead><tbody id="officeInventoryRows"></tbody></table></div>
 </div></section>
 <section id="inventory-stock-statistics" class="panel"><div class="box">
@@ -1478,7 +1477,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  <div class="table-wrap"><table>
   <thead><tr>
    <th>PO #</th><th>Vendor/Producer</th><th class="inventory-pinned-product">Product Name</th>
-   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th>Other Fees per Bottle</th><th scope="col">ACTION</th><th>Prime Cost per Bottle (TAX/HST incl.)</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Profit per Bottle (TAX/HST incl.) /<br>Profit total item (TAX/HST incl.) <span id="inventoryTotalItemProfit" style="white-space:nowrap" aria-live="polite">(aprox ttl. profit non lc,cst only —)</span></th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>Total cases sold / Cases sold per month</th><th>Total profit / Monthly profit</th>
+   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th>Other Fees per Bottle</th><th scope="col">ACTION</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Profit per Bottle (TAX/HST incl.) /<br>Profit total item (TAX/HST incl.) <span id="inventoryTotalItemProfit" style="white-space:nowrap" aria-live="polite">(aprox ttl. profit non lc,cst only —)</span></th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>Total cases sold / Cases sold per month</th><th>Total profit / Monthly profit</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -9746,7 +9745,7 @@ function deductOfficeInventoryCases(officeRecords,qty,licensed){
     for(const record of officeRecords){
       const deducted=Math.min(nonLicensedCasesForRecord(record),remaining);
       record.licensedCases=licensedCasesForRecord(record);
-      record.cases=num(record.cases)-deducted;
+      record.cases=officeRoundCases(num(record.cases)-deducted);
       remaining-=deducted;
       if(remaining<=0)return;
     }
@@ -9754,8 +9753,8 @@ function deductOfficeInventoryCases(officeRecords,qty,licensed){
   if(licensed!==false){
     for(const record of officeRecords){
       const deducted=Math.min(licensedCasesForRecord(record),remaining);
-      record.licensedCases=licensedCasesForRecord(record)-deducted;
-      record.cases=num(record.cases)-deducted;
+      record.licensedCases=officeRoundCases(licensedCasesForRecord(record)-deducted);
+      record.cases=officeRoundCases(num(record.cases)-deducted);
       remaining-=deducted;
       if(remaining<=0)return;
     }
@@ -9775,6 +9774,116 @@ window.updateOfficeCustomerCases=(input,licensed)=>{
     record.licensedCases=Math.min(num(record.cases),remaining);
     remaining-=record.licensedCases;
   }
+  save();
+  renderOfficeInventory();
+  renderHeadInventory();
+};
+function officeRoundCases(value){return Math.round(num(value)*1e6)/1e6;}
+// Show a (possibly part) case quantity as "X cases + Y bottles".
+function officeCasesBottlesText(cases,bpc){
+  if(!(bpc>0))return officeRoundCases(cases).toLocaleString()+' cases';
+  const bottles=Math.round(num(cases)*bpc);
+  const full=Math.floor(bottles/bpc),loose=bottles-full*bpc;
+  return full.toLocaleString()+' cases'+(loose?' + '+loose.toLocaleString()+' bottles':'');
+}
+// Office/Warehouse "Sold to" channels. Restaurant/Hotels take Licensed stock; Online Store and In Store take Non-Licensed stock.
+function officeSaleChannels(){return [
+  {id:'restaurant',label:'Restaurant/Hotels',licensed:true},
+  {id:'online',label:'Online Store',licensed:false},
+  {id:'inStore',label:'In Store',licensed:false}
+];}
+function officeChannelSoldCases(metrics,channel){
+  return Math.max(0,num(metrics?.officeChannelCasesSold?.[channel]));
+}
+function askOfficeCasesAndBottles({title,note,bpc,channels}){
+  const dialog=document.createElement('dialog');
+  dialog.innerHTML=`<form method="dialog" style="min-width:300px">
+    <h3 style="margin-top:0">${escapeHtml(title)}</h3>
+    ${note?`<p style="margin:0 0 10px"><small>${escapeHtml(note)}</small></p>`:''}
+    ${channels?`<label style="display:block;margin-bottom:10px">Sold to
+      <select name="channel" style="display:block;width:100%">${channels.map(c=>`<option value="${c.id}">${escapeHtml(c.label)}</option>`).join('')}</select></label>`:''}
+    <label style="display:block;margin-bottom:10px">Cases
+      <input name="cases" type="number" min="0" step="1" value="0" style="display:block;width:100%"></label>
+    ${bpc>0?`<label style="display:block;margin-bottom:10px">Bottles <small>(${bpc} bottles per case)</small>
+      <input name="bottles" type="number" min="0" step="1" value="0" style="display:block;width:100%"></label>`:''}
+    <p data-office-qty-error style="color:#b91c1c;margin:0 0 10px" hidden></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button value="cancel" class="secondary" formnovalidate>Cancel</button>
+      <button value="ok">Save</button>
+    </div>
+  </form>`;
+  const form=dialog.querySelector('form');
+  const error=dialog.querySelector('[data-office-qty-error]');
+  return new Promise(resolve=>{
+    let result=null;
+    form.addEventListener('submit',event=>{
+      if(event.submitter?.value!=='ok')return;
+      const cases=Number(form.elements.cases.value||0);
+      const bottles=bpc>0?Number(form.elements.bottles.value||0):0;
+      if(![cases,bottles].every(v=>Number.isFinite(v)&&v>=0)||cases+bottles<=0){
+        event.preventDefault();
+        error.textContent='Enter the cases and/or bottles (more than 0).';
+        error.hidden=false;
+        return;
+      }
+      result={cases,bottles,channel:form.elements.channel?.value||null};
+    });
+    dialog.addEventListener('close',()=>{dialog.remove();resolve(result);},{once:true});
+    document.body.append(dialog);
+    dialog.showModal();
+    form.elements.cases.focus();
+    form.elements.cases.select();
+  });
+}
+window.sellOfficeInventoryToChannel=async(encodedKey,channelId)=>{
+  const key=decodeURIComponent(String(encodedKey||''));
+  const channel=officeSaleChannels().find(c=>c.id===channelId);if(!channel)return;
+  let records=officeInventoryRecords(key);
+  if(!records.length){alert('No office/warehouse stock is available for this item.');return;}
+  const bpc=num(records[0].bpc);
+  const available=officeCasesForCustomer(records,channel.licensed);
+  if(available<=0){alert('No '+(channel.licensed?'Licensed':'Non-Licensed')+' stock is available for '+channel.label+'.');return;}
+  const answer=await askOfficeCasesAndBottles({title:'Sold to '+channel.label,
+    note:'Available ('+(channel.licensed?'Licensed':'Non-Licensed')+' stock): '+officeCasesBottlesText(available,bpc),bpc});
+  if(!answer)return;
+  records=officeInventoryRecords(key);
+  const now=officeCasesForCustomer(records,channel.licensed);
+  const qty=officeRoundCases(bpc>0?(answer.cases*bpc+answer.bottles)/bpc:answer.cases);
+  if(qty>now+1e-6){alert('Quantity cannot exceed the available stock ('+officeCasesBottlesText(now,bpc)+').');return;}
+  deductOfficeInventoryCases(records,qty,channel.licensed);
+  const metrics=(state.inventorySalesMetrics??={})[key]??={};
+  const countField=channel.licensed?'licensedCasesSold':'nonLicensedCasesSold';
+  const officeField=channel.licensed?'officeLicensedCasesSold':'officeNonLicensedCasesSold';
+  metrics[countField]=officeRoundCases(num(metrics[countField])+qty);
+  metrics[officeField]=officeRoundCases(num(metrics[officeField])+qty);
+  const bucket=metrics.officeChannelCasesSold??={};
+  bucket[channel.id]=officeRoundCases(num(bucket[channel.id])+qty);
+  save();
+  renderOfficeInventory();
+  renderHeadInventory();
+};
+window.returnOfficeChannelSale=async(encodedKey)=>{
+  const key=decodeURIComponent(String(encodedKey||''));
+  const metrics=state.inventorySalesMetrics?.[key];
+  const channels=officeSaleChannels().filter(c=>officeChannelSoldCases(metrics,c.id)>0);
+  if(!channels.length){alert('There are no sales to return for this item.');return;}
+  const record=(state.officeInventory||[]).find(row=>row.inventoryKey===key&&!row.inventoryArchived)
+    ||(state.officeInventory||[]).find(row=>row.inventoryKey===key);
+  if(!record){alert('No office/warehouse stock record is available for this item.');return;}
+  const bpc=num(record.bpc);
+  const answer=await askOfficeCasesAndBottles({title:'Return',
+    note:channels.map(c=>c.label+': '+officeCasesBottlesText(officeChannelSoldCases(metrics,c.id),bpc)+' sold').join(' · '),bpc,channels});
+  if(!answer||state.inventorySalesMetrics?.[key]!==metrics)return;
+  const channel=officeSaleChannels().find(c=>c.id===answer.channel);if(!channel)return;
+  const sold=officeChannelSoldCases(metrics,channel.id);
+  const qty=officeRoundCases(bpc>0?(answer.cases*bpc+answer.bottles)/bpc:answer.cases);
+  if(qty>sold+1e-6){alert('The return cannot exceed '+officeCasesBottlesText(sold,bpc)+' sold to '+channel.label+'.');return;}
+  restoreOfficeReturn(key,record,qty,channel.licensed?qty:0);
+  const countField=channel.licensed?'licensedCasesSold':'nonLicensedCasesSold';
+  const officeField=channel.licensed?'officeLicensedCasesSold':'officeNonLicensedCasesSold';
+  metrics[countField]=Math.max(0,officeRoundCases(num(metrics[countField])-qty));
+  metrics[officeField]=Math.max(0,officeRoundCases(num(metrics[officeField])-qty));
+  metrics.officeChannelCasesSold[channel.id]=Math.max(0,officeRoundCases(sold-qty));
   save();
   renderOfficeInventory();
   renderHeadInventory();
@@ -10812,8 +10921,7 @@ window.addOfficeInventory=event=>{
     licensedCases:fields.licensedCases.valueAsNumber,
     bpc:fields.bpc.valueAsNumber,
     retailPricing:{
-      finalRetailBottle:fields.finalRetailBottle.value===''?'':fields.finalRetailBottle.valueAsNumber,
-      licensedRetailBottle:fields.licensedRetailBottle.value===''?'':fields.licensedRetailBottle.valueAsNumber
+      finalRetailBottle:fields.finalRetailBottle.value===''?'':fields.finalRetailBottle.valueAsNumber
     }
   });
   save({inventoryOnly:true});
@@ -10834,74 +10942,81 @@ function renderOfficeInventory(statisticsCards){
     grouped.set(key,row);
   }
   let totalCases=0,totalBottles=0;
-  const retailTotals=[
-    {field:'finalRetailBottle',label:'Non-Licensed',heading:'Stock Total Retail Value (Non-Licensed Price)',cents:0,unpricedBottles:0},
-    {field:'licensedRetailBottle',label:'Licensed',heading:'Total Retail Value (Licensed Price)',cents:0,unpricedBottles:0}
-  ];
-  let totalNonLicensed=0,totalLicensed=0,totalNonLicensedStock=0,totalLicensedStock=0;
+  // Office/Warehouse stock has one Final Retail Price per Bottle (stored as finalRetailBottle).
+  const retailTotal={cents:0,unpricedBottles:0};
+  let totalNonLicensedStock=0,totalLicensedStock=0;
+  const channelTotals=Object.fromEntries(officeSaleChannels().map(c=>[c.id,{cases:0,bottles:0}]));
+  const costBasis=body?inventoryPoCostBasisMap():new Map();
   const officeRows=[...grouped].map(([key,{record,cases,licensedCases}])=>{
     const nonLicensedCases=cases-licensedCases;
     const sales=state.inventorySalesMetrics?.[key]||{};
-    const nonLicensed=num(sales.officeNonLicensedCasesSold);
-    const licensed=num(sales.officeLicensedCasesSold);
-    if(!cases&&!nonLicensed&&!licensed)return '';
+    const anySold=officeSaleChannels().some(c=>officeChannelSoldCases(sales,c.id)>0);
+    if(!(cases>0)&&!anySold)return '';
     const bpc=num(record.bpc);
-    const bottles=cases*bpc;
+    const bottles=Math.round(cases*bpc);
+    for(const c of officeSaleChannels()){
+      const sold=officeChannelSoldCases(sales,c.id);
+      channelTotals[c.id].cases+=sold;
+      channelTotals[c.id].bottles+=Math.round(sold*bpc);
+    }
     const pricing=officeInventoryPricing(record);
-    const itemRetailValues=retailTotals.map(total=>{
-      const price=pricing[total.field];
-      const priced=price!==''&&price!=null&&Number.isFinite(Number(price));
-      const cents=priced?Math.round(Number(price)*100)*bottles:null;
-      total.cents+=cents??0;
-      if(!priced)total.unpricedBottles+=bottles;
-      return `<div>${total.label}: <b>${inventoryPriceMoney(cents===null?null:cents/100)}</b></div>`;
-    }).join('');
+    const price=pricing.finalRetailBottle;
+    const priced=price!==''&&price!=null&&Number.isFinite(Number(price));
+    const itemCents=priced?Math.round(Number(price)*100)*bottles:null;
+    retailTotal.cents+=itemCents??0;
+    if(!priced)retailTotal.unpricedBottles+=bottles;
+    const itemRetailValues=`<b>${inventoryPriceMoney(itemCents===null?null:itemCents/100)}</b>`;
     totalCases+=cases;
     totalBottles+=bottles;
-    totalNonLicensed+=nonLicensed;
-    totalLicensed+=licensed;
     totalNonLicensedStock+=nonLicensedCases;
     totalLicensedStock+=licensedCases;
     if(!body)return '';
-    const prices=[['finalRetailBottle','Non-licensed'],['licensedRetailBottle','Licensed']].map(([field,label])=>
-      `<label style="display:block;margin-bottom:6px">${label}
-        <input type="number" min="0" step="0.01" inputmode="decimal" style="width:105px"
-          value="${escapeHtml(String(pricing[field]??''))}" data-office-inventory-key="${escapeHtml(key)}"
-          data-retail-field="${field}" onchange="updateOfficeRetailPrice(this)">
-      </label>`).join('');
+    const prices=`<span style="display:flex;align-items:center;gap:5px">$<input type="number" min="0" step="0.01" inputmode="decimal" style="width:105px"
+          aria-label="Final retail price per bottle for ${escapeHtml(record.product||record.itemNo||'item')}"
+          value="${escapeHtml(String(pricing.finalRetailBottle??''))}" data-office-inventory-key="${escapeHtml(key)}"
+          data-retail-field="finalRetailBottle" onchange="updateOfficeRetailPrice(this)"></span>`;
     const keyArg=inventoryActionArg(key);
-    const nonLicensedButton=inventorySaleButton(keyArg,nonLicensedCases,nonLicensedCases,'office',false);
-    const licensedButton=inventorySaleButton(keyArg,licensedCases,licensedCases,'office',true);
+    const soldTo=officeSaleChannels().map(c=>{
+      const stock=c.licensed?licensedCases:nonLicensedCases;
+      return `<div style="min-width:190px;margin-bottom:10px">${escapeHtml(c.label)}<br><b>${officeCasesBottlesText(officeChannelSoldCases(sales,c.id),bpc)}</b> sold<br>
+        <button type="button" class="secondary small" onclick="sellOfficeInventoryToChannel('${keyArg}','${c.id}')" ${stock>0?'':'disabled'}>Sold to ${escapeHtml(c.label)}</button></div>`;
+    }).join('');
+    const returnButton=`<button type="button" class="secondary small" onclick="returnOfficeChannelSale('${keyArg}')" ${anySold?'':'disabled'}>Return</button>`;
     return `<tr>
       <td><b>${escapeHtml(record.product||'—')}</b><br><small>Item # ${escapeHtml(record.itemNo||'—')}</small></td>
       <td>${escapeHtml(record.vendor||'—')}</td>
-      <td><b>${cases.toLocaleString()}</b> / ${bpc.toLocaleString()}<br><small>${bottles.toLocaleString()} bottles in stock</small></td>
+      <td><b>${officeCasesBottlesText(cases,bpc)}</b> / ${bpc.toLocaleString()}<br><small>${bottles.toLocaleString()} bottles in stock</small></td>
       <td><label style="display:block;margin-bottom:6px">Non-Licensed
-          <input type="number" min="0" max="${cases}" step="1" inputmode="numeric" style="width:90px"
+          <input type="number" min="0" max="${cases}" step="any" inputmode="decimal" style="width:90px"
           aria-label="Office/Warehouse cases for Non-Licensed customers, ${escapeHtml(record.product||record.itemNo||'item')}"
-          value="${nonLicensedCases}" data-office-inventory-key="${escapeHtml(key)}"
+          value="${officeRoundCases(nonLicensedCases)}" data-office-inventory-key="${escapeHtml(key)}"
           onchange="updateOfficeCustomerCases(this,false)" ${cases<=0?'disabled':''}></label>
         <label style="display:block">Licensed
-          <input type="number" min="0" max="${cases}" step="1" inputmode="numeric" style="width:90px"
+          <input type="number" min="0" max="${cases}" step="any" inputmode="decimal" style="width:90px"
           aria-label="Office/Warehouse cases for Licensed customers, ${escapeHtml(record.product||record.itemNo||'item')}"
-          value="${licensedCases}" data-office-inventory-key="${escapeHtml(key)}"
+          value="${officeRoundCases(licensedCases)}" data-office-inventory-key="${escapeHtml(key)}"
           onchange="updateOfficeCustomerCases(this,true)" ${cases<=0?'disabled':''}></label>
       </td>
+      <td>${(()=>{
+        const poId=String(record.poId||decodeURIComponent(String(key).split('::')[0]));
+        const basis=costBasis.get(poId)||{transportPerBottle:0,originalPoBottles:inventoryPoOriginalBottles(inventoryProformaPo(poId))};
+        return inventoryPrimeCostCell(basis,pricing);
+      })()}</td>
       <td>${prices}</td><td>${itemRetailValues}</td>
-      <td><b>${nonLicensed.toLocaleString()}</b> cases<br>${nonLicensedButton}</td>
-      <td><b>${licensed.toLocaleString()}</b> cases<br>${licensedButton}<br>${inventoryReturnButton(keyArg,cases,'office')}</td>
+      <td>${soldTo}${returnButton}</td>
     </tr>`;
   }).join('');
   if(body)body.innerHTML=officeRows||'<tr><td colspan="8">No office/warehouse stock yet. Add inventory or move cases from In Stock Transportation.</td></tr>';
   cards.innerHTML=`
-    <div class="card"><span>Cases in Stock</span><strong>${totalCases.toLocaleString()}</strong></div>
+    <div class="card"><span>Cases in Stock</span><strong>${officeRoundCases(totalCases).toLocaleString(undefined,{maximumFractionDigits:2})}</strong></div>
     <div class="card"><span>Bottles in Stock</span><strong>${totalBottles.toLocaleString()}</strong></div>
-    ${body?`<div class="card"><span>Stock for Non-Licensed Customers</span><strong>${totalNonLicensedStock.toLocaleString()} cases</strong></div>
-    <div class="card"><span>Stock for Licensed Customers</span><strong>${totalLicensedStock.toLocaleString()} cases</strong></div>`:''}
-    ${retailTotals.map(({heading,cents,unpricedBottles})=>`<div class="card"><span>${heading}</span><strong>${inventoryPriceMoney(cents/100)}</strong>
-      ${unpricedBottles?`<small>${unpricedBottles.toLocaleString()} bottles without a retail price</small>`:''}</div>`).join('')}
-    <div class="card"><span>Sold to Non-Licensed Customers</span><strong>${totalNonLicensed.toLocaleString()} cases</strong></div>
-    <div class="card"><span>Sold to Licensed Customers</span><strong>${totalLicensed.toLocaleString()} cases</strong></div>`;
+    ${body?`<div class="card"><span>Stock for Non-Licensed Customers</span><strong>${officeRoundCases(totalNonLicensedStock).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong></div>
+    <div class="card"><span>Stock for Licensed Customers</span><strong>${officeRoundCases(totalLicensedStock).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong></div>`:''}
+    <div class="card"><span>Stock Total Retail Value</span><strong>${inventoryPriceMoney(retailTotal.cents/100)}</strong>
+      ${retailTotal.unpricedBottles?`<small>${retailTotal.unpricedBottles.toLocaleString()} bottles without a retail price</small>`:''}</div>
+    ${officeSaleChannels().map(c=>`<div class="card"><span>Sold to ${escapeHtml(c.label)}</span><strong>${officeRoundCases(channelTotals[c.id].cases).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong><small>${channelTotals[c.id].bottles.toLocaleString()} bottles</small></div>`).join('')}`;
+  // Statistics combine by customer type; office stock uses its one price for both.
+  const retailTotals=['Non-Licensed','Licensed'].map(label=>({label,...retailTotal}));
   return {totalCases,totalBottles,retailTotals};
 }
 
@@ -10912,6 +11027,26 @@ window.renderHeadInventory=()=>{
  if(document.getElementById('inventory-stock-statistics')?.classList.contains('active'))window.renderInventoryStockStatistics();
  renderTransportationInventory();
 };
+function inventoryPoTransportPerBottle(po,shipment){
+ const statusShipment=shipment?.recordKind==='transportation'?shipment:(shipment?cargoDateSourceTransportation(shipment):null)||shipment;
+ const transportCosts=statusShipment?.recordKind==='transportation'?shipmentTotals(statusShipment):(shipment?cargoTransportationCostTotals(shipment):null);
+ return transportCosts?.costPerBottleCad??0;
+}
+function inventoryPoOriginalBottles(po){
+ return (po?.lines||[]).reduce((total,line)=>total+num(line.totalQuantity)*num(line.unitsPerCase),0);
+}
+// Per PO: transportation cost per bottle and original PO bottles (used for Prime Cost on the Office/Warehouse page).
+function inventoryPoCostBasisMap(){
+ const map=new Map();
+ for(const {shipment,pos} of inventoryTransportationGroups().values()){
+   for(const po of pos){
+     const id=String(po.originalPoId||po.id);
+     if(map.has(id))continue;
+     map.set(id,{transportPerBottle:inventoryPoTransportPerBottle(po,shipment),originalPoBottles:inventoryPoOriginalBottles(po)});
+   }
+ }
+ return map;
+}
 function renderTransportationInventory(statisticsCards){
  const aggregate=Boolean(statisticsCards);
  if(document.getElementById('inventory-in-stock-office')?.classList.contains('active'))renderOfficeInventory();
@@ -11057,7 +11192,6 @@ function renderTransportationInventory(statisticsCards){
         </label><small>Lab cost per bottle: ${inventoryPriceMoney(labCostPerBottle)}</small>`;
       })()}</td>
     <td><button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${inventoryActionArg(JSON.stringify({poId:r.poId,poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${r.cases<=0?'disabled':''}>Purchased</button><div>${inventoryReturnButton(keyArg,r.cases,'trillium')}</div></td>
-    <td>${inventoryPrimeCostCell(r,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)}</td>
     <td style="border-left:3px solid #64748b">${['nonLicensed','licensed'].map(type=>{const field=type==='licensed'?'licensedRetailBottle':'finalRetailBottle',label=type==='licensed'?'Licensed customer':'Non-licensed customer';return `<label style="display:flex;flex-direction:column;gap:8px;min-width:170px;min-height:76px;margin:6px 0">${label}<span style="display:flex;align-items:center;gap:5px">$<input type="number" min="0" step="0.01" inputmode="decimal" aria-label="${label} final retail price including TAX/HST" placeholder="Enter retail price" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.[field]??''))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="${field}" onchange="updateInventoryProformaPrice('${poIdArg}','${field}',this)"></span></label>`;}).join('')}</td>
     <td>${[false,true].map(licensed=>inventoryItemProfit(r,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,licensed)).map(({label,perBottle,totalItem})=>`<div style="min-width:170px;min-height:76px;margin:6px 0;display:flex;flex-direction:column;gap:8px">
       ${label}
@@ -11074,7 +11208,7 @@ function renderTransportationInventory(statisticsCards){
     <td>${salesByCustomer.map(({label,profit})=>`<div style="min-width:175px;margin-bottom:12px">${label}<br><b>${inventoryPriceMoney(profit)}</b> total<br><small>${inventoryPriceMoney(months===null||profit===null?null:profit/months)} / month</small></div>`).join('')}
       <small>Combined total: ${inventoryPriceMoney(totalSalesProfit)}<br>${inventoryPriceMoney(months===null||totalSalesProfit===null?null:totalSalesProfit/months)} / month</small></td>
    </tr>`;
- }).join('')||'<tr><td colspan="22">No non-tender inventory rows for this transportation.</td></tr>';
+ }).join('')||'<tr><td colspan="21">No non-tender inventory rows for this transportation.</td></tr>';
 
  let totalCases=0,totalBottles=0;
  if(k){

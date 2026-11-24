@@ -43,3 +43,22 @@ UPDATE 3 (same day)
 
 UPDATE 4 (same day)
 - In Stock Transportation: "LCBO Item #" column removed. The item # still shows under the Product Name.
+
+UPDATE 5 (same day)
+- "Prime Cost per Bottle (TAX/HST incl.)" moved from In Stock Transportation to the
+  Office/Warehouse Stock Inventory page (after Office/Warehouse Stock). Same automatic
+  calculation, using the item's PO pricing, transportation cost and lab cost.
+
+UPDATE 6 (same day)
+- Office/Warehouse Stock Inventory: one Final Retail Price per Bottle and one Item total
+  retail value per item (no separate Non-Licensed/Licensed prices). Summary shows one
+  Stock Total Retail Value. "+ Add Inventory" asks for one retail price.
+
+UPDATE 7 (same day)
+- Office/Warehouse Stock Inventory: "Sold to Non-Licensed Customers" and "Sold to Licensed
+  Customers" columns replaced by one "Sold to" column with three: Restaurant/Hotels,
+  Online Store, In Store. Each button asks Cases and Bottles sold.
+  Restaurant/Hotels takes Licensed stock; Online Store and In Store take Non-Licensed stock.
+- Stock now shows part cases as "X cases + Y bottles".
+- Return button asks which of the three it was sold to, plus cases and bottles.
+- Summary cards: Sold to Restaurant/Hotels / Online Store / In Store.
