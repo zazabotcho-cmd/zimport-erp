@@ -166,3 +166,10 @@ sales, returns, archive/restore, edit. All totals checked by hand. Fixes:
   not only after "Sold out on" is set; months use the calendar average (30.44 days).
 - Live "POs in Inventory" also counts POs whose stock is in Office/Warehouse.
 - Combined Live Retail Value squares: amount shown before the explanation line.
+- Inventory IN STOCK Office/Warehouse: PO # now shown after Item # in the first column.
+- "+ Add Inventory" (Add Office/Warehouse Inventory): new Transportation field; shown under the item and editable in Open / Edit for items added by hand.
+- Project Sales Revenue now shows where the revenue comes from (Office/Warehouse page items, archived/deleted items,
+  earlier office sales, sales directly from In Stock Transportation), so it can be compared with "Revenue Already Made".
+- Project Sales Revenue, Project Net Profit, Project Total Profit and Cases Sold per Month now count ONLY
+  Restaurant/Hotels, Online Store and In Store sales of items still on the Office/Warehouse page.
+  Not counted: archived/deleted items, old sales before these channels, sales made directly on In Stock Transportation.

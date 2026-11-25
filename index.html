@@ -1419,6 +1419,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
     <label class="full">Item Description <input name="product" required></label>
     <label>Item # <input name="itemNo"></label>
     <label>Supplier <input name="vendor"></label>
+    <label>Transportation <input name="transportationName" placeholder="e.g. KTL26083598"></label>
     <label>Cases for Non-Licensed Customers <input name="nonLicensedCases" type="number" min="0" step="1" value="0" required></label>
     <label>Cases for Licensed Customers <input name="licensedCases" type="number" min="0" step="1" value="0" required></label>
     <label>Bottles per Case <input name="bpc" type="number" min="1" step="1" required></label>
@@ -1436,7 +1437,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  </div>
  <div class="cards" id="officeInventoryKpis"></div>
  <div class="table-wrap"><table><thead><tr>
-  <th>Item Description / Item # / Supplier</th><th>Cases in Stock / Bottles per Case</th>
+  <th>Item Description / Item # / PO # / Supplier</th><th>Cases in Stock / Bottles per Case</th>
   <th>Prime Cost per Bottle (TAX/HST incl.)</th><th>Item total prime cost (TAX/HST incl.)<br><small>(what was purchased)</small></th><th>Final Retail Price per Bottle (CAD, TAX/HST incl.)</th><th>Item total retail value</th>
   <th>Sold to</th><th>Revenue (HST incl.) /<br>Profit (HST incl.)</th><th>Sold out on</th><th>ACTIONS</th>
  </tr></thead><tbody id="officeInventoryRows"></tbody></table></div>
@@ -10351,6 +10352,7 @@ window.editOfficeInventory=encodedKey=>{
       <label class="full">Item Description <input name="product" required value="${v(first.product)}"></label>
       <label>Item # <input name="itemNo" value="${v(first.itemNo)}"></label>
       <label>Supplier <input name="vendor" value="${v(first.vendor)}"></label>
+      ${fromPo?'':`<label>Transportation <input name="transportationName" value="${v(first.transportationName)}"></label>`}
       <label>Cases in Stock — Non-Licensed <input name="nonLicensedCases" type="number" min="0" step="any" value="${officeRoundCases(totalCases-licensed)}"></label>
       <label>Cases in Stock — Licensed <input name="licensedCases" type="number" min="0" step="any" value="${officeRoundCases(licensed)}"></label>
       <label>Bottles per Case <input name="bpc" type="number" min="1" step="1" value="${v(first.bpc)}"></label>
@@ -10386,6 +10388,7 @@ window.editOfficeInventory=encodedKey=>{
     if(f.availableSince.value&&sales.soldOutOn&&sales.soldOutOn<f.availableSince.value)return fail('Available for sale since must be on or before the Sold out on date.');
     for(const r of records){
       r.product=f.product.value.trim();r.itemNo=f.itemNo.value.trim();r.vendor=f.vendor.value.trim();
+      if(f.transportationName)r.transportationName=f.transportationName.value.trim();
       r.retailPricing={...(r.retailPricing||{}),finalRetailBottle:retail,separateFromTransportation:true};
     }
     // Put all cases on the first record.
@@ -11212,6 +11215,7 @@ window.addOfficeInventory=event=>{
     product,
     itemNo:fields.itemNo.value.trim(),
     vendor:fields.vendor.value.trim(),
+    transportationName:fields.transportationName.value.trim(),
     cases:fields.nonLicensedCases.valueAsNumber+fields.licensedCases.valueAsNumber,
     licensedCases:fields.licensedCases.valueAsNumber,
     bpc:fields.bpc.valueAsNumber,
@@ -11304,7 +11308,7 @@ function renderOfficeInventory(statisticsCards){
     }).join('');
     const returnButton=`<button type="button" class="secondary small" onclick="returnOfficeChannelSale('${keyArg}')" ${anySold?'':'disabled'}>Return</button>`;
     return `<tr>
-      <td><b>${escapeHtml(record.product||'—')}</b><br><small>Item # ${escapeHtml(record.itemNo||'—')}</small><br><small>Supplier: ${escapeHtml(record.vendor||'—')}</small><br><small>Transportation: ${escapeHtml((poTransportation.get(String(record.poId||decodeURIComponent(String(key).split('::')[0])))||[]).join(', ')||'—')}</small></td>
+      <td><b>${escapeHtml(record.product||'—')}</b><br><small>Item # ${escapeHtml(record.itemNo||'—')}</small><br><small>PO # ${escapeHtml(record.poNumber||inventoryProformaPo(String(record.poId||decodeURIComponent(String(key).split('::')[0])))?.number||'—')}</small><br><small>Supplier: ${escapeHtml(record.vendor||'—')}</small><br><small>Transportation: ${escapeHtml((poTransportation.get(String(record.poId||decodeURIComponent(String(key).split('::')[0])))||[]).join(', ')||record.transportationName||'—')}</small></td>
       <td><b style="font-size:17px">${officeCasesBottlesText(cases,bpc)}</b> / ${bpc.toLocaleString()}<br><small>${bottles.toLocaleString()} bottles in stock</small>
         <div style="margin-top:6px;font-size:12px;line-height:1.5;color:#94a3b8">
           <div>Non-Licensed: ${officeCasesBottlesText(nonLicensedCases,bpc)}</div>
@@ -11619,6 +11623,8 @@ function renderTransportationInventory(statisticsCards){
    let projectSellOutMonths=null,projectCasesPerMonth=0;
    const livePoIds=new Set();
    let salesRevenue=0,salesUnpricedBottles=0,actualProfit=0,actualProfitMissing=false;
+   // Where the sales revenue comes from (shown under Project Sales Revenue).
+   const revenueParts={officePage:0,officeRemoved:0,officeEarlier:0,direct:0};
    let officeStockValue=0,officeStockUnpriced=0,potentialProfit=0,potentialMissingBottles=0;
    orders.forEach(({po,shipment})=>{
      const pricing=inventoryProformaPo(po.originalPoId||po.id)?.inventoryProformaPricing||po.inventoryProformaPricing;
@@ -11654,7 +11660,11 @@ function renderTransportationInventory(statisticsCards){
            if(totalCost===null)actualProfitMissing=true;else actualProfit+=revenue-totalCost;
          };
          let channelSold=0;
-         for(const channel of officeSaleChannels()){
+         const revenueBefore=salesRevenue;
+         const lineOnOfficePage=(state.officeInventory||[]).some(r=>r.inventoryKey===lineKey&&!r.inventoryArchived);
+         // Only sales of items still on the Office/Warehouse page count (archived/deleted items and
+         // sales made before the Restaurant/Online/In Store channels are not counted).
+         for(const channel of (lineOnOfficePage?officeSaleChannels():[])){
            const sold=officeChannelSoldCases(sales,channel.id);
            if(sold<=0)continue;
            channelSold+=sold;
@@ -11673,10 +11683,8 @@ function renderTransportationInventory(statisticsCards){
            [Math.max(0,num(sales.nonLicensedCasesSold)-num(sales.officeNonLicensedCasesSold)),pricing?.finalRetailBottle,false],
            [Math.max(0,num(sales.licensedCasesSold)-num(sales.officeLicensedCasesSold)),pricing?.licensedRetailBottle,true]
          ];
-         for(const [soldCases,price,licensed] of parts){
-           const bottles=Math.round(soldCases*bottlesPerCase);
-           addPart(bottles&&validPrice(price)?Number(price)*bottles:null,bottles,licensed);
-         }
+         revenueParts.officePage+=salesRevenue-revenueBefore;
+         void parts;
          // Live: potential profit of stock in hand = (retail price - Prime Cost) x bottles.
          // LCBO Trillium stock uses the Non-licensed transportation price; Office/Warehouse stock uses the
          // Office/Warehouse price with the Non-Licensed / Licensed Prime Cost of its split.
@@ -11702,7 +11710,9 @@ function renderTransportationInventory(statisticsCards){
        }
        const months=inventorySellingMonths(sales);
        if(months!==null){
-         projectCasesPerMonth+=casesSold/months;
+         const currentSold=(state.officeInventory||[]).some(r=>r.inventoryKey===lineKey&&!r.inventoryArchived)
+           ?officeSaleChannels().reduce((t,c)=>t+officeChannelSoldCases(sales,c.id),0):0;
+         projectCasesPerMonth+=currentSold/months;
          projectSellOutMonths=Math.max(projectSellOutMonths??0,months);
        }
        projectCases+=originalCases;
@@ -11782,7 +11792,7 @@ function renderTransportationInventory(statisticsCards){
        <span style="margin-top:8px">Project Net Profit</span>
        <strong style="color:${salesRevenue-projectBudgetCents/100<0?'var(--red)':'var(--green)'}">${inventoryPriceMoney(salesRevenue-projectBudgetCents/100)}</strong>
        <div style="margin-top:10px;font-size:12px;line-height:1.6;color:#94a3b8">
-         <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">Sales Revenue (bottles sold × price sold at)</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(salesRevenue)}</span></div>
+         <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">Sales Revenue (Restaurant/Hotels, Online Store, In Store — items on the Office/Warehouse page)</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(salesRevenue)}</span></div>
          <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">− Total Project Budget</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(projectBudgetCents/100)}</span></div>
          <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid #e2e8f0;margin-top:3px;padding-top:3px"><span style="color:inherit;font-size:inherit">= Project Net Profit</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(salesRevenue-projectBudgetCents/100)}</span></div>
          ${salesUnpricedBottles?`<div style="margin-top:4px;color:var(--orange)">${salesUnpricedBottles.toLocaleString()} sold bottles have no retail price and are not counted.</div>`:''}
