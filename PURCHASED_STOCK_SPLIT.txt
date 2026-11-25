@@ -234,3 +234,6 @@ sales, returns, archive/restore, edit. All totals checked by hand. Fixes:
 - Transportation colours: background tints removed everywhere; only the coloured lines stay (left edge, group title line,
   outline around the In Stock Transportation title and the transportation buttons).
 - In Stock Transportation, Profit column header: "(Aprox total profit if all Non-Licensed: $X / if all Licensed: $Y)" — same calculation, shown for both.
+- Project Selling Period / Cases Sold per Month / Monthly Profit fixed: period = earliest "Available for sale since" to
+  latest "Sold out on" (or today while selling), shown in days with dates. Cases per month and monthly profit use the
+  total sold ÷ months; a period under 1 month counts as 1 month (no more huge numbers from a few days).

@@ -11933,6 +11933,7 @@ function renderTransportationInventory(statisticsCards){
    let projectCases=0,projectBottles=0,projectBalanceCents=0;
    let projectTransportation=0,totalLabCost=0,totalOtherFees=0;
    let projectSellOutMonths=null,projectCasesPerMonth=0;
+   let projectSellStart='',projectSellEnd='',projectStillSelling=false,projectSoldCases=0;
    const livePoIds=new Set();
    let salesRevenue=0,salesUnpricedBottles=0,actualProfit=0,actualProfitMissing=false;
    // Where the sales revenue comes from (shown under Project Sales Revenue).
@@ -12031,12 +12032,17 @@ function renderTransportationInventory(statisticsCards){
            else officeStockUnpriced+=officeBottlesInStock;
          }
        }
-       const months=inventorySellingMonths(sales);
-       if(months!==null){
+       {
+         // Project selling period: earliest "Available for sale since" to latest "Sold out on" (today while selling).
          const currentSold=(state.officeInventory||[]).some(r=>r.inventoryKey===lineKey&&!r.inventoryArchived)
            ?officeSaleChannels().reduce((t,c)=>t+officeChannelSoldCases(sales,c.id),0):0;
-         projectCasesPerMonth+=currentSold/months;
-         projectSellOutMonths=Math.max(projectSellOutMonths??0,months);
+         projectSoldCases+=currentSold;
+         if(sales.availableSince){
+           if(!projectSellStart||sales.availableSince<projectSellStart)projectSellStart=sales.availableSince;
+           const end=sales.soldOutOn||new Date().toISOString().slice(0,10);
+           if(!sales.soldOutOn)projectStillSelling=true;
+           if(!projectSellEnd||end>projectSellEnd)projectSellEnd=end;
+         }
        }
        projectCases+=originalCases;
        projectBottles+=originalCases*bottlesPerCase;
@@ -12058,6 +12064,14 @@ function renderTransportationInventory(statisticsCards){
        totalLabCost+=num(pricing?.totalLabCost);
      }
    });
+   // Per-month numbers: a period shorter than one month counts as one month (no blowing up a few days to a month).
+   let projectSellDays=null;
+   if(projectSellStart&&projectSellEnd){
+     const days=(Date.parse(projectSellEnd)-Date.parse(projectSellStart))/86400000+1;
+     if(days>0){projectSellDays=Math.round(days);projectSellOutMonths=days/30.4375;}
+   }
+   const perMonthDivisor=projectSellOutMonths===null?null:Math.max(1,projectSellOutMonths);
+   projectCasesPerMonth=perMonthDivisor?projectSoldCases/perMonthDivisor:0;
    // Squares always show the whole transportation, whatever the search / filters.
    const totalProformaBalanceCents=projectRows.reduce((sum,r)=>{
      const balance=inventoryProformaBalanceOwing(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc);
@@ -12140,11 +12154,12 @@ function renderTransportationInventory(statisticsCards){
        <strong>${inventoryPriceMoney(totalProformaBalanceCents/100)}</strong>
      </div>
      <div class="card kpi-col5">
-       <span>${aggregate?'Longest Project Sell-Out Period (Months)':'Project Sell-Out Months'} / Total Cases Sold per Month</span>
-       <strong>${projectSellOutMonths===null?'—':projectSellOutMonths.toLocaleString('en-CA',{maximumFractionDigits:2})} / ${projectSellOutMonths!==null?projectCasesPerMonth.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong>
+       <span>${aggregate?'Selling Period (all transportations)':'Project Selling Period'} / Cases Sold per Month</span>
+       <strong>${projectSellOutMonths===null?'—':projectSellOutMonths.toLocaleString('en-CA',{maximumFractionDigits:2})+' mo'} / ${projectSellOutMonths!==null?projectCasesPerMonth.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong>
+       <small style="color:#94a3b8">${projectSellDays===null?'Set "Available for sale since" to count the selling period.':`${projectSellDays} days: ${escapeHtml(projectSellStart)} → ${projectStillSelling?'today (still selling)':escapeHtml(projectSellEnd)}. Total cases sold: ${officeRoundCases(projectSoldCases).toLocaleString()}`}</small>
        <span style="margin-top:8px">Project Total Profit / Project Monthly Profit</span>
-       <strong>${inventoryPriceMoney(actualProfit)} / ${inventoryPriceMoney(!projectSellOutMonths?null:actualProfit/projectSellOutMonths)}</strong>
-       <small style="color:#94a3b8">Actual sale prices − Prime Cost × bottles sold${actualProfitMissing?' (some sales missing a price or prime cost — not counted)':''}</small>
+       <strong>${inventoryPriceMoney(actualProfit)} / ${inventoryPriceMoney(!perMonthDivisor?null:actualProfit/perMonthDivisor)}</strong>
+       <small style="color:#94a3b8">Actual sale prices − Prime Cost × bottles sold${actualProfitMissing?' (some sales missing a price or prime cost — not counted)':''}${projectSellOutMonths!==null&&projectSellOutMonths<1?'. Period under 1 month: per-month numbers = what was sold so far.':''}</small>
      </div>
     </div>`;
  }
