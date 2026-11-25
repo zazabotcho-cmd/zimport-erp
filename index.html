@@ -340,7 +340,7 @@ label[data-retrieved-locked="1"] textarea{
 #headInventoryRows .inventory-transport-status-date time{font-size:12px;font-weight:600;color:#425466;font-variant-numeric:tabular-nums}
 .worker-product-needs-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.worker-product-needs-grid input,.worker-product-needs-grid select{width:100%;box-sizing:border-box}@media(max-width:760px){.worker-product-needs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:460px){.worker-product-needs-grid{grid-template-columns:1fr}}
 .approved-portal-files{margin-left:auto;width:max-content;min-width:390px;max-width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:#f8fafc}.approved-portal-files strong{display:block;font-size:12px;line-height:1.4;margin-bottom:8px}.approved-portal-attach{display:inline-block;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px}#approvedPortalFileRows{display:grid;grid-template-rows:repeat(5,auto);grid-auto-flow:column;grid-auto-columns:350px;column-gap:12px;direction:rtl;overflow-x:auto;max-width:100%}.approved-portal-file{direction:ltr;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;align-items:center;margin-top:7px}.approved-portal-file input{font-size:12px;padding:5px}.approved-portal-file button{font-size:11px;padding:5px 7px}@media(max-width:800px){#worker-list .section-head{flex-wrap:wrap;gap:12px}.approved-portal-files{width:100%;min-width:0;margin-left:0}}
-[id^="transportationProjectRetailValues"]>span:first-child,[id^="transportationLiveRetailValues"]>span:first-child{margin-top:0!important}.kpi-new-row{grid-column-start:1}@media(min-width:1101px){.kpi-col2{grid-column:2}.kpi-col3{grid-column:3}.kpi-col4{grid-column:4}.kpi-col5{grid-column:5}.kpi-col6{grid-column:6}}</style>
+[id^="transportationProjectRetailValues"]>span:first-child,[id^="transportationLiveRetailValues"]>span:first-child{margin-top:0!important}tr.office-group-row>td{background:var(--office-group-bg)}tr.office-group-row>td:first-child{border-left:6px solid var(--office-group-line)}tr.office-group-row:hover>td{filter:brightness(.98)}.kpi-new-row{grid-column-start:1}@media(min-width:1101px){.kpi-col2{grid-column:2}.kpi-col3{grid-column:3}.kpi-col4{grid-column:4}.kpi-col5{grid-column:5}.kpi-col6{grid-column:6}}</style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="online-config.js"></script>
@@ -1435,6 +1435,16 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
    </div>
   </form>
  </div>
+ <div class="toolbar inventory-filter-bar" style="flex-wrap:wrap">
+  <input id="officeInventorySearch" type="search" placeholder="Search item, item #, PO #, supplier or transportation" oninput="renderOfficeInventory()" style="min-width:260px">
+  <select id="officeFilterTransportation" style="max-width:220px;flex:0 0 auto" onchange="renderOfficeInventory()" aria-label="Filter by transportation"><option value="">All transportations</option></select>
+  <select id="officeFilterSupplier" style="max-width:220px;flex:0 0 auto" onchange="renderOfficeInventory()" aria-label="Filter by supplier"><option value="">All suppliers</option></select>
+  <select id="officeFilterPo" style="max-width:220px;flex:0 0 auto" onchange="renderOfficeInventory()" aria-label="Filter by PO"><option value="">All PO #</option></select>
+  <select id="officeFilterStock" style="max-width:220px;flex:0 0 auto" onchange="renderOfficeInventory()" aria-label="Filter by stock">
+   <option value="">All items</option><option value="instock">In stock</option><option value="soldout">No stock left</option><option value="sold">Has sales</option><option value="nosales">No sales yet</option><option value="noprice">No retail price</option>
+  </select>
+  <button type="button" class="secondary small" onclick="clearInventoryFilters('office')">Clear filters</button>
+ </div>
  <div class="cards" id="officeInventoryKpis"></div>
  <div class="table-wrap"><table><thead><tr>
   <th>Item Description / Item # / PO # / Supplier</th><th>Cases in Stock / Bottles per Case</th>
@@ -1482,6 +1492,13 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  </div>
  <div class="toolbar">
   <input id="headInventorySearch" type="search" placeholder="Search PO, program, vendor/producer, item, product or shipment" oninput="renderHeadInventory()">
+  <select id="headFilterVendor" style="max-width:220px;flex:0 0 auto" onchange="renderHeadInventory()" aria-label="Filter by vendor/producer"><option value="">All vendors/producers</option></select>
+  <select id="headFilterPo" style="max-width:220px;flex:0 0 auto" onchange="renderHeadInventory()" aria-label="Filter by PO"><option value="">All PO #</option></select>
+  <select id="headFilterProgram" style="max-width:220px;flex:0 0 auto" onchange="renderHeadInventory()" aria-label="Filter by program"><option value="">All programs</option></select>
+  <select id="headFilterStock" style="max-width:220px;flex:0 0 auto" onchange="renderHeadInventory()" aria-label="Filter by stock">
+   <option value="">All items</option><option value="instock">Cases in stock</option><option value="nostock">No cases left</option><option value="office">Has Office/Warehouse stock</option><option value="noprice">No retail price</option>
+  </select>
+  <button type="button" class="secondary small" onclick="clearInventoryFilters('head')">Clear filters</button>
  </div>
  <div class="cards" id="headInventoryKpis"></div>
  <div class="table-wrap"><table>
@@ -3949,6 +3966,10 @@ function updateShipmentStatusFromRow(id,status,date=shipmentStatusToday()){
   renderArchivedPurchaseOrders();
   if(typeof renderFinancial==='function')renderFinancial();
   if(typeof renderHeadInventory==='function')renderHeadInventory();if(typeof renderProfitItemCalculator==='function')renderProfitItemCalculator();
+  if(shared.replace(/ \(PARTIALLY\)$/i,'')==='Received in LCBO'){
+    const target=sh.recordKind==='transportation'?sh:statusSource;
+    if(target)setTimeout(()=>window.notifyInventoryForTransportation?.(target.id),50);
+  }
 }
 window.updateShipmentStatusFromRow=updateShipmentStatusFromRow;
 function updateShipmentCanadaField(id,field,value){
@@ -4225,6 +4246,9 @@ function saveShipment(){
  save();
  if(typeof renderHeadInventory==='function')renderHeadInventory();
  if(typeof renderFinancialProfitPages==='function')renderFinancialProfitPages();
+ if(sh.recordKind==='transportation'&&String(normalizeSharedShipmentStatus(sh.status||'')).replace(/ \(PARTIALLY\)$/i,'')==='Received in LCBO'&&normalizeSharedShipmentStatus(previousShipment?.status||'')!==normalizeSharedShipmentStatus(sh.status||'')){
+   setTimeout(()=>window.notifyInventoryForTransportation?.(sh.id),50);
+ }
  closeShipmentEditor();
 }
 async function deleteShipment(id){
@@ -5206,12 +5230,16 @@ function rsoInvoiceOrders(){
 function rsoOrderProgram(po){
   return String(po.program||'').trim().toUpperCase()||(repairedReguPoNumber(po.number)?'REGU':'');
 }
+function rsoReceivedStatus(status){
+  // "Received in LCBO" and "Received in LCBO (PARTIALLY)".
+  return String(normalizeSharedShipmentStatus(status)).replace(/ \(PARTIALLY\)$/i,'')==='Received in LCBO';
+}
 function receivedRsoShipmentPoIds(){
   const ids=new Set();
   for(const shipment of allTransportationRecords()){
-    if(normalizeSharedShipmentStatus(shipment.status)!=='Received in LCBO')continue;
-    const links=shipment.recordKind==='transportation'&&shipment.cargoLinks?.length?
-      cargoLinksPoLinks(shipment.cargoLinks):shipment.poLinks||[];
+    if(!rsoReceivedStatus(shipment.status))continue;
+    // All POs of the transportation: linked directly and through its cargo.
+    const links=[...(shipment.poLinks||[]),...(shipment.recordKind==='transportation'?cargoLinksPoLinks(shipment.cargoLinks||[]):[])];
     for(const link of links)if(link.poId)ids.add(link.poId);
   }
   return ids;
@@ -5219,7 +5247,7 @@ function receivedRsoShipmentPoIds(){
 function rsoOrderReceived(po,receivedPoIds){
   return receivedPoIds.has(po.id)||
     (!po.inventoryRemovedByShipment&&!['shipment','removed-shipment'].includes(po.inventoryArrivalSource)&&
-      normalizeSharedShipmentStatus(po.poStatus)==='Received in LCBO');
+      rsoReceivedStatus(po.poStatus));
 }
 function rsoInvoiceMatchesOrder(invoice,po){
   if(!invoice)return false;
@@ -5258,7 +5286,7 @@ function ensureInvoiceForPo(po){
   const program=rsoOrderProgram(po);
   if(isTenderInvoiceOrder(po)){
     ensureTenderInvoiceForPo(po);
-  }else if(['REGU','SEAS','OTHER'].includes(program)){
+  }else if(program!=='TENDER'){
     ensureReguSeasOtherInvoiceForPo(po);
   }
 }
@@ -5274,8 +5302,10 @@ window.totalPoQuotedValue=totalPoQuotedValue;
 
 function ensureReguSeasOtherInvoiceForPo(po,receivedPoIds){
   if(!po||isRemovedTrainingPoNumber(po.number)||isTenderInvoiceOrder(po))return;
-  const program=rsoOrderProgram(po);
-  if(!['REGU','SEAS','OTHER'].includes(program))return;
+  // Every non-tender PO gets a SEAS/REGU/OTHER TO AGENT invoice (programs other than REGU/SEAS count as OTHER).
+  const rawProgram=rsoOrderProgram(po);
+  if(rawProgram==='TENDER')return;
+  const program=['REGU','SEAS','OTHER'].includes(rawProgram)?rawProgram:'OTHER';
   if(!Array.isArray(state.otherInvoices))state.otherInvoices=[];
 
   const poNo=String(po.number||'').trim();
@@ -5925,13 +5955,52 @@ function renderOtherInvoiceTotals(invoices){
     invoice=>normalizeRsoInvoiceStatus(invoice.paidStatus||invoice.invoicePaidStatus),
     invoice=>({...otherInvoiceAmounts(invoice),currency:String(invoice.currency||'CAD').trim().toUpperCase()||'CAD'}));
 }
+// SEAS/REGU/OTHER TO AGENT INVOICES: group invoices of the same transportation with the same soft colour.
+const rsoInvoiceGroupInfo=new WeakMap();
+let rsoInvoiceLastGroup=null,rsoInvoiceColumnCount=12;
+function rsoInvoiceTransportationName(inv){
+  const orders=[...(state.purchaseOrders||[]),...(state.manuallyArchivedPurchaseOrders||[])];
+  const number=invoiceOrderNumber(inv.poNumber);
+  const po=orders.find(p=>inv.sourcePoId&&p.id===inv.sourcePoId)||orders.find(p=>number&&invoiceOrderNumber(p.number)===number);
+  const poId=po?.id||inv.sourcePoId;
+  if(!poId)return '';
+  const records=allTransportationRecords();
+  const has=sh=>[...(sh.poLinks||[]),...(sh.recordKind==='transportation'?cargoLinksPoLinks(sh.cargoLinks||[]):[])].some(l=>String(l.poId)===String(poId));
+  const transport=records.find(sh=>sh.recordKind==='transportation'&&has(sh));
+  if(transport)return transport.name||transport.id;
+  const cargo=records.find(sh=>(sh.recordKind||'cargo')==='cargo'&&has(sh));
+  return cargo?(cargo.name||cargo.id)+' (cargo)':'';
+}
+function rsoGroupedInvoices(list,body){
+  const palette=[['#eef6ff','#2f80ed'],['#eefaf0','#2e7d32'],['#fff6e6','#d97706'],['#f4efff','#7c3aed'],['#fdeff4','#db2777'],['#e9f9f7','#0d9488'],['#f7f9e8','#65a30d'],['#fff0ec','#ea580c']];
+  const names=list.map(inv=>rsoInvoiceTransportationName(inv));
+  const order=[...new Set(names.filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  list.forEach((inv,i)=>{
+    const name=names[i];
+    const [bg,line]=name?palette[order.indexOf(name)%palette.length]:['#ffffff','#cbd5e1'];
+    rsoInvoiceGroupInfo.set(inv,{name:name?'Transportation: '+name:'No transportation',bg,line});
+  });
+  rsoInvoiceLastGroup=null;
+  rsoInvoiceColumnCount=body?.closest('table')?.querySelectorAll('thead th').length||12;
+  // Keep the original order inside each group; groups in transportation order, "No transportation" last.
+  return list.map((inv,i)=>({inv,i,name:names[i]})).sort((a,b)=>{
+    const ga=a.name?order.indexOf(a.name):order.length,gb=b.name?order.indexOf(b.name):order.length;
+    return ga-gb||a.i-b.i;
+  }).map(x=>x.inv);
+}
+function rsoInvoiceRowStart(inv){
+  const g=rsoInvoiceGroupInfo.get(inv)||{name:'',bg:'#fff',line:'#cbd5e1'};
+  const header=g.name!==rsoInvoiceLastGroup?`<tr class="office-group-header"><td colspan="${rsoInvoiceColumnCount}" style="background:${g.bg};border-left:6px solid ${g.line};border-top:2px solid ${g.line};font-weight:700;color:#1f2937;font-size:14px">${escapeHtml(g.name)}</td></tr>`:'';
+  rsoInvoiceLastGroup=g.name;
+  return header+`<tr class="office-group-row" style="--office-group-bg:${g.bg};--office-group-line:${g.line}">`;
+}
 function renderOtherInvoices(){
   const body=$('#otherInvoiceRows');if(!body)return;
   const invoices=visibleRsoInvoices();
   invoices.forEach(syncRsoInvoiceAmountFromLinkedPo);
   renderOtherInvoiceTotals(invoices);
   const otherInvoiceQuery=$('#otherInvoicePageSearch')?.value||'';
-  body.innerHTML=invoices.filter(x=>pageSearchMatches(x,otherInvoiceQuery)).map(x=>`<tr><td><b>${escapeHtml(x.name||'—')}</b>${invoicePoItemNamesHtml(x)}</td><td><button type="button" class="invoice-number-link" onclick="openGenericInvoiceDetails('other','${x.id}')">${escapeHtml(x.number||'—')}</button></td><td>${escapeHtml(x.date||'—')}</td><td class="other-invoice-amount">${renderOtherInvoiceAmount(x)}</td><td>${rsoInvoiceStatusSelect(x)}${x.stockOutDate?`<br><small>Stock-Out Date: ${escapeHtml(x.stockOutDate)}</small>`:''}</td><td>${x.fileName?`<button type="button" class="file-link" onclick="openSavedOtherInvoiceFile('${x.id}')">${escapeHtml(x.fileName)}</button>`:'—'}</td><td>${escapeHtml(x.notes||'—')}</td><td><button type="button" onclick="openOtherInvoiceEditor('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('SEAS/REGU/OTHER TO AGENT','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="deleteOtherInvoice('${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="9" class="note">No other invoices created. Click + Create Invoice.</td></tr>'}
+  body.innerHTML=rsoGroupedInvoices(invoices.filter(x=>pageSearchMatches(x,otherInvoiceQuery)),body).map(x=>`${rsoInvoiceRowStart(x)}<td><b>${escapeHtml(x.name||'—')}</b>${invoicePoItemNamesHtml(x)}</td><td><button type="button" class="invoice-number-link" onclick="openGenericInvoiceDetails('other','${x.id}')">${escapeHtml(x.number||'—')}</button></td><td>${escapeHtml(x.date||'—')}</td><td class="other-invoice-amount">${renderOtherInvoiceAmount(x)}</td><td>${rsoInvoiceStatusSelect(x)}${x.stockOutDate?`<br><small>Stock-Out Date: ${escapeHtml(x.stockOutDate)}</small>`:''}</td><td>${x.fileName?`<button type="button" class="file-link" onclick="openSavedOtherInvoiceFile('${x.id}')">${escapeHtml(x.fileName)}</button>`:'—'}</td><td>${escapeHtml(x.notes||'—')}</td><td><button type="button" onclick="openOtherInvoiceEditor('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('SEAS/REGU/OTHER TO AGENT','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="deleteOtherInvoice('${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="9" class="note">No other invoices created. Click + Create Invoice.</td></tr>'}
 function renderOtherInvoiceFileStatus(message=''){const el=$('#otherInvoiceFileStatus');if(el)el.textContent=message||(otherInvoicePendingFile?.name||'No invoice attached')}
 function readOtherInvoiceFile(file){if(!file)return;if(file.size>10*1024*1024){alert('Maximum invoice file size is 10 MB.');return}const r=new FileReader();r.onload=()=>{otherInvoicePendingFile={name:file.name,type:file.type||'application/octet-stream',data:r.result};renderOtherInvoiceFileStatus();const id=$('#otherInvoiceId').value,x=(state.otherInvoices||[]).find(v=>v.id===id);if(x){x.file=otherInvoicePendingFile;x.fileName=otherInvoicePendingFile.name;save();renderOtherInvoiceFileStatus(otherInvoicePendingFile.name+' — saved automatically')}};r.readAsDataURL(file)}
 function openOtherInvoiceFile(){if(!otherInvoicePendingFile?.data){alert('No invoice is attached.');return}openShipmentAttachmentBlob(otherInvoicePendingFile,'invoice-file')}
@@ -5945,7 +6014,7 @@ function syncRsoInvoiceAmountFromLinkedPo(inv){
   const po=orders.find(p=>inv.sourcePoId&&p.id===inv.sourcePoId)||
     orders.find(p=>number&&invoiceOrderNumber(p.number)===number);
   const program=String(po?.program||inv.poProgram||'').trim().toUpperCase();
-  if(po && ['REGU','SEAS','OTHER'].includes(program)){
+  if(po && program!=='TENDER' && !isTenderInvoiceOrder(po)){
     inv.amount=totalPoQuotedValue(po);
     inv.invoiceAmount=inv.amount;
     inv.currency=po.currency||inv.currency||'CAD';
@@ -9547,8 +9616,46 @@ function inventoryDeletedPoSnapshotsActive(){
 
 var selectedInventoryTransportationId=null;
 function inventoryTransportationReceived(shipment){
- return normalizeSharedShipmentStatus(shipment.status)==='Received in LCBO';
+ // "Received in LCBO" and "Received in LCBO (PARTIALLY)" both put the transportation in inventory.
+ return String(normalizeSharedShipmentStatus(shipment.status)).replace(/ \(PARTIALLY\)$/i,'')==='Received in LCBO';
 }
+// Why a received transportation is (not) in Inventory in stock — used for the message after saving and on the list page.
+function inventoryTransportationStatusInfo(shipmentId){
+ const shipment=allTransportationRecords().find(sh=>String(sh.id)===String(shipmentId));
+ if(!shipment)return {ok:false,reason:'Transportation not found.'};
+ const name=shipment.name||shipment.id;
+ if(shipment.recordKind!=='transportation')return {ok:false,name,reason:'This is a cargo record. Inventory is opened per transportation (Transportation page).'};
+ if(!inventoryTransportationReceived(shipment))return {ok:false,name,reason:'Status is not "Received in LCBO".'};
+ if(inventoryTransportationGroups().has(String(shipment.id)))return {ok:true,name};
+ const ids=new Set((shipment.poLinks||[]).map(l=>String(l.poId)));
+ for(const l of cargoLinksPoLinks(shipment.cargoLinks||[]))ids.add(String(l.poId));
+ if(!ids.size)return {ok:false,name,reason:'No PO is linked to this transportation (or to its cargo).'};
+ const live=[...(state.purchaseOrders||[]),...inventoryDeletedPoSnapshotsActive()];
+ const found=[...ids].map(id=>live.find(po=>String(po.originalPoId||po.id)===id)).filter(Boolean);
+ const archived=[...ids].filter(id=>(state.manuallyArchivedPurchaseOrders||[]).some(po=>String(po.originalPoId||po.id)===id));
+ if(!found.length&&archived.length)return {ok:false,name,reason:'Its POs are in Archived PO\'S. Restore the POs to show their stock.'};
+ if(!found.length)return {ok:false,name,reason:'Its linked POs no longer exist.'};
+ if(found.every(po=>inventoryPoProgram(po)==='TENDER'||isTenderInvoiceOrder(po)))return {ok:false,name,reason:'All its POs are TENDER POs. Inventory in stock shows non-tender POs only (REGU / SEAS / OTHER).'};
+ return {ok:false,name,reason:'Its POs could not be matched.'};
+}
+window.openInventoryForTransportation=shipmentId=>{
+ selectedInventoryTransportationId=String(shipmentId);
+ const search=document.getElementById('headInventorySearch');if(search)search.value='';
+ activate('inventory-in-stock','heads-page');
+};
+// After a transportation is marked "Received in LCBO": open its In Stock Transportation page, or say why it is not there.
+window.notifyInventoryForTransportation=shipmentId=>{
+ const info=inventoryTransportationStatusInfo(shipmentId);
+ if(info.ok){
+   const shipment=allTransportationRecords().find(sh=>String(sh.id)===String(shipmentId));
+   const poIds=new Set([...(shipment?.poLinks||[]),...cargoLinksPoLinks(shipment?.cargoLinks||[])].map(l=>l.poId));
+   const invoiceCount=(state.otherInvoices||[]).filter(inv=>poIds.has(inv.sourcePoId)).length;
+   const invoiceLine=invoiceCount?'\n\n'+invoiceCount+' invoice(s) for its POs are in SEAS/REGU/OTHER TO AGENT INVOICES.':'';
+   if(confirm('Transportation '+info.name+' is Received in LCBO and now has its own page:\n"In Stock Transportation: '+info.name+'".'+invoiceLine+'\n\nOpen the In Stock Transportation page now?'))window.openInventoryForTransportation(shipmentId);
+ }else if(info.name&&!/not "Received in LCBO"|cargo record/.test(info.reason)){
+   alert('Transportation '+info.name+' is Received in LCBO, but it was not added to Inventory in stock:\n'+info.reason);
+ }
+};
 function inventoryTransportationGroups(){
  const groups=new Map();
  const live=(state.purchaseOrders||[]);
@@ -9581,6 +9688,14 @@ function renderInventoryTransportationPages(groups=inventoryTransportationGroups
    list.append(button);
  }
  if(!groups.size)list.textContent='No received transportation with non-tender POs.';
+ const missing=allTransportationRecords().filter(sh=>sh.recordKind==='transportation'&&inventoryTransportationReceived(sh)&&!groups.has(String(sh.id)));
+ if(missing.length){
+   const note=document.createElement('div');
+   note.className='note';
+   note.style.cssText='flex-basis:100%;margin-top:10px;padding:10px 12px;border:1px solid #f5d08a;background:#fff8e6;border-radius:8px;color:#7a4b00';
+   note.innerHTML='<b>Received in LCBO but not shown here:</b>'+missing.map(sh=>'<div>• '+escapeHtml(sh.name||sh.id)+' — '+escapeHtml(inventoryTransportationStatusInfo(sh.id).reason||'')+'</div>').join('');
+   list.append(note);
+ }
 }
 
 function inventoryActionArg(value){
@@ -11156,6 +11271,22 @@ function separateOfficeRetailPricing(){
 }
 // Prime Cost per Bottle for an Office/Warehouse item: from the In Stock Transportation PO pricing,
 // or (for items added with "+ Add Inventory") the prime cost entered in that form.
+// Fill a filter <select> with values, keeping the current choice.
+function fillInventoryFilter(id,values){
+  const select=document.getElementById(id);if(!select)return '';
+  const current=select.value;
+  const first=select.options[0]?.outerHTML||'<option value="">All</option>';
+  const list=[...new Set(values.filter(v=>v!==''&&v!=null).map(String))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  select.innerHTML=first+list.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+  select.value=list.includes(current)?current:'';
+  return select.value;
+}
+window.clearInventoryFilters=page=>{
+  const ids=page==='office'?['officeInventorySearch','officeFilterTransportation','officeFilterSupplier','officeFilterPo','officeFilterStock']
+    :['headInventorySearch','headFilterVendor','headFilterPo','headFilterProgram','headFilterStock'];
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  if(page==='office')renderOfficeInventory();else renderHeadInventory();
+};
 function officeManualPrimeCost(record,licensed){
   const value=record?.manualPrimeCost?.[licensed?'licensed':'nonLicensed'];
   return value===''||value==null||!Number.isFinite(Number(value))?null:Number(value);
@@ -11277,7 +11408,45 @@ function renderOfficeInventory(statisticsCards){
   const manualTotals={revenue:0,profit:0,purchased:0,potentialProfit:0,potentialRevenue:0,purchasedPotentialNl:0,purchasedPotentialL:0};
   const potentialTotal={profit:0,missingBottles:0};
   const channelMade=Object.fromEntries(officeSaleChannels().map(c=>[c.id,{revenue:0,profit:0,missing:false}]));
-  const officeRows=[...grouped].map(([key,{record,cases,licensedCases}])=>{
+  // Group rows by transportation (items added by hand grouped by the transportation typed for them),
+  // each group with its own soft colour.
+  const officeGroupName=(key,record)=>{
+    const names=poTransportation.get(String(record.poId||decodeURIComponent(String(key).split('::')[0])))||[];
+    if(names.length)return 'Transportation: '+names.join(', ');
+    return record.transportationName?'Transportation: '+record.transportationName+' (added by hand)':'Added by hand (no transportation)';
+  };
+  const officeGroupPalette=[['#eef6ff','#2f80ed'],['#eefaf0','#2e7d32'],['#fff6e6','#d97706'],['#f4efff','#7c3aed'],['#fdeff4','#db2777'],['#e9f9f7','#0d9488'],['#f7f9e8','#65a30d'],['#fff0ec','#ea580c']];
+  const officeGroupOrder=[...new Set([...grouped].map(([key,{record}])=>officeGroupName(key,record)))]
+    .sort((a,b)=>(a.startsWith('Added by hand')-b.startsWith('Added by hand'))||a.localeCompare(b));
+  const officeGroupColor=name=>name.startsWith('Added by hand')?['#f3f4f6','#6b7280']:officeGroupPalette[officeGroupOrder.indexOf(name)%officeGroupPalette.length];
+  const sortedGrouped=[...grouped].sort(([ka,a],[kb,b])=>officeGroupOrder.indexOf(officeGroupName(ka,a.record))-officeGroupOrder.indexOf(officeGroupName(kb,b.record)));
+  let lastOfficeGroup=null,officeVisibleRows=0;
+  // Search and filters (table only; the squares above always show all items).
+  const officePoNumber=(key,record)=>record.poNumber||inventoryProformaPo(String(record.poId||decodeURIComponent(String(key).split('::')[0])))?.number||'';
+  const officeFilter=body?{
+    q:(document.getElementById('officeInventorySearch')?.value||'').trim().toLowerCase(),
+    transportation:fillInventoryFilter('officeFilterTransportation',sortedGrouped.map(([key,{record}])=>officeGroupName(key,record))),
+    supplier:fillInventoryFilter('officeFilterSupplier',sortedGrouped.map(([,{record}])=>record.vendor||'')),
+    po:fillInventoryFilter('officeFilterPo',sortedGrouped.map(([key,{record}])=>officePoNumber(key,record))),
+    stock:document.getElementById('officeFilterStock')?.value||''
+  }:null;
+  const officeRowVisible=(key,record,cases,sales)=>{
+    if(!officeFilter)return true;
+    const f=officeFilter,group=officeGroupName(key,record),po=officePoNumber(key,record);
+    if(f.transportation&&group!==f.transportation)return false;
+    if(f.supplier&&String(record.vendor||'')!==f.supplier)return false;
+    if(f.po&&String(po)!==f.po)return false;
+    const sold=officeSaleChannels().some(c=>officeChannelSoldCases(sales,c.id)>0);
+    const price=officeInventoryPricing(record).finalRetailBottle;
+    if(f.stock==='instock'&&!(cases>0))return false;
+    if(f.stock==='soldout'&&cases>0)return false;
+    if(f.stock==='sold'&&!sold)return false;
+    if(f.stock==='nosales'&&sold)return false;
+    if(f.stock==='noprice'&&!(price===''||price==null))return false;
+    if(f.q&&![record.product,record.itemNo,po,record.vendor,group].join(' ').toLowerCase().includes(f.q))return false;
+    return true;
+  };
+  const officeRows=sortedGrouped.map(([key,{record,cases,licensedCases}])=>{
     const nonLicensedCases=cases-licensedCases;
     const sales=state.inventorySalesMetrics?.[key]||{};
     const isManualItem=!inventoryProformaPo(String(record.poId||decodeURIComponent(String(key).split('::')[0])))?.inventoryProformaPricing;
@@ -11312,7 +11481,11 @@ function renderOfficeInventory(statisticsCards){
         <button type="button" class="secondary small" onclick="sellOfficeInventoryToChannel('${keyArg}','${c.id}')" ${stock>0?'':'disabled'}>Sold to ${escapeHtml(c.label)}</button></div>`;
     }).join('');
     const returnButton=`<button type="button" class="secondary small" onclick="returnOfficeChannelSale('${keyArg}')" ${anySold?'':'disabled'}>Return</button>`;
-    return `<tr>
+    const groupName=officeGroupName(key,record),[groupBg,groupLine]=officeGroupColor(groupName);
+    const rowVisible=officeRowVisible(key,record,cases,sales);
+    const groupHeader=rowVisible&&groupName!==lastOfficeGroup?`<tr class="office-group-header"><td colspan="10" style="background:${groupBg};border-left:6px solid ${groupLine};border-top:2px solid ${groupLine};font-weight:700;color:#1f2937;font-size:14px">${escapeHtml(groupName)}</td></tr>`:'';
+    if(rowVisible){lastOfficeGroup=groupName;officeVisibleRows++;}
+    return (rowVisible?groupHeader:'')+`<tr class="office-group-row" ${rowVisible?'':'hidden'} style="--office-group-bg:${groupBg};--office-group-line:${groupLine}">
       <td><b>${escapeHtml(record.product||'—')}</b><br><small>Item # ${escapeHtml(record.itemNo||'—')}</small><br><small>PO # ${escapeHtml(record.poNumber||inventoryProformaPo(String(record.poId||decodeURIComponent(String(key).split('::')[0])))?.number||'—')}</small><br><small>Supplier: ${escapeHtml(record.vendor||'—')}</small><br><small>Transportation: ${escapeHtml((poTransportation.get(String(record.poId||decodeURIComponent(String(key).split('::')[0])))||[]).join(', ')||record.transportationName||'—')}</small></td>
       <td><b style="font-size:17px">${officeCasesBottlesText(cases,bpc)}</b> / ${bpc.toLocaleString()}<br><small>${bottles.toLocaleString()} bottles in stock</small>
         <div style="margin-top:6px;font-size:12px;line-height:1.5;color:#94a3b8">
@@ -11409,7 +11582,7 @@ function renderOfficeInventory(statisticsCards){
       <td><div style="display:flex;flex-direction:column;gap:6px;min-width:190px"><button type="button" class="small" onclick="editOfficeInventory('${keyArg}')">Open / Edit</button><button type="button" class="secondary small" onclick="archiveOfficeInventory('${keyArg}')">Move to Archived Inventory</button><button type="button" class="danger small" onclick="deleteOfficeInventory('${keyArg}')">Delete</button></div></td>
     </tr>`;
   }).join('');
-  if(body)body.innerHTML=officeRows||'<tr><td colspan="10">No office/warehouse stock yet. Add inventory or move cases from In Stock Transportation.</td></tr>';
+  if(body)body.innerHTML=(officeVisibleRows?officeRows:'')||(officeFilter&&grouped.size?'<tr><td colspan="10">No items match the search / filters. <button type="button" class="secondary small" onclick="clearInventoryFilters(\'office\')">Clear filters</button></td></tr>':'')||'<tr><td colspan="10">No office/warehouse stock yet. Add inventory or move cases from In Stock Transportation.</td></tr>';
   cards.innerHTML=`
     <div class="card"><span>Cases in Stock / Bottles in Stock</span>
       <strong>${officeRoundCases(totalCases).toLocaleString(undefined,{maximumFractionDigits:2})} / ${totalBottles.toLocaleString()}</strong>
@@ -11489,6 +11662,27 @@ function renderTransportationInventory(statisticsCards){
    'In Stock Transportation: '+(selected.shipment.name||selectedInventoryTransportationId):'In Stock Transportation';
  const rows=[];
  const projectRows=[];
+ // Dropdown filters on In Stock Transportation (fill options from this transportation's POs).
+ const headFilter=aggregate?null:(()=>{
+   const all=[];
+   orders.forEach(({po})=>(po.lines||[]).forEach(()=>all.push(po)));
+   const vendors=[],pos=[],programs=[];
+   orders.forEach(({po})=>{vendors.push(...(po.supplierNames||po.vendors||[]),po.vendor||'');pos.push(po.number||'');programs.push(inventoryPoProgram(po));});
+   return {vendor:fillInventoryFilter('headFilterVendor',vendors),po:fillInventoryFilter('headFilterPo',pos),
+     program:fillInventoryFilter('headFilterProgram',programs),stock:document.getElementById('headFilterStock')?.value||''};
+ })();
+ const inventoryHeadRowMatches=row=>{
+   if(!headFilter)return true;
+   const f=headFilter;
+   if(f.vendor&&!String(row.vendor).split(', ').includes(f.vendor))return false;
+   if(f.po&&String(row.poNumber)!==f.po)return false;
+   if(f.program&&String(row.program)!==f.program)return false;
+   if(f.stock==='instock'&&!(row.cases>0))return false;
+   if(f.stock==='nostock'&&row.cases>0)return false;
+   if(f.stock==='office'&&!(state.officeInventory||[]).some(r=>r.inventoryKey===row.inventoryKey&&!r.inventoryArchived&&num(r.cases)>0))return false;
+   if(f.stock==='noprice'){const pr=inventoryProformaPo(row.poId)?.inventoryProformaPricing||row.proformaPricing||{};if(!(pr.finalRetailBottle===''||pr.finalRetailBottle==null))return false;}
+   return true;
+ };
  let projectTotalProfit=0;
  let hasMissingProfit=false;
 
@@ -11548,7 +11742,7 @@ function renderTransportationInventory(statisticsCards){
       deletedFromPoPage:!!po.inventoryDeletedFromPoPage
     };
     projectRows.push(row);
-    if(!q||hay.includes(q))rows.push(row);
+    if((!q||hay.includes(q))&&inventoryHeadRowMatches(row))rows.push(row);
    });
   }
  });
@@ -11759,7 +11953,8 @@ function renderTransportationInventory(statisticsCards){
        totalLabCost+=num(pricing?.totalLabCost);
      }
    });
-   const totalProformaBalanceCents=rows.reduce((sum,r)=>{
+   // Squares always show the whole transportation, whatever the search / filters.
+   const totalProformaBalanceCents=projectRows.reduce((sum,r)=>{
      const balance=inventoryProformaBalanceOwing(r.cases,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,r.bpc);
      return sum+(balance==='—'?0:Math.round(Number(balance)*100));
    },0);

@@ -188,3 +188,20 @@ sales, returns, archive/restore, edit. All totals checked by hand. Fixes:
 - Archived Inventory page: tab row now shows all four inventory pages in the same order (Archived Inventory stays last).
 - Inventory IN STOCK Office/Warehouse: the three "Sold to" squares now start on their own second line, next to each other.
 - Office/Warehouse: "Total Item Retail Value" added on top of Total Prime Cost Purchased (same square).
+- Inventory IN STOCK Office/Warehouse: rows grouped by transportation with a coloured title row, soft background
+  and coloured left edge per transportation. Hand-added items grouped by their typed transportation, or grey "Added by hand".
+- Search & filters:
+  In Stock Transportation: search box + Vendor/Producer, PO #, Program, Stock (cases in stock / none left /
+  has Office/Warehouse stock / no retail price) + Clear filters.
+  Inventory IN STOCK Office/Warehouse: search box (item, item #, PO #, supplier, transportation) + Transportation,
+  Supplier, PO #, Stock (in stock / no stock / has sales / no sales / no retail price) + Clear filters.
+  Filters change only the table; the squares always show the full totals.
+- Transportation marked "Received in LCBO" (row status or Open / Edit): the program now asks to open its new
+  "In Stock Transportation: <name>" page right away. If it cannot be added, a message says why
+  (only TENDER POs, no POs linked, POs archived...). "Received in LCBO (PARTIALLY)" also counts.
+- Inventory in stock LCBO Trillium/office/storage: lists received transportations that are not shown, with the reason.
+- "Received in LCBO": invoices in SEAS/REGU/OTHER TO AGENT INVOICES are created automatically for ALL non-tender POs
+  of the transportation (linked directly or through its cargo). Programs other than REGU/SEAS are filed as OTHER.
+  The message after saving says how many invoices are there. (Deleted/archived invoices are not re-created.)
+- SEAS/REGU/OTHER TO AGENT INVOICES: invoices of the same transportation are grouped with a coloured title row
+  and the same soft background colour; invoices without a transportation are last.
