@@ -233,3 +233,4 @@ sales, returns, archive/restore, edit. All totals checked by hand. Fixes:
   under the PO #. Older ones made on arrival say "...Arrived in Canada". Page description mentions the rule.
 - Transportation colours: background tints removed everywhere; only the coloured lines stay (left edge, group title line,
   outline around the In Stock Transportation title and the transportation buttons).
+- In Stock Transportation, Profit column header: "(Aprox total profit if all Non-Licensed: $X / if all Licensed: $Y)" — same calculation, shown for both.
