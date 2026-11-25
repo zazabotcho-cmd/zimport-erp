@@ -11095,6 +11095,9 @@ function renderOfficeInventory(statisticsCards){
   const channelTotals=Object.fromEntries(officeSaleChannels().map(c=>[c.id,{cases:0,bottles:0}]));
   const costBasis=body?inventoryPoCostBasisMap():new Map();
   const purchasedTotal={amount:0,missing:0};
+  const madeTotal={revenue:0,profit:0,revenueMissing:0,profitMissing:0};
+  const potentialTotal={profit:0,missingBottles:0};
+  const channelMade=Object.fromEntries(officeSaleChannels().map(c=>[c.id,{revenue:0,profit:0,missing:false}]));
   const officeRows=[...grouped].map(([key,{record,cases,licensedCases}])=>{
     const nonLicensedCases=cases-licensedCases;
     const sales=state.inventorySalesMetrics?.[key]||{};
@@ -11189,8 +11192,21 @@ function renderOfficeInventory(statisticsCards){
           const profit=soldBottles===0?0:revenue===null||cost===null?null:revenue-cost*soldBottles;
           if(revenue===null)revenueMissing=true;else totalRevenue+=revenue;
           if(profit===null)profitMissing=true;else totalProfit+=profit;
+          if(revenue===null||profit===null)channelMade[c.id].missing=true;
+          channelMade[c.id].revenue+=revenue??0;channelMade[c.id].profit+=profit??0;
           return `<div style="min-width:190px;margin-bottom:10px">${escapeHtml(c.label)}<br><b>${inventoryPriceMoney(revenue)} / ${inventoryPriceMoney(profit)}</b></div>`;
         }).join('');
+        madeTotal.revenue+=totalRevenue;madeTotal.profit+=totalProfit;
+        if(revenueMissing)madeTotal.revenueMissing++;
+        if(profitMissing)madeTotal.profitMissing++;
+        // Potential profit of the stock still in hand: retail price - prime cost, per Non-Licensed / Licensed stock.
+        for(const [licensed,groupCases] of [[false,nonLicensedCases],[true,licensedCases]]){
+          const groupBottles=Math.round(groupCases*bpc);
+          if(!groupBottles)continue;
+          const cost=officePrimeCostPerBottle(record,key,costBasis,licensed);
+          if(retailPrice===null||cost===null)potentialTotal.missingBottles+=groupBottles;
+          else potentialTotal.profit+=(retailPrice-cost)*groupBottles;
+        }
         return cells+`<div style="border-top:1px solid #e2e8f0;padding-top:6px">Total<br><b>${revenueMissing?'—':inventoryPriceMoney(totalRevenue)} / ${profitMissing?'—':inventoryPriceMoney(totalProfit)}</b></div>`;
       })()}</td>
       <td style="min-width:160px"><label style="display:block">Sold out on
@@ -11206,11 +11222,22 @@ function renderOfficeInventory(statisticsCards){
     <div class="card"><span>Bottles in Stock</span><strong>${totalBottles.toLocaleString()}</strong></div>
     ${body?`<div class="card"><span>Stock for Non-Licensed Customers</span><strong>${officeRoundCases(totalNonLicensedStock).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong></div>
     <div class="card"><span>Stock for Licensed Customers</span><strong>${officeRoundCases(totalLicensedStock).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong></div>`:''}
-    <div class="card"><span>Stock Total Retail Value</span><strong>${inventoryPriceMoney(retailTotal.cents/100)}</strong>
-      ${retailTotal.unpricedBottles?`<small>${retailTotal.unpricedBottles.toLocaleString()} bottles without a retail price</small>`:''}</div>
+    <div class="card"><span>Potential Revenue — Stock in Hand (HST incl.)</span><strong>${inventoryPriceMoney(retailTotal.cents/100)}</strong>
+      <small style="color:#94a3b8">Bottles in stock × Final Retail Price</small>
+      ${retailTotal.unpricedBottles?`<small>${retailTotal.unpricedBottles.toLocaleString()} bottles without a retail price</small>`:''}
+      ${body?`<span style="margin-top:8px">Potential Profit — Stock in Hand</span><strong>${inventoryPriceMoney(potentialTotal.profit)}</strong>
+      <small style="color:#94a3b8">(Final Retail Price − Prime Cost) × bottles in stock</small>
+      ${potentialTotal.missingBottles?`<small>${potentialTotal.missingBottles.toLocaleString()} bottles without a price or prime cost not counted</small>`:''}`:''}</div>
+    ${body?`<div class="card"><span>Revenue Already Made (HST incl.)</span><strong>${inventoryPriceMoney(madeTotal.revenue)}</strong>
+      <span style="margin-top:8px">Net Profit Already Made</span><strong style="color:${madeTotal.profit<0?'var(--red)':'var(--green)'}">${inventoryPriceMoney(madeTotal.profit)}</strong>
+      <small style="color:#94a3b8">From sales of items still on this page: revenue − Prime Cost × bottles sold</small>
+      ${madeTotal.revenueMissing||madeTotal.profitMissing?`<small>${Math.max(madeTotal.revenueMissing,madeTotal.profitMissing)} item(s) missing a price or prime cost — partly not counted</small>`:''}</div>`:''}
     ${body?`<div class="card"><span>Total Prime Cost Purchased</span><strong>${inventoryPriceMoney(purchasedTotal.amount)}</strong>
       ${purchasedTotal.missing?`<small>${purchasedTotal.missing} item(s) without a proforma net price not counted</small>`:''}</div>`:''}
-    ${officeSaleChannels().map(c=>`<div class="card"><span>Sold to ${escapeHtml(c.label)}</span><strong>${officeRoundCases(channelTotals[c.id].cases).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong><small>${channelTotals[c.id].bottles.toLocaleString()} bottles</small></div>`).join('')}`;
+    ${officeSaleChannels().map(c=>`<div class="card"><span>Sold to ${escapeHtml(c.label)}</span><strong>${officeRoundCases(channelTotals[c.id].cases).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong><small>${channelTotals[c.id].bottles.toLocaleString()} bottles</small>
+      ${body?`<span style="margin-top:8px">Revenue (HST incl.) / Profit (HST incl.)</span>
+      <strong style="font-size:18px">${inventoryPriceMoney(channelMade[c.id].revenue)} / ${inventoryPriceMoney(channelMade[c.id].profit)}</strong>
+      ${channelMade[c.id].missing?'<small>Some sales missing a price or prime cost — not counted</small>':''}`:''}</div>`).join('')}`;
   // Statistics combine by customer type; office stock uses its one price for both.
   const retailTotals=['Non-Licensed','Licensed'].map(label=>({label,...retailTotal}));
   return {totalCases,totalBottles,retailTotals};

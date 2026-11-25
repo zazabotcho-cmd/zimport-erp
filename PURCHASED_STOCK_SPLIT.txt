@@ -119,3 +119,9 @@ UPDATE 8 (2026-11-25)
   Edit: description, Item #, supplier, Final Retail Price, Available for sale since; for items added with
   "+ Add Inventory" also cases (Non-Licensed/Licensed), bottles per case and Prime Cost.
   Archived items appear on the Archived Inventory page (Restore / Delete there).
+- Office/Warehouse summary squares:
+  "Potential Revenue — Stock in Hand" (bottles in stock x Final Retail Price) with
+  "Potential Profit — Stock in Hand" ((Final Retail Price - Prime Cost) x bottles in stock).
+  "Revenue Already Made" and "Net Profit Already Made" = sales of items still on the page
+  (revenue - Prime Cost x bottles sold).
+- Office/Warehouse "Sold to Restaurant/Hotels / Online Store / In Store" squares now also show Revenue (HST incl.) / Profit (HST incl.).
