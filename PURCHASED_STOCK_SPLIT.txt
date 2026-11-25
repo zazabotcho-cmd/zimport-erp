@@ -173,3 +173,7 @@ sales, returns, archive/restore, edit. All totals checked by hand. Fixes:
 - Project Sales Revenue, Project Net Profit, Project Total Profit and Cases Sold per Month now count ONLY
   Restaurant/Hotels, Online Store and In Store sales of items still on the Office/Warehouse page.
   Not counted: archived/deleted items, old sales before these channels, sales made directly on In Stock Transportation.
+- "Sell-Out Months / Cases Sold per Month" and "Project Total Profit / Monthly Profit" square moved from the Project row to the Live row.
+- "Potential Profit — Stock in Hand" square moved from the Live row to the Project row.
+- In Stock Transportation (and Total Live on Statistics): "Office/Warehouse Stock Value" removed from the Live Retail Value square.
+- Project row: "Potential Profit" is now Project Potential Profit = (If Final Retail Price - Prime Cost) x original project bottles, shown for Non-Licensed and Licensed.

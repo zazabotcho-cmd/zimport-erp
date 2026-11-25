@@ -11626,6 +11626,7 @@ function renderTransportationInventory(statisticsCards){
    // Where the sales revenue comes from (shown under Project Sales Revenue).
    const revenueParts={officePage:0,officeRemoved:0,officeEarlier:0,direct:0};
    let officeStockValue=0,officeStockUnpriced=0,potentialProfit=0,potentialMissingBottles=0;
+   const projectPotential={nl:0,l:0,nlMissing:0,lMissing:0};
    orders.forEach(({po,shipment})=>{
      const pricing=inventoryProformaPo(po.originalPoId||po.id)?.inventoryProformaPricing||po.inventoryProformaPricing;
      const transportationPerBottle=nonTenderPoTransportationCad(po,shipment);
@@ -11685,6 +11686,16 @@ function renderTransportationInventory(statisticsCards){
          ];
          revenueParts.officePage+=salesRevenue-revenueBefore;
          void parts;
+         // Project: potential profit of all project bottles = (If Final Retail Price - Prime Cost) x project bottles.
+         {
+           const projectLineBottles=originalCases*bottlesPerCase;
+           for(const [licensed,field] of [[false,'finalRetailBottle'],[true,'licensedRetailBottle']]){
+             const price=pricing?.[field],cost=primeCost(licensed),slot=licensed?'l':'nl';
+             if(!projectLineBottles)continue;
+             if(!validPrice(price)||cost===null)projectPotential[slot+'Missing']+=projectLineBottles;
+             else projectPotential[slot]+=(Number(price)-cost)*projectLineBottles;
+           }
+         }
          // Live: potential profit of stock in hand = (retail price - Prime Cost) x bottles.
          // LCBO Trillium stock uses the Non-licensed transportation price; Office/Warehouse stock uses the
          // Office/Warehouse price with the Non-Licensed / Licensed Prime Cost of its split.
@@ -11776,12 +11787,13 @@ function renderTransportationInventory(statisticsCards){
        <span style="margin-top:8px">Total Other Fees</span>
        <strong>${inventoryPriceMoney(totalOtherFees)}</strong>
      </div>
-     <div class="card">
-       <span>${aggregate?'Longest Project Sell-Out Period (Months)':'Project Sell-Out Months'} / Total Cases Sold per Month</span>
-       <strong>${projectSellOutMonths===null?'—':projectSellOutMonths.toLocaleString('en-CA',{maximumFractionDigits:2})} / ${projectSellOutMonths!==null?projectCasesPerMonth.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong>
-       <span style="margin-top:8px">Project Total Profit / Project Monthly Profit</span>
-       <strong>${inventoryPriceMoney(actualProfit)} / ${inventoryPriceMoney(!projectSellOutMonths?null:actualProfit/projectSellOutMonths)}</strong>
-       <small style="color:#94a3b8">Actual sale prices − Prime Cost × bottles sold${actualProfitMissing?' (some sales missing a price or prime cost — not counted)':''}</small>
+     <div class="card"><span>Project Potential Profit — Non-Licensed (TAX/HST incl.)</span>
+       <strong>${inventoryPriceMoney(projectPotential.nl)}</strong>
+       ${projectPotential.nlMissing?`<small>${projectPotential.nlMissing.toLocaleString()} bottles without a price or prime cost not counted</small>`:''}
+       <span style="margin-top:8px">Project Potential Profit — Licensed (TAX/HST incl.)</span>
+       <strong>${inventoryPriceMoney(projectPotential.l)}</strong>
+       ${projectPotential.lMissing?`<small>${projectPotential.lMissing.toLocaleString()} bottles without a price or prime cost not counted</small>`:''}
+       <small style="color:#94a3b8">(If Final Retail Price − Prime Cost per Bottle) × Total Project Bottles</small>
      </div>
     </div>
     ${rowTitle(aggregate?'Total Live':'Live')}
@@ -11809,18 +11821,18 @@ function renderTransportationInventory(statisticsCards){
        <strong>${livePoIds.size}</strong>
        ${aggregate?`<span style="margin-top:8px">In Stock Transportations</span><strong>${shipments.length}</strong>`:''}
      </div>
-     ${retailCard('transportationLiveRetailValues','kpi-col3',`<span style="margin-top:8px">Office/Warehouse Stock Value (HST incl.)</span>
-       <strong>${inventoryPriceMoney(officeStockValue)}</strong>
-       <small style="color:#94a3b8">Office/Warehouse bottles × Office/Warehouse Final Retail Price</small>
-       ${officeStockUnpriced?`<small>${officeStockUnpriced.toLocaleString()} bottles without a retail price</small>`:''}`)}
+     ${retailCard('transportationLiveRetailValues','kpi-col3')}
      <div class="card kpi-col4">
        <span>Total Amount of Proforma Balance Owing (TAX/HST incl.)</span>
        <strong>${inventoryPriceMoney(totalProformaBalanceCents/100)}</strong>
      </div>
-     <div class="card kpi-col5"><span>Potential Profit — Stock in Hand (HST incl.)</span>
-       <strong>${inventoryPriceMoney(potentialProfit)}</strong>
-       <small style="color:#94a3b8">(Retail price − Prime Cost) × bottles at LCBO Trillium and Office/Warehouse</small>
-       ${potentialMissingBottles?`<small>${potentialMissingBottles.toLocaleString()} bottles without a price or prime cost not counted</small>`:''}</div>
+     <div class="card kpi-col5">
+       <span>${aggregate?'Longest Project Sell-Out Period (Months)':'Project Sell-Out Months'} / Total Cases Sold per Month</span>
+       <strong>${projectSellOutMonths===null?'—':projectSellOutMonths.toLocaleString('en-CA',{maximumFractionDigits:2})} / ${projectSellOutMonths!==null?projectCasesPerMonth.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong>
+       <span style="margin-top:8px">Project Total Profit / Project Monthly Profit</span>
+       <strong>${inventoryPriceMoney(actualProfit)} / ${inventoryPriceMoney(!projectSellOutMonths?null:actualProfit/projectSellOutMonths)}</strong>
+       <small style="color:#94a3b8">Actual sale prices − Prime Cost × bottles sold${actualProfitMissing?' (some sales missing a price or prime cost — not counted)':''}</small>
+     </div>
     </div>`;
  }
  const total=aggregate?null:document.getElementById('inventoryTotalItemProfit');
