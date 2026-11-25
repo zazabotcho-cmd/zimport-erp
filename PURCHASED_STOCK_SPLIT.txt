@@ -103,3 +103,6 @@ UPDATE 8 (2026-11-25)
 - Office/Warehouse Stock Inventory: new column "Item total prime cost (what was purchased)" next to
   Item total retail value = purchased bottles (stock now + sold) x Prime Cost per Bottle, split
   Non-Licensed / Licensed. New summary card "Total Prime Cost Purchased".
+- Office/Warehouse: Supplier column removed; supplier now shown under Item # in "Item Description / Item # / Supplier".
+- Office/Warehouse: case number in "Cases in Stock / Bottles per Case" shown larger.
+- Office/Warehouse: new last column "Sold out on" with a date field (same date as on In Stock Transportation).

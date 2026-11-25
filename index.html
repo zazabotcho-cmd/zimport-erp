@@ -1432,9 +1432,9 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  </div>
  <div class="cards" id="officeInventoryKpis"></div>
  <div class="table-wrap"><table><thead><tr>
-  <th>Item Description / Item #</th><th>Supplier</th><th>Cases in Stock / Bottles per Case</th>
+  <th>Item Description / Item # / Supplier</th><th>Cases in Stock / Bottles per Case</th>
   <th>Prime Cost per Bottle (TAX/HST incl.)</th><th>Final Retail Price per Bottle (CAD, TAX/HST incl.)</th><th>Item total retail value</th><th>Item total prime cost<br><small>(what was purchased)</small></th>
-  <th>Sold to</th>
+  <th>Sold to</th><th>Sold out on</th>
  </tr></thead><tbody id="officeInventoryRows"></tbody></table></div>
 </div></section>
 <section id="inventory-stock-statistics" class="panel"><div class="box">
@@ -11027,9 +11027,8 @@ function renderOfficeInventory(statisticsCards){
     }).join('');
     const returnButton=`<button type="button" class="secondary small" onclick="returnOfficeChannelSale('${keyArg}')" ${anySold?'':'disabled'}>Return</button>`;
     return `<tr>
-      <td><b>${escapeHtml(record.product||'—')}</b><br><small>Item # ${escapeHtml(record.itemNo||'—')}</small></td>
-      <td>${escapeHtml(record.vendor||'—')}</td>
-      <td><b>${officeCasesBottlesText(cases,bpc)}</b> / ${bpc.toLocaleString()}<br><small>${bottles.toLocaleString()} bottles in stock</small>
+      <td><b>${escapeHtml(record.product||'—')}</b><br><small>Item # ${escapeHtml(record.itemNo||'—')}</small><br><small>Supplier: ${escapeHtml(record.vendor||'—')}</small></td>
+      <td><b style="font-size:17px">${officeCasesBottlesText(cases,bpc)}</b> / ${bpc.toLocaleString()}<br><small>${bottles.toLocaleString()} bottles in stock</small>
         <div style="margin-top:6px;font-size:12px;line-height:1.5;color:#94a3b8">
           <div>Non-Licensed: ${officeCasesBottlesText(nonLicensedCases,bpc)}</div>
           <div>Licensed: ${officeCasesBottlesText(licensedCases,bpc)}</div>
@@ -11066,6 +11065,9 @@ function renderOfficeInventory(statisticsCards){
           <div style="margin-top:6px;font-size:12px;line-height:1.5;color:#94a3b8">${lines}</div>`;
       })()}</td>
       <td>${soldTo}${returnButton}</td>
+      <td style="min-width:160px"><label style="display:block">Sold out on
+        <input type="date" data-inventory-sales-date value="${escapeHtml(sales.soldOutOn||'')}" onchange="updateInventorySalesDate('${keyArg}','soldOutOn',this)">
+      </label>${sales.availableSince?`<small style="color:#94a3b8">Available for sale since ${escapeHtml(sales.availableSince)}</small>`:''}</td>
     </tr>`;
   }).join('');
   if(body)body.innerHTML=officeRows||'<tr><td colspan="8">No office/warehouse stock yet. Add inventory or move cases from In Stock Transportation.</td></tr>';
