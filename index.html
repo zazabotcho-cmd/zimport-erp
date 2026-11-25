@@ -1432,7 +1432,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  </div>
  <div class="cards" id="officeInventoryKpis"></div>
  <div class="table-wrap"><table><thead><tr>
-  <th>Item Description / Item #</th><th>Supplier</th><th>Cases in Stock / Bottles per Case</th><th>Office/Warehouse Stock<br><small>Non-Licensed / Licensed cases</small></th>
+  <th>Item Description / Item #</th><th>Supplier</th><th>Cases in Stock / Bottles per Case</th>
   <th>Prime Cost per Bottle (TAX/HST incl.)</th><th>Final Retail Price per Bottle (CAD, TAX/HST incl.)</th><th>Item total retail value</th>
   <th>Sold to</th>
  </tr></thead><tbody id="officeInventoryRows"></tbody></table></div>
@@ -10994,28 +10994,24 @@ function renderOfficeInventory(statisticsCards){
     return `<tr>
       <td><b>${escapeHtml(record.product||'—')}</b><br><small>Item # ${escapeHtml(record.itemNo||'—')}</small></td>
       <td>${escapeHtml(record.vendor||'—')}</td>
-      <td><b>${officeCasesBottlesText(cases,bpc)}</b> / ${bpc.toLocaleString()}<br><small>${bottles.toLocaleString()} bottles in stock</small></td>
-      <td><label style="display:block;margin-bottom:6px">Non-Licensed
-          <input type="number" min="0" max="${cases}" step="any" inputmode="decimal" style="width:90px"
-          aria-label="Office/Warehouse cases for Non-Licensed customers, ${escapeHtml(record.product||record.itemNo||'item')}"
-          value="${officeRoundCases(nonLicensedCases)}" data-office-inventory-key="${escapeHtml(key)}"
-          onchange="updateOfficeCustomerCases(this,false)" ${cases<=0?'disabled':''}></label>
-        <label style="display:block">Licensed
-          <input type="number" min="0" max="${cases}" step="any" inputmode="decimal" style="width:90px"
-          aria-label="Office/Warehouse cases for Licensed customers, ${escapeHtml(record.product||record.itemNo||'item')}"
-          value="${officeRoundCases(licensedCases)}" data-office-inventory-key="${escapeHtml(key)}"
-          onchange="updateOfficeCustomerCases(this,true)" ${cases<=0?'disabled':''}></label>
-      </td>
+      <td><b>${officeCasesBottlesText(cases,bpc)}</b> / ${bpc.toLocaleString()}<br><small>${bottles.toLocaleString()} bottles in stock</small>
+        <div style="margin-top:6px;font-size:12px;line-height:1.5;color:#94a3b8">
+          <div>Non-Licensed: ${officeCasesBottlesText(nonLicensedCases,bpc)}</div>
+          <div>Licensed: ${officeCasesBottlesText(licensedCases,bpc)}</div>
+        </div></td>
       <td>${(()=>{
         const poId=String(record.poId||decodeURIComponent(String(key).split('::')[0]));
         const basis=costBasis.get(poId)||{transportPerBottle:0,originalPoBottles:inventoryPoOriginalBottles(inventoryProformaPo(poId))};
-        return inventoryPrimeCostCell(basis,pricing);
+        // Prime Cost always comes from the PO pricing entered on In Stock Transportation.
+        const transportationPricing=inventoryProformaPo(poId)?.inventoryProformaPricing;
+        if(!transportationPricing)return '<small>— (not from an In Stock Transportation PO)</small>';
+        return inventoryPrimeCostCell(basis,transportationPricing);
       })()}</td>
       <td>${prices}</td><td>${itemRetailValues}</td>
       <td>${soldTo}${returnButton}</td>
     </tr>`;
   }).join('');
-  if(body)body.innerHTML=officeRows||'<tr><td colspan="8">No office/warehouse stock yet. Add inventory or move cases from In Stock Transportation.</td></tr>';
+  if(body)body.innerHTML=officeRows||'<tr><td colspan="7">No office/warehouse stock yet. Add inventory or move cases from In Stock Transportation.</td></tr>';
   cards.innerHTML=`
     <div class="card"><span>Cases in Stock</span><strong>${officeRoundCases(totalCases).toLocaleString(undefined,{maximumFractionDigits:2})}</strong></div>
     <div class="card"><span>Bottles in Stock</span><strong>${totalBottles.toLocaleString()}</strong></div>

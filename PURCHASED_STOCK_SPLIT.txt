@@ -88,3 +88,7 @@ UPDATE 8 (2026-11-25)
   Project Net Profit = Sales Revenue - Total Project Budget, with grey breakdown.
   Sales Revenue = bottles sold x selling price (Office/Warehouse sales use the Office/Warehouse
   retail price; other sales use the In Stock Transportation retail price).
+- Office/Warehouse Stock Inventory: Prime Cost per Bottle again calculated automatically from the
+  In Stock Transportation PO pricing (net price + TAX/HST + other fees + transportation + lab cost).
+- Office/Warehouse Stock Inventory: "Office/Warehouse Stock (Non-Licensed / Licensed)" column removed.
+  The split is now shown (not editable) in grey under Cases in Stock / Bottles per Case; it is set when Purchased.
