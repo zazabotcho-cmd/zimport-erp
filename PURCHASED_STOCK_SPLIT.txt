@@ -92,3 +92,14 @@ UPDATE 8 (2026-11-25)
   In Stock Transportation PO pricing (net price + TAX/HST + other fees + transportation + lab cost).
 - Office/Warehouse Stock Inventory: "Office/Warehouse Stock (Non-Licensed / Licensed)" column removed.
   The split is now shown (not editable) in grey under Cases in Stock / Bottles per Case; it is set when Purchased.
+- Office/Warehouse: Restaurant/Hotels, Online Store and In Store can each sell whenever there are any cases in stock.
+  Cases are taken from the matching group first (Licensed for Restaurant/Hotels, Non-Licensed for stores), then from the other group.
+- Office/Warehouse "Sold to" box now shows the selling price (Final Retail Price per bottle and per case) above Cases/Bottles.
+- Office/Warehouse "Sold to" box: selling price per bottle is editable (pre-filled with Final Retail Price),
+  so a sale can be cheaper or higher. The actual amount is saved with the sale and shown under the channel
+  ("Sold for $..."). Returns take back the matching part of that amount.
+- Project Sales Revenue / Project Net Profit now use the actual prices sold at. Older sales without a
+  saved price still use the current Final Retail Price.
+- Office/Warehouse Stock Inventory: new column "Item total prime cost (what was purchased)" next to
+  Item total retail value = purchased bottles (stock now + sold) x Prime Cost per Bottle, split
+  Non-Licensed / Licensed. New summary card "Total Prime Cost Purchased".
