@@ -81,3 +81,10 @@ UPDATE 8 (2026-11-25)
   Proforma Project Balance + Transportation + Lab Cost + Other Fees = Total Project Budget.
 - Total Project Budget: Other Fees now = Other Fees per Bottle x bottles of each PO (was counted once per PO).
   Budget = Proforma Case Price + TAX/HST x cases + Transportation + Total Lab Cost (per PO) + Other Fees.
+- Statistics: Live squares now sit directly under the matching Project squares
+  (Cases/Bottles & POs, Retail Value, Proforma Balance).
+- Total Project Budget title is now "(CAD, supplier paid from case price)".
+- New square (Live row, under Total Project Budget): Project Sales Revenue (TAX/HST incl.) and
+  Project Net Profit = Sales Revenue - Total Project Budget, with grey breakdown.
+  Sales Revenue = bottles sold x selling price (Office/Warehouse sales use the Office/Warehouse
+  retail price; other sales use the In Stock Transportation retail price).

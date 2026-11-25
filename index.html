@@ -340,7 +340,7 @@ label[data-retrieved-locked="1"] textarea{
 #headInventoryRows .inventory-transport-status-date time{font-size:12px;font-weight:600;color:#425466;font-variant-numeric:tabular-nums}
 .worker-product-needs-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.worker-product-needs-grid input,.worker-product-needs-grid select{width:100%;box-sizing:border-box}@media(max-width:760px){.worker-product-needs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:460px){.worker-product-needs-grid{grid-template-columns:1fr}}
 .approved-portal-files{margin-left:auto;width:max-content;min-width:390px;max-width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:#f8fafc}.approved-portal-files strong{display:block;font-size:12px;line-height:1.4;margin-bottom:8px}.approved-portal-attach{display:inline-block;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px}#approvedPortalFileRows{display:grid;grid-template-rows:repeat(5,auto);grid-auto-flow:column;grid-auto-columns:350px;column-gap:12px;direction:rtl;overflow-x:auto;max-width:100%}.approved-portal-file{direction:ltr;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;align-items:center;margin-top:7px}.approved-portal-file input{font-size:12px;padding:5px}.approved-portal-file button{font-size:11px;padding:5px 7px}@media(max-width:800px){#worker-list .section-head{flex-wrap:wrap;gap:12px}.approved-portal-files{width:100%;min-width:0;margin-left:0}}
-[id^="transportationProjectRetailValues"]>span:first-child,[id^="transportationLiveRetailValues"]>span:first-child{margin-top:0!important}</style>
+[id^="transportationProjectRetailValues"]>span:first-child,[id^="transportationLiveRetailValues"]>span:first-child{margin-top:0!important}@media(min-width:1101px){.kpi-col2{grid-column:2}.kpi-col3{grid-column:3}.kpi-col4{grid-column:4}.kpi-col5{grid-column:5}.kpi-col6{grid-column:6}}</style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="online-config.js"></script>
@@ -11222,6 +11222,7 @@ function renderTransportationInventory(statisticsCards){
    let projectTransportation=0,totalLabCost=0,totalOtherFees=0;
    let projectSellOutMonths=null,projectCasesPerMonth=0;
    const livePoIds=new Set();
+   let salesRevenue=0,salesUnpricedBottles=0;
    orders.forEach(({po,shipment})=>{
      const pricing=inventoryProformaPo(po.originalPoId||po.id)?.inventoryProformaPricing||po.inventoryProformaPricing;
      const transportationPerBottle=nonTenderPoTransportationCad(po,shipment);
@@ -11232,6 +11233,25 @@ function renderTransportationInventory(statisticsCards){
        const bottlesPerCase=num(line.unitsPerCase);
        const sales=state.inventorySalesMetrics?.[inventoryLineKey(po,line,index)]||{};
        const casesSold=num(sales.nonLicensedCasesSold)+num(sales.licensedCasesSold);
+       {
+         // Sales revenue: office/warehouse sales at the office retail price,
+         // other sales at the In Stock Transportation retail price.
+         const lineKey=inventoryLineKey(po,line,index);
+         const officeRecord=(state.officeInventory||[]).find(r=>r.inventoryKey===lineKey);
+         const officePrice=officeRecord?officeInventoryPricing(officeRecord).finalRetailBottle:'';
+         const officeSold=num(sales.officeNonLicensedCasesSold)+num(sales.officeLicensedCasesSold);
+         const parts=[
+           [officeSold,officeRecord?officePrice:pricing?.finalRetailBottle],
+           [Math.max(0,num(sales.nonLicensedCasesSold)-num(sales.officeNonLicensedCasesSold)),pricing?.finalRetailBottle],
+           [Math.max(0,num(sales.licensedCasesSold)-num(sales.officeLicensedCasesSold)),pricing?.licensedRetailBottle]
+         ];
+         for(const [soldCases,price] of parts){
+           const soldBottles=Math.round(soldCases*bottlesPerCase);
+           if(!soldBottles)continue;
+           if(price===''||price==null||!Number.isFinite(Number(price)))salesUnpricedBottles+=soldBottles;
+           else salesRevenue+=Number(price)*soldBottles;
+         }
+       }
        const months=inventorySellingMonths(sales);
        if(months!==null){
          projectCasesPerMonth+=casesSold/months;
@@ -11263,19 +11283,19 @@ function renderTransportationInventory(statisticsCards){
    },0);
    const projectBudgetCents=projectBalanceCents+Math.round(projectTransportation*100)
      +Math.round(totalLabCost*100)+Math.round(totalOtherFees*100);
-   const retailCard=id=>aggregate||selected?`<div class="card"><div id="${id}${aggregate?'All':''}" style="display:flex;flex-direction:column"></div></div>`:'';
+   const retailCard=(id,cls='')=>aggregate||selected?`<div class="card ${cls}"><div id="${id}${aggregate?'All':''}" style="display:flex;flex-direction:column"></div></div>`:'';
    const rowTitle=text=>`<h3 style="margin:0 0 10px;font-size:15px;color:var(--navy)">${text}</h3>`;
    k.style.display='block';
    k.innerHTML=`${rowTitle('Project')}
     <div class="cards">
-     <div class="card"><span>Total Project Budget (CAD, Supplier Costs Not Included)</span><strong>${inventoryPriceMoney(projectBudgetCents/100)}</strong>
+     <div class="card"><span>Total Project Budget (CAD, supplier paid from case price)</span><strong>${inventoryPriceMoney(projectBudgetCents/100)}</strong>
        <div style="margin-top:10px;font-size:12px;line-height:1.6;color:#94a3b8">
          <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">Proforma Case Price + TAX/HST × cases</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(projectBalanceCents/100)}</span></div>
          <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">+ Transportation (per bottle × bottles)</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(projectTransportation)}</span></div>
          <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">+ Total Lab Cost (per PO)</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(totalLabCost)}</span></div>
          <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">+ Other Fees (per bottle × bottles)</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(totalOtherFees)}</span></div>
          <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid #e2e8f0;margin-top:3px;padding-top:3px"><span style="color:inherit;font-size:inherit">= Total Project Budget</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(projectBudgetCents/100)}</span></div>
-         <div style="margin-top:4px;font-style:italic">Supplier costs not included.</div>
+         <div style="margin-top:4px;font-style:italic">Supplier is paid from the Proforma Case Price.</div>
        </div>
      </div>
      <div class="card">
@@ -11307,20 +11327,32 @@ function renderTransportationInventory(statisticsCards){
     ${rowTitle('Live')}
     <div class="cards">
      <div class="card">
+       <span>Project Sales Revenue (TAX/HST incl.)</span>
+       <strong>${inventoryPriceMoney(salesRevenue)}</strong>
+       <span style="margin-top:8px">Project Net Profit</span>
+       <strong style="color:${salesRevenue-projectBudgetCents/100<0?'var(--red)':'var(--green)'}">${inventoryPriceMoney(salesRevenue-projectBudgetCents/100)}</strong>
+       <div style="margin-top:10px;font-size:12px;line-height:1.6;color:#94a3b8">
+         <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">Sales Revenue (bottles sold × selling price)</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(salesRevenue)}</span></div>
+         <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">− Total Project Budget</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(projectBudgetCents/100)}</span></div>
+         <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid #e2e8f0;margin-top:3px;padding-top:3px"><span style="color:inherit;font-size:inherit">= Project Net Profit</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(salesRevenue-projectBudgetCents/100)}</span></div>
+         ${salesUnpricedBottles?`<div style="margin-top:4px;color:var(--orange)">${salesUnpricedBottles.toLocaleString()} sold bottles have no retail price and are not counted.</div>`:''}
+       </div>
+     </div>
+     <div class="card kpi-col2">
        <span>Total Cases in Stock / Total Bottles in Stock</span>
        <strong>${totalCases.toLocaleString()} / ${totalBottles.toLocaleString()}</strong>
        <span style="margin-top:8px">POs in Inventory</span>
        <strong>${livePoIds.size}</strong>
        ${aggregate?`<span style="margin-top:8px">In Stock Transportations</span><strong>${shipments.length}</strong>`:''}
      </div>
-     ${retailCard('transportationLiveRetailValues')}
-     <div class="card">
+     ${retailCard('transportationLiveRetailValues','kpi-col3')}
+     <div class="card kpi-col4">
        <span>Total Amount of Proforma Balance Owing (TAX/HST incl.)</span>
        <strong>${inventoryPriceMoney(totalProformaBalanceCents/100)}</strong>
      </div>
-     ${aggregate?`<div class="card"><span>Office/Warehouse Cases / Bottles in Stock (Transportation POs)</span>
+     ${aggregate?`<div class="card kpi-col5"><span>Office/Warehouse Cases / Bottles in Stock (Transportation POs)</span>
        <strong>${officeStockCases.toLocaleString()} / ${officeStockBottles.toLocaleString()}</strong></div>
-     <div class="card"><span>Approximate Stock Profit — Non-Licensed</span>
+     <div class="card kpi-col6"><span>Approximate Stock Profit — Non-Licensed</span>
        <strong>${inventoryPriceMoney(inventoryTotalItemProfit(projectRows))}</strong></div>`:''}
     </div>`;
  }
