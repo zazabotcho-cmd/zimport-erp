@@ -75,3 +75,9 @@ UPDATE 8 (2026-11-25)
 - "If Final Retail Price per Bottle" (In Stock Transportation) and "Final Retail Price per Bottle"
   (Office/Warehouse Stock Inventory) are no longer connected. Existing office items keep the price
   they showed before; items moved to Office/Warehouse from now on start with an empty retail price.
+- Statistics: "Project POs in Inventory" added under Total Project Cases / Bottles (all POs in the project).
+  "POs in Inventory" moved under Total Cases / Bottles in Stock (POs that still have cases in stock).
+- Total Project Budget square now shows its calculation in light grey text:
+  Proforma Project Balance + Transportation + Lab Cost + Other Fees = Total Project Budget.
+- Total Project Budget: Other Fees now = Other Fees per Bottle x bottles of each PO (was counted once per PO).
+  Budget = Proforma Case Price + TAX/HST x cases + Transportation + Total Lab Cost (per PO) + Other Fees.

@@ -11221,6 +11221,7 @@ function renderTransportationInventory(statisticsCards){
    let projectCases=0,projectBottles=0,projectBalanceCents=0;
    let projectTransportation=0,totalLabCost=0,totalOtherFees=0;
    let projectSellOutMonths=null,projectCasesPerMonth=0;
+   const livePoIds=new Set();
    orders.forEach(({po,shipment})=>{
      const pricing=inventoryProformaPo(po.originalPoId||po.id)?.inventoryProformaPricing||po.inventoryProformaPricing;
      const transportationPerBottle=nonTenderPoTransportationCad(po,shipment);
@@ -11241,9 +11242,11 @@ function renderTransportationInventory(statisticsCards){
        poHasActiveInventory=true;
        const originalBottles=originalCases*bottlesPerCase;
        projectTransportation+=originalBottles*transportationPerBottle;
+       totalOtherFees+=num(pricing?.otherFeesBottle)*originalBottles;
        const projectBalance=inventoryProformaBalanceOwing(originalCases,pricing,bottlesPerCase);
        if(projectBalance!=='—')projectBalanceCents+=Math.round(Number(projectBalance)*100);
        const c=inventoryCasesForLine(po,line,index);
+       if(c>0)livePoIds.add(String(po.originalPoId||po.id));
        totalCases+=c;
        totalBottles+=c*bottlesPerCase;
        const officeCases=officeCasesByInventoryKey.get(inventoryLineKey(po,line,index))||0;
@@ -11252,7 +11255,6 @@ function renderTransportationInventory(statisticsCards){
      });
      if(poHasActiveInventory){
        totalLabCost+=num(pricing?.totalLabCost);
-       totalOtherFees+=num(pricing?.otherFeesBottle);
      }
    });
    const totalProformaBalanceCents=rows.reduce((sum,r)=>{
@@ -11266,10 +11268,21 @@ function renderTransportationInventory(statisticsCards){
    k.style.display='block';
    k.innerHTML=`${rowTitle('Project')}
     <div class="cards">
-     <div class="card"><span>Total Project Budget (CAD, Supplier Costs Not Included)</span><strong>${inventoryPriceMoney(projectBudgetCents/100)}</strong></div>
+     <div class="card"><span>Total Project Budget (CAD, Supplier Costs Not Included)</span><strong>${inventoryPriceMoney(projectBudgetCents/100)}</strong>
+       <div style="margin-top:10px;font-size:12px;line-height:1.6;color:#94a3b8">
+         <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">Proforma Case Price + TAX/HST × cases</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(projectBalanceCents/100)}</span></div>
+         <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">+ Transportation (per bottle × bottles)</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(projectTransportation)}</span></div>
+         <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">+ Total Lab Cost (per PO)</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(totalLabCost)}</span></div>
+         <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">+ Other Fees (per bottle × bottles)</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(totalOtherFees)}</span></div>
+         <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid #e2e8f0;margin-top:3px;padding-top:3px"><span style="color:inherit;font-size:inherit">= Total Project Budget</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(projectBudgetCents/100)}</span></div>
+         <div style="margin-top:4px;font-style:italic">Supplier costs not included.</div>
+       </div>
+     </div>
      <div class="card">
        <span>Total Project Cases / Total Project Bottles</span>
        <strong>${projectCases.toLocaleString()} / ${projectBottles.toLocaleString()}</strong>
+       <span style="margin-top:8px">Project POs in Inventory</span>
+       <strong>${orders.size}</strong>
      </div>
      ${retailCard('transportationProjectRetailValues')}
      <div class="card">
@@ -11293,12 +11306,12 @@ function renderTransportationInventory(statisticsCards){
     </div>
     ${rowTitle('Live')}
     <div class="cards">
-     <div class="card"><span>POs in Inventory</span><strong>${orders.size}</strong>
-       ${aggregate?`<span style="margin-top:8px">In Stock Transportations</span><strong>${shipments.length}</strong>`:''}
-     </div>
      <div class="card">
        <span>Total Cases in Stock / Total Bottles in Stock</span>
        <strong>${totalCases.toLocaleString()} / ${totalBottles.toLocaleString()}</strong>
+       <span style="margin-top:8px">POs in Inventory</span>
+       <strong>${livePoIds.size}</strong>
+       ${aggregate?`<span style="margin-top:8px">In Stock Transportations</span><strong>${shipments.length}</strong>`:''}
      </div>
      ${retailCard('transportationLiveRetailValues')}
      <div class="card">
