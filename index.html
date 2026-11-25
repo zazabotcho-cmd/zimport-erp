@@ -340,7 +340,7 @@ label[data-retrieved-locked="1"] textarea{
 #headInventoryRows .inventory-transport-status-date time{font-size:12px;font-weight:600;color:#425466;font-variant-numeric:tabular-nums}
 .worker-product-needs-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.worker-product-needs-grid input,.worker-product-needs-grid select{width:100%;box-sizing:border-box}@media(max-width:760px){.worker-product-needs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:460px){.worker-product-needs-grid{grid-template-columns:1fr}}
 .approved-portal-files{margin-left:auto;width:max-content;min-width:390px;max-width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:#f8fafc}.approved-portal-files strong{display:block;font-size:12px;line-height:1.4;margin-bottom:8px}.approved-portal-attach{display:inline-block;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px}#approvedPortalFileRows{display:grid;grid-template-rows:repeat(5,auto);grid-auto-flow:column;grid-auto-columns:350px;column-gap:12px;direction:rtl;overflow-x:auto;max-width:100%}.approved-portal-file{direction:ltr;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;align-items:center;margin-top:7px}.approved-portal-file input{font-size:12px;padding:5px}.approved-portal-file button{font-size:11px;padding:5px 7px}@media(max-width:800px){#worker-list .section-head{flex-wrap:wrap;gap:12px}.approved-portal-files{width:100%;min-width:0;margin-left:0}}
-</style>
+[id^="transportationProjectRetailValues"]>span:first-child,[id^="transportationLiveRetailValues"]>span:first-child{margin-top:0!important}</style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="online-config.js"></script>
@@ -1477,7 +1477,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  <div class="table-wrap"><table>
   <thead><tr>
    <th>PO #</th><th>Vendor/Producer</th><th class="inventory-pinned-product">Product Name</th>
-   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th>Other Fees per Bottle</th><th scope="col">ACTION</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Profit per Bottle (TAX/HST incl.) /<br>Profit total item (TAX/HST incl.) <span id="inventoryTotalItemProfit" style="white-space:nowrap" aria-live="polite">(aprox ttl. profit non lc,cst only —)</span></th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>Total cases sold / Cases sold per month</th><th>Total profit / Monthly profit</th>
+   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th>Other Fees per Bottle</th><th scope="col">ACTION</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Profit per Bottle (TAX/HST incl.) /<br>Profit total item (TAX/HST incl.) <span id="inventoryTotalItemProfit" style="white-space:nowrap" aria-live="polite">(aprox ttl. profit non lc,cst only —)</span></th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -10114,7 +10114,7 @@ window.moveInventoryToOffice=async(encodedKey,availableCases,encodedMeta)=>{
     existing.movedAt=new Date().toISOString();
     Object.assign(existing,meta);
   }else{
-    state.officeInventory.push({id:uid(),inventoryKey:key,cases:qty,licensedCases:split.licensed,movedAt:new Date().toISOString(),...meta});
+    state.officeInventory.push({id:uid(),inventoryKey:key,cases:qty,licensedCases:split.licensed,movedAt:new Date().toISOString(),...meta,retailPricing:{finalRetailBottle:'',separateFromTransportation:true}});
   }
   save({inventoryOnly:true});
   renderOfficeInventory();
@@ -10736,6 +10736,7 @@ function inventoryProformaPo(poId){
  return [...(state.purchaseOrders||[]),...(state.manuallyArchivedPurchaseOrders||[]),...(state.inventoryDeletedPoSnapshots||[])].find(po=>String(po.originalPoId||po.id)===String(poId));
 }
 window.updateInventoryProformaPrice=(encodedPoId,field,input)=>{
+ separateOfficeRetailPricing();
  const fields=['nonLicensedBottle','licensedBottle','hstPercent','finalRetailBottle','licensedRetailBottle','otherFeesBottle','bottleDeposit','totalLabCost'];
  if(!fields.includes(field))return;
  const poId=decodeURIComponent(encodedPoId),po=inventoryProformaPo(poId);if(!po)return;
@@ -10859,10 +10860,21 @@ function inventoryTotalItemProfit(rows,draft){
  return total;
 }
 
+// Office/Warehouse retail price is kept on the office records only and is not
+// linked to the "If Final Retail Price" fields on In Stock Transportation.
+function separateOfficeRetailPricing(){
+  for(const record of state.officeInventory||[]){
+    if(record.retailPricing&&record.retailPricing.separateFromTransportation)continue;
+    // One-time copy so existing office items keep the price they showed before.
+    const poId=record.poId||decodeURIComponent(String(record.inventoryKey||'').split('::')[0]);
+    const linked=record.retailPricing?null:inventoryProformaPo(poId)?.inventoryProformaPricing;
+    const source=linked||record.retailPricing||{};
+    record.retailPricing={finalRetailBottle:source.finalRetailBottle??'',separateFromTransportation:true};
+  }
+}
 function officeInventoryPricing(record){
-  // Older transfers stored the original PO ID in the inventory key.
-  const poId=record.poId||decodeURIComponent(record.inventoryKey.split('::')[0]);
-  return inventoryProformaPo(poId)?.inventoryProformaPricing||record.retailPricing||{};
+  separateOfficeRetailPricing();
+  return record.retailPricing||{};
 }
 window.updateOfficeRetailPrice=(input)=>{
   const {officeInventoryKey:key,retailField:field}=input.dataset;
@@ -10872,11 +10884,7 @@ window.updateOfficeRetailPrice=(input)=>{
   if(!input.reportValidity())return;
   const value=input.value===''?'':input.valueAsNumber;
   if(value!==''&&(!Number.isFinite(value)||value<0))return;
-  const poId=records[0].poId||decodeURIComponent(key.split('::')[0]);
-  if(inventoryProformaPo(poId)){
-    updateInventoryProformaPrice(encodeURIComponent(poId),field,input);
-    return;
-  }
+  separateOfficeRetailPricing();
   for(const record of records)record.retailPricing={...record.retailPricing,[field]:value};
   save();
   renderOfficeInventory();
@@ -10921,7 +10929,8 @@ window.addOfficeInventory=event=>{
     licensedCases:fields.licensedCases.valueAsNumber,
     bpc:fields.bpc.valueAsNumber,
     retailPricing:{
-      finalRetailBottle:fields.finalRetailBottle.value===''?'':fields.finalRetailBottle.valueAsNumber
+      finalRetailBottle:fields.finalRetailBottle.value===''?'':fields.finalRetailBottle.valueAsNumber,
+      separateFromTransportation:true
     }
   });
   save({inventoryOnly:true});
@@ -11203,12 +11212,8 @@ function renderTransportationInventory(statisticsCards){
       </label>`).join('')}
       <small>Selling period: ${months===null?'—':months.toFixed(2)+' months'}</small>
     </td>
-    <td>${salesByCustomer.map(({label,count})=>`<div style="min-width:175px;margin-bottom:12px">${label}<br><b>${count.toLocaleString()}</b> cases sold<br><small>${months===null?'—':(count/months).toFixed(2)} cases/month</small></div>`).join('')}
-      <small>Combined total: ${totalCasesSold.toLocaleString()} cases sold<br>${months===null?'—':(totalCasesSold/months).toFixed(2)} cases/month</small></td>
-    <td>${salesByCustomer.map(({label,profit})=>`<div style="min-width:175px;margin-bottom:12px">${label}<br><b>${inventoryPriceMoney(profit)}</b> total<br><small>${inventoryPriceMoney(months===null||profit===null?null:profit/months)} / month</small></div>`).join('')}
-      <small>Combined total: ${inventoryPriceMoney(totalSalesProfit)}<br>${inventoryPriceMoney(months===null||totalSalesProfit===null?null:totalSalesProfit/months)} / month</small></td>
    </tr>`;
- }).join('')||'<tr><td colspan="21">No non-tender inventory rows for this transportation.</td></tr>';
+ }).join('')||'<tr><td colspan="19">No non-tender inventory rows for this transportation.</td></tr>';
 
  let totalCases=0,totalBottles=0;
  if(k){
@@ -11256,34 +11261,20 @@ function renderTransportationInventory(statisticsCards){
    },0);
    const projectBudgetCents=projectBalanceCents+Math.round(projectTransportation*100)
      +Math.round(totalLabCost*100)+Math.round(totalOtherFees*100);
-   k.innerHTML=`<div class="card"><span>Total Project Budget (CAD, Supplier Costs Not Included)</span><strong>${inventoryPriceMoney(projectBudgetCents/100)}</strong>
-       ${aggregate||selected?`<div id="transportationProjectRetailValues${aggregate?'All':''}"></div>`:''}
-     </div>
-     <div class="card">
-       <span>${aggregate?'Longest Project Sell-Out Period (Months)':'Project Sell-Out Months'} / Total Cases Sold per Month</span>
-       <strong>${projectSellOutMonths===null?'—':projectSellOutMonths.toLocaleString('en-CA',{maximumFractionDigits:2})} / ${projectSellOutMonths!==null?projectCasesPerMonth.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong>
-       <span style="margin-top:8px">Project Total Profit / Project Monthly Profit</span>
-       <strong>${inventoryPriceMoney(hasMissingProfit?null:projectTotalProfit)} / ${inventoryPriceMoney(hasMissingProfit||!projectSellOutMonths?null:projectTotalProfit/projectSellOutMonths)}</strong>
-       ${aggregate?`<span style="margin-top:8px">Approximate Stock Profit — Non-Licensed</span>
-       <strong>${inventoryPriceMoney(inventoryTotalItemProfit(projectRows))}</strong>`:''}
-     </div>
-     <div class="card"><span>POs in Inventory</span><strong>${orders.size}</strong>
-       ${aggregate?`<span style="margin-top:8px">In Stock Transportations</span><strong>${shipments.length}</strong>`:''}
-       ${aggregate||selected?`<div id="transportationLiveRetailValues${aggregate?'All':''}"></div>`:''}
-     </div>
+   const retailCard=id=>aggregate||selected?`<div class="card"><div id="${id}${aggregate?'All':''}" style="display:flex;flex-direction:column"></div></div>`:'';
+   const rowTitle=text=>`<h3 style="margin:0 0 10px;font-size:15px;color:var(--navy)">${text}</h3>`;
+   k.style.display='block';
+   k.innerHTML=`${rowTitle('Project')}
+    <div class="cards">
+     <div class="card"><span>Total Project Budget (CAD, Supplier Costs Not Included)</span><strong>${inventoryPriceMoney(projectBudgetCents/100)}</strong></div>
      <div class="card">
        <span>Total Project Cases / Total Project Bottles</span>
        <strong>${projectCases.toLocaleString()} / ${projectBottles.toLocaleString()}</strong>
-       <span style="margin-top:8px">Total Cases in Stock / Total Bottles in Stock</span>
-       <strong>${totalCases.toLocaleString()} / ${totalBottles.toLocaleString()}</strong>
-       <span style="margin-top:8px">Office/Warehouse Cases / Bottles in Stock${aggregate?' (Transportation POs)':''}</span>
-       <strong>${officeStockCases.toLocaleString()} / ${officeStockBottles.toLocaleString()}</strong>
      </div>
+     ${retailCard('transportationProjectRetailValues')}
      <div class="card">
        <span>Total Amount of Proforma Project Balance (TAX/HST incl.)</span>
        <strong>${inventoryPriceMoney(projectBalanceCents/100)}</strong>
-       <span style="margin-top:8px">Total Amount of Proforma Balance Owing (TAX/HST incl.)</span>
-       <strong>${inventoryPriceMoney(totalProformaBalanceCents/100)}</strong>
      </div>
      <div class="card">
        <span>Total Project Transportation Price (CAD)</span>
@@ -11292,7 +11283,33 @@ function renderTransportationInventory(statisticsCards){
        <strong>${inventoryPriceMoney(totalLabCost)}</strong>
        <span style="margin-top:8px">Total Other Fees</span>
        <strong>${inventoryPriceMoney(totalOtherFees)}</strong>
-     </div>`;
+     </div>
+     <div class="card">
+       <span>${aggregate?'Longest Project Sell-Out Period (Months)':'Project Sell-Out Months'} / Total Cases Sold per Month</span>
+       <strong>${projectSellOutMonths===null?'—':projectSellOutMonths.toLocaleString('en-CA',{maximumFractionDigits:2})} / ${projectSellOutMonths!==null?projectCasesPerMonth.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong>
+       <span style="margin-top:8px">Project Total Profit / Project Monthly Profit</span>
+       <strong>${inventoryPriceMoney(hasMissingProfit?null:projectTotalProfit)} / ${inventoryPriceMoney(hasMissingProfit||!projectSellOutMonths?null:projectTotalProfit/projectSellOutMonths)}</strong>
+     </div>
+    </div>
+    ${rowTitle('Live')}
+    <div class="cards">
+     <div class="card"><span>POs in Inventory</span><strong>${orders.size}</strong>
+       ${aggregate?`<span style="margin-top:8px">In Stock Transportations</span><strong>${shipments.length}</strong>`:''}
+     </div>
+     <div class="card">
+       <span>Total Cases in Stock / Total Bottles in Stock</span>
+       <strong>${totalCases.toLocaleString()} / ${totalBottles.toLocaleString()}</strong>
+     </div>
+     ${retailCard('transportationLiveRetailValues')}
+     <div class="card">
+       <span>Total Amount of Proforma Balance Owing (TAX/HST incl.)</span>
+       <strong>${inventoryPriceMoney(totalProformaBalanceCents/100)}</strong>
+     </div>
+     ${aggregate?`<div class="card"><span>Office/Warehouse Cases / Bottles in Stock (Transportation POs)</span>
+       <strong>${officeStockCases.toLocaleString()} / ${officeStockBottles.toLocaleString()}</strong></div>
+     <div class="card"><span>Approximate Stock Profit — Non-Licensed</span>
+       <strong>${inventoryPriceMoney(inventoryTotalItemProfit(projectRows))}</strong></div>`:''}
+    </div>`;
  }
  const total=aggregate?null:document.getElementById('inventoryTotalItemProfit');
  const renderTotalProfit=draft=>{

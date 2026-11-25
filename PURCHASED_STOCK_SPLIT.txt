@@ -62,3 +62,16 @@ UPDATE 7 (same day)
 - Stock now shows part cases as "X cases + Y bottles".
 - Return button asks which of the three it was sold to, plus cases and bottles.
 - Summary cards: Sold to Restaurant/Hotels / Online Store / In Store.
+
+UPDATE 8 (2026-11-25)
+- In Stock Transportation: "Total cases sold / Cases sold per month" and
+  "Total profit / Monthly profit" columns removed.
+- In Stock Transportation / All In Stock Transportations: statistics now in two rows of squares.
+  Row 1 "Project": Total Project Budget, Total Project Cases/Bottles, Total Project Retail Value
+  (Non-Licensed/Licensed), Proforma Project Balance, Transportation/Lab Cost/Other Fees,
+  Sell-Out Months & Project Profit.
+  Row 2 "Live": POs in Inventory, Cases/Bottles in Stock, Live Retail Value (Non-Licensed/Licensed),
+  Proforma Balance Owing (+ Office/Warehouse stock and Approximate Stock Profit on the All page only).
+- "If Final Retail Price per Bottle" (In Stock Transportation) and "Final Retail Price per Bottle"
+  (Office/Warehouse Stock Inventory) are no longer connected. Existing office items keep the price
+  they showed before; items moved to Office/Warehouse from now on start with an empty retail price.
