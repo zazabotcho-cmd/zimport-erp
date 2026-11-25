@@ -146,3 +146,13 @@ UPDATE 8 (2026-11-25)
 - In Stock Transportation and Office/Warehouse Stock Inventory: last column ACTIONS with
   "Open / Edit", "Move to Archived Inventory" and "Delete" (Delete moves to Head's Recycling Bin).
   In Stock Transportation Open / Edit: Cases in Stock (LCBO Trillium), Available for sale since, Sold out on.
+- Office/Warehouse: under Supplier the item now shows "Transportation: <name>" it belongs to.
+- Whole program: every row with "Open / Edit", "Move to Archived ..." and "Delete" (invoices, PO's,
+  cargo, transportation, inventory) now uses the same stacked button design as Office/Warehouse:
+  blue Open / Edit, light Move to Archived ..., red Delete, one under another.
+- Page "Office/Warehouse Stock Inventory" renamed to "Inventory IN STOCK Office/Warehouse" (tabs, heading, messages).
+- Inventory Stock Statistics, combined section: new squares (HST incl.)
+  Combined Revenue Made; Combined Prime Cost of Bottles Sold + Combined Profit Made;
+  Combined Total Prime Cost / Budget + Combined Net Profit (after all costs);
+  Combined Potential Profit — Stock in Hand. Each shows Transportation POs vs items added by hand
+  (no double counting). Negative amounts now show as -$1,000.00.
