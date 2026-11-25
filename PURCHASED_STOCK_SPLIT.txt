@@ -156,3 +156,13 @@ UPDATE 8 (2026-11-25)
   Combined Total Prime Cost / Budget + Combined Net Profit (after all costs);
   Combined Potential Profit — Stock in Hand. Each shows Transportation POs vs items added by hand
   (no double counting). Negative amounts now show as -$1,000.00.
+- Whole program: every "Open / Edit" button is blue, every "Move to Archived ..." button is light, every "Delete" button is red (same as Inventory IN STOCK Office/Warehouse).
+
+INVENTORY AUDIT (2026-11-25) — tested all Inventory pages with sample POs, transportation, purchases,
+sales, returns, archive/restore, edit. All totals checked by hand. Fixes:
+- Selling to a channel from the other stock group (e.g. Restaurant/Hotels using Non-Licensed cases) is now
+  remembered. Prime Cost, Profit, "Item total prime cost" and Returns use the group the cases really came from.
+- Selling period / monthly numbers now count up to today while an item is still selling ("so far"),
+  not only after "Sold out on" is set; months use the calendar average (30.44 days).
+- Live "POs in Inventory" also counts POs whose stock is in Office/Warehouse.
+- Combined Live Retail Value squares: amount shown before the explanation line.

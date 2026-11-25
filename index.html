@@ -9796,6 +9796,29 @@ function officeSaleChannels(){return [
   {id:'online',label:'Online Store',licensed:false},
   {id:'inStore',label:'In Store',licensed:false}
 ];}
+// Which stock group (Non-Licensed / Licensed) the cases sold to a channel actually came from.
+// Older sales without this record count in the channel's own group.
+function officeChannelStockSplit(metrics,channel){
+  const sold=officeChannelSoldCases(metrics,channel.id);
+  const taken=metrics?.officeChannelTaken?.[channel.id]||{};
+  const nl=Math.min(num(taken.nl),sold);
+  const l=Math.min(num(taken.l),Math.max(0,sold-nl));
+  const untracked=Math.max(0,sold-nl-l);
+  return channel.licensed?{nl,l:l+untracked}:{nl:nl+untracked,l};
+}
+// Cases purchased into Office/Warehouse per group = stock now + sold from that group.
+function officePurchasedSplit(metrics,currentNonLicensed,currentLicensed){
+  let nl=num(currentNonLicensed),l=num(currentLicensed),channelNl=0,channelL=0;
+  for(const channel of officeSaleChannels()){
+    const split=officeChannelStockSplit(metrics,channel);
+    nl+=split.nl;l+=split.l;
+    if(channel.licensed)channelL+=officeChannelSoldCases(metrics,channel.id);else channelNl+=officeChannelSoldCases(metrics,channel.id);
+  }
+  // Office sales recorded before the Restaurant/Online/In Store channels existed.
+  nl+=Math.max(0,num(metrics?.officeNonLicensedCasesSold)-channelNl);
+  l+=Math.max(0,num(metrics?.officeLicensedCasesSold)-channelL);
+  return {nl,l};
+}
 function officeChannelSoldCases(metrics,channel){
   return Math.max(0,num(metrics?.officeChannelCasesSold?.[channel]));
 }
@@ -9878,6 +9901,12 @@ window.sellOfficeInventoryToChannel=async(encodedKey,channelId)=>{
   deductOfficeInventoryCases(records,fromMatching,channel.licensed);
   if(qty-fromMatching>1e-9)deductOfficeInventoryCases(records,officeRoundCases(qty-fromMatching),!channel.licensed);
   const metrics=(state.inventorySalesMetrics??={})[key]??={};
+  {
+    const taken=(metrics.officeChannelTaken??={})[channel.id]??={nl:0,l:0};
+    const other=officeRoundCases(qty-fromMatching);
+    if(channel.licensed){taken.l=officeRoundCases(num(taken.l)+fromMatching);taken.nl=officeRoundCases(num(taken.nl)+other);}
+    else{taken.nl=officeRoundCases(num(taken.nl)+fromMatching);taken.l=officeRoundCases(num(taken.l)+other);}
+  }
   const countField=channel.licensed?'licensedCasesSold':'nonLicensedCasesSold';
   const officeField=channel.licensed?'officeLicensedCasesSold':'officeNonLicensedCasesSold';
   metrics[countField]=officeRoundCases(num(metrics[countField])+qty);
@@ -9910,7 +9939,14 @@ window.returnOfficeChannelSale=async(encodedKey)=>{
   const sold=officeChannelSoldCases(metrics,channel.id);
   const qty=officeRoundCases(bpc>0?(answer.cases*bpc+answer.bottles)/bpc:answer.cases);
   if(qty>sold+1e-6){alert('The return cannot exceed '+officeCasesBottlesText(sold,bpc)+' sold to '+channel.label+'.');return;}
-  restoreOfficeReturn(key,record,qty,channel.licensed?qty:0);
+  // Put the cases back into the group they were taken from.
+  const split=officeChannelStockSplit(metrics,channel);
+  let backL,backNl;
+  if(channel.licensed){backL=Math.min(qty,split.l);backNl=officeRoundCases(qty-backL);}
+  else{backNl=Math.min(qty,split.nl);backL=officeRoundCases(qty-backNl);}
+  restoreOfficeReturn(key,record,qty,backL);
+  const taken=metrics.officeChannelTaken?.[channel.id];
+  if(taken){taken.nl=Math.max(0,officeRoundCases(num(taken.nl)-backNl));taken.l=Math.max(0,officeRoundCases(num(taken.l)-backL));}
   const countField=channel.licensed?'licensedCasesSold':'nonLicensedCasesSold';
   const officeField=channel.licensed?'officeLicensedCasesSold':'officeNonLicensedCasesSold';
   metrics[countField]=Math.max(0,officeRoundCases(num(metrics[countField])-qty));
@@ -11028,9 +11064,11 @@ window.updateInventorySalesDate=(encodedKey,field,input)=>{
  renderHeadInventory();
 };
 function inventorySellingMonths(metrics){
- if(!metrics.availableSince||!metrics.soldOutOn)return null;
- const days=(Date.parse(metrics.soldOutOn)-Date.parse(metrics.availableSince))/86400000+1;
- return days>0?days/30:null;
+ // Selling period: from "Available for sale since" to "Sold out on" (or to today while still selling).
+ if(!metrics?.availableSince)return null;
+ const end=metrics.soldOutOn||new Date().toISOString().slice(0,10);
+ const days=(Date.parse(end)-Date.parse(metrics.availableSince))/86400000+1;
+ return days>0?days/30.4375:null;
 }
 function inventoryLabCostPerBottle(pricing,originalPoBottles){
  const cost=pricing?.totalLabCost;
@@ -11288,8 +11326,8 @@ function renderOfficeInventory(statisticsCards){
       <td>${(()=>{
         // Total prime cost of what was purchased into Office/Warehouse (stock now + sold),
         // using the Non-Licensed / Licensed prime cost per bottle from In Stock Transportation.
-        const groups=[[false,'Non-Licensed',nonLicensedCases+num(sales.officeNonLicensedCasesSold)],
-                      [true,'Licensed',licensedCases+num(sales.officeLicensedCasesSold)]];
+        const purchased=officePurchasedSplit(sales,nonLicensedCases,licensedCases);
+        const groups=[[false,'Non-Licensed',purchased.nl],[true,'Licensed',purchased.l]];
         let total=0,missing=false,purchasedBottles=0;
         const lines=groups.map(([licensed,label,groupCases])=>{
           const groupBottles=Math.round(groupCases*bpc);
@@ -11321,8 +11359,11 @@ function renderOfficeInventory(statisticsCards){
           let revenue=pricedCases>0?num(rec.amount)*pricedCases/num(rec.cases):0;
           const unpricedBottles=Math.round((soldCases-pricedCases)*bpc);
           if(unpricedBottles>0){if(retailPrice===null)revenue=null;else revenue+=retailPrice*unpricedBottles;}
-          const cost=officePrimeCostPerBottle(record,key,costBasis,c.licensed);
-          const profit=soldBottles===0?0:revenue===null||cost===null?null:revenue-cost*soldBottles;
+          const split=officeChannelStockSplit(sales,c);
+          const costNl=officePrimeCostPerBottle(record,key,costBasis,false),costL=officePrimeCostPerBottle(record,key,costBasis,true);
+          const nlBottles=Math.round(split.nl*bpc),lBottles=soldBottles-nlBottles;
+          const cost=(nlBottles>0&&costNl===null)||(lBottles>0&&costL===null)?null:(nlBottles*(costNl??0)+lBottles*(costL??0));
+          const profit=soldBottles===0?0:revenue===null||cost===null?null:revenue-cost;
           if(revenue===null)revenueMissing=true;else totalRevenue+=revenue;
           if(profit===null)profitMissing=true;else totalProfit+=profit;
           if(revenue===null||profit===null)channelMade[c.id].missing=true;
@@ -11562,7 +11603,7 @@ function renderTransportationInventory(statisticsCards){
       ${[['availableSince','Available for sale since'],['soldOutOn','Sold out on']].map(([field,label])=>`<label style="display:block;margin-bottom:8px">${label}
         <input type="date" data-inventory-sales-date value="${escapeHtml(sales[field]||'')}" onchange="updateInventorySalesDate('${keyArg}','${field}',this)">
       </label>`).join('')}
-      <small>Selling period: ${months===null?'—':months.toFixed(2)+' months'}</small>
+      <small>Selling period: ${months===null?'—':months.toFixed(2)+' months'+(sales.soldOutOn?'':' so far')}</small>
     </td>
     <td>${(()=>{const rowArg=inventoryActionArg(JSON.stringify({inventoryKey:r.inventoryKey,poId:r.poId,poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,cases:r.cases,bpc:r.bpc}));
       return `<div style="display:flex;flex-direction:column;gap:6px;min-width:190px"><button type="button" class="small" onclick="editTransportationInventory('${rowArg}')">Open / Edit</button><button type="button" class="secondary small" onclick="archiveLcboInventory('${rowArg}')">Move to Archived Inventory</button><button type="button" class="danger small" onclick="deleteTransportationInventory('${rowArg}')">Delete</button></div>`;})()}</td>
@@ -11600,12 +11641,17 @@ function renderTransportationInventory(statisticsCards){
          const originalPoBottles=inventoryPoOriginalBottles(po);
          const primeCost=licensed=>pricing?inventoryPrimeCostPerBottle(pricing,transportationPerBottle,originalPoBottles,licensed):null;
          const validPrice=price=>price!==''&&price!=null&&Number.isFinite(Number(price));
+         // licensed: true/false, or {nl,l} bottle split for Office/Warehouse channel sales.
          const addPart=(revenue,bottles,licensed)=>{
            if(!bottles)return;
-           const cost=primeCost(licensed);
+           let totalCost;
+           if(typeof licensed==='object'){
+             const cNl=primeCost(false),cL=primeCost(true);
+             totalCost=(licensed.nl>0&&cNl===null)||(licensed.l>0&&cL===null)?null:licensed.nl*(cNl??0)+licensed.l*(cL??0);
+           }else{const cost=primeCost(licensed);totalCost=cost===null?null:cost*bottles;}
            if(revenue===null){salesUnpricedBottles+=bottles;actualProfitMissing=true;return;}
            salesRevenue+=revenue;
-           if(cost===null)actualProfitMissing=true;else actualProfit+=revenue-cost*bottles;
+           if(totalCost===null)actualProfitMissing=true;else actualProfit+=revenue-totalCost;
          };
          let channelSold=0;
          for(const channel of officeSaleChannels()){
@@ -11617,7 +11663,9 @@ function renderTransportationInventory(statisticsCards){
            const recorded=priced>0?num(rec.amount)*priced/num(rec.cases):0;
            const unpricedBottles=Math.round((sold-priced)*bottlesPerCase);
            const revenue=unpricedBottles>0?(validPrice(officePrice)?recorded+Number(officePrice)*unpricedBottles:null):recorded;
-           addPart(revenue,Math.round(sold*bottlesPerCase),channel.licensed);
+           const soldBottlesAll=Math.round(sold*bottlesPerCase),split=officeChannelStockSplit(sales,channel);
+           const nlB=Math.round(split.nl*bottlesPerCase);
+           addPart(revenue,soldBottlesAll,{nl:nlB,l:soldBottlesAll-nlB});
          }
          const officeSold=num(sales.officeNonLicensedCasesSold)+num(sales.officeLicensedCasesSold);
          const parts=[
@@ -11666,7 +11714,7 @@ function renderTransportationInventory(statisticsCards){
        const projectBalance=inventoryProformaBalanceOwing(originalCases,pricing,bottlesPerCase);
        if(projectBalance!=='—')projectBalanceCents+=Math.round(Number(projectBalance)*100);
        const c=inventoryCasesForLine(po,line,index);
-       if(c>0)livePoIds.add(String(po.originalPoId||po.id));
+       if(c>0||(officeCasesByInventoryKey.get(inventoryLineKey(po,line,index))||0)>0)livePoIds.add(String(po.originalPoId||po.id));
        totalCases+=c;
        totalBottles+=c*bottlesPerCase;
        const officeCases=officeCasesByInventoryKey.get(inventoryLineKey(po,line,index))||0;
@@ -11834,8 +11882,8 @@ window.renderInventoryStockStatistics=()=>{
      const officeRetail=office.retailTotals[index];
      const missing=unpricedBottles+officeRetail.unpricedBottles;
      return `<div class="card"><span>Combined Live Retail Value — ${label} (TAX/HST incl.)</span>
-       <small style="color:#94a3b8">LCBO Trillium at transportation price + Office/Warehouse at its own price</small>
        <strong>${inventoryPriceMoney((cents+officeRetail.cents)/100)}</strong>
+       <small style="color:#94a3b8">LCBO Trillium at transportation price + Office/Warehouse at its own price</small>
        ${missing?`<small>${missing.toLocaleString()} bottles without a retail price</small>`:''}</div>`;
    }).join('')}
    ${(()=>{
@@ -14639,8 +14687,16 @@ td.row-actions-cell>div{display:flex!important;flex-direction:column;gap:0!impor
       else if(t==='Delete'){b.classList.remove('secondary');b.classList.add('danger','small');}
     }
   }
+  // Same colours in the whole program: Open / Edit blue, Move to Archived ... light, Delete red.
+  function colourButton(b){
+    const t=b.textContent.trim();
+    if(t==='Open / Edit'){if(b.classList.contains('secondary')||b.classList.contains('danger'))b.classList.remove('secondary','danger');}
+    else if(/^Move to Archived\b/.test(t)){if(!b.classList.contains('secondary')||b.classList.contains('danger')){b.classList.remove('danger');b.classList.add('secondary');}}
+    else if(t==='Delete'){if(!b.classList.contains('danger')||b.classList.contains('secondary')){b.classList.remove('secondary');b.classList.add('danger');}}
+  }
   function scan(root){
-    (root.querySelectorAll?root:document).querySelectorAll('td').forEach(td=>{
+    document.querySelectorAll('button').forEach(colourButton);
+    document.querySelectorAll('td').forEach(td=>{
       if(td.querySelector('button'))styleCell(td);
     });
   }
