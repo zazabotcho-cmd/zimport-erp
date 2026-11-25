@@ -177,3 +177,14 @@ sales, returns, archive/restore, edit. All totals checked by hand. Fixes:
 - "Potential Profit — Stock in Hand" square moved from the Live row to the Project row.
 - In Stock Transportation (and Total Live on Statistics): "Office/Warehouse Stock Value" removed from the Live Retail Value square.
 - Project row: "Potential Profit" is now Project Potential Profit = (If Final Retail Price - Prime Cost) x original project bottles, shown for Non-Licensed and Licensed.
+- Inventory Stock Statistics: new combined squares
+  "Combined Total Amount of Proforma Balance Owing (TAX/HST incl.)" (with Proforma Project Balance) and
+  "Combined Project Potential Profit" Non-Licensed / Licensed (original bottles; POs + items added by hand).
+  Total Live labels: "Total Sales Revenue" / "Total Net Profit". Checked all numbers again by hand.
+- Inventory Stock Statistics: Combined Live Retail Value Non-Licensed and Licensed now in one square.
+- Inventory Stock Statistics: "Combined Prime Cost of Bottles Sold" moved into the Combined Cases / Bottles in Stock square.
+- Inventory Stock Statistics: "Combined Profit Made" (with breakdown) moved under Combined Revenue Made in the same square.
+- Inventory Stock Statistics: "Combined Profit Made" moved into the Combined Potential Profit — Stock in Hand square (under it).
+- Archived Inventory page: tab row now shows all four inventory pages in the same order (Archived Inventory stays last).
+- Inventory IN STOCK Office/Warehouse: the three "Sold to" squares now start on their own second line, next to each other.
+- Office/Warehouse: "Total Item Retail Value" added on top of Total Prime Cost Purchased (same square).

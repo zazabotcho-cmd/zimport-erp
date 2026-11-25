@@ -340,7 +340,7 @@ label[data-retrieved-locked="1"] textarea{
 #headInventoryRows .inventory-transport-status-date time{font-size:12px;font-weight:600;color:#425466;font-variant-numeric:tabular-nums}
 .worker-product-needs-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.worker-product-needs-grid input,.worker-product-needs-grid select{width:100%;box-sizing:border-box}@media(max-width:760px){.worker-product-needs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:460px){.worker-product-needs-grid{grid-template-columns:1fr}}
 .approved-portal-files{margin-left:auto;width:max-content;min-width:390px;max-width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:#f8fafc}.approved-portal-files strong{display:block;font-size:12px;line-height:1.4;margin-bottom:8px}.approved-portal-attach{display:inline-block;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px}#approvedPortalFileRows{display:grid;grid-template-rows:repeat(5,auto);grid-auto-flow:column;grid-auto-columns:350px;column-gap:12px;direction:rtl;overflow-x:auto;max-width:100%}.approved-portal-file{direction:ltr;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;align-items:center;margin-top:7px}.approved-portal-file input{font-size:12px;padding:5px}.approved-portal-file button{font-size:11px;padding:5px 7px}@media(max-width:800px){#worker-list .section-head{flex-wrap:wrap;gap:12px}.approved-portal-files{width:100%;min-width:0;margin-left:0}}
-[id^="transportationProjectRetailValues"]>span:first-child,[id^="transportationLiveRetailValues"]>span:first-child{margin-top:0!important}@media(min-width:1101px){.kpi-col2{grid-column:2}.kpi-col3{grid-column:3}.kpi-col4{grid-column:4}.kpi-col5{grid-column:5}.kpi-col6{grid-column:6}}</style>
+[id^="transportationProjectRetailValues"]>span:first-child,[id^="transportationLiveRetailValues"]>span:first-child{margin-top:0!important}.kpi-new-row{grid-column-start:1}@media(min-width:1101px){.kpi-col2{grid-column:2}.kpi-col3{grid-column:3}.kpi-col4{grid-column:4}.kpi-col5{grid-column:5}.kpi-col6{grid-column:6}}</style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="online-config.js"></script>
@@ -1457,7 +1457,12 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  <div class="cards" id="officeInventoryStatistics"></div>
 </div></section>
 <section id="inventory-archived" class="panel"><div class="box">
-<div class="invoice-page-row"><button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button><button type="button" class="invoice-page-tab active" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button></div>
+ <div class="invoice-page-row invoice-subnav">
+  <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
+  <button type="button" class="invoice-page-tab" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Inventory IN STOCK Office/Warehouse</button>
+  <button type="button" class="invoice-page-tab" data-inventory-statistics-link onclick="activate('inventory-stock-statistics','heads-page')">Inventory Stock Statistics</button>
+  <button type="button" class="invoice-page-tab active" aria-current="page" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
+ </div>
 <div class="section-head"><div><h2>Archived Inventory</h2><p class="note">Archived LCBO Trillium and office/warehouse inventory. Restore a record to return it to its original inventory page.</p></div></div>
 <div class="toolbar"><input id="archivedInventorySearch" type="search" placeholder="Search location, PO, vendor or product" oninput="renderArchivedInventory()"></div>
 <div class="table-wrap"><table><thead><tr><th>Location</th><th>PO #</th><th>Vendor/Producer</th><th>Item #</th><th>Product</th><th>Cases</th><th>Bottles / Case</th><th>Total Bottles</th><th>Archived Date</th><th>Actions</th></tr></thead><tbody id="archivedInventoryRows"></tbody></table></div>
@@ -11269,7 +11274,7 @@ function renderOfficeInventory(statisticsCards){
   const purchasedTotal={amount:0,missing:0};
   const madeTotal={revenue:0,profit:0,revenueMissing:0,profitMissing:0};
   // Items added by hand (not from an In Stock Transportation PO) - used for combined statistics without double counting.
-  const manualTotals={revenue:0,profit:0,purchased:0,potentialProfit:0,potentialRevenue:0};
+  const manualTotals={revenue:0,profit:0,purchased:0,potentialProfit:0,potentialRevenue:0,purchasedPotentialNl:0,purchasedPotentialL:0};
   const potentialTotal={profit:0,missingBottles:0};
   const channelMade=Object.fromEntries(officeSaleChannels().map(c=>[c.id,{revenue:0,profit:0,missing:false}]));
   const officeRows=[...grouped].map(([key,{record,cases,licensedCases}])=>{
@@ -11339,6 +11344,13 @@ function renderOfficeInventory(statisticsCards){
           const cost=officePrimeCostPerBottle(record,key,costBasis,licensed);
           if(cost===null){if(groupBottles>0)missing=true;return `<div>${label}: ${groupBottles.toLocaleString()} btl × —</div>`;}
           total+=cost*groupBottles;
+          {
+            // Items added by hand: potential profit of all purchased bottles (for combined statistics).
+            const retailNow=pricing.finalRetailBottle;
+            if(isManualItem&&retailNow!==''&&retailNow!=null&&Number.isFinite(Number(retailNow))){
+              manualTotals[licensed?'purchasedPotentialL':'purchasedPotentialNl']+=(Number(retailNow)-cost)*groupBottles;
+            }
+          }
           return `<div>${label}: ${groupBottles.toLocaleString()} btl × ${inventoryPriceMoney(cost)}</div>`;
         }).join('');
         if(missing)purchasedTotal.missing++;else purchasedTotal.amount+=total;
@@ -11415,9 +11427,10 @@ function renderOfficeInventory(statisticsCards){
       <span style="margin-top:8px">Net Profit Already Made</span><strong style="color:${madeTotal.profit<0?'var(--red)':'var(--green)'}">${inventoryPriceMoney(madeTotal.profit)}</strong>
       <small style="color:#94a3b8">From sales of items still on this page: revenue − Prime Cost × bottles sold</small>
       ${madeTotal.revenueMissing||madeTotal.profitMissing?`<small>${Math.max(madeTotal.revenueMissing,madeTotal.profitMissing)} item(s) missing a price or prime cost — partly not counted</small>`:''}</div>`:''}
-    ${true?`<div class="card"><span>Total Prime Cost Purchased (TAX/HST incl.)</span><strong>${inventoryPriceMoney(purchasedTotal.amount)}</strong>
+    ${true?`<div class="card"><span>Total Item Retail Value (TAX/HST incl.)</span><strong>${inventoryPriceMoney(retailTotal.cents/100)}</strong>
+      <span style="margin-top:8px">Total Prime Cost Purchased (TAX/HST incl.)</span><strong>${inventoryPriceMoney(purchasedTotal.amount)}</strong>
       ${purchasedTotal.missing?`<small>${purchasedTotal.missing} item(s) without a proforma net price not counted</small>`:''}</div>`:''}
-    ${officeSaleChannels().map(c=>`<div class="card"><span>Sold to ${escapeHtml(c.label)}</span><strong>${officeRoundCases(channelTotals[c.id].cases).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong><small>${channelTotals[c.id].bottles.toLocaleString()} bottles</small>
+    ${officeSaleChannels().map((c,i)=>`<div class="card${i===0?' kpi-new-row':''}"><span>Sold to ${escapeHtml(c.label)}</span><strong>${officeRoundCases(channelTotals[c.id].cases).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong><small>${channelTotals[c.id].bottles.toLocaleString()} bottles</small>
       ${true?`<span style="margin-top:8px">Revenue (HST incl.) / Profit (HST incl.)</span>
       <strong style="font-size:18px">${inventoryPriceMoney(channelMade[c.id].revenue)} / ${inventoryPriceMoney(channelMade[c.id].profit)}</strong>
       ${channelMade[c.id].missing?'<small>Some sales missing a price or prime cost — not counted</small>':''}`:''}</div>`).join('')}`;
@@ -11752,7 +11765,7 @@ function renderTransportationInventory(statisticsCards){
    },0);
    const projectBudgetCents=projectBalanceCents+Math.round(projectTransportation*100)
      +Math.round(totalLabCost*100)+Math.round(totalOtherFees*100);
-   moneyTotals={salesRevenue,actualProfit,budget:projectBudgetCents/100,potentialProfit,officeStockValue};
+   moneyTotals={salesRevenue,actualProfit,budget:projectBudgetCents/100,potentialProfit,officeStockValue,balanceOwing:totalProformaBalanceCents/100,projectBalance:projectBalanceCents/100,projectPotential};
    const retailCard=(id,cls='',extra='')=>aggregate||selected?`<div class="card ${cls}"><div id="${id}${aggregate?'All':''}" style="display:flex;flex-direction:column"></div>${extra}</div>`:'';
    const rowTitle=text=>`<h3 style="margin:0 0 10px;font-size:15px;color:var(--navy)">${text}</h3>`;
    k.style.display='block';
@@ -11799,9 +11812,9 @@ function renderTransportationInventory(statisticsCards){
     ${rowTitle(aggregate?'Total Live':'Live')}
     <div class="cards">
      <div class="card">
-       <span>Project Sales Revenue (TAX/HST incl.)</span>
+       <span>${aggregate?'Total Sales Revenue':'Project Sales Revenue'} (TAX/HST incl.)</span>
        <strong>${inventoryPriceMoney(salesRevenue)}</strong>
-       <span style="margin-top:8px">Project Net Profit</span>
+       <span style="margin-top:8px">${aggregate?'Total Net Profit':'Project Net Profit'}</span>
        <strong style="color:${salesRevenue-projectBudgetCents/100<0?'var(--red)':'var(--green)'}">${inventoryPriceMoney(salesRevenue-projectBudgetCents/100)}</strong>
        <div style="margin-top:10px;font-size:12px;line-height:1.6;color:#94a3b8">
          <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">Sales Revenue (Restaurant/Hotels, Online Store, In Store — items on the Office/Warehouse page)</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(salesRevenue)}</span></div>
@@ -11899,18 +11912,21 @@ window.renderInventoryStockStatistics=()=>{
    <div class="card"><span>Combined Cases / Bottles in Stock</span>
      <strong>${officeRoundCases(transportation.totalCases+office.totalCases).toLocaleString(undefined,{maximumFractionDigits:2})} / ${Math.round(transportation.totalBottles+office.totalBottles).toLocaleString()}</strong>
      <small style="color:#94a3b8">LCBO Trillium + Office/Warehouse (incl. items added by hand)</small>
+     ${(()=>{const t=transportation.moneyTotals||{salesRevenue:0,actualProfit:0},m=office.manualTotals||{revenue:0,profit:0};
+       const soldCost=(t.salesRevenue+m.revenue)-(t.actualProfit+m.profit);
+       return `<span style="margin-top:8px">Combined Prime Cost of Bottles Sold (HST incl.)</span><strong>${inventoryPriceMoney(soldCost)}</strong>`;})()}
    </div>
-   ${transportation.retailTotals.map(({label,cents,unpricedBottles},index)=>{
+   <div class="card">${transportation.retailTotals.map(({label,cents,unpricedBottles},index)=>{
      const officeRetail=office.retailTotals[index];
      const missing=unpricedBottles+officeRetail.unpricedBottles;
-     return `<div class="card"><span>Combined Live Retail Value — ${label} (TAX/HST incl.)</span>
+     return `<span${index?' style="margin-top:8px"':''}>Combined Live Retail Value — ${label} (TAX/HST incl.)</span>
        <strong>${inventoryPriceMoney((cents+officeRetail.cents)/100)}</strong>
-       <small style="color:#94a3b8">LCBO Trillium at transportation price + Office/Warehouse at its own price</small>
-       ${missing?`<small>${missing.toLocaleString()} bottles without a retail price</small>`:''}</div>`;
+       ${missing?`<small>${missing.toLocaleString()} bottles without a retail price</small>`:''}`;
    }).join('')}
+     <small style="color:#94a3b8;margin-top:6px;display:block">LCBO Trillium at transportation price + Office/Warehouse at its own price</small></div>
    ${(()=>{
      const t=transportation.moneyTotals||{salesRevenue:0,actualProfit:0,budget:0,potentialProfit:0};
-     const m=office.manualTotals||{revenue:0,profit:0,purchased:0,potentialProfit:0};
+     const m=office.manualTotals||{revenue:0,profit:0,purchased:0,potentialProfit:0,purchasedPotentialNl:0,purchasedPotentialL:0};
      const revenue=t.salesRevenue+m.revenue,profit=t.actualProfit+m.profit;
      const soldCost=revenue-profit,totalCost=t.budget+m.purchased,net=revenue-totalCost;
      const potential=t.potentialProfit+m.potentialProfit;
@@ -11918,15 +11934,20 @@ window.renderInventoryStockStatistics=()=>{
      const grey=html=>`<div style="margin-top:8px;font-size:12px;line-height:1.6;color:#94a3b8">${html}</div>`;
      const color=v=>v<0?'var(--red)':'var(--green)';
      return `<div class="card"><span>Combined Revenue Made (HST incl.)</span><strong>${inventoryPriceMoney(revenue)}</strong>
-         ${grey(line('Transportation POs',t.salesRevenue)+line('Items added by hand',m.revenue))}</div>
-       <div class="card"><span>Combined Prime Cost of Bottles Sold (HST incl.)</span><strong>${inventoryPriceMoney(soldCost)}</strong>
-         <span style="margin-top:8px">Combined Profit Made (HST incl.)</span><strong style="color:${color(profit)}">${inventoryPriceMoney(profit)}</strong>
-         ${grey(line('Revenue made',revenue)+line('− Prime Cost of bottles sold',soldCost)+line('= Profit made',profit))}</div>
+         ${grey(line('Transportation POs',t.salesRevenue)+line('Items added by hand',m.revenue))}
+         </div>
        <div class="card"><span>Combined Total Prime Cost / Budget (HST incl.)</span><strong>${inventoryPriceMoney(totalCost)}</strong>
          <span style="margin-top:8px">Combined Net Profit (after all costs)</span><strong style="color:${color(net)}">${inventoryPriceMoney(net)}</strong>
          ${grey(line('Total Project Budget (POs)',t.budget)+line('+ Prime Cost purchased (by hand)',m.purchased)+line('Revenue made',revenue)+line('− Total Prime Cost / Budget',totalCost)+line('= Net Profit',net))}</div>
+       <div class="card"><span>Combined Total Amount of Proforma Balance Owing (TAX/HST incl.)</span><strong>${inventoryPriceMoney(t.balanceOwing||0)}</strong>
+         ${grey(line('Proforma Project Balance (all POs)',t.projectBalance||0)+line('Balance Owing — cases still at LCBO Trillium',t.balanceOwing||0)+'All In Stock Transportations together')}</div>
+       <div class="card"><span>Combined Project Potential Profit — Non-Licensed (HST incl.)</span><strong>${inventoryPriceMoney((t.projectPotential?.nl||0)+m.purchasedPotentialNl)}</strong>
+         <span style="margin-top:8px">Combined Project Potential Profit — Licensed (HST incl.)</span><strong>${inventoryPriceMoney((t.projectPotential?.l||0)+m.purchasedPotentialL)}</strong>
+         ${grey(line('Transportation POs — Non-Licensed',t.projectPotential?.nl||0)+line('Transportation POs — Licensed',t.projectPotential?.l||0)+line('Items added by hand — Non-Licensed',m.purchasedPotentialNl)+line('Items added by hand — Licensed',m.purchasedPotentialL)+'(Retail price − Prime Cost) × original bottles')}</div>
        <div class="card"><span>Combined Potential Profit — Stock in Hand (HST incl.)</span><strong>${inventoryPriceMoney(potential)}</strong>
-         ${grey(line('Transportation POs',t.potentialProfit)+line('Items added by hand',m.potentialProfit)+'(Retail price − Prime Cost) × bottles still in stock')}</div>`;
+         ${grey(line('Transportation POs',t.potentialProfit)+line('Items added by hand',m.potentialProfit)+'(Retail price − Prime Cost) × bottles still in stock')}
+         <span style="margin-top:8px">Combined Profit Made (HST incl.)</span><strong style="color:${color(profit)}">${inventoryPriceMoney(profit)}</strong>
+         ${grey(line('Revenue made',revenue)+line('− Prime Cost of bottles sold',soldCost)+line('= Profit made',profit))}</div>`;
    })()}`;
 };
 
