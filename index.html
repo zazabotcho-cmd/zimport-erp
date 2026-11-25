@@ -1437,8 +1437,8 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  <div class="cards" id="officeInventoryKpis"></div>
  <div class="table-wrap"><table><thead><tr>
   <th>Item Description / Item # / Supplier</th><th>Cases in Stock / Bottles per Case</th>
-  <th>Prime Cost per Bottle (TAX/HST incl.)</th><th>Item total prime cost<br><small>(what was purchased)</small></th><th>Final Retail Price per Bottle (CAD, TAX/HST incl.)</th><th>Item total retail value</th>
-  <th>Sold to</th><th>Revenue (HST incl.) /<br>Profit (HST incl.)</th><th>Sold out on</th><th>ACTION</th>
+  <th>Prime Cost per Bottle (TAX/HST incl.)</th><th>Item total prime cost (TAX/HST incl.)<br><small>(what was purchased)</small></th><th>Final Retail Price per Bottle (CAD, TAX/HST incl.)</th><th>Item total retail value</th>
+  <th>Sold to</th><th>Revenue (HST incl.) /<br>Profit (HST incl.)</th><th>Sold out on</th><th>ACTIONS</th>
  </tr></thead><tbody id="officeInventoryRows"></tbody></table></div>
 </div></section>
 <section id="inventory-stock-statistics" class="panel"><div class="box">
@@ -1481,7 +1481,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  <div class="table-wrap"><table>
   <thead><tr>
    <th>PO #</th><th>Vendor/Producer</th><th class="inventory-pinned-product">Product Name</th>
-   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th>Other Fees per Bottle</th><th scope="col">ACTION</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Profit per Bottle (TAX/HST incl.) /<br>Profit total item (TAX/HST incl.) <span id="inventoryTotalItemProfit" style="white-space:nowrap" aria-live="polite">(aprox ttl. profit non lc,cst only —)</span></th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th>
+   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th>Other Fees per Bottle</th><th scope="col">ACTION</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Profit per Bottle (TAX/HST incl.) /<br>Profit total item (TAX/HST incl.) <span id="inventoryTotalItemProfit" style="white-space:nowrap" aria-live="polite">(aprox ttl. profit non lc,cst only —)</span></th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>ACTIONS</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -10124,6 +10124,60 @@ window.returnInventorySale=async(encodedKey,displayedCases,location)=>{
   renderHeadInventory();
 };
 
+// "Return" on In Stock Transportation: move cases back from Office/Warehouse Stock Inventory.
+function officeReturnToTransportationButton(keyArg){
+  const records=officeInventoryRecords(decodeURIComponent(keyArg));
+  const total=records.reduce((sum,r)=>sum+num(r.cases),0);
+  return `<button type="button" class="secondary small" onclick="returnOfficeToTransportation('${keyArg}')" ${total>=1?'':'disabled'} title="Move cases back from Office/Warehouse Stock Inventory">Return</button>`;
+}
+window.returnOfficeToTransportation=encodedKey=>{
+  const key=decodeURIComponent(String(encodedKey||''));
+  const records=officeInventoryRecords(key);
+  const maxNl=Math.floor(officeCasesForCustomer(records,false)+1e-6);
+  const maxL=Math.floor(officeCasesForCustomer(records,true)+1e-6);
+  if(maxNl+maxL<=0){alert('There are no full cases in Office/Warehouse Stock Inventory to return.');return;}
+  const dialog=document.createElement('dialog');
+  dialog.innerHTML=`<form method="dialog" style="min-width:300px">
+    <h3 style="margin-top:0">Return — Move back to In Stock Transportation</h3>
+    <p style="margin:0 0 10px"><small>Cases are taken from Office/Warehouse Stock Inventory and added back to In Stock Transportation.</small></p>
+    <label style="display:block;margin-bottom:10px">Non-Licensed cases <small>(up to ${maxNl})</small>
+      <input name="nonLicensed" type="number" min="0" max="${maxNl}" step="1" value="0" style="display:block;width:100%"></label>
+    <label style="display:block;margin-bottom:10px">Licensed cases <small>(up to ${maxL})</small>
+      <input name="licensed" type="number" min="0" max="${maxL}" step="1" value="0" style="display:block;width:100%"></label>
+    <p data-return-error style="color:#b91c1c;margin:0 0 10px" hidden></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button value="cancel" class="secondary" formnovalidate>Cancel</button>
+      <button value="ok">Return Cases</button>
+    </div>
+  </form>`;
+  const form=dialog.querySelector('form'),error=dialog.querySelector('[data-return-error]');
+  form.addEventListener('submit',event=>{
+    if(event.submitter?.value!=='ok')return;
+    const nl=Number(form.elements.nonLicensed.value||0),lc=Number(form.elements.licensed.value||0);
+    const fail=msg=>{event.preventDefault();error.textContent=msg;error.hidden=false;};
+    if(![nl,lc].every(v=>Number.isInteger(v)&&v>=0))return fail('Enter whole cases (0 or more).');
+    if(nl+lc<=0)return fail('Enter at least 1 case.');
+    const current=officeInventoryRecords(key);
+    if(nl>officeCasesForCustomer(current,false)+1e-6||lc>officeCasesForCustomer(current,true)+1e-6)return fail('Not enough cases in Office/Warehouse for that.');
+    if(nl)deductOfficeInventoryCases(current,nl,false);
+    if(lc)deductOfficeInventoryCases(current,lc,true);
+    const qty=nl+lc;
+    state.inventoryCaseOverrides??={};
+    const row=[...inventoryTransportationGroups().values()].flatMap(g=>g.pos).flatMap(po=>(po.lines||[]).map((line,index)=>({po,line,index})))
+      .find(({po,line,index})=>inventoryLineKey(po,line,index)===key);
+    const before=state.inventoryCaseOverrides[key]!==undefined?num(state.inventoryCaseOverrides[key])
+      :(row?inventoryCasesForLine(row.po,row.line,row.index):0);
+    state.inventoryCaseOverrides[key]=before+qty;
+    state.inventorySaleAvailability??={};
+    state.inventorySaleAvailability[key]=num(state.inventorySaleAvailability[key])+qty;
+    save({inventoryOnly:true});
+    renderOfficeInventory();
+    renderHeadInventory();
+  });
+  dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+  document.body.append(dialog);
+  dialog.showModal();
+};
 window.moveInventoryToOffice=async(encodedKey,availableCases,encodedMeta)=>{
   const key=decodeURIComponent(String(encodedKey||''));
   let meta={};
@@ -10168,6 +10222,69 @@ window.archiveLcboInventory=(encodedRow)=>{
   state.archivedLcboInventory[row.inventoryKey]={...row,archivedAt:new Date().toISOString()};
   save();renderHeadInventory();renderArchivedInventory();
 };
+window.deleteOfficeInventory=encodedKey=>{
+  const key=decodeURIComponent(String(encodedKey||''));
+  const records=(state.officeInventory||[]).filter(r=>r.inventoryKey===key&&!r.inventoryArchived);
+  if(!records.length)return;
+  const name=records[0].product||records[0].itemNo||'this item';
+  if(!confirm('Delete "'+name+'" from Office/Warehouse Stock Inventory? It will be moved to Head\'s Recycling Bin.'))return;
+  for(const r of records)moveToHeadsRecycleBin('officeInventory','Office/Warehouse Stock Inventory',r,{collection:'officeInventory'});
+  const ids=new Set(records.map(r=>r.id));
+  state.officeInventory=state.officeInventory.filter(r=>!ids.has(r.id));
+  save({inventoryOnly:true});
+  renderOfficeInventory();renderHeadInventory();
+};
+window.editTransportationInventory=encodedRow=>{
+  let row;try{row=JSON.parse(decodeURIComponent(encodedRow))}catch(e){return;}
+  const key=row.inventoryKey;
+  const current=num(state.inventoryCaseOverrides?.[key]??row.cases);
+  const sales=state.inventorySalesMetrics?.[key]||{};
+  const dialog=document.createElement('dialog');
+  dialog.innerHTML=`<form method="dialog" style="min-width:320px">
+    <h3 style="margin-top:0">Open / Edit — ${escapeHtml(row.product||'Item')}</h3>
+    <p style="margin:0 0 10px"><small>PO # ${escapeHtml(row.poNumber||'—')} · Item # ${escapeHtml(row.itemNo||'—')} · ${escapeHtml(row.vendor||'—')} · ${num(row.bpc)} bottles per case</small></p>
+    <label style="display:block;margin-bottom:10px">Cases in Stock (LCBO Trillium)
+      <input name="cases" type="number" min="0" step="1" value="${current}" style="display:block;width:100%"></label>
+    <label style="display:block;margin-bottom:10px">Available for sale since
+      <input name="availableSince" type="date" value="${escapeHtml(sales.availableSince||'')}" style="display:block;width:100%"></label>
+    <label style="display:block;margin-bottom:10px">Sold out on
+      <input name="soldOutOn" type="date" value="${escapeHtml(sales.soldOutOn||'')}" style="display:block;width:100%"></label>
+    <p data-edit-error style="color:#b91c1c;margin:0 0 10px" hidden></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button value="cancel" class="secondary" formnovalidate>Cancel</button>
+      <button value="ok">Save</button>
+    </div>
+  </form>`;
+  const form=dialog.querySelector('form'),error=dialog.querySelector('[data-edit-error]');
+  form.addEventListener('submit',event=>{
+    if(event.submitter?.value!=='ok')return;
+    const fail=msg=>{event.preventDefault();error.textContent=msg;error.hidden=false;};
+    const cases=Number(form.elements.cases.value);
+    if(!Number.isInteger(cases)||cases<0)return fail('Enter whole cases (0 or more).');
+    const since=form.elements.availableSince.value,out=form.elements.soldOutOn.value;
+    if(since&&out&&out<since)return fail('Sold out date must be on or after the available for sale date.');
+    state.inventoryCaseOverrides??={};
+    state.inventoryCaseOverrides[key]=cases;
+    state.inventorySaleAvailability??={};
+    state.inventorySaleAvailability[key]=Math.min(cases,Math.max(num(state.inventorySaleAvailability[key])+(cases-current),0));
+    const metrics=(state.inventorySalesMetrics??={})[key]??={};
+    metrics.availableSince=since;metrics.soldOutOn=out;
+    save({inventoryOnly:true});
+    renderHeadInventory();renderOfficeInventory();
+  });
+  dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+  document.body.append(dialog);
+  dialog.showModal();
+};
+window.deleteTransportationInventory=encodedRow=>{
+  let row;try{row=JSON.parse(decodeURIComponent(encodedRow))}catch(e){return;}
+  if(!confirm('Delete "'+(row.product||row.itemNo||'this item')+'" from In Stock Transportation? It will be moved to Head\'s Recycling Bin.'))return;
+  const record={...row,archivedAt:new Date().toISOString()};
+  moveToHeadsRecycleBin('archivedLcboInventory','In Stock Transportation',{...record,id:row.inventoryKey},{inventoryKey:row.inventoryKey});
+  state.archivedLcboInventory??={};
+  state.archivedLcboInventory[row.inventoryKey]={...record,inventoryRecycled:true};
+  save();renderHeadInventory();renderArchivedInventory();
+};
 window.archiveOfficeInventory=encodedKey=>{
   const key=decodeURIComponent(String(encodedKey||''));
   const records=(state.officeInventory||[]).filter(r=>r.inventoryKey===key&&!r.inventoryArchived);
@@ -10198,15 +10315,15 @@ window.editOfficeInventory=encodedKey=>{
       <label class="full">Item Description <input name="product" required value="${v(first.product)}"></label>
       <label>Item # <input name="itemNo" value="${v(first.itemNo)}"></label>
       <label>Supplier <input name="vendor" value="${v(first.vendor)}"></label>
-      ${fromPo?'':`<label>Cases for Non-Licensed Customers <input name="nonLicensedCases" type="number" min="0" step="any" value="${officeRoundCases(totalCases-licensed)}"></label>
-      <label>Cases for Licensed Customers <input name="licensedCases" type="number" min="0" step="any" value="${officeRoundCases(licensed)}"></label>
+      <label>Cases in Stock — Non-Licensed <input name="nonLicensedCases" type="number" min="0" step="any" value="${officeRoundCases(totalCases-licensed)}"></label>
+      <label>Cases in Stock — Licensed <input name="licensedCases" type="number" min="0" step="any" value="${officeRoundCases(licensed)}"></label>
       <label>Bottles per Case <input name="bpc" type="number" min="1" step="1" value="${v(first.bpc)}"></label>
-      <label>Prime Cost per Bottle — Non-Licensed (TAX/HST incl.) <input name="primeCostNonLicensed" type="number" min="0" step="0.01" value="${v(first.manualPrimeCost?.nonLicensed)}"></label>
+      ${fromPo?'':`<label>Prime Cost per Bottle — Non-Licensed (TAX/HST incl.) <input name="primeCostNonLicensed" type="number" min="0" step="0.01" value="${v(first.manualPrimeCost?.nonLicensed)}"></label>
       <label>Prime Cost per Bottle — Licensed (TAX/HST incl.) <input name="primeCostLicensed" type="number" min="0" step="0.01" value="${v(first.manualPrimeCost?.licensed)}"></label>`}
       <label>Final Retail Price per Bottle (CAD, TAX/HST incl.) <input name="finalRetailBottle" type="number" min="0" step="0.01" value="${v(pricing.finalRetailBottle)}"></label>
       <label>Available for sale since <input name="availableSince" type="date" value="${v(sales.availableSince)}"></label>
     </div>
-    ${fromPo?'<p class="note" style="margin:8px 0 0">Cases, bottles per case and Prime Cost come from In Stock Transportation (Purchased) and cannot be changed here.</p>':''}
+    ${fromPo?'<p class="note" style="margin:8px 0 0">Prime Cost comes from In Stock Transportation and cannot be changed here.</p>':''}
     <p data-edit-error style="color:#b91c1c;margin:8px 0 0" hidden></p>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
       <button value="cancel" class="secondary" formnovalidate>Cancel</button>
@@ -10222,12 +10339,12 @@ window.editOfficeInventory=encodedKey=>{
     if(!f.product.value.trim())return fail('Enter the item description.');
     const retail=numOrBlank(f.finalRetailBottle);
     if(retail!==''&&!(retail>=0))return fail('Enter a valid Final Retail Price.');
-    let nl,lc,bpc,pcNl,pcL;
+    const nl=Number(f.nonLicensedCases.value||0),lc=Number(f.licensedCases.value||0),bpc=Number(f.bpc.value);
+    if(!(nl>=0)||!(lc>=0))return fail('Enter valid case quantities.');
+    if(!(bpc>=1)||!Number.isInteger(bpc))return fail('Enter bottles per case (whole number, 1 or more).');
+    let pcNl,pcL;
     if(!fromPo){
-      nl=Number(f.nonLicensedCases.value||0);lc=Number(f.licensedCases.value||0);bpc=Number(f.bpc.value);
       pcNl=numOrBlank(f.primeCostNonLicensed);pcL=numOrBlank(f.primeCostLicensed);
-      if(!(nl>=0)||!(lc>=0))return fail('Enter valid case quantities.');
-      if(!(bpc>=1))return fail('Enter bottles per case (1 or more).');
       if((pcNl!==''&&!(pcNl>=0))||(pcL!==''&&!(pcL>=0)))return fail('Enter a valid Prime Cost.');
     }
     if(f.availableSince.value&&sales.soldOutOn&&sales.soldOutOn<f.availableSince.value)return fail('Available for sale since must be on or before the Sold out on date.');
@@ -10235,10 +10352,11 @@ window.editOfficeInventory=encodedKey=>{
       r.product=f.product.value.trim();r.itemNo=f.itemNo.value.trim();r.vendor=f.vendor.value.trim();
       r.retailPricing={...(r.retailPricing||{}),finalRetailBottle:retail,separateFromTransportation:true};
     }
-    if(!fromPo){
-      // Manual items: put all cases on the first record.
-      records.forEach((r,i)=>{r.cases=i?0:officeRoundCases(nl+lc);r.licensedCases=i?0:officeRoundCases(lc);r.bpc=bpc;r.manualPrimeCost={nonLicensed:pcNl,licensed:pcL};});
-    }
+    // Put all cases on the first record.
+    records.forEach((r,i)=>{
+      r.cases=i?0:officeRoundCases(nl+lc);r.licensedCases=i?0:officeRoundCases(lc);r.bpc=bpc;
+      if(!fromPo)r.manualPrimeCost={nonLicensed:pcNl,licensed:pcL};
+    });
     const metrics=(state.inventorySalesMetrics??={})[key]??={};
     metrics.availableSince=f.availableSince.value;
     save({inventoryOnly:true});
@@ -11093,7 +11211,7 @@ function renderOfficeInventory(statisticsCards){
   const retailTotal={cents:0,unpricedBottles:0};
   let totalNonLicensedStock=0,totalLicensedStock=0;
   const channelTotals=Object.fromEntries(officeSaleChannels().map(c=>[c.id,{cases:0,bottles:0}]));
-  const costBasis=body?inventoryPoCostBasisMap():new Map();
+  const costBasis=inventoryPoCostBasisMap();
   const purchasedTotal={amount:0,missing:0};
   const madeTotal={revenue:0,profit:0,revenueMissing:0,profitMissing:0};
   const potentialTotal={profit:0,missingBottles:0};
@@ -11121,7 +11239,6 @@ function renderOfficeInventory(statisticsCards){
     totalBottles+=bottles;
     totalNonLicensedStock+=nonLicensedCases;
     totalLicensedStock+=licensedCases;
-    if(!body)return '';
     const prices=`<span style="display:flex;align-items:center;gap:5px">$<input type="number" min="0" step="0.01" inputmode="decimal" style="width:105px"
           aria-label="Final retail price per bottle for ${escapeHtml(record.product||record.itemNo||'item')}"
           value="${escapeHtml(String(pricing.finalRetailBottle??''))}" data-office-inventory-key="${escapeHtml(key)}"
@@ -11212,30 +11329,31 @@ function renderOfficeInventory(statisticsCards){
       <td style="min-width:160px"><label style="display:block">Sold out on
         <input type="date" data-inventory-sales-date value="${escapeHtml(sales.soldOutOn||'')}" onchange="updateInventorySalesDate('${keyArg}','soldOutOn',this)">
       </label>${sales.availableSince?`<small style="color:#94a3b8">Available for sale since ${escapeHtml(sales.availableSince)}</small>`:''}</td>
-      <td style="min-width:150px"><button type="button" class="secondary small" style="display:block;width:100%;margin-bottom:6px" onclick="editOfficeInventory('${keyArg}')">Edit Inventory</button>
-        <button type="button" class="secondary small" style="display:block;width:100%" onclick="archiveOfficeInventory('${keyArg}')">Move to Archived Inventory</button></td>
+      <td><div style="display:flex;flex-direction:column;gap:6px;min-width:190px"><button type="button" class="small" onclick="editOfficeInventory('${keyArg}')">Open / Edit</button><button type="button" class="secondary small" onclick="archiveOfficeInventory('${keyArg}')">Move to Archived Inventory</button><button type="button" class="danger small" onclick="deleteOfficeInventory('${keyArg}')">Delete</button></div></td>
     </tr>`;
   }).join('');
   if(body)body.innerHTML=officeRows||'<tr><td colspan="10">No office/warehouse stock yet. Add inventory or move cases from In Stock Transportation.</td></tr>';
   cards.innerHTML=`
-    <div class="card"><span>Cases in Stock</span><strong>${officeRoundCases(totalCases).toLocaleString(undefined,{maximumFractionDigits:2})}</strong></div>
-    <div class="card"><span>Bottles in Stock</span><strong>${totalBottles.toLocaleString()}</strong></div>
-    ${body?`<div class="card"><span>Stock for Non-Licensed Customers</span><strong>${officeRoundCases(totalNonLicensedStock).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong></div>
-    <div class="card"><span>Stock for Licensed Customers</span><strong>${officeRoundCases(totalLicensedStock).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong></div>`:''}
+    <div class="card"><span>Cases in Stock / Bottles in Stock</span>
+      <strong>${officeRoundCases(totalCases).toLocaleString(undefined,{maximumFractionDigits:2})} / ${totalBottles.toLocaleString()}</strong>
+      <span style="margin-top:8px">Stock for Non-Licensed Customers</span>
+      <strong style="font-size:20px">${officeRoundCases(totalNonLicensedStock).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong>
+      <span style="margin-top:8px">Stock for Licensed Customers</span>
+      <strong style="font-size:20px">${officeRoundCases(totalLicensedStock).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong></div>
     <div class="card"><span>Potential Revenue — Stock in Hand (HST incl.)</span><strong>${inventoryPriceMoney(retailTotal.cents/100)}</strong>
       <small style="color:#94a3b8">Bottles in stock × Final Retail Price</small>
       ${retailTotal.unpricedBottles?`<small>${retailTotal.unpricedBottles.toLocaleString()} bottles without a retail price</small>`:''}
-      ${body?`<span style="margin-top:8px">Potential Profit — Stock in Hand</span><strong>${inventoryPriceMoney(potentialTotal.profit)}</strong>
+      ${true?`<span style="margin-top:8px">Potential Profit — Stock in Hand</span><strong>${inventoryPriceMoney(potentialTotal.profit)}</strong>
       <small style="color:#94a3b8">(Final Retail Price − Prime Cost) × bottles in stock</small>
       ${potentialTotal.missingBottles?`<small>${potentialTotal.missingBottles.toLocaleString()} bottles without a price or prime cost not counted</small>`:''}`:''}</div>
-    ${body?`<div class="card"><span>Revenue Already Made (HST incl.)</span><strong>${inventoryPriceMoney(madeTotal.revenue)}</strong>
+    ${true?`<div class="card"><span>Revenue Already Made (HST incl.)</span><strong>${inventoryPriceMoney(madeTotal.revenue)}</strong>
       <span style="margin-top:8px">Net Profit Already Made</span><strong style="color:${madeTotal.profit<0?'var(--red)':'var(--green)'}">${inventoryPriceMoney(madeTotal.profit)}</strong>
       <small style="color:#94a3b8">From sales of items still on this page: revenue − Prime Cost × bottles sold</small>
       ${madeTotal.revenueMissing||madeTotal.profitMissing?`<small>${Math.max(madeTotal.revenueMissing,madeTotal.profitMissing)} item(s) missing a price or prime cost — partly not counted</small>`:''}</div>`:''}
-    ${body?`<div class="card"><span>Total Prime Cost Purchased</span><strong>${inventoryPriceMoney(purchasedTotal.amount)}</strong>
+    ${true?`<div class="card"><span>Total Prime Cost Purchased (TAX/HST incl.)</span><strong>${inventoryPriceMoney(purchasedTotal.amount)}</strong>
       ${purchasedTotal.missing?`<small>${purchasedTotal.missing} item(s) without a proforma net price not counted</small>`:''}</div>`:''}
     ${officeSaleChannels().map(c=>`<div class="card"><span>Sold to ${escapeHtml(c.label)}</span><strong>${officeRoundCases(channelTotals[c.id].cases).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong><small>${channelTotals[c.id].bottles.toLocaleString()} bottles</small>
-      ${body?`<span style="margin-top:8px">Revenue (HST incl.) / Profit (HST incl.)</span>
+      ${true?`<span style="margin-top:8px">Revenue (HST incl.) / Profit (HST incl.)</span>
       <strong style="font-size:18px">${inventoryPriceMoney(channelMade[c.id].revenue)} / ${inventoryPriceMoney(channelMade[c.id].profit)}</strong>
       ${channelMade[c.id].missing?'<small>Some sales missing a price or prime cost — not counted</small>':''}`:''}</div>`).join('')}`;
   // Statistics combine by customer type; office stock uses its one price for both.
@@ -11414,7 +11532,7 @@ function renderTransportationInventory(statisticsCards){
           <span style="display:flex;align-items:center;gap:5px">$<input type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${escapeHtml(String(labCost))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="totalLabCost" onchange="updateInventoryProformaPrice('${poIdArg}','totalLabCost',this)"></span>
         </label><small>Lab cost per bottle: ${inventoryPriceMoney(labCostPerBottle)}</small>`;
       })()}</td>
-    <td><button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${inventoryActionArg(JSON.stringify({poId:r.poId,poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${r.cases<=0?'disabled':''}>Purchased</button><div>${inventoryReturnButton(keyArg,r.cases,'trillium')}</div></td>
+    <td><button type="button" class="secondary small" onclick="moveInventoryToOffice('${keyArg}',${r.cases},'${inventoryActionArg(JSON.stringify({poId:r.poId,poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,bpc:r.bpc}))}')" ${r.cases<=0?'disabled':''}>Purchased</button><div>${officeReturnToTransportationButton(keyArg)}</div></td>
     <td style="border-left:3px solid #64748b">${['nonLicensed','licensed'].map(type=>{const field=type==='licensed'?'licensedRetailBottle':'finalRetailBottle',label=type==='licensed'?'Licensed customer':'Non-licensed customer';return `<label style="display:flex;flex-direction:column;gap:8px;min-width:170px;min-height:76px;margin:6px 0">${label}<span style="display:flex;align-items:center;gap:5px">$<input type="number" min="0" step="0.01" inputmode="decimal" aria-label="${label} final retail price including TAX/HST" placeholder="Enter retail price" value="${escapeHtml(String((inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing)?.[field]??''))}" data-inventory-price-po="${escapeHtml(poIdArg)}" data-inventory-price-field="${field}" onchange="updateInventoryProformaPrice('${poIdArg}','${field}',this)"></span></label>`;}).join('')}</td>
     <td>${[false,true].map(licensed=>inventoryItemProfit(r,inventoryProformaPo(r.poId)?.inventoryProformaPricing||r.proformaPricing,licensed)).map(({label,perBottle,totalItem})=>`<div style="min-width:170px;min-height:76px;margin:6px 0;display:flex;flex-direction:column;gap:8px">
       ${label}
@@ -11426,8 +11544,10 @@ function renderTransportationInventory(statisticsCards){
       </label>`).join('')}
       <small>Selling period: ${months===null?'—':months.toFixed(2)+' months'}</small>
     </td>
+    <td>${(()=>{const rowArg=inventoryActionArg(JSON.stringify({inventoryKey:r.inventoryKey,poId:r.poId,poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,cases:r.cases,bpc:r.bpc}));
+      return `<div style="display:flex;flex-direction:column;gap:6px;min-width:190px"><button type="button" class="small" onclick="editTransportationInventory('${rowArg}')">Open / Edit</button><button type="button" class="secondary small" onclick="archiveLcboInventory('${rowArg}')">Move to Archived Inventory</button><button type="button" class="danger small" onclick="deleteTransportationInventory('${rowArg}')">Delete</button></div>`;})()}</td>
    </tr>`;
- }).join('')||'<tr><td colspan="19">No non-tender inventory rows for this transportation.</td></tr>';
+ }).join('')||'<tr><td colspan="20">No non-tender inventory rows for this transportation.</td></tr>';
 
  let totalCases=0,totalBottles=0;
  if(k){
@@ -11436,7 +11556,8 @@ function renderTransportationInventory(statisticsCards){
    let projectTransportation=0,totalLabCost=0,totalOtherFees=0;
    let projectSellOutMonths=null,projectCasesPerMonth=0;
    const livePoIds=new Set();
-   let salesRevenue=0,salesUnpricedBottles=0;
+   let salesRevenue=0,salesUnpricedBottles=0,actualProfit=0,actualProfitMissing=false;
+   let officeStockValue=0,officeStockUnpriced=0,potentialProfit=0,potentialMissingBottles=0;
    orders.forEach(({po,shipment})=>{
      const pricing=inventoryProformaPo(po.originalPoId||po.id)?.inventoryProformaPricing||po.inventoryProformaPricing;
      const transportationPerBottle=nonTenderPoTransportationCad(po,shipment);
@@ -11447,33 +11568,67 @@ function renderTransportationInventory(statisticsCards){
        const bottlesPerCase=num(line.unitsPerCase);
        const sales=state.inventorySalesMetrics?.[inventoryLineKey(po,line,index)]||{};
        const casesSold=num(sales.nonLicensedCasesSold)+num(sales.licensedCasesSold);
+       const lineKey=inventoryLineKey(po,line,index);
+       const officeRecord=(state.officeInventory||[]).find(r=>r.inventoryKey===lineKey&&!r.inventoryArchived)
+         ||(state.officeInventory||[]).find(r=>r.inventoryKey===lineKey);
+       const officePrice=officeRecord?officeInventoryPricing(officeRecord).finalRetailBottle:pricing?.finalRetailBottle;
        {
-         // Sales revenue: office/warehouse sales at the office retail price,
-         // other sales at the In Stock Transportation retail price.
-         const lineKey=inventoryLineKey(po,line,index);
-         const officeRecord=(state.officeInventory||[]).find(r=>r.inventoryKey===lineKey);
-         const officePrice=officeRecord?officeInventoryPricing(officeRecord).finalRetailBottle:'';
-         const officeSold=num(sales.officeNonLicensedCasesSold)+num(sales.officeLicensedCasesSold);
-         // Sales with a saved selling price use that actual price.
-         let recordedCases=0;
+         // Sales revenue and actual profit. Office/Warehouse sales use the price saved with each sale
+         // (or the Office/Warehouse Final Retail Price); older sales use the In Stock Transportation price.
+         // Profit = revenue - Prime Cost per Bottle x bottles sold.
+         const originalPoBottles=inventoryPoOriginalBottles(po);
+         const primeCost=licensed=>pricing?inventoryPrimeCostPerBottle(pricing,transportationPerBottle,originalPoBottles,licensed):null;
+         const validPrice=price=>price!==''&&price!=null&&Number.isFinite(Number(price));
+         const addPart=(revenue,bottles,licensed)=>{
+           if(!bottles)return;
+           const cost=primeCost(licensed);
+           if(revenue===null){salesUnpricedBottles+=bottles;actualProfitMissing=true;return;}
+           salesRevenue+=revenue;
+           if(cost===null)actualProfitMissing=true;else actualProfit+=revenue-cost*bottles;
+         };
+         let channelSold=0;
          for(const channel of officeSaleChannels()){
+           const sold=officeChannelSoldCases(sales,channel.id);
+           if(sold<=0)continue;
+           channelSold+=sold;
            const rec=sales.officeChannelRevenue?.[channel.id];
-           if(!rec)continue;
-           const priced=Math.min(num(rec.cases),officeChannelSoldCases(sales,channel.id));
-           if(priced<=0)continue;
-           salesRevenue+=num(rec.amount)*(num(rec.cases)>0?priced/num(rec.cases):0);
-           recordedCases+=priced;
+           const priced=Math.min(num(rec?.cases),sold);
+           const recorded=priced>0?num(rec.amount)*priced/num(rec.cases):0;
+           const unpricedBottles=Math.round((sold-priced)*bottlesPerCase);
+           const revenue=unpricedBottles>0?(validPrice(officePrice)?recorded+Number(officePrice)*unpricedBottles:null):recorded;
+           addPart(revenue,Math.round(sold*bottlesPerCase),channel.licensed);
          }
+         const officeSold=num(sales.officeNonLicensedCasesSold)+num(sales.officeLicensedCasesSold);
          const parts=[
-           [Math.max(0,officeSold-recordedCases),officeRecord?officePrice:pricing?.finalRetailBottle],
-           [Math.max(0,num(sales.nonLicensedCasesSold)-num(sales.officeNonLicensedCasesSold)),pricing?.finalRetailBottle],
-           [Math.max(0,num(sales.licensedCasesSold)-num(sales.officeLicensedCasesSold)),pricing?.licensedRetailBottle]
+           [Math.max(0,officeSold-channelSold),officePrice,false],
+           [Math.max(0,num(sales.nonLicensedCasesSold)-num(sales.officeNonLicensedCasesSold)),pricing?.finalRetailBottle,false],
+           [Math.max(0,num(sales.licensedCasesSold)-num(sales.officeLicensedCasesSold)),pricing?.licensedRetailBottle,true]
          ];
-         for(const [soldCases,price] of parts){
-           const soldBottles=Math.round(soldCases*bottlesPerCase);
-           if(!soldBottles)continue;
-           if(price===''||price==null||!Number.isFinite(Number(price)))salesUnpricedBottles+=soldBottles;
-           else salesRevenue+=Number(price)*soldBottles;
+         for(const [soldCases,price,licensed] of parts){
+           const bottles=Math.round(soldCases*bottlesPerCase);
+           addPart(bottles&&validPrice(price)?Number(price)*bottles:null,bottles,licensed);
+         }
+         // Live: potential profit of stock in hand = (retail price - Prime Cost) x bottles.
+         // LCBO Trillium stock uses the Non-licensed transportation price; Office/Warehouse stock uses the
+         // Office/Warehouse price with the Non-Licensed / Licensed Prime Cost of its split.
+         const lcboBottles=Math.round(inventoryCasesForLine(po,line,index)*bottlesPerCase);
+         const officeLicensedCases=officeLicensedByInventoryKey.get(lineKey)||0;
+         const officeAllCases=officeCasesByInventoryKey.get(lineKey)||0;
+         for(const [bottles,price,licensed] of [
+           [lcboBottles,pricing?.finalRetailBottle,false],
+           [Math.round((officeAllCases-officeLicensedCases)*bottlesPerCase),officePrice,false],
+           [Math.round(officeLicensedCases*bottlesPerCase),officePrice,true]
+         ]){
+           if(!bottles)continue;
+           const cost=primeCost(licensed);
+           if(!validPrice(price)||cost===null)potentialMissingBottles+=bottles;
+           else potentialProfit+=(Number(price)-cost)*bottles;
+         }
+         // Live: Office/Warehouse stock value of this item at the Office/Warehouse price.
+         const officeBottlesInStock=Math.round((officeCasesByInventoryKey.get(lineKey)||0)*bottlesPerCase);
+         if(officeBottlesInStock){
+           if(validPrice(officePrice))officeStockValue+=Number(officePrice)*officeBottlesInStock;
+           else officeStockUnpriced+=officeBottlesInStock;
          }
        }
        const months=inventorySellingMonths(sales);
@@ -11507,10 +11662,10 @@ function renderTransportationInventory(statisticsCards){
    },0);
    const projectBudgetCents=projectBalanceCents+Math.round(projectTransportation*100)
      +Math.round(totalLabCost*100)+Math.round(totalOtherFees*100);
-   const retailCard=(id,cls='')=>aggregate||selected?`<div class="card ${cls}"><div id="${id}${aggregate?'All':''}" style="display:flex;flex-direction:column"></div></div>`:'';
+   const retailCard=(id,cls='',extra='')=>aggregate||selected?`<div class="card ${cls}"><div id="${id}${aggregate?'All':''}" style="display:flex;flex-direction:column"></div>${extra}</div>`:'';
    const rowTitle=text=>`<h3 style="margin:0 0 10px;font-size:15px;color:var(--navy)">${text}</h3>`;
    k.style.display='block';
-   k.innerHTML=`${rowTitle('Project')}
+   k.innerHTML=`${rowTitle(aggregate?'Total Project':'Project')}
     <div class="cards">
      <div class="card"><span>Total Project Budget (CAD, supplier paid from case price)</span><strong>${inventoryPriceMoney(projectBudgetCents/100)}</strong>
        <div style="margin-top:10px;font-size:12px;line-height:1.6;color:#94a3b8">
@@ -11545,10 +11700,11 @@ function renderTransportationInventory(statisticsCards){
        <span>${aggregate?'Longest Project Sell-Out Period (Months)':'Project Sell-Out Months'} / Total Cases Sold per Month</span>
        <strong>${projectSellOutMonths===null?'—':projectSellOutMonths.toLocaleString('en-CA',{maximumFractionDigits:2})} / ${projectSellOutMonths!==null?projectCasesPerMonth.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong>
        <span style="margin-top:8px">Project Total Profit / Project Monthly Profit</span>
-       <strong>${inventoryPriceMoney(hasMissingProfit?null:projectTotalProfit)} / ${inventoryPriceMoney(hasMissingProfit||!projectSellOutMonths?null:projectTotalProfit/projectSellOutMonths)}</strong>
+       <strong>${inventoryPriceMoney(actualProfit)} / ${inventoryPriceMoney(!projectSellOutMonths?null:actualProfit/projectSellOutMonths)}</strong>
+       <small style="color:#94a3b8">Actual sale prices − Prime Cost × bottles sold${actualProfitMissing?' (some sales missing a price or prime cost — not counted)':''}</small>
      </div>
     </div>
-    ${rowTitle('Live')}
+    ${rowTitle(aggregate?'Total Live':'Live')}
     <div class="cards">
      <div class="card">
        <span>Project Sales Revenue (TAX/HST incl.)</span>
@@ -11564,20 +11720,27 @@ function renderTransportationInventory(statisticsCards){
      </div>
      <div class="card kpi-col2">
        <span>Total Cases in Stock / Total Bottles in Stock</span>
-       <strong>${totalCases.toLocaleString()} / ${totalBottles.toLocaleString()}</strong>
+       <strong>${officeRoundCases(totalCases+officeStockCases).toLocaleString(undefined,{maximumFractionDigits:2})} / ${Math.round(totalBottles+officeStockBottles).toLocaleString()}</strong>
+       <div style="margin-top:6px;font-size:12px;line-height:1.6;color:#94a3b8">
+         <div>At LCBO Trillium: ${totalCases.toLocaleString()} / ${totalBottles.toLocaleString()}</div>
+         <div>Office/Warehouse: ${officeRoundCases(officeStockCases).toLocaleString(undefined,{maximumFractionDigits:2})} / ${Math.round(officeStockBottles).toLocaleString()}</div>
+       </div>
        <span style="margin-top:8px">POs in Inventory</span>
        <strong>${livePoIds.size}</strong>
        ${aggregate?`<span style="margin-top:8px">In Stock Transportations</span><strong>${shipments.length}</strong>`:''}
      </div>
-     ${retailCard('transportationLiveRetailValues','kpi-col3')}
+     ${retailCard('transportationLiveRetailValues','kpi-col3',`<span style="margin-top:8px">Office/Warehouse Stock Value (HST incl.)</span>
+       <strong>${inventoryPriceMoney(officeStockValue)}</strong>
+       <small style="color:#94a3b8">Office/Warehouse bottles × Office/Warehouse Final Retail Price</small>
+       ${officeStockUnpriced?`<small>${officeStockUnpriced.toLocaleString()} bottles without a retail price</small>`:''}`)}
      <div class="card kpi-col4">
        <span>Total Amount of Proforma Balance Owing (TAX/HST incl.)</span>
        <strong>${inventoryPriceMoney(totalProformaBalanceCents/100)}</strong>
      </div>
-     ${aggregate?`<div class="card kpi-col5"><span>Office/Warehouse Cases / Bottles in Stock (Transportation POs)</span>
-       <strong>${officeStockCases.toLocaleString()} / ${officeStockBottles.toLocaleString()}</strong></div>
-     <div class="card kpi-col6"><span>Approximate Stock Profit — Non-Licensed</span>
-       <strong>${inventoryPriceMoney(inventoryTotalItemProfit(projectRows))}</strong></div>`:''}
+     <div class="card kpi-col5"><span>Potential Profit — Stock in Hand (HST incl.)</span>
+       <strong>${inventoryPriceMoney(potentialProfit)}</strong>
+       <small style="color:#94a3b8">(Retail price − Prime Cost) × bottles at LCBO Trillium and Office/Warehouse</small>
+       ${potentialMissingBottles?`<small>${potentialMissingBottles.toLocaleString()} bottles without a price or prime cost not counted</small>`:''}</div>
     </div>`;
  }
  const total=aggregate?null:document.getElementById('inventoryTotalItemProfit');
@@ -11613,7 +11776,7 @@ function renderTransportationInventory(statisticsCards){
  const liveRetailValues=document.getElementById('transportationLiveRetailValues'+(aggregate?'All':''));
  const projectRetailValues=document.getElementById('transportationProjectRetailValues'+(aggregate?'All':''));
  const updateRetailValues=draft=>{
-   const liveTotals=renderRetailValues(liveRetailValues,'Live Retail Value',row=>row.bottles,draft);
+   const liveTotals=renderRetailValues(liveRetailValues,'Live Retail Value at LCBO Trillium',row=>row.bottles,draft);
    renderRetailValues(projectRetailValues,'Total Project Retail Value',row=>row.originalCases*row.bpc,draft);
    return liveTotals;
  };
@@ -11642,12 +11805,14 @@ window.renderInventoryStockStatistics=()=>{
  const office=renderOfficeInventory(document.getElementById('officeInventoryStatistics'));
  combined.innerHTML=`
    <div class="card"><span>Combined Cases / Bottles in Stock</span>
-     <strong>${(transportation.totalCases+office.totalCases).toLocaleString()} / ${(transportation.totalBottles+office.totalBottles).toLocaleString()}</strong>
+     <strong>${officeRoundCases(transportation.totalCases+office.totalCases).toLocaleString(undefined,{maximumFractionDigits:2})} / ${Math.round(transportation.totalBottles+office.totalBottles).toLocaleString()}</strong>
+     <small style="color:#94a3b8">LCBO Trillium + Office/Warehouse (incl. items added by hand)</small>
    </div>
    ${transportation.retailTotals.map(({label,cents,unpricedBottles},index)=>{
      const officeRetail=office.retailTotals[index];
      const missing=unpricedBottles+officeRetail.unpricedBottles;
      return `<div class="card"><span>Combined Live Retail Value — ${label} (TAX/HST incl.)</span>
+       <small style="color:#94a3b8">LCBO Trillium at transportation price + Office/Warehouse at its own price</small>
        <strong>${inventoryPriceMoney((cents+officeRetail.cents)/100)}</strong>
        ${missing?`<small>${missing.toLocaleString()} bottles without a retail price</small>`:''}</div>`;
    }).join('')}`;

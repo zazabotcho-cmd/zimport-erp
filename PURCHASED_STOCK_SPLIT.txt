@@ -125,3 +125,24 @@ UPDATE 8 (2026-11-25)
   "Revenue Already Made" and "Net Profit Already Made" = sales of items still on the page
   (revenue - Prime Cost x bottles sold).
 - Office/Warehouse "Sold to Restaurant/Hotels / Online Store / In Store" squares now also show Revenue (HST incl.) / Profit (HST incl.).
+- In Stock Transportation stats updated for today's changes:
+  Project Total Profit / Monthly Profit now = actual sale prices - Prime Cost x bottles sold.
+  Live: Total Cases/Bottles in Stock = LCBO Trillium + Office/Warehouse (breakdown in grey);
+  Live Retail Value is now "at LCBO Trillium" and the same square shows Office/Warehouse Stock Value
+  at the Office/Warehouse price. (All page: separate Office/Warehouse square removed, now in the cases square.)
+- Office/Warehouse: "Item total prime cost" header and "Total Prime Cost Purchased" square now say (TAX/HST incl.).
+- Inventory Stock Statistics:
+  All In Stock Transportations rows renamed "Total Project" and "Total Live" (same squares as In Stock
+  Transportation, incl. budget breakdown, actual profit, LCBO + Office/Warehouse stock).
+  "Approximate Stock Profit" replaced by "Potential Profit — Stock in Hand" (also on In Stock Transportation).
+  Office/Warehouse section now also shows Potential Profit, Revenue/Net Profit Already Made,
+  Total Prime Cost Purchased and Revenue/Profit per Sold-to channel.
+  Combined squares explain what they add up.
+- Office/Warehouse: Cases in Stock, Bottles in Stock, Stock for Non-Licensed and Stock for Licensed combined in one square.
+- In Stock Transportation, ACTION "Return": now moves cases back from Office/Warehouse Stock Inventory
+  to In Stock Transportation (asks Non-Licensed and Licensed cases, up to what is in Office/Warehouse).
+- Office/Warehouse Edit Inventory: Cases in Stock (Non-Licensed / Licensed) and Bottles per Case can now be
+  edited for all items (Prime Cost still from In Stock Transportation for PO items).
+- In Stock Transportation and Office/Warehouse Stock Inventory: last column ACTIONS with
+  "Open / Edit", "Move to Archived Inventory" and "Delete" (Delete moves to Head's Recycling Bin).
+  In Stock Transportation Open / Edit: Cases in Stock (LCBO Trillium), Available for sale since, Sold out on.
