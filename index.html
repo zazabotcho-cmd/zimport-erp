@@ -1489,6 +1489,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
    <h2 id="inventoryTransportationHeading">In Stock Transportation</h2>
    <p class="note">Shows non-tender POs for this transportation.</p>
   </div>
+  <div id="inventoryTransportationHeaderActions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div>
  </div>
  <div class="toolbar">
   <input id="headInventorySearch" type="search" placeholder="Search PO, program, vendor/producer, item, product or shipment" oninput="renderHeadInventory()">
@@ -1528,7 +1529,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments','heads-page')">Paying to Suppliers Invoices</button>
   <button type="button" class="invoice-page-tab" onclick="activate('supplier-payments-2','heads-page')">Suppliers to Agent Fee Payment</button>
   <button type="button" class="invoice-page-tab" onclick="activate('archived-invoices','heads-page')">Archived Invoices</button>
-</div><div class="section-head"><div><h2>LCBO to Agent Tender Invoices</h2><p class="note">Create and manage separate financial invoice records by PO number and invoice number.</p></div><button type="button" id="createFinancialInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleFinancialSearch">Search</button><div class="page-search-panel" id="financialSearchPanel"><label>Search Invoices<input id="financialPageSearch" type="search" placeholder="PO, invoice, submission, status, amount or currency"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearFinancialPageSearch">Clear Search</button></div></div>
+</div><div class="section-head"><div><h2>LCBO to Agent Tender Invoices</h2><p class="note">Create and manage separate financial invoice records by PO number and invoice number. Tender invoices are created automatically when the Tender PO transportation is Received in LCBO.</p></div><button type="button" id="createFinancialInvoiceBtn">+ Create Invoice</button></div><button type="button" class="secondary page-search-toggle" id="toggleFinancialSearch">Search</button><div class="page-search-panel" id="financialSearchPanel"><label>Search Invoices<input id="financialPageSearch" type="search" placeholder="PO, invoice, submission, status, amount or currency"></label><div class="page-search-actions"><button type="button" class="secondary" id="clearFinancialPageSearch">Clear Search</button></div></div>
 <div id="financialInvoiceList"><div id="tenderInvoiceTotals" class="other-invoice-totals" aria-label="Tender invoice payment totals"></div><div class="table-wrap"><table><thead><tr><th>PO #</th><th>Invoice Number</th><th>Submission #</th><th>Total Supplier Payment Amount CAD</th><th class="financial-transport-divider">Transportation Cost CAD</th><th>Arrived in Canada Date</th><th>LCBO PAYMENT STATUS</th><th class="financial-transport-divider">Total PO Quoted Value * /<br>Total Payable<span class="tender-column-total" id="tenderTotalPayable"></span></th><th>Failed Sales LCBO Rebate</th><th>NET PROFIT CAD<span class="tender-column-total" id="tenderTotalNetProfit"></span></th><th>Actions</th><th>Notes</th></tr></thead><tbody id="financialInvoiceRows"></tbody></table></div></div>
 <div id="financialInvoiceDetails" class="hidden"><div class="invoice-detail-actions"><button type="button" class="secondary" id="backFromFinancialDetails">Back to Invoice List</button><button type="button" class="secondary" id="copyAllFinancialDetails">Copy All Invoice Information</button><button type="button" id="editFromFinancialDetails">Edit Invoice</button></div><div id="financialInvoiceDetailsContent"></div></div>
 <div id="financialInvoiceEditor" class="hidden">
@@ -5142,10 +5143,9 @@ function isTenderInvoiceOrder(po,poNumber=po?.number){
     !!number&&(state.records||[]).some(record=>record.finalDecision==='Winner'&&invoiceOrderNumber(record.poNumber)===number);
 }
 function tenderPoArrivedInCanada(po){
-  // Tender invoice is created when the PO is "Arrived in Canada" or "Received in LCBO".
+  // Tender invoice is created automatically only when the PO is "Received in LCBO" (not on "Arrived in Canada").
   const status=String(splitPoAggregateStatus(po)||'').replace(/ \(PARTIALLY\)$/i,'');
-  return !!po&&String(po.program||'').trim().toUpperCase()==='TENDER'&&
-    ['Arrived in Canada','Received in LCBO'].includes(status);
+  return !!po&&String(po.program||'').trim().toUpperCase()==='TENDER'&&status==='Received in LCBO';
 }
 window.tenderPoArrivedInCanada=tenderPoArrivedInCanada;
 
@@ -5185,10 +5185,11 @@ function tenderPoAutoInvoiceValues(po,existing={}){
     supplierRate:existing.supplierRate||'',
     notes:existing.notes??po.notes??'',
     autoCreatedFromTenderPo:true,
-    autoCreatedOnArrival:true,
+    autoCreatedOnArrival:existing.autoCreatedOnArrival&&!existing.autoCreatedOnReceived?true:undefined,
+    autoCreatedOnReceived:existing.id&&!existing.autoCreatedOnReceived&&existing.autoCreatedOnArrival?undefined:true,
     sourcePoId:po.id,
     poProgram:'TENDER',
-    poStatus:'Arrived in Canada',
+    poStatus:'Received in LCBO',
     totalPoQuotedValue:quotedValue,
     poCurrency:po.currency||'CAD',
     supplierNames:(po.supplierNames||po.vendors||[]).join(', '),
@@ -5670,7 +5671,7 @@ function renderFinancial(){(state.financialInvoices||[]).forEach(x=>{syncTenderI
     return status==='Next 60 Days Upcoming Payment'?'Upcoming Payment in Next 14 Days':status;
   },
   invoice=>tenderInvoicePayableAmounts(invoice,invoiceNettedExpenses(invoice))
-);const rows=(state.financialInvoices||[]).map(x=>({x,c:financialCalculations(x)}));renderTenderInvoiceColumnTotals(rows);const financialQuery=$('#financialPageSearch')?.value||'';const financialVisible=rows.filter(({x})=>pageSearchMatches(x,financialQuery));const financialOrder=rsoGroupedInvoices(financialVisible.map(r=>r.x),$('#financialInvoiceRows'),x=>{const numbers=invoicePoNumbers(x);let name='';for(const n of (numbers.length?numbers:[x.poNumber||''])){name=rsoInvoiceTransportationName({sourcePoId:x.sourcePoId,poNumber:n});if(name)break;}return name;});$('#financialInvoiceRows').innerHTML=financialOrder.map(x=>financialVisible.find(r=>r.x===x)).map(({x,c})=>{return `${rsoInvoiceRowStart(x)}<td>${invoicePoRowsHtml(x)}</td><td><button type="button" class="invoice-number-link" onclick="openFinancialInvoiceDetails('${x.id}')">${escapeHtml(x.invoiceNumber||'—')}</button></td><td>${escapeHtml(x.submissionNumber||'—')}</td><td>${money(c.supplierTotalCad)}</td><td class="financial-transport-divider">${money(c.transportCad)}</td><td>${escapeHtml(x.arrivedInCanadaDate||'—')}</td><td>${tenderPaymentSelectHtml(x)}</td><td class="other-invoice-amount financial-transport-divider">${renderTenderInvoicePayable(c.payable)}</td><td>${money(c.failedSalesAmount)}</td><td><strong class="${c.netProfit<0?'negative':'positive'}">${money(c.netProfit)}</strong></td><td><div><button type="button" onclick="editFinancialInvoice('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('Tender','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="removeFinancialInvoice('${x.id}')">Delete</button></div></td><td class="comments-cell"><div style="white-space:pre-wrap">${escapeHtml(x.notes||'—')}</div>${x.poStatus==='Arrived in Canada'?'<span class="invoice-status-paid">Arrived in Canada</span>':''}</td></tr>`}).join('')||'<tr><td colspan="12" class="note">No financial invoices created. Click + Create Invoice.</td></tr>';}
+);const rows=(state.financialInvoices||[]).map(x=>({x,c:financialCalculations(x)}));renderTenderInvoiceColumnTotals(rows);const financialQuery=$('#financialPageSearch')?.value||'';const financialVisible=rows.filter(({x})=>pageSearchMatches(x,financialQuery));const tenderAutoNote=x=>x.autoCreatedFromTenderPo?`<div style="margin-top:4px;font-size:11px;color:#64748b;font-style:italic">${x.autoCreatedOnReceived?'Automatically created when Tender PO Transportation Received in LCBO':'Automatically created when Tender PO Transportation Arrived in Canada'}</div>`:'';const financialOrder=rsoGroupedInvoices(financialVisible.map(r=>r.x),$('#financialInvoiceRows'),x=>{const numbers=invoicePoNumbers(x);let name='';for(const n of (numbers.length?numbers:[x.poNumber||''])){name=rsoInvoiceTransportationName({sourcePoId:x.sourcePoId,poNumber:n});if(name)break;}return name;});$('#financialInvoiceRows').innerHTML=financialOrder.map(x=>financialVisible.find(r=>r.x===x)).map(({x,c})=>{return `${rsoInvoiceRowStart(x)}<td>${invoicePoRowsHtml(x)}${tenderAutoNote(x)}</td><td><button type="button" class="invoice-number-link" onclick="openFinancialInvoiceDetails('${x.id}')">${escapeHtml(x.invoiceNumber||'—')}</button></td><td>${escapeHtml(x.submissionNumber||'—')}</td><td>${money(c.supplierTotalCad)}</td><td class="financial-transport-divider">${money(c.transportCad)}</td><td>${escapeHtml(x.arrivedInCanadaDate||'—')}</td><td>${tenderPaymentSelectHtml(x)}</td><td class="other-invoice-amount financial-transport-divider">${renderTenderInvoicePayable(c.payable)}</td><td>${money(c.failedSalesAmount)}</td><td><strong class="${c.netProfit<0?'negative':'positive'}">${money(c.netProfit)}</strong></td><td><div><button type="button" onclick="editFinancialInvoice('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('Tender','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="removeFinancialInvoice('${x.id}')">Delete</button></div></td><td class="comments-cell"><div style="white-space:pre-wrap">${escapeHtml(x.notes||'—')}</div>${x.poStatus==='Arrived in Canada'?'<span class="invoice-status-paid">Arrived in Canada</span>':''}</td></tr>`}).join('')||'<tr><td colspan="12" class="note">No financial invoices created. Click + Create Invoice.</td></tr>';}
 let currentFinancialDetailId='';
 function financialDetailField(label,value){const text=value===undefined||value===null||value===''?'—':String(value);return `<div class="detail-row"><span>${escapeHtml(label)}</span><b>${escapeHtml(text)}</b><button type="button" class="secondary small" onclick='copyText(${JSON.stringify(text)})'>Copy</button></div>`}
 function tenderInvoicePoDetails(invoice){
@@ -5989,10 +5990,10 @@ function renderOtherInvoiceTotals(invoices){
 }
 // One colour per transportation, the same on every page (In Stock Transportation, Office/Warehouse, invoices).
 // Colours follow the order transportations were created, so adding a new one never changes the others.
-var TRANSPORTATION_COLOURS=[['#f5f9ff','#2f80ed'],['#f4fbf5','#2e7d32'],['#fffaf1','#d97706'],['#f9f6ff','#7c3aed'],['#fef6f9','#db2777'],['#f3fbfa','#0d9488'],['#fafcf2','#65a30d'],['#fff7f4','#ea580c'],['#f6f7ff','#4f46e5'],['#fffcf0','#ca8a04'],['#f3fcfe','#0891b2'],['#fdf6fa','#be185d']];
+var TRANSPORTATION_COLOURS=[['transparent','#2f80ed'],['transparent','#2e7d32'],['transparent','#d97706'],['transparent','#7c3aed'],['transparent','#db2777'],['transparent','#0d9488'],['transparent','#65a30d'],['transparent','#ea580c'],['transparent','#4f46e5'],['transparent','#ca8a04'],['transparent','#0891b2'],['transparent','#be185d']]; // background removed: only coloured lines
 function transportationGroupColor(nameOrId){
   const key=String(nameOrId||'').replace(/^Transportation:\s*/,'').replace(/\s*\((added by hand|cargo)\)$/,'').split(',')[0].trim();
-  if(!key)return ['#f7f7f8','#6b7280'];
+  if(!key)return ['transparent','#6b7280'];
   const list=allTransportationRecords().filter(sh=>sh.recordKind==='transportation');
   let index=list.findIndex(sh=>String(sh.name||'').trim()===key||String(sh.id)===key);
   if(index<0){ // a name typed by hand or a cargo: stable colour from the name
@@ -6022,7 +6023,7 @@ function rsoGroupedInvoices(list,body,nameOf=rsoInvoiceTransportationName){
   const order=[...new Set(names.filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   list.forEach((inv,i)=>{
     const name=names[i];
-    const [bg,line]=name?transportationGroupColor(name):['#ffffff','#cbd5e1'];
+    const [bg,line]=name?transportationGroupColor(name):['transparent','#cbd5e1'];
     (rsoInvoiceGroupInfo||(rsoInvoiceGroupInfo=new WeakMap())).set(inv,{name:name?'Transportation: '+name:'No transportation',bg,line});
   });
   rsoInvoiceLastGroup=null;
@@ -9693,6 +9694,7 @@ window.archiveInventoryTransportation=encodedId=>{
  if(!confirm('Move "In Stock Transportation: '+name+'" to Archived Inventory Stock?\nIts page is hidden from Inventory in stock. Office/Warehouse stock and invoices are not changed. You can restore it from Archived Inventory Stock.'))return;
  (state.hiddenInventoryTransportations??={})[id]={status:'archived',name,archivedAt:new Date().toISOString()};
  save({inventoryOnly:true});
+ if(String(selectedInventoryTransportationId)===id&&document.getElementById('inventory-in-stock')?.classList.contains('active'))activate('total-inventory','heads-page');
  renderInventoryTransportationPages();window.renderArchivedInventory?.();
 };
 window.deleteInventoryTransportation=encodedId=>{
@@ -9703,6 +9705,7 @@ window.deleteInventoryTransportation=encodedId=>{
  (state.hiddenInventoryTransportations??={})[id]={status:'deleted',name,archivedAt:new Date().toISOString()};
  moveToHeadsRecycleBin('inventoryTransportation','Inventory in stock LCBO Trillium/office/storage',{id,name},{transportationId:id});
  save({inventoryOnly:true});
+ if(String(selectedInventoryTransportationId)===id&&document.getElementById('inventory-in-stock')?.classList.contains('active'))activate('total-inventory','heads-page');
  renderInventoryTransportationPages();window.renderArchivedInventory?.();
 };
 window.restoreInventoryTransportation=encodedId=>{
@@ -9759,18 +9762,13 @@ function renderInventoryTransportationPages(groups=inventoryTransportationGroups
    button.type='button';
    button.className='invoice-page-tab';
    button.textContent='In Stock Transportation: '+(shipment.name||id);
-   {const [bg,line]=transportationGroupColor(shipment.name||id);button.style.background=bg;button.style.borderLeft='6px solid '+line;}
+   {const [,line]=transportationGroupColor(shipment.name||id);button.style.borderLeft='6px solid '+line;button.style.borderTop=button.style.borderRight=button.style.borderBottom='1px solid '+line;}
    button.onclick=()=>{
      selectedInventoryTransportationId=id;
      document.getElementById('headInventorySearch').value='';
      activate('inventory-in-stock','heads-page');
    };
-   const wrap=document.createElement('div');
-   wrap.style.cssText='display:flex;align-items:center;gap:6px;flex-wrap:wrap';
-   const idArg=inventoryActionArg(id);
-   wrap.innerHTML=`<button type="button" class="secondary small" onclick="archiveInventoryTransportation('${idArg}')">Move to Archived Inventory Stock</button><button type="button" class="danger small" onclick="deleteInventoryTransportation('${idArg}')">Delete</button>`;
-   wrap.prepend(button);
-   list.append(wrap);
+   list.append(button);
  }
  if(!groups.size)list.textContent='No received transportation with non-tender POs.';
  const missing=allTransportationRecords().filter(sh=>sh.recordKind==='transportation'&&inventoryTransportationReceived(sh)&&!groups.has(String(sh.id))&&!state.hiddenInventoryTransportations?.[String(sh.id)]);
@@ -11511,7 +11509,7 @@ function renderOfficeInventory(statisticsCards){
   const officeGroupPalette=[['#eef6ff','#2f80ed'],['#eefaf0','#2e7d32'],['#fff6e6','#d97706'],['#f4efff','#7c3aed'],['#fdeff4','#db2777'],['#e9f9f7','#0d9488'],['#f7f9e8','#65a30d'],['#fff0ec','#ea580c']];
   const officeGroupOrder=[...new Set([...grouped].map(([key,{record}])=>officeGroupName(key,record)))]
     .sort((a,b)=>(a.startsWith('Added by hand')-b.startsWith('Added by hand'))||a.localeCompare(b));
-  const officeGroupColor=name=>name.startsWith('Added by hand')?['#f7f7f8','#6b7280']:transportationGroupColor(name);
+  const officeGroupColor=name=>name.startsWith('Added by hand')?['transparent','#6b7280']:transportationGroupColor(name);
   const sortedGrouped=[...grouped].sort(([ka,a],[kb,b])=>officeGroupOrder.indexOf(officeGroupName(ka,a.record))-officeGroupOrder.indexOf(officeGroupName(kb,b.record)));
   let lastOfficeGroup=null,officeVisibleRows=0;
   // Search and filters (table only; the squares above always show all items).
@@ -11755,10 +11753,15 @@ function renderTransportationInventory(statisticsCards){
    const heading=document.getElementById('inventoryTransportationHeading');
    heading.textContent=selected?'In Stock Transportation: '+(selected.shipment.name||selectedInventoryTransportationId):'In Stock Transportation';
    // Same colour as this transportation's groups on the Office/Warehouse and invoices pages.
+   const actions=document.getElementById('inventoryTransportationHeaderActions');
+   if(actions){
+     const idArg=selected?inventoryActionArg(String(selectedInventoryTransportationId)):'';
+     actions.innerHTML=selected?`<button type="button" class="secondary small" onclick="archiveInventoryTransportation('${idArg}')">Move to Archived Inventory Stock</button><button type="button" class="danger small" onclick="deleteInventoryTransportation('${idArg}')">Delete</button>`:'';
+   }
    const head=heading.closest('.section-head');
    if(head){
      const [bg,line]=selected?transportationGroupColor(selected.shipment.name||selected.shipment.id):['',''];
-     head.style.background=bg;head.style.borderLeft=line?'6px solid '+line:'';
+     head.style.background='';head.style.border=line?'1px solid '+line:'';head.style.borderLeft=line?'6px solid '+line:'';
      head.style.padding=line?'10px 14px':'';head.style.borderRadius=line?'8px':'';head.style.marginBottom=line?'12px':'';
    }
  }

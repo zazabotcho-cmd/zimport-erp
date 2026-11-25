@@ -225,3 +225,11 @@ sales, returns, archive/restore, edit. All totals checked by hand. Fixes:
   transportation's colour.
 - Transportation colours: background tints made stronger (less white) so groups are easier to tell apart.
 - Transportation colours: background tints made softer (very light), coloured left edge kept.
+- "Move to Archived Inventory Stock" and "Delete" for a whole transportation moved from the Inventory in stock list to
+  the right side of the title line on each "In Stock Transportation: <name>" page. After using them you return to the list.
+- LCBO to Agent Tender Invoices: tender invoices are created automatically ONLY on "Received in LCBO" (no longer on "Arrived in Canada").
+  Invoices created earlier stay as they are.
+- LCBO to Agent Tender Invoices: automatic tender invoices show "Automatically created when Tender PO Transportation Received in LCBO"
+  under the PO #. Older ones made on arrival say "...Arrived in Canada". Page description mentions the rule.
+- Transportation colours: background tints removed everywhere; only the coloured lines stay (left edge, group title line,
+  outline around the In Stock Transportation title and the transportation buttons).
