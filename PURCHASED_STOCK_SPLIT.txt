@@ -208,3 +208,20 @@ sales, returns, archive/restore, edit. All totals checked by hand. Fixes:
 - Transportation / Cargo pages: choosing a new Cargo/Transportation status is NOT saved automatically (as before).
   Instead an orange reminder appears and the "Save status and date" button is highlighted until it is pressed.
   The status date is not changed automatically. Leaving/refreshing the page with an unsaved status asks first.
+- Office/Warehouse: "Transportation:" line removed under each item (the coloured group title already shows it).
+- One colour per transportation everywhere: the In Stock Transportation page title area, its button on
+  "Inventory in stock LCBO Trillium/office/storage", its group on Inventory IN STOCK Office/Warehouse and its group on
+  SEAS/REGU/OTHER TO AGENT INVOICES all use the same colour. Colours follow the order transportations were created,
+  so a new transportation never changes the colour of existing ones.
+- "Archived Inventory" renamed to "Archived Inventory Stock" (page, tabs, buttons, messages).
+- Inventory in stock LCBO Trillium/office/storage: each transportation now has "Move to Archived Inventory Stock" and
+  "Delete" (to Head's Recycling Bin). Archived transportations show on Archived Inventory Stock as "Whole transportation"
+  with Restore / Delete. Office/Warehouse stock and invoices are not changed by this.
+- LCBO to Agent Tender Invoices: a tender invoice is now created automatically when a tender PO's transportation is
+  "Received in LCBO" (before only on "Arrived in Canada"), also for POs linked through cargo. Tender invoices are grouped
+  by transportation with the same colours as the other pages. The message after saving the status mentions them.
+- Transportation page: each transportation (with its PO lines) uses its colour (soft background + coloured left edge),
+  the same colour as on Inventory and Invoices pages. Cargo page: a cargo inside a transportation shows that
+  transportation's colour.
+- Transportation colours: background tints made stronger (less white) so groups are easier to tell apart.
+- Transportation colours: background tints made softer (very light), coloured left edge kept.

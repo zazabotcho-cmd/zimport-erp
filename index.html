@@ -340,7 +340,7 @@ label[data-retrieved-locked="1"] textarea{
 #headInventoryRows .inventory-transport-status-date time{font-size:12px;font-weight:600;color:#425466;font-variant-numeric:tabular-nums}
 .worker-product-needs-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.worker-product-needs-grid input,.worker-product-needs-grid select{width:100%;box-sizing:border-box}@media(max-width:760px){.worker-product-needs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:460px){.worker-product-needs-grid{grid-template-columns:1fr}}
 .approved-portal-files{margin-left:auto;width:max-content;min-width:390px;max-width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:#f8fafc}.approved-portal-files strong{display:block;font-size:12px;line-height:1.4;margin-bottom:8px}.approved-portal-attach{display:inline-block;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px}#approvedPortalFileRows{display:grid;grid-template-rows:repeat(5,auto);grid-auto-flow:column;grid-auto-columns:350px;column-gap:12px;direction:rtl;overflow-x:auto;max-width:100%}.approved-portal-file{direction:ltr;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;align-items:center;margin-top:7px}.approved-portal-file input{font-size:12px;padding:5px}.approved-portal-file button{font-size:11px;padding:5px 7px}@media(max-width:800px){#worker-list .section-head{flex-wrap:wrap;gap:12px}.approved-portal-files{width:100%;min-width:0;margin-left:0}}
-[id^="transportationProjectRetailValues"]>span:first-child,[id^="transportationLiveRetailValues"]>span:first-child{margin-top:0!important}tr.office-group-row>td{background:var(--office-group-bg)}tr.office-group-row>td:first-child{border-left:6px solid var(--office-group-line)}tr.office-group-row:hover>td{filter:brightness(.98)}.shipment-status-unsaved::before{content:attr(data-msg)}.kpi-new-row{grid-column-start:1}@media(min-width:1101px){.kpi-col2{grid-column:2}.kpi-col3{grid-column:3}.kpi-col4{grid-column:4}.kpi-col5{grid-column:5}.kpi-col6{grid-column:6}}</style>
+[id^="transportationProjectRetailValues"]>span:first-child,[id^="transportationLiveRetailValues"]>span:first-child{margin-top:0!important}tr.office-group-row>td{background:var(--office-group-bg)}tr.office-group-row>td:first-child{border-left:6px solid var(--office-group-line)}tr.office-group-row:hover>td{filter:brightness(.98)}.shipment-status-unsaved::before{content:attr(data-msg)}tr.office-group-sub>td{background:var(--office-group-bg)}.kpi-new-row{grid-column-start:1}@media(min-width:1101px){.kpi-col2{grid-column:2}.kpi-col3{grid-column:3}.kpi-col4{grid-column:4}.kpi-col5{grid-column:5}.kpi-col6{grid-column:6}}</style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="online-config.js"></script>
@@ -1386,7 +1386,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   <button type="button" class="invoice-page-tab" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Inventory IN STOCK Office/Warehouse</button>
   <button type="button" class="invoice-page-tab" data-inventory-statistics-link onclick="activate('inventory-stock-statistics','heads-page')">Inventory Stock Statistics</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory Stock</button>
  </div>
 </div></section>
 <section id="total-inventory" class="panel"><div class="box">
@@ -1394,7 +1394,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <button type="button" class="invoice-page-tab active" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   <button type="button" class="invoice-page-tab" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Inventory IN STOCK Office/Warehouse</button>
   <button type="button" class="invoice-page-tab" data-inventory-statistics-link onclick="activate('inventory-stock-statistics','heads-page')">Inventory Stock Statistics</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory Stock</button>
  </div>
  <div class="section-head"><div><h2>Inventory in stock LCBO Trillium/office/storage</h2><p class="note">Choose a transportation to open its stock.</p></div></div>
  <div class="invoice-page-row" id="inventoryTransportationPages"></div>
@@ -1404,7 +1404,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   <button type="button" class="invoice-page-tab active" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Inventory IN STOCK Office/Warehouse</button>
   <button type="button" class="invoice-page-tab" data-inventory-statistics-link onclick="activate('inventory-stock-statistics','heads-page')">Inventory Stock Statistics</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory Stock</button>
  </div>
  <div class="section-head"><div><h2>Inventory IN STOCK Office/Warehouse</h2></div>
   <button type="button" id="officeInventoryAddButton" onclick="openOfficeInventoryAdd()">+ Add Inventory</button>
@@ -1457,7 +1457,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   <button type="button" class="invoice-page-tab" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Inventory IN STOCK Office/Warehouse</button>
   <button type="button" class="invoice-page-tab active" aria-current="page">Inventory Stock Statistics</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory Stock</button>
  </div>
  <h2>Inventory Stock Statistics</h2>
  <div class="cards" id="combinedInventoryStatistics"></div>
@@ -1471,9 +1471,9 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   <button type="button" class="invoice-page-tab" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Inventory IN STOCK Office/Warehouse</button>
   <button type="button" class="invoice-page-tab" data-inventory-statistics-link onclick="activate('inventory-stock-statistics','heads-page')">Inventory Stock Statistics</button>
-  <button type="button" class="invoice-page-tab active" aria-current="page" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
+  <button type="button" class="invoice-page-tab active" aria-current="page" onclick="activate('inventory-archived','heads-page')">Archived Inventory Stock</button>
  </div>
-<div class="section-head"><div><h2>Archived Inventory</h2><p class="note">Archived LCBO Trillium and office/warehouse inventory. Restore a record to return it to its original inventory page.</p></div></div>
+<div class="section-head"><div><h2>Archived Inventory Stock</h2><p class="note">Archived LCBO Trillium and office/warehouse inventory. Restore a record to return it to its original inventory page.</p></div></div>
 <div class="toolbar"><input id="archivedInventorySearch" type="search" placeholder="Search location, PO, vendor or product" oninput="renderArchivedInventory()"></div>
 <div class="table-wrap"><table><thead><tr><th>Location</th><th>PO #</th><th>Vendor/Producer</th><th>Item #</th><th>Product</th><th>Cases</th><th>Bottles / Case</th><th>Total Bottles</th><th>Archived Date</th><th>Actions</th></tr></thead><tbody id="archivedInventoryRows"></tbody></table></div>
 </div></section>
@@ -1482,7 +1482,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <button type="button" class="invoice-page-tab active" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   <button type="button" class="invoice-page-tab" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Inventory IN STOCK Office/Warehouse</button>
   <button type="button" class="invoice-page-tab" data-inventory-statistics-link onclick="activate('inventory-stock-statistics','heads-page')">Inventory Stock Statistics</button>
-  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory</button>
+  <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory Stock</button>
  </div>
  <div class="section-head">
   <div>
@@ -4056,7 +4056,8 @@ function shipmentPoQuantityRows(sh,rowHtml){
  rowHtml=rowHtml.replace(/<td(?=[ >])/g,`<td rowspan="${rows.length+1}"`);
  rowHtml=rowHtml.replace('<!--PO_QUANTITY_CELLS-->',`<td class="shipment-po-cell"></td><td class="shipment-vendor-cell"></td><td class="shipment-quantity-cell"><b>Total<br>${cases}/${bottles}</b></td>`);
  if(transportCosts)rowHtml=rowHtml.replace('<!--TRANSPORT_COST_CELL-->',`<td class="shipment-transport-cost-total"><div>${escapeHtml(transportCosts.currency)} ${transportCosts.cost.toFixed(2)}</div><div><b>1 CAD = ${transportCosts.exchangeRate.toFixed(4)} ${escapeHtml(transportCosts.currency)}</b></div></td>`);
- return rowHtml+rows.map(row=>`<tr class="shipment-po-detail-row"><td class="shipment-po-cell">${transportationPoDisplay(row.link)}</td><td class="shipment-vendor-cell">${poVendorProducerHtml(row.po)}</td><td class="shipment-quantity-cell">${shipmentPoCasePackQuantity(row.po)}/${row.bottles}</td>${bottleCostHtml}</tr>`).join('');
+ const groupStyle=(rowHtml.match(/^<tr class="office-group-row" style="([^"]*)"/)||[])[1]||'';
+ return rowHtml+rows.map(row=>`<tr class="shipment-po-detail-row${groupStyle?' office-group-sub':''}"${groupStyle?` style="${groupStyle}"`:''}><td class="shipment-po-cell">${transportationPoDisplay(row.link)}</td><td class="shipment-vendor-cell">${poVendorProducerHtml(row.po)}</td><td class="shipment-quantity-cell">${shipmentPoCasePackQuantity(row.po)}/${row.bottles}</td>${bottleCostHtml}</tr>`).join('');
 }
 
 function transportationVendorProducerDisplay(sh){
@@ -4140,7 +4141,7 @@ function cargoTransportationNameDisplay(cargo){
  const transportation=cargoDateSourceTransportation(cargo);
  return `<div class="cargo-linked-transportation" style="margin-top:6px;white-space:normal"><span>Transportation Name (TR order number):</span><br>${transportation?`<button type="button" class="shipment-name-link" onclick="openShipmentInfo('${escapeHtml(transportation.id)}')">${escapeHtml(transportation.name||'—')}</button>`:'<b>—</b>'}</div>`;
 }
-function renderShipments(){syncTransportationCargoRecords();for(const view of [{kind:'cargo',rows:'shipmentRows',count:'activeShipmentCount',search:'transportationPageSearch'},{kind:'transportation',rows:'transportationRecordRows',count:'activeTransportationCount',search:'transportationRecordsPageSearch'}]){const records=(state.shipments||[]).filter(sh=>(sh.recordKind||'cargo')===view.kind);if(!$('#'+view.rows))continue;const count=$('#'+view.count);if(count)count.textContent='('+records.length+')';const shipmentQuery=String($('#'+view.search)?.value||'').trim().toLocaleLowerCase();const rows=records.filter(sh=>{if(!shipmentMatchesPoFilters(sh,view.kind))return false;if(!shipmentQuery)return true;const poText=transportationPoSearchText(sh)+' '+(sh.cargoLinks||[]).map(link=>resolveTransportationCargo(link)?.name||'').join(' ');const searchable=[sh.name,sh.company,sh.status,sh.paymentStatus,sh.paymentOther,sh.pickupDate,sh.deliveryDate,sh.currency,poText,JSON.stringify(sh)].join(' ').toLocaleLowerCase();return searchable.includes(shipmentQuery)}).map(sh=>{const t=shipmentTotals(sh),linkedCosts=sh.recordKind==='transportation'?t:cargoTransportationCostTotals(sh),payment=sh.paymentStatus==='Other'?(sh.paymentOther||'Other'):(sh.paymentStatus||'Not Paid'),converter=`1 CAD = ${t.exchangeRate.toFixed(4)} ${escapeHtml(sh.currency||'CAD')}`;return shipmentPoQuantityRows(sh,`<tr><td><button type="button" class="shipment-name-link" onclick="openShipmentInfo('${sh.id}')">${escapeHtml(sh.name||'—')}</button><div class="shipment-company-under-name" style="margin-top:6px;white-space:normal">Transport Company: <b>${escapeHtml(sh.company||'—')}</b></div>${sh.recordKind!=='transportation'?cargoTransportationNameDisplay(sh):''}</td>${sh.recordKind==='transportation'?`<td>${transportationCargoDisplay(sh)||'—'}</td>`:''}<td>${transportationPalletDisplay(sh)}</td><!--PO_QUANTITY_CELLS-->${sh.recordKind==='transportation'?'<!--TRANSPORT_COST_CELL-->':`<td class="shipment-bottle-cost"><div>${linkedCosts?escapeHtml((linkedCosts.currency||'CAD')+' '+linkedCosts.costPerBottle.toFixed(4)):'—'}</div><div><b>${linkedCosts?'CAD '+linkedCosts.costPerBottleCad.toFixed(4):'—'}</b></div></td>`}${sh.recordKind==='transportation'?'':`<td><span class="${sh.refPalletStatus==='Yes'?'yesno-green':'yesno-yellow'}" style="display:inline-block;padding:5px 10px;border-radius:6px;font-weight:700">${escapeHtml(sh.refPalletStatus||'No')}</span></td>`}<td>${shipmentStatusSelect(sh)}</td><td><div class="shipment-canada-fields">${sh.recordKind==='transportation'?`<label>Approximate Canada Delivery Date<input type="date" data-native-shipment-date="1" aria-label="Approximate Canada delivery date" value="${escapeHtml(sh.canadaDeliveryDate||'')}" onchange="updateShipmentCanadaField('${sh.id}','canadaDeliveryDate',this.value)"></label>`:`<div class="cargo-canada-delivery-date" title="Synced from linked Transportation"><b>${escapeHtml(formatTransportationDate(cargoDateSourceTransportation(sh)?.canadaDeliveryDate||'')||'—')}</b></div>`}<label>Transport Link<input type="text" aria-label="Transport link" value="${escapeHtml(sh.transportLink||'')}" placeholder="Paste transport link" onchange="updateShipmentCanadaField('${sh.id}','transportLink',this.value)"></label></div></td><td>${sh.recordKind==='transportation'?escapeHtml(payment):cargoAttachmentLinks(sh)}</td>${sh.recordKind==='transportation'?`<td>${cargoAttachmentLinks(sh)}</td>`:''}<td><div class="shipment-actions"><button type="button" class="secondary small" onclick="openShipmentEditor('${sh.id}')">Edit</button><button type="button" class="danger small" onclick="deleteShipment('${sh.id}')">Delete</button></div></td></tr>`)}).join('');$('#'+view.rows).innerHTML=rows||'<tr><td colspan="'+(view.kind==='transportation'?12:11)+'">'+(shipmentQuery?'No '+view.kind+' matches this search. Clear Search to show all active records.':'No '+view.kind+' records. Archived records are in the '+(view.kind==='transportation'?'Archived Transportation':'Archived Cargo')+' tab.')+'</td></tr>'}}
+function renderShipments(){syncTransportationCargoRecords();for(const view of [{kind:'cargo',rows:'shipmentRows',count:'activeShipmentCount',search:'transportationPageSearch'},{kind:'transportation',rows:'transportationRecordRows',count:'activeTransportationCount',search:'transportationRecordsPageSearch'}]){const records=(state.shipments||[]).filter(sh=>(sh.recordKind||'cargo')===view.kind);if(!$('#'+view.rows))continue;const count=$('#'+view.count);if(count)count.textContent='('+records.length+')';const shipmentQuery=String($('#'+view.search)?.value||'').trim().toLocaleLowerCase();const rows=records.filter(sh=>{if(!shipmentMatchesPoFilters(sh,view.kind))return false;if(!shipmentQuery)return true;const poText=transportationPoSearchText(sh)+' '+(sh.cargoLinks||[]).map(link=>resolveTransportationCargo(link)?.name||'').join(' ');const searchable=[sh.name,sh.company,sh.status,sh.paymentStatus,sh.paymentOther,sh.pickupDate,sh.deliveryDate,sh.currency,poText,JSON.stringify(sh)].join(' ').toLocaleLowerCase();return searchable.includes(shipmentQuery)}).map(sh=>{const t=shipmentTotals(sh),linkedCosts=sh.recordKind==='transportation'?t:cargoTransportationCostTotals(sh),payment=sh.paymentStatus==='Other'?(sh.paymentOther||'Other'):(sh.paymentStatus||'Not Paid'),converter=`1 CAD = ${t.exchangeRate.toFixed(4)} ${escapeHtml(sh.currency||'CAD')}`;const colourOf=sh.recordKind==='transportation'?sh:cargoDateSourceTransportation(sh);const [rowBg,rowLine]=colourOf?transportationGroupColor(colourOf.name||colourOf.id):['',''];return shipmentPoQuantityRows(sh,`<tr${colourOf?` class="office-group-row" style="--office-group-bg:${rowBg};--office-group-line:${rowLine}"`:''}><td><button type="button" class="shipment-name-link" onclick="openShipmentInfo('${sh.id}')">${escapeHtml(sh.name||'—')}</button><div class="shipment-company-under-name" style="margin-top:6px;white-space:normal">Transport Company: <b>${escapeHtml(sh.company||'—')}</b></div>${sh.recordKind!=='transportation'?cargoTransportationNameDisplay(sh):''}</td>${sh.recordKind==='transportation'?`<td>${transportationCargoDisplay(sh)||'—'}</td>`:''}<td>${transportationPalletDisplay(sh)}</td><!--PO_QUANTITY_CELLS-->${sh.recordKind==='transportation'?'<!--TRANSPORT_COST_CELL-->':`<td class="shipment-bottle-cost"><div>${linkedCosts?escapeHtml((linkedCosts.currency||'CAD')+' '+linkedCosts.costPerBottle.toFixed(4)):'—'}</div><div><b>${linkedCosts?'CAD '+linkedCosts.costPerBottleCad.toFixed(4):'—'}</b></div></td>`}${sh.recordKind==='transportation'?'':`<td><span class="${sh.refPalletStatus==='Yes'?'yesno-green':'yesno-yellow'}" style="display:inline-block;padding:5px 10px;border-radius:6px;font-weight:700">${escapeHtml(sh.refPalletStatus||'No')}</span></td>`}<td>${shipmentStatusSelect(sh)}</td><td><div class="shipment-canada-fields">${sh.recordKind==='transportation'?`<label>Approximate Canada Delivery Date<input type="date" data-native-shipment-date="1" aria-label="Approximate Canada delivery date" value="${escapeHtml(sh.canadaDeliveryDate||'')}" onchange="updateShipmentCanadaField('${sh.id}','canadaDeliveryDate',this.value)"></label>`:`<div class="cargo-canada-delivery-date" title="Synced from linked Transportation"><b>${escapeHtml(formatTransportationDate(cargoDateSourceTransportation(sh)?.canadaDeliveryDate||'')||'—')}</b></div>`}<label>Transport Link<input type="text" aria-label="Transport link" value="${escapeHtml(sh.transportLink||'')}" placeholder="Paste transport link" onchange="updateShipmentCanadaField('${sh.id}','transportLink',this.value)"></label></div></td><td>${sh.recordKind==='transportation'?escapeHtml(payment):cargoAttachmentLinks(sh)}</td>${sh.recordKind==='transportation'?`<td>${cargoAttachmentLinks(sh)}</td>`:''}<td><div class="shipment-actions"><button type="button" class="secondary small" onclick="openShipmentEditor('${sh.id}')">Edit</button><button type="button" class="danger small" onclick="deleteShipment('${sh.id}')">Delete</button></div></td></tr>`)}).join('');$('#'+view.rows).innerHTML=rows||'<tr><td colspan="'+(view.kind==='transportation'?12:11)+'">'+(shipmentQuery?'No '+view.kind+' matches this search. Clear Search to show all active records.':'No '+view.kind+' records. Archived records are in the '+(view.kind==='transportation'?'Archived Transportation':'Archived Cargo')+' tab.')+'</td></tr>'}}
 function shipmentInfoField(label,value){const text=value===undefined||value===null||value===''?'—':String(value);return `<div class="info-field"><button type="button" class="copy-field" onclick='copyText(${JSON.stringify(text)})'>Copy</button><span>${escapeHtml(label)}</span><b>${escapeHtml(text)}</b></div>`}
 function openShipmentInfo(id){const sh=allTransportationRecords().find(x=>x.id===id);if(!sh)return;const totals=shipmentTotals(sh),payment=sh.paymentStatus==='Other'?(sh.paymentOther||'Other'):(sh.paymentStatus||'Not Paid');const poRows=(sh.poLinks||[]).map(link=>{link=link||{};const po=(state.purchaseOrders||[]).find(x=>x.id===link.poId),poNo=po?.number||'—',suppliers=po?poVendorProducerPlain(po):'—',bottles=poBottleCount(po).toLocaleString(),ref=link.ref||'—';return `<tr><td><b>${escapeHtml(poNo)}</b><button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(poNo)})'>Copy</button></td><td>${escapeHtml(ref)}<button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(ref)})'>Copy</button></td><td>${escapeHtml(suppliers)}<button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(suppliers)})'>Copy</button></td><td>${escapeHtml(bottles)}<button type="button" class="secondary copy-mini" onclick='copyText(${JSON.stringify(bottles)})'>Copy</button></td></tr>`}).join('')||'<tr><td colspan="4">No POs added.</td></tr>';const files=[1,2,3,4,5,6].map(n=>({slot:n,file:sh['attachment'+n]})).filter(x=>x.file);$('#shipmentInfoTitle').textContent=sh.name||'Shipment Information';const copyName=$('#copyTransportationName');copyName.hidden=sh.recordKind!=='transportation'||!sh.name;$('#shipmentInfoTransportationLabel').hidden=sh.recordKind!=='transportation';copyName.onclick=copyName.hidden?null:()=>copyText(sh.name);$('#shipmentInfoContent').innerHTML=`${sh.recordKind==='transportation'&&sh.cargoLinks?.length?'<div class="info-section"><h3>Cargo Name (Invoice #)</h3>'+transportationCargoDisplay(sh)+'</div>':''}<div class="info-section"><h3>Purchase Orders</h3><div class="table-wrap"><table class="shipment-detail-po-table"><thead><tr><th>PO #</th><th>Ref #</th><th>Suppliers</th><th>Bottles</th></tr></thead><tbody>${poRows}</tbody></table></div></div><div class="info-section"><h3>Transport Information</h3><div class="info-grid">${shipmentInfoField('Transport Company Name',sh.company)}${shipmentInfoField('Phone Number',sh.phone)}${shipmentInfoField('Email 1',sh.email1)}${shipmentInfoField('Email 2',sh.email2)}${shipmentInfoField('From',sh.from)}${shipmentInfoField('To',sh.to)}</div></div><div class="info-section"><h3>Shipment Information</h3><div class="info-grid">${shipmentInfoField('Cargo/Transportation status',shipmentStatusLabel(sh.status||'Cargo Ready For Pick up'))}<div class="info-field"><span>Status date and history</span>${escapeHtml(sh.statusDate||'Date not recorded')}${shipmentStatusHistoryHtml(sh)}</div>${shipmentInfoField(sh.recordKind==='transportation'?'Approx. Transportation Pickup Date':'Approximate Pickup Date',formatTransportationDate(sh.pickupDate)||'—')}${shipmentInfoField(shipmentDeliveryLabel(sh.status),formatTransportationDate(sh.deliveryDate)||'—')}${shipmentInfoField('Approximate Canada Delivery Date',formatTransportationDate(sh.canadaDeliveryDate)||'—')}${shipmentInfoField('Transport Link',sh.transportLink)}${shipmentInfoField('REF # and Pallet Labels Requested',sh.refPalletStatus||'No')}${shipmentInfoField('Export Files Sent',sh.exportFilesStatus||'No')}${shipmentInfoField('Total Bottles',totals.totalBottles.toLocaleString())}${sh.recordKind==='transportation'?'<div class="info-field"><span>Pallets</span>'+transportationPalletDisplay(sh)+'</div>':shipmentInfoField('Pallet Quantity',num(sh.palletQty).toLocaleString())}${shipmentInfoField('Cost of Shipment',(sh.currency||'CAD')+' '+totals.cost.toFixed(2))}${shipmentInfoField('Cost / Bottle',(sh.currency||'CAD')+' '+totals.costPerBottle.toFixed(4))}${shipmentInfoField('CAD to '+(sh.currency||'CAD')+' Converter','1 CAD = '+totals.exchangeRate.toFixed(4)+' '+(sh.currency||'CAD'))}${shipmentInfoField(sh.recordKind==='transportation'?'Transportation Bottle Cost in CAD':'Bottle Cost in CAD','CAD '+totals.costPerBottleCad.toFixed(4))}${shipmentInfoField('Transportation Invoice Payment Status',payment)}${shipmentInfoField('PAY DATE',formatTransportationDate(sh.payDate)||'—')}${shipmentInfoField('Notes',sh.notes)}</div></div><div class="info-section"><h3>Attached Files</h3><div class="info-grid">${files.length?files.map(({slot,file:f})=>`<div class="info-field"><span>File ${slot}</span><b>${escapeHtml(f.name||'Attached file')}</b><div class="inline-actions"><button type="button" class="secondary small" onclick="openStoredShipmentInfoFile('${sh.id}',${slot-1})">Open</button><button type="button" class="secondary small" onclick='copyText(${JSON.stringify(f.name||'Attached file')})'>Copy Name</button></div></div>`).join(''):'<div class="info-empty">No files attached.</div>'}</div></div>`;$('#copyAllShipmentInfo').onclick=()=>copyShipmentInfoAll(sh);$('#shipmentInfoModal').classList.remove('hidden')}
 function copyShipmentInfoAll(sh){const totals=shipmentTotals(sh),payment=sh.paymentStatus==='Other'?(sh.paymentOther||'Other'):(sh.paymentStatus||'Not Paid');const poText=(sh.poLinks||[]).map(link=>{link=link||{};const po=(state.purchaseOrders||[]).find(x=>x.id===link.poId);return `PO #: ${po?.number||'—'} | Ref #: ${link.ref||'—'} | Suppliers: ${(po?.supplierNames||[]).join(', ')||'—'} | Bottles: ${poBottleCount(po)}`}).join('\n');copyText(`Shipment: ${sh.name||'—'}\n${poText}\nTransport Company Name: ${sh.company||'—'}\nPhone Number: ${sh.phone||'—'}\nEmail 1: ${sh.email1||'—'}\nEmail 2: ${sh.email2||'—'}\nFrom: ${sh.from||'—'}\nTo: ${sh.to||'—'}\nCargo/Transportation status: ${sh.status||'Cargo Ready For Pick up'}\n${sh.recordKind==='transportation'?'Approx. Transportation Pickup Date':'Approximate Pickup Date'}: ${formatTransportationDate(sh.pickupDate)||'—'}\n${shipmentDeliveryLabel(sh.status)}: ${formatTransportationDate(sh.deliveryDate)||'—'}\nApproximate Canada Delivery Date: ${formatTransportationDate(sh.canadaDeliveryDate)||'—'}\nTransport Link: ${sh.transportLink||'—'}\nREF # and Pallet Labels Requested: ${sh.refPalletStatus||'No'}\nExport Files Sent: ${sh.exportFilesStatus||'No'}\nTotal Bottles: ${totals.totalBottles}\nPallet Quantity: ${num(sh.palletQty)}\nCost of Shipment: ${(sh.currency||'CAD')} ${totals.cost.toFixed(2)}\nCost / Bottle: ${(sh.currency||'CAD')} ${totals.costPerBottle.toFixed(4)}\nCAD to ${sh.currency||'CAD'} Converter: 1 CAD = ${totals.exchangeRate.toFixed(4)} ${sh.currency||'CAD'}\n${sh.recordKind==='transportation'?'Transportation Bottle Cost in CAD':'Bottle Cost in CAD'}: CAD ${totals.costPerBottleCad.toFixed(4)}\nTransportation Invoice Payment Status: ${payment}\nPAY DATE: ${formatTransportationDate(sh.payDate)||'—'}\nNotes: ${sh.notes||'—'}`)}
@@ -5141,8 +5142,10 @@ function isTenderInvoiceOrder(po,poNumber=po?.number){
     !!number&&(state.records||[]).some(record=>record.finalDecision==='Winner'&&invoiceOrderNumber(record.poNumber)===number);
 }
 function tenderPoArrivedInCanada(po){
+  // Tender invoice is created when the PO is "Arrived in Canada" or "Received in LCBO".
+  const status=String(splitPoAggregateStatus(po)||'').replace(/ \(PARTIALLY\)$/i,'');
   return !!po&&String(po.program||'').trim().toUpperCase()==='TENDER'&&
-    splitPoAggregateStatus(po)==='Arrived in Canada';
+    ['Arrived in Canada','Received in LCBO'].includes(status);
 }
 window.tenderPoArrivedInCanada=tenderPoArrivedInCanada;
 
@@ -5667,7 +5670,7 @@ function renderFinancial(){(state.financialInvoices||[]).forEach(x=>{syncTenderI
     return status==='Next 60 Days Upcoming Payment'?'Upcoming Payment in Next 14 Days':status;
   },
   invoice=>tenderInvoicePayableAmounts(invoice,invoiceNettedExpenses(invoice))
-);const rows=(state.financialInvoices||[]).map(x=>({x,c:financialCalculations(x)}));renderTenderInvoiceColumnTotals(rows);const financialQuery=$('#financialPageSearch')?.value||'';$('#financialInvoiceRows').innerHTML=rows.filter(({x})=>pageSearchMatches(x,financialQuery)).map(({x,c})=>{return `<tr><td>${invoicePoRowsHtml(x)}</td><td><button type="button" class="invoice-number-link" onclick="openFinancialInvoiceDetails('${x.id}')">${escapeHtml(x.invoiceNumber||'—')}</button></td><td>${escapeHtml(x.submissionNumber||'—')}</td><td>${money(c.supplierTotalCad)}</td><td class="financial-transport-divider">${money(c.transportCad)}</td><td>${escapeHtml(x.arrivedInCanadaDate||'—')}</td><td>${tenderPaymentSelectHtml(x)}</td><td class="other-invoice-amount financial-transport-divider">${renderTenderInvoicePayable(c.payable)}</td><td>${money(c.failedSalesAmount)}</td><td><strong class="${c.netProfit<0?'negative':'positive'}">${money(c.netProfit)}</strong></td><td><div><button type="button" onclick="editFinancialInvoice('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('Tender','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="removeFinancialInvoice('${x.id}')">Delete</button></div></td><td class="comments-cell"><div style="white-space:pre-wrap">${escapeHtml(x.notes||'—')}</div>${x.poStatus==='Arrived in Canada'?'<span class="invoice-status-paid">Arrived in Canada</span>':''}</td></tr>`}).join('')||'<tr><td colspan="12" class="note">No financial invoices created. Click + Create Invoice.</td></tr>';}
+);const rows=(state.financialInvoices||[]).map(x=>({x,c:financialCalculations(x)}));renderTenderInvoiceColumnTotals(rows);const financialQuery=$('#financialPageSearch')?.value||'';const financialVisible=rows.filter(({x})=>pageSearchMatches(x,financialQuery));const financialOrder=rsoGroupedInvoices(financialVisible.map(r=>r.x),$('#financialInvoiceRows'),x=>{const numbers=invoicePoNumbers(x);let name='';for(const n of (numbers.length?numbers:[x.poNumber||''])){name=rsoInvoiceTransportationName({sourcePoId:x.sourcePoId,poNumber:n});if(name)break;}return name;});$('#financialInvoiceRows').innerHTML=financialOrder.map(x=>financialVisible.find(r=>r.x===x)).map(({x,c})=>{return `${rsoInvoiceRowStart(x)}<td>${invoicePoRowsHtml(x)}</td><td><button type="button" class="invoice-number-link" onclick="openFinancialInvoiceDetails('${x.id}')">${escapeHtml(x.invoiceNumber||'—')}</button></td><td>${escapeHtml(x.submissionNumber||'—')}</td><td>${money(c.supplierTotalCad)}</td><td class="financial-transport-divider">${money(c.transportCad)}</td><td>${escapeHtml(x.arrivedInCanadaDate||'—')}</td><td>${tenderPaymentSelectHtml(x)}</td><td class="other-invoice-amount financial-transport-divider">${renderTenderInvoicePayable(c.payable)}</td><td>${money(c.failedSalesAmount)}</td><td><strong class="${c.netProfit<0?'negative':'positive'}">${money(c.netProfit)}</strong></td><td><div><button type="button" onclick="editFinancialInvoice('${x.id}')">Open / Edit</button> <button type="button" class="secondary" onclick="archiveInvoice('Tender','${x.id}')">Move to Archived Invoices</button> <button type="button" class="danger" onclick="removeFinancialInvoice('${x.id}')">Delete</button></div></td><td class="comments-cell"><div style="white-space:pre-wrap">${escapeHtml(x.notes||'—')}</div>${x.poStatus==='Arrived in Canada'?'<span class="invoice-status-paid">Arrived in Canada</span>':''}</td></tr>`}).join('')||'<tr><td colspan="12" class="note">No financial invoices created. Click + Create Invoice.</td></tr>';}
 let currentFinancialDetailId='';
 function financialDetailField(label,value){const text=value===undefined||value===null||value===''?'—':String(value);return `<div class="detail-row"><span>${escapeHtml(label)}</span><b>${escapeHtml(text)}</b><button type="button" class="secondary small" onclick='copyText(${JSON.stringify(text)})'>Copy</button></div>`}
 function tenderInvoicePoDetails(invoice){
@@ -5984,9 +5987,23 @@ function renderOtherInvoiceTotals(invoices){
     invoice=>normalizeRsoInvoiceStatus(invoice.paidStatus||invoice.invoicePaidStatus),
     invoice=>({...otherInvoiceAmounts(invoice),currency:String(invoice.currency||'CAD').trim().toUpperCase()||'CAD'}));
 }
+// One colour per transportation, the same on every page (In Stock Transportation, Office/Warehouse, invoices).
+// Colours follow the order transportations were created, so adding a new one never changes the others.
+var TRANSPORTATION_COLOURS=[['#f5f9ff','#2f80ed'],['#f4fbf5','#2e7d32'],['#fffaf1','#d97706'],['#f9f6ff','#7c3aed'],['#fef6f9','#db2777'],['#f3fbfa','#0d9488'],['#fafcf2','#65a30d'],['#fff7f4','#ea580c'],['#f6f7ff','#4f46e5'],['#fffcf0','#ca8a04'],['#f3fcfe','#0891b2'],['#fdf6fa','#be185d']];
+function transportationGroupColor(nameOrId){
+  const key=String(nameOrId||'').replace(/^Transportation:\s*/,'').replace(/\s*\((added by hand|cargo)\)$/,'').split(',')[0].trim();
+  if(!key)return ['#f7f7f8','#6b7280'];
+  const list=allTransportationRecords().filter(sh=>sh.recordKind==='transportation');
+  let index=list.findIndex(sh=>String(sh.name||'').trim()===key||String(sh.id)===key);
+  if(index<0){ // a name typed by hand or a cargo: stable colour from the name
+    index=[...key].reduce((h,c)=>(h*31+c.charCodeAt(0))>>>0,7);
+  }
+  const colours=TRANSPORTATION_COLOURS||[['#eef6ff','#2f80ed']];return colours[index%colours.length];
+}
+window.transportationGroupColor=transportationGroupColor;
 // SEAS/REGU/OTHER TO AGENT INVOICES: group invoices of the same transportation with the same soft colour.
-const rsoInvoiceGroupInfo=new WeakMap();
-let rsoInvoiceLastGroup=null,rsoInvoiceColumnCount=12;
+var rsoInvoiceGroupInfo=new WeakMap();
+var rsoInvoiceLastGroup=null,rsoInvoiceColumnCount=12;
 function rsoInvoiceTransportationName(inv){
   const orders=[...(state.purchaseOrders||[]),...(state.manuallyArchivedPurchaseOrders||[])];
   const number=invoiceOrderNumber(inv.poNumber);
@@ -6000,14 +6017,13 @@ function rsoInvoiceTransportationName(inv){
   const cargo=records.find(sh=>(sh.recordKind||'cargo')==='cargo'&&has(sh));
   return cargo?(cargo.name||cargo.id)+' (cargo)':'';
 }
-function rsoGroupedInvoices(list,body){
-  const palette=[['#eef6ff','#2f80ed'],['#eefaf0','#2e7d32'],['#fff6e6','#d97706'],['#f4efff','#7c3aed'],['#fdeff4','#db2777'],['#e9f9f7','#0d9488'],['#f7f9e8','#65a30d'],['#fff0ec','#ea580c']];
-  const names=list.map(inv=>rsoInvoiceTransportationName(inv));
+function rsoGroupedInvoices(list,body,nameOf=rsoInvoiceTransportationName){
+  const names=list.map(inv=>nameOf(inv));
   const order=[...new Set(names.filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   list.forEach((inv,i)=>{
     const name=names[i];
-    const [bg,line]=name?palette[order.indexOf(name)%palette.length]:['#ffffff','#cbd5e1'];
-    rsoInvoiceGroupInfo.set(inv,{name:name?'Transportation: '+name:'No transportation',bg,line});
+    const [bg,line]=name?transportationGroupColor(name):['#ffffff','#cbd5e1'];
+    (rsoInvoiceGroupInfo||(rsoInvoiceGroupInfo=new WeakMap())).set(inv,{name:name?'Transportation: '+name:'No transportation',bg,line});
   });
   rsoInvoiceLastGroup=null;
   rsoInvoiceColumnCount=body?.closest('table')?.querySelectorAll('thead th').length||12;
@@ -6018,7 +6034,7 @@ function rsoGroupedInvoices(list,body){
   }).map(x=>x.inv);
 }
 function rsoInvoiceRowStart(inv){
-  const g=rsoInvoiceGroupInfo.get(inv)||{name:'',bg:'#fff',line:'#cbd5e1'};
+  const g=(rsoInvoiceGroupInfo&&rsoInvoiceGroupInfo.get(inv))||{name:'',bg:'#fff',line:'#cbd5e1'};
   const header=g.name!==rsoInvoiceLastGroup?`<tr class="office-group-header"><td colspan="${rsoInvoiceColumnCount}" style="background:${g.bg};border-left:6px solid ${g.line};border-top:2px solid ${g.line};font-weight:700;color:#1f2937;font-size:14px">${escapeHtml(g.name)}</td></tr>`:'';
   rsoInvoiceLastGroup=g.name;
   return header+`<tr class="office-group-row" style="--office-group-bg:${g.bg};--office-group-line:${g.line}">`;
@@ -6103,7 +6119,7 @@ function moveToHeadsRecycleBin(type,page,record,restoreMeta={}){if(!record)retur
 function purgeExpiredRecycle(){if(!isAdminUser()){alert('Only an administrator can move expired Recycling Bin records to Head\'s Recycling Bin.');return}const now=Date.now();if(!Array.isArray(state.headsRecycleBin))state.headsRecycleBin=[];const keep=[];(state.recycleBin||[]).forEach(x=>{if(new Date(x.deleteAfter).getTime()<=now)state.headsRecycleBin.push({...x,movedToHeadsAt:new Date().toISOString()});else keep.push(x)});state.recycleBin=keep;save()}
 function restoreRecycleRecord(id){const x=(state.recycleBin||[]).find(v=>v.id===id);if(!x)return;const r=JSON.parse(JSON.stringify(x.record));const map={record:'records',tender:'tenders',item:'items',agency:'agencies',supplier:'suppliers',purchaseOrder:'purchaseOrders',shipment:'shipments',financialInvoice:'financialInvoices',supplierPaymentInvoice:'supplierPaymentInvoices',supplierPaymentInvoice2:'supplierPaymentInvoices2',otherInvoice:'otherInvoices',otherNewInvoice:'otherNewInvoices',archivedInvoice:'archivedInvoices',archivedShipment:'archivedShipments',archivedPo:'manuallyArchivedPurchaseOrders',countryWinery:'countryWineries',countryCandidate:'countryCandidates',countryBonus:'countryBonuses',countryOpportunity:'countryOpportunities'};if(x.type==='supplierItem'){const s=state.suppliers.find(v=>v.id===x.restoreMeta.supplierId);if(!s){alert('The original supplier no longer exists. Restore the supplier first.');return}(s.items||(s.items=[])).push(r)}else if(x.type==='workerItem'){const t=workerSubmissionGroup(x.restoreMeta.tenderId);if(!t){alert('The original tender no longer exists. Restore the tender first.');return}(t.workItems||(t.workItems=[])).push(r)}else{const key=x.restoreMeta?.collection||map[x.type];if(!key)return;if(!Array.isArray(state[key]))state[key]=[];if(!state[key].some(v=>v.id===r.id))state[key].push(r)}state.recycleBin=state.recycleBin.filter(v=>v.id!==id);save()}
 function permanentlyDeleteRecycle(id){if(!isAdminUser()){alert('Only an administrator can move records to Head\'s Recycling Bin.');return}const x=(state.recycleBin||[]).find(v=>v.id===id);if(!x)return;if(!confirm('Move this record to Head\'s Recycling Bin?'))return;if(!Array.isArray(state.headsRecycleBin))state.headsRecycleBin=[];state.headsRecycleBin.push({...x,movedToHeadsAt:new Date().toISOString()});state.recycleBin=state.recycleBin.filter(v=>v.id!==id);save()}
-function restoreHeadsRecycleRecord(id){if(!isAdminUser()){alert('Administrator access only.');return}const x=(state.headsRecycleBin||[]).find(v=>v.id===id);if(!x)return;if(x.directToHeads&&x.type==='archivedLcboInventory'){const key=x.restoreMeta?.inventoryKey||x.record.inventoryKey;if(!state.archivedLcboInventory)state.archivedLcboInventory={};state.archivedLcboInventory[key]={...x.record};delete state.archivedLcboInventory[key].inventoryRecycled;state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save();window.renderArchivedInventory?.();return;}if(x.directToHeads){const r=JSON.parse(JSON.stringify(x.record));const map={financialInvoice:'financialInvoices',supplierPaymentInvoice:'supplierPaymentInvoices',supplierPaymentInvoice2:'supplierPaymentInvoices2',otherInvoice:'otherInvoices',otherNewInvoice:'otherNewInvoices',archivedInvoice:'archivedInvoices',officeInventory:'officeInventory',profitCalculatorItem:'profitCalculatorItem'};const key=x.restoreMeta?.collection||map[x.type];if(!key)return;if(!Array.isArray(state[key]))state[key]=[];if(!state[key].some(v=>v.id===r.id))state[key].push(r);state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save();try{renderFinancial()}catch(e){}try{renderOtherInvoices()}catch(e){}try{renderOtherNewInvoices()}catch(e){}try{renderSupplierPaymentInvoices()}catch(e){}try{renderSupplierPaymentInvoices2()}catch(e){}try{renderArchivedInvoices()}catch(e){}try{renderArchivedInventory()}catch(e){}try{renderProfitItemCalculator()}catch(e){}return}if(!Array.isArray(state.recycleBin))state.recycleBin=[];const restored={...x};delete restored.movedToHeadsAt;if(!state.recycleBin.some(v=>v.id===restored.id))state.recycleBin.push(restored);state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save()}
+function restoreHeadsRecycleRecord(id){if(!isAdminUser()){alert('Administrator access only.');return}const x=(state.headsRecycleBin||[]).find(v=>v.id===id);if(!x)return;if(x.type==='inventoryTransportation'){const tid=x.restoreMeta?.transportationId||x.record?.id;if(state.hiddenInventoryTransportations)delete state.hiddenInventoryTransportations[tid];state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save();try{window.renderInventoryTransportationPages?.()}catch(e){}return;}if(x.directToHeads&&x.type==='archivedLcboInventory'){const key=x.restoreMeta?.inventoryKey||x.record.inventoryKey;if(!state.archivedLcboInventory)state.archivedLcboInventory={};state.archivedLcboInventory[key]={...x.record};delete state.archivedLcboInventory[key].inventoryRecycled;state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save();window.renderArchivedInventory?.();return;}if(x.directToHeads){const r=JSON.parse(JSON.stringify(x.record));const map={financialInvoice:'financialInvoices',supplierPaymentInvoice:'supplierPaymentInvoices',supplierPaymentInvoice2:'supplierPaymentInvoices2',otherInvoice:'otherInvoices',otherNewInvoice:'otherNewInvoices',archivedInvoice:'archivedInvoices',officeInventory:'officeInventory',profitCalculatorItem:'profitCalculatorItem'};const key=x.restoreMeta?.collection||map[x.type];if(!key)return;if(!Array.isArray(state[key]))state[key]=[];if(!state[key].some(v=>v.id===r.id))state[key].push(r);state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save();try{renderFinancial()}catch(e){}try{renderOtherInvoices()}catch(e){}try{renderOtherNewInvoices()}catch(e){}try{renderSupplierPaymentInvoices()}catch(e){}try{renderSupplierPaymentInvoices2()}catch(e){}try{renderArchivedInvoices()}catch(e){}try{renderArchivedInventory()}catch(e){}try{renderProfitItemCalculator()}catch(e){}return}if(!Array.isArray(state.recycleBin))state.recycleBin=[];const restored={...x};delete restored.movedToHeadsAt;if(!state.recycleBin.some(v=>v.id===restored.id))state.recycleBin.push(restored);state.headsRecycleBin=state.headsRecycleBin.filter(v=>v.id!==id);save()}
 function permanentlyDeleteHeadsRecycle(id){if(!isAdminUser()){alert('Administrator access only.');return}if(!confirm('Permanently delete this record?'))return;state.headsRecycleBin=(state.headsRecycleBin||[]).filter(v=>v.id!==id);save()}
 const selectedRecycleIds=new Set();
 const selectedHeadsRecycleIds=new Set();
@@ -9656,6 +9672,8 @@ function inventoryTransportationStatusInfo(shipmentId){
  if(shipment.recordKind!=='transportation')return {ok:false,name,reason:'This is a cargo record. Inventory is opened per transportation (Transportation page).'};
  if(!inventoryTransportationReceived(shipment))return {ok:false,name,reason:'Status is not "Received in LCBO".'};
  if(inventoryTransportationGroups().has(String(shipment.id)))return {ok:true,name};
+ const hidden=state.hiddenInventoryTransportations?.[String(shipment.id)];
+ if(hidden)return {ok:false,name,reason:hidden.status==='deleted'?'It was deleted from Inventory in stock (restore it from Head\'s Recycling Bin).':'It is in Archived Inventory Stock (restore it there).'};
  const ids=new Set((shipment.poLinks||[]).map(l=>String(l.poId)));
  for(const l of cargoLinksPoLinks(shipment.cargoLinks||[]))ids.add(String(l.poId));
  if(!ids.size)return {ok:false,name,reason:'No PO is linked to this transportation (or to its cargo).'};
@@ -9667,6 +9685,32 @@ function inventoryTransportationStatusInfo(shipmentId){
  if(found.every(po=>inventoryPoProgram(po)==='TENDER'||isTenderInvoiceOrder(po)))return {ok:false,name,reason:'All its POs are TENDER POs. Inventory in stock shows non-tender POs only (REGU / SEAS / OTHER).'};
  return {ok:false,name,reason:'Its POs could not be matched.'};
 }
+// Whole transportation: move to Archived Inventory Stock, restore, or delete (to Head's Recycling Bin).
+window.archiveInventoryTransportation=encodedId=>{
+ const id=decodeURIComponent(String(encodedId||''));
+ const shipment=allTransportationRecords().find(sh=>String(sh.id)===id);if(!shipment)return;
+ const name=shipment.name||id;
+ if(!confirm('Move "In Stock Transportation: '+name+'" to Archived Inventory Stock?\nIts page is hidden from Inventory in stock. Office/Warehouse stock and invoices are not changed. You can restore it from Archived Inventory Stock.'))return;
+ (state.hiddenInventoryTransportations??={})[id]={status:'archived',name,archivedAt:new Date().toISOString()};
+ save({inventoryOnly:true});
+ renderInventoryTransportationPages();window.renderArchivedInventory?.();
+};
+window.deleteInventoryTransportation=encodedId=>{
+ const id=decodeURIComponent(String(encodedId||''));
+ const shipment=allTransportationRecords().find(sh=>String(sh.id)===id);
+ const name=shipment?.name||state.hiddenInventoryTransportations?.[id]?.name||id;
+ if(!confirm('Delete "In Stock Transportation: '+name+'" from Inventory in stock?\nIt is moved to Head\'s Recycling Bin (can be restored there). Office/Warehouse stock and invoices are not changed.'))return;
+ (state.hiddenInventoryTransportations??={})[id]={status:'deleted',name,archivedAt:new Date().toISOString()};
+ moveToHeadsRecycleBin('inventoryTransportation','Inventory in stock LCBO Trillium/office/storage',{id,name},{transportationId:id});
+ save({inventoryOnly:true});
+ renderInventoryTransportationPages();window.renderArchivedInventory?.();
+};
+window.restoreInventoryTransportation=encodedId=>{
+ const id=decodeURIComponent(String(encodedId||''));
+ if(state.hiddenInventoryTransportations)delete state.hiddenInventoryTransportations[id];
+ save({inventoryOnly:true});
+ renderInventoryTransportationPages();window.renderArchivedInventory?.();
+};
 window.openInventoryForTransportation=shipmentId=>{
  selectedInventoryTransportationId=String(shipmentId);
  const search=document.getElementById('headInventorySearch');if(search)search.value='';
@@ -9680,9 +9724,14 @@ window.notifyInventoryForTransportation=shipmentId=>{
    const poIds=new Set([...(shipment?.poLinks||[]),...cargoLinksPoLinks(shipment?.cargoLinks||[])].map(l=>l.poId));
    const invoiceCount=(state.otherInvoices||[]).filter(inv=>poIds.has(inv.sourcePoId)).length;
    const invoiceLine=invoiceCount?'\n\n'+invoiceCount+' invoice(s) for its POs are in SEAS/REGU/OTHER TO AGENT INVOICES.':'';
-   if(confirm('Transportation '+info.name+' is Received in LCBO and now has its own page:\n"In Stock Transportation: '+info.name+'".'+invoiceLine+'\n\nOpen the In Stock Transportation page now?'))window.openInventoryForTransportation(shipmentId);
+   const tenderInvoices=(state.financialInvoices||[]).filter(inv=>poIds.has(inv.sourcePoId)).length;
+   const tenderLine=tenderInvoices?'\n'+tenderInvoices+' tender invoice(s) for its POs are in LCBO to Agent Tender Invoices.':'';
+   if(confirm('Transportation '+info.name+' is Received in LCBO and now has its own page:\n"In Stock Transportation: '+info.name+'".'+invoiceLine+tenderLine+'\n\nOpen the In Stock Transportation page now?'))window.openInventoryForTransportation(shipmentId);
  }else if(info.name&&!/not "Received in LCBO"|cargo record/.test(info.reason)){
-   alert('Transportation '+info.name+' is Received in LCBO, but it was not added to Inventory in stock:\n'+info.reason);
+   const shipment=allTransportationRecords().find(sh=>String(sh.id)===String(shipmentId));
+   const poIds=new Set([...(shipment?.poLinks||[]),...cargoLinksPoLinks(shipment?.cargoLinks||[])].map(l=>l.poId));
+   const tenderCount=(state.financialInvoices||[]).filter(inv=>poIds.has(inv.sourcePoId)).length;
+   alert('Transportation '+info.name+' is Received in LCBO, but it was not added to Inventory in stock:\n'+info.reason+(tenderCount?'\n\n'+tenderCount+' tender invoice(s) for its POs are in LCBO to Agent Tender Invoices.':''));
  }
 };
 function inventoryTransportationGroups(){
@@ -9693,6 +9742,7 @@ function inventoryTransportationGroups(){
  const byId=new Map(orders.map(po=>[String(po.originalPoId||po.id),po]));
  for(const shipment of allTransportationRecords()){
    if(shipment.recordKind!=='transportation'||!inventoryTransportationReceived(shipment))continue;
+   if(state.hiddenInventoryTransportations?.[String(shipment.id)])continue; // archived or deleted from Inventory in stock
    const ids=new Set((shipment.poLinks||[]).map(link=>String(link.poId)));
    for(const link of cargoLinksPoLinks(shipment.cargoLinks||[]))ids.add(String(link.poId));
    const pos=[...ids].map(id=>byId.get(id)).filter(Boolean);
@@ -9709,15 +9759,21 @@ function renderInventoryTransportationPages(groups=inventoryTransportationGroups
    button.type='button';
    button.className='invoice-page-tab';
    button.textContent='In Stock Transportation: '+(shipment.name||id);
+   {const [bg,line]=transportationGroupColor(shipment.name||id);button.style.background=bg;button.style.borderLeft='6px solid '+line;}
    button.onclick=()=>{
      selectedInventoryTransportationId=id;
      document.getElementById('headInventorySearch').value='';
      activate('inventory-in-stock','heads-page');
    };
-   list.append(button);
+   const wrap=document.createElement('div');
+   wrap.style.cssText='display:flex;align-items:center;gap:6px;flex-wrap:wrap';
+   const idArg=inventoryActionArg(id);
+   wrap.innerHTML=`<button type="button" class="secondary small" onclick="archiveInventoryTransportation('${idArg}')">Move to Archived Inventory Stock</button><button type="button" class="danger small" onclick="deleteInventoryTransportation('${idArg}')">Delete</button>`;
+   wrap.prepend(button);
+   list.append(wrap);
  }
  if(!groups.size)list.textContent='No received transportation with non-tender POs.';
- const missing=allTransportationRecords().filter(sh=>sh.recordKind==='transportation'&&inventoryTransportationReceived(sh)&&!groups.has(String(sh.id)));
+ const missing=allTransportationRecords().filter(sh=>sh.recordKind==='transportation'&&inventoryTransportationReceived(sh)&&!groups.has(String(sh.id))&&!state.hiddenInventoryTransportations?.[String(sh.id)]);
  if(missing.length){
    const note=document.createElement('div');
    note.className='note';
@@ -10476,7 +10532,7 @@ window.archiveOfficeInventory=encodedKey=>{
   const records=(state.officeInventory||[]).filter(r=>r.inventoryKey===key&&!r.inventoryArchived);
   if(!records.length)return;
   const name=records[0].product||records[0].itemNo||'this item';
-  if(!confirm('Move "'+name+'" to Archived Inventory? You can restore it from the Archived Inventory page.'))return;
+  if(!confirm('Move "'+name+'" to Archived Inventory Stock? You can restore it from the Archived Inventory Stock page.'))return;
   const now=new Date().toISOString();
   for(const record of records){record.inventoryArchived=true;record.inventoryArchivedAt=now;}
   save({inventoryOnly:true});
@@ -10565,11 +10621,11 @@ window.deleteInventoryArchive=(source,encodedKey)=>{
  if(!confirm("Move this archived inventory record to Head's Recycling Bin?"))return;
  if(source==='lcbo'){
   const row=state.archivedLcboInventory?.[key];if(!row||row.inventoryRecycled)return;
-  moveToHeadsRecycleBin('archivedLcboInventory','Archived Inventory',{...row,id:key},{inventoryKey:key});
+  moveToHeadsRecycleBin('archivedLcboInventory','Archived Inventory Stock',{...row,id:key},{inventoryKey:key});
   state.archivedLcboInventory[key]={...row,inventoryRecycled:true};
  }else{
   const row=(state.officeInventory||[]).find(r=>String(r.id)===key&&r.inventoryArchived);if(!row)return;
-  moveToHeadsRecycleBin('officeInventory','Archived Inventory',row,{collection:'officeInventory'});
+  moveToHeadsRecycleBin('officeInventory','Archived Inventory Stock',row,{collection:'officeInventory'});
   state.officeInventory=state.officeInventory.filter(r=>String(r.id)!==key);
  }
  save();renderArchivedInventory();
@@ -10577,8 +10633,16 @@ window.deleteInventoryArchive=(source,encodedKey)=>{
 window.renderArchivedInventory=()=>{
   const body=document.getElementById('archivedInventoryRows');if(!body)return;
   const q=(document.getElementById('archivedInventorySearch')?.value||'').trim().toLowerCase();
+  // Whole transportations moved to Archived Inventory Stock.
+  const transportRows=Object.entries(state.hiddenInventoryTransportations||{}).filter(([,t])=>t.status==='archived').map(([id,t])=>{
+    const shipment=allTransportationRecords().find(sh=>String(sh.id)===id);
+    const poIds=new Set([...(shipment?.poLinks||[]),...cargoLinksPoLinks(shipment?.cargoLinks||[])].map(l=>String(l.poId)));
+    const pos=[...(state.purchaseOrders||[]),...(state.manuallyArchivedPurchaseOrders||[])].filter(po=>poIds.has(String(po.id)));
+    return {id,name:t.name||shipment?.name||id,archivedAt:t.archivedAt,poNumbers:pos.map(po=>po.number).filter(Boolean).join(', ')};
+  }).filter(t=>!q||[t.name,t.poNumbers,'transportation'].join(' ').toLowerCase().includes(q));
+  const transportHtml=transportRows.map(t=>`<tr><td><b>Whole transportation</b><br><small>In Stock Transportation: ${escapeHtml(t.name)}</small></td><td>${escapeHtml(t.poNumbers||'—')}</td><td>—</td><td>—</td><td>${escapeHtml(t.name)}</td><td>—</td><td>—</td><td>—</td><td>${escapeHtml((t.archivedAt||'').slice(0,10))}</td><td><button type="button" class="secondary small" onclick="restoreInventoryTransportation('${encodeURIComponent(t.id)}')">Restore</button> <button type="button" class="danger small" onclick="deleteInventoryTransportation('${encodeURIComponent(t.id)}')">Delete</button></td></tr>`).join('');
   const rows=[...Object.entries(state.archivedLcboInventory||{}).filter(([,r])=>!r.inventoryRecycled).map(([key,r])=>({...r,archiveSource:'lcbo',archiveKey:key,location:'LCBO Trillium warehouse'})),...(state.officeInventory||[]).filter(r=>r.inventoryArchived).map(r=>({...r,archiveSource:'office',archiveKey:r.id,location:'Office/warehouse',archivedAt:r.inventoryArchivedAt}))];
-  body.innerHTML=rows.filter(r=>!q||[r.location,r.poNumber,r.vendor,r.itemNo,r.product].join(' ').toLowerCase().includes(q)).map(r=>`<tr><td>${escapeHtml(r.location)}</td><td>${escapeHtml(r.poNumber||'—')}</td><td>${escapeHtml(r.vendor||'—')}</td><td>${escapeHtml(r.itemNo||'—')}</td><td>${escapeHtml(r.product||'—')}</td><td>${num(r.cases).toLocaleString()}</td><td>${num(r.bpc).toLocaleString()}</td><td>${(num(r.cases)*num(r.bpc)).toLocaleString()}</td><td>${escapeHtml((r.archivedAt||'').slice(0,10))}</td><td><button type="button" class="secondary small" onclick="restoreInventoryArchive('${r.archiveSource}','${encodeURIComponent(r.archiveKey)}')">Restore</button> <button type="button" class="danger small" onclick="deleteInventoryArchive('${r.archiveSource}','${encodeURIComponent(r.archiveKey)}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="10">No archived inventory records.</td></tr>';
+  body.innerHTML=transportHtml+(rows.filter(r=>!q||[r.location,r.poNumber,r.vendor,r.itemNo,r.product].join(' ').toLowerCase().includes(q)).map(r=>`<tr><td>${escapeHtml(r.location)}</td><td>${escapeHtml(r.poNumber||'—')}</td><td>${escapeHtml(r.vendor||'—')}</td><td>${escapeHtml(r.itemNo||'—')}</td><td>${escapeHtml(r.product||'—')}</td><td>${num(r.cases).toLocaleString()}</td><td>${num(r.bpc).toLocaleString()}</td><td>${(num(r.cases)*num(r.bpc)).toLocaleString()}</td><td>${escapeHtml((r.archivedAt||'').slice(0,10))}</td><td><button type="button" class="secondary small" onclick="restoreInventoryArchive('${r.archiveSource}','${encodeURIComponent(r.archiveKey)}')">Restore</button> <button type="button" class="danger small" onclick="deleteInventoryArchive('${r.archiveSource}','${encodeURIComponent(r.archiveKey)}')">Delete</button></td></tr>`).join('')||(transportHtml?'':'<tr><td colspan="10">No archived inventory records.</td></tr>'));
 };
 
 function profitCalcPoProgram(po){
@@ -11447,7 +11511,7 @@ function renderOfficeInventory(statisticsCards){
   const officeGroupPalette=[['#eef6ff','#2f80ed'],['#eefaf0','#2e7d32'],['#fff6e6','#d97706'],['#f4efff','#7c3aed'],['#fdeff4','#db2777'],['#e9f9f7','#0d9488'],['#f7f9e8','#65a30d'],['#fff0ec','#ea580c']];
   const officeGroupOrder=[...new Set([...grouped].map(([key,{record}])=>officeGroupName(key,record)))]
     .sort((a,b)=>(a.startsWith('Added by hand')-b.startsWith('Added by hand'))||a.localeCompare(b));
-  const officeGroupColor=name=>name.startsWith('Added by hand')?['#f3f4f6','#6b7280']:officeGroupPalette[officeGroupOrder.indexOf(name)%officeGroupPalette.length];
+  const officeGroupColor=name=>name.startsWith('Added by hand')?['#f7f7f8','#6b7280']:transportationGroupColor(name);
   const sortedGrouped=[...grouped].sort(([ka,a],[kb,b])=>officeGroupOrder.indexOf(officeGroupName(ka,a.record))-officeGroupOrder.indexOf(officeGroupName(kb,b.record)));
   let lastOfficeGroup=null,officeVisibleRows=0;
   // Search and filters (table only; the squares above always show all items).
@@ -11515,7 +11579,7 @@ function renderOfficeInventory(statisticsCards){
     const groupHeader=rowVisible&&groupName!==lastOfficeGroup?`<tr class="office-group-header"><td colspan="10" style="background:${groupBg};border-left:6px solid ${groupLine};border-top:2px solid ${groupLine};font-weight:700;color:#1f2937;font-size:14px">${escapeHtml(groupName)}</td></tr>`:'';
     if(rowVisible){lastOfficeGroup=groupName;officeVisibleRows++;}
     return (rowVisible?groupHeader:'')+`<tr class="office-group-row" ${rowVisible?'':'hidden'} style="--office-group-bg:${groupBg};--office-group-line:${groupLine}">
-      <td><b>${escapeHtml(record.product||'—')}</b><br><small>Item # ${escapeHtml(record.itemNo||'—')}</small><br><small>PO # ${escapeHtml(record.poNumber||inventoryProformaPo(String(record.poId||decodeURIComponent(String(key).split('::')[0])))?.number||'—')}</small><br><small>Supplier: ${escapeHtml(record.vendor||'—')}</small><br><small>Transportation: ${escapeHtml((poTransportation.get(String(record.poId||decodeURIComponent(String(key).split('::')[0])))||[]).join(', ')||record.transportationName||'—')}</small></td>
+      <td><b>${escapeHtml(record.product||'—')}</b><br><small>Item # ${escapeHtml(record.itemNo||'—')}</small><br><small>PO # ${escapeHtml(record.poNumber||inventoryProformaPo(String(record.poId||decodeURIComponent(String(key).split('::')[0])))?.number||'—')}</small><br><small>Supplier: ${escapeHtml(record.vendor||'—')}</small></td>
       <td><b style="font-size:17px">${officeCasesBottlesText(cases,bpc)}</b> / ${bpc.toLocaleString()}<br><small>${bottles.toLocaleString()} bottles in stock</small>
         <div style="margin-top:6px;font-size:12px;line-height:1.5;color:#94a3b8">
           <div>Non-Licensed: ${officeCasesBottlesText(nonLicensedCases,bpc)}</div>
@@ -11608,7 +11672,7 @@ function renderOfficeInventory(statisticsCards){
       <td style="min-width:160px"><label style="display:block">Sold out on
         <input type="date" data-inventory-sales-date value="${escapeHtml(sales.soldOutOn||'')}" onchange="updateInventorySalesDate('${keyArg}','soldOutOn',this)">
       </label>${sales.availableSince?`<small style="color:#94a3b8">Available for sale since ${escapeHtml(sales.availableSince)}</small>`:''}</td>
-      <td><div style="display:flex;flex-direction:column;gap:6px;min-width:190px"><button type="button" class="small" onclick="editOfficeInventory('${keyArg}')">Open / Edit</button><button type="button" class="secondary small" onclick="archiveOfficeInventory('${keyArg}')">Move to Archived Inventory</button><button type="button" class="danger small" onclick="deleteOfficeInventory('${keyArg}')">Delete</button></div></td>
+      <td><div style="display:flex;flex-direction:column;gap:6px;min-width:190px"><button type="button" class="small" onclick="editOfficeInventory('${keyArg}')">Open / Edit</button><button type="button" class="secondary small" onclick="archiveOfficeInventory('${keyArg}')">Move to Archived Inventory Stock</button><button type="button" class="danger small" onclick="deleteOfficeInventory('${keyArg}')">Delete</button></div></td>
     </tr>`;
   }).join('');
   if(body)body.innerHTML=(officeVisibleRows?officeRows:'')||(officeFilter&&grouped.size?'<tr><td colspan="10">No items match the search / filters. <button type="button" class="secondary small" onclick="clearInventoryFilters(\'office\')">Clear filters</button></td></tr>':'')||'<tr><td colspan="10">No office/warehouse stock yet. Add inventory or move cases from In Stock Transportation.</td></tr>';
@@ -11687,8 +11751,17 @@ function renderTransportationInventory(statisticsCards){
      if(!orders.has(id))orders.set(id,{po,shipment});
    }
  }
- if(!aggregate)document.getElementById('inventoryTransportationHeading').textContent=selected?
-   'In Stock Transportation: '+(selected.shipment.name||selectedInventoryTransportationId):'In Stock Transportation';
+ if(!aggregate){
+   const heading=document.getElementById('inventoryTransportationHeading');
+   heading.textContent=selected?'In Stock Transportation: '+(selected.shipment.name||selectedInventoryTransportationId):'In Stock Transportation';
+   // Same colour as this transportation's groups on the Office/Warehouse and invoices pages.
+   const head=heading.closest('.section-head');
+   if(head){
+     const [bg,line]=selected?transportationGroupColor(selected.shipment.name||selected.shipment.id):['',''];
+     head.style.background=bg;head.style.borderLeft=line?'6px solid '+line:'';
+     head.style.padding=line?'10px 14px':'';head.style.borderRadius=line?'8px':'';head.style.marginBottom=line?'12px':'';
+   }
+ }
  const rows=[];
  const projectRows=[];
  // Dropdown filters on In Stock Transportation (fill options from this transportation's POs).
@@ -11846,7 +11919,7 @@ function renderTransportationInventory(statisticsCards){
       <small>Selling period: ${months===null?'—':months.toFixed(2)+' months'+(sales.soldOutOn?'':' so far')}</small>
     </td>
     <td>${(()=>{const rowArg=inventoryActionArg(JSON.stringify({inventoryKey:r.inventoryKey,poId:r.poId,poNumber:r.poNumber,program:r.program,vendor:r.vendor,itemNo:r.itemNo,product:r.product,cases:r.cases,bpc:r.bpc}));
-      return `<div style="display:flex;flex-direction:column;gap:6px;min-width:190px"><button type="button" class="small" onclick="editTransportationInventory('${rowArg}')">Open / Edit</button><button type="button" class="secondary small" onclick="archiveLcboInventory('${rowArg}')">Move to Archived Inventory</button><button type="button" class="danger small" onclick="deleteTransportationInventory('${rowArg}')">Delete</button></div>`;})()}</td>
+      return `<div style="display:flex;flex-direction:column;gap:6px;min-width:190px"><button type="button" class="small" onclick="editTransportationInventory('${rowArg}')">Open / Edit</button><button type="button" class="secondary small" onclick="archiveLcboInventory('${rowArg}')">Move to Archived Inventory Stock</button><button type="button" class="danger small" onclick="deleteTransportationInventory('${rowArg}')">Delete</button></div>`;})()}</td>
    </tr>`;
  }).join('')||'<tr><td colspan="20">No non-tender inventory rows for this transportation.</td></tr>';
 
