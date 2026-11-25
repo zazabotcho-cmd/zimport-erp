@@ -106,3 +106,16 @@ UPDATE 8 (2026-11-25)
 - Office/Warehouse: Supplier column removed; supplier now shown under Item # in "Item Description / Item # / Supplier".
 - Office/Warehouse: case number in "Cases in Stock / Bottles per Case" shown larger.
 - Office/Warehouse: new last column "Sold out on" with a date field (same date as on In Stock Transportation).
+- Office/Warehouse: "Item total prime cost" column moved right after "Prime Cost per Bottle".
+- Office/Warehouse: new column after "Sold to": "Revenue (HST incl.) / Profit (HST incl.)" for
+  Restaurant/Hotels, Online Store and In Store, plus Total of the three.
+  Revenue = actual selling prices saved with each sale (older sales: Final Retail Price).
+  Profit = Revenue - Prime Cost per Bottle x bottles sold (Licensed cost for Restaurant/Hotels,
+  Non-Licensed cost for Online Store / In Store).
+- "+ Add Inventory" (Add Office/Warehouse Inventory) updated: new fields Prime Cost per Bottle
+  Non-Licensed / Licensed (TAX/HST incl.) and Available for sale since. Items added this way now show
+  Prime Cost, Item total prime cost and Profit like PO items.
+- Office/Warehouse: new ACTION column at the end with "Edit Inventory" and "Move to Archived Inventory".
+  Edit: description, Item #, supplier, Final Retail Price, Available for sale since; for items added with
+  "+ Add Inventory" also cases (Non-Licensed/Licensed), bottles per case and Prime Cost.
+  Archived items appear on the Archived Inventory page (Restore / Delete there).
