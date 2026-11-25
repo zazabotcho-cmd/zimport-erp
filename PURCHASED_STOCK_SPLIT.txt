@@ -205,3 +205,6 @@ sales, returns, archive/restore, edit. All totals checked by hand. Fixes:
   The message after saving says how many invoices are there. (Deleted/archived invoices are not re-created.)
 - SEAS/REGU/OTHER TO AGENT INVOICES: invoices of the same transportation are grouped with a coloured title row
   and the same soft background colour; invoices without a transportation are last.
+- Transportation / Cargo pages: choosing a new Cargo/Transportation status is NOT saved automatically (as before).
+  Instead an orange reminder appears and the "Save status and date" button is highlighted until it is pressed.
+  The status date is not changed automatically. Leaving/refreshing the page with an unsaved status asks first.

@@ -340,7 +340,7 @@ label[data-retrieved-locked="1"] textarea{
 #headInventoryRows .inventory-transport-status-date time{font-size:12px;font-weight:600;color:#425466;font-variant-numeric:tabular-nums}
 .worker-product-needs-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.worker-product-needs-grid input,.worker-product-needs-grid select{width:100%;box-sizing:border-box}@media(max-width:760px){.worker-product-needs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:460px){.worker-product-needs-grid{grid-template-columns:1fr}}
 .approved-portal-files{margin-left:auto;width:max-content;min-width:390px;max-width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:#f8fafc}.approved-portal-files strong{display:block;font-size:12px;line-height:1.4;margin-bottom:8px}.approved-portal-attach{display:inline-block;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px}#approvedPortalFileRows{display:grid;grid-template-rows:repeat(5,auto);grid-auto-flow:column;grid-auto-columns:350px;column-gap:12px;direction:rtl;overflow-x:auto;max-width:100%}.approved-portal-file{direction:ltr;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;align-items:center;margin-top:7px}.approved-portal-file input{font-size:12px;padding:5px}.approved-portal-file button{font-size:11px;padding:5px 7px}@media(max-width:800px){#worker-list .section-head{flex-wrap:wrap;gap:12px}.approved-portal-files{width:100%;min-width:0;margin-left:0}}
-[id^="transportationProjectRetailValues"]>span:first-child,[id^="transportationLiveRetailValues"]>span:first-child{margin-top:0!important}tr.office-group-row>td{background:var(--office-group-bg)}tr.office-group-row>td:first-child{border-left:6px solid var(--office-group-line)}tr.office-group-row:hover>td{filter:brightness(.98)}.kpi-new-row{grid-column-start:1}@media(min-width:1101px){.kpi-col2{grid-column:2}.kpi-col3{grid-column:3}.kpi-col4{grid-column:4}.kpi-col5{grid-column:5}.kpi-col6{grid-column:6}}</style>
+[id^="transportationProjectRetailValues"]>span:first-child,[id^="transportationLiveRetailValues"]>span:first-child{margin-top:0!important}tr.office-group-row>td{background:var(--office-group-bg)}tr.office-group-row>td:first-child{border-left:6px solid var(--office-group-line)}tr.office-group-row:hover>td{filter:brightness(.98)}.shipment-status-unsaved::before{content:attr(data-msg)}.kpi-new-row{grid-column-start:1}@media(min-width:1101px){.kpi-col2{grid-column:2}.kpi-col3{grid-column:3}.kpi-col4{grid-column:4}.kpi-col5{grid-column:5}.kpi-col6{grid-column:6}}</style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="online-config.js"></script>
@@ -3911,8 +3911,37 @@ function recordShipmentStatus(sh,status,date){
 }
 function shipmentStatusSelect(sh){
  const status=normalizeSharedShipmentStatus(sh.status||'Cargo Ready For Pick up');
- return `<div class="shipment-status-controls"><select id="shipment-row-status-${sh.id}" class="shipment-inline-status ${shipmentStatusClass(status)}">${transportationStatusOptions(status,sh.recordKind||'cargo')}</select><label style="display:block;margin-top:6px">Status date<input id="shipment-row-date-${sh.id}" type="date" data-native-shipment-date="1" value="${escapeHtml(sh.statusDate||'')}"></label><button type="button" class="secondary small" onclick="saveShipmentRowStatus('${sh.id}')">Save status and date</button>${shipmentStatusHistoryHtml(sh)}</div>`;
+ return `<div class="shipment-status-controls"><select id="shipment-row-status-${sh.id}" class="shipment-inline-status ${shipmentStatusClass(status)}" onchange="shipmentRowStatusChanged('${sh.id}')">${transportationStatusOptions(status,sh.recordKind||'cargo')}</select><label style="display:block;margin-top:6px">Status date<input id="shipment-row-date-${sh.id}" type="date" data-native-shipment-date="1" value="${escapeHtml(sh.statusDate||'')}"></label><button type="button" class="secondary small" onclick="saveShipmentRowStatus('${sh.id}')">Save status and date</button>${shipmentStatusHistoryHtml(sh)}</div>`;
 }
+// Choosing a new status does not save it: remind the user to press "Save status and date".
+function shipmentRowStatusChanged(id){
+ const sh=(state.shipments||[]).find(x=>x.id===id);
+ const select=document.getElementById('shipment-row-status-'+id);
+ if(!sh||!select)return;
+ const box=select.closest('.shipment-status-controls');
+ const button=box?.querySelector('button[onclick^="saveShipmentRowStatus"]');
+ let note=box?.querySelector('.shipment-status-unsaved');
+ const changed=normalizeSharedShipmentStatus(select.value)!==normalizeSharedShipmentStatus(sh.status||'');
+ if(!changed){
+   note?.remove();
+   if(button){button.style.outline='';button.style.boxShadow='';}
+   return;
+ }
+ if(!note&&box){
+   note=document.createElement('div');
+   note.className='shipment-status-unsaved';
+   note.style.cssText='margin-top:6px;padding:6px 8px;border-radius:6px;background:#fff4e5;border:1px solid #f59e0b;color:#92400e;font-size:12px;font-weight:700';
+   // Text through CSS so the program's automatic capitalisation does not change it.
+   note.setAttribute('data-msg','⚠ Not saved yet — check the date and press "Save status and date".');
+   (button||select).insertAdjacentElement('afterend',note);
+ }
+ if(button){button.style.outline='3px solid #f59e0b';button.style.boxShadow='0 0 0 4px rgba(245,158,11,.25)';button.scrollIntoView({block:'nearest'});}
+}
+// Warn before leaving the page with a status that was chosen but not saved.
+window.addEventListener('beforeunload',event=>{
+ if(document.querySelector('.shipment-status-unsaved')){event.preventDefault();event.returnValue='';}
+});
+window.shipmentRowStatusChanged=shipmentRowStatusChanged;
 function saveShipmentRowStatus(id){
  const date=document.getElementById('shipment-row-date-'+id).value;
  if(!date){alert('Choose the date when this status occurred.');return}
