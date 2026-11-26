@@ -1505,7 +1505,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  <div class="table-wrap"><table>
   <thead><tr>
    <th>PO #</th><th>Vendor/Producer</th><th class="inventory-pinned-product">Product Name</th>
-   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th>Other Fees per Bottle</th><th scope="col">ACTION</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Profit per Bottle (TAX/HST incl.) /<br>Profit total item (TAX/HST incl.) <span id="inventoryTotalItemProfit" style="white-space:nowrap" aria-live="polite">(Aprox total profit if all Non-Licensed: — / if all Licensed: —)</span></th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>ACTIONS</th>
+   <th>Total PO Quoted Value</th><th>Bottles / Case</th><th>Total Bottles</th><th>Transportation</th><th>Cargo/Transportation status</th><th>Cases in Stock</th><th>Proforma Net Bottle Price</th><th>Proforma Total PO Net Price</th><th>TAX/HST</th><th>Proforma Balance Owing (TAX/HST incl.)</th><th>Proforma Case Selling Price /<br>Proforma Case Selling Price +TAX/HST</th><th>Other Fees per Bottle</th><th scope="col">ACTION</th><th style="border-left:3px solid #64748b">If Final Retail Price per Bottle (TAX/HST Included)</th><th>Profit per Bottle (TAX/HST incl.) /<br>Profit total item (TAX/HST incl.) <span id="inventoryTotalItemProfit" style="display:block;margin-top:4px;white-space:nowrap;font-weight:600" aria-live="polite">Aprox total profit:<br>if all Non-Licensed: —<br>if all Licensed: —</span></th><th style="border-left:3px solid #64748b">Available for sale since / Sold out on</th><th>ACTIONS</th>
   </tr></thead>
   <tbody id="headInventoryRows"></tbody>
  </table></div>
@@ -11881,7 +11881,7 @@ function renderTransportationInventory(statisticsCards){
    return `<tr>
     <td><b>${escapeHtml(r.poNumber||'—')}</b><br><small>${escapeHtml(r.program)}</small>${r.deletedFromPoPage?'<br><small>PO deleted from PO page — retained in inventory</small>':''}</td>
     <td>${escapeHtml(r.vendor)}</td>
-    <td class="inventory-pinned-product"><b>${escapeHtml(r.product)}</b><br><small><b>LCBO Item #</b> ${escapeHtml(r.itemNo)}</small></td>
+    <td class="inventory-pinned-product"><b>${escapeHtml(r.product)}</b><br><small><b>LCBO Item #</b> ${escapeHtml(r.itemNo)}</small><br><small><b>PO#</b> ${escapeHtml(r.poNumber||'—')}</small></td>
     <td><b>${r.totalQuotedValue?escapeHtml((r.quoteCurrency?r.quoteCurrency+' ':'')+'$'+r.totalQuotedValue.toFixed(2)):'—'}</b></td>
 
     <td>${r.bpc.toLocaleString()}</td>
@@ -12114,10 +12114,10 @@ function renderTransportationInventory(statisticsCards){
        <span style="margin-top:8px">Total Other Fees</span>
        <strong>${inventoryPriceMoney(totalOtherFees)}</strong>
      </div>
-     <div class="card"><span>Project Potential Profit — Non-Licensed (TAX/HST incl.)</span>
+     <div class="card"><span>Project Planned Profit — Non-Licensed (TAX/HST incl.)</span>
        <strong>${inventoryPriceMoney(projectPotential.nl)}</strong>
        ${projectPotential.nlMissing?`<small>${projectPotential.nlMissing.toLocaleString()} bottles without a price or prime cost not counted</small>`:''}
-       <span style="margin-top:8px">Project Potential Profit — Licensed (TAX/HST incl.)</span>
+       <span style="margin-top:8px">Project Planned Profit — Licensed (TAX/HST incl.)</span>
        <strong>${inventoryPriceMoney(projectPotential.l)}</strong>
        ${projectPotential.lMissing?`<small>${projectPotential.lMissing.toLocaleString()} bottles without a price or prime cost not counted</small>`:''}
        <small style="color:#94a3b8">(If Final Retail Price − Prime Cost per Bottle) × Total Project Bottles</small>
@@ -12126,38 +12126,38 @@ function renderTransportationInventory(statisticsCards){
     ${rowTitle(aggregate?'Total Live':'Live')}
     <div class="cards">
      <div class="card">
-       <span>${aggregate?'Total Sales Revenue':'Project Sales Revenue'} (TAX/HST incl.)</span>
+       <span>${aggregate?'Live Total Sales Revenue':'Live Project Sales Revenue'} (TAX/HST incl.)</span>
        <strong>${inventoryPriceMoney(salesRevenue)}</strong>
-       <span style="margin-top:8px">${aggregate?'Total Net Profit':'Project Net Profit'}</span>
+       <span style="margin-top:8px">${aggregate?'Live Total Net Profit':'Live Project Net Profit'}</span>
        <strong style="color:${salesRevenue-projectBudgetCents/100<0?'var(--red)':'var(--green)'}">${inventoryPriceMoney(salesRevenue-projectBudgetCents/100)}</strong>
        <div style="margin-top:10px;font-size:12px;line-height:1.6;color:#94a3b8">
          <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">Sales Revenue (Restaurant/Hotels, Online Store, In Store — items on the Office/Warehouse page)</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(salesRevenue)}</span></div>
          <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:inherit;font-size:inherit">− Total Project Budget</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(projectBudgetCents/100)}</span></div>
-         <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid #e2e8f0;margin-top:3px;padding-top:3px"><span style="color:inherit;font-size:inherit">= Project Net Profit</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(salesRevenue-projectBudgetCents/100)}</span></div>
+         <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid #e2e8f0;margin-top:3px;padding-top:3px"><span style="color:inherit;font-size:inherit">= Live Project Net Profit</span><span style="color:inherit;font-size:inherit;white-space:nowrap">${inventoryPriceMoney(salesRevenue-projectBudgetCents/100)}</span></div>
          ${salesUnpricedBottles?`<div style="margin-top:4px;color:var(--orange)">${salesUnpricedBottles.toLocaleString()} sold bottles have no retail price and are not counted.</div>`:''}
        </div>
      </div>
      <div class="card kpi-col2">
-       <span>Total Cases in Stock / Total Bottles in Stock</span>
+       <span>Live Total Cases in Stock / Total Bottles in Stock</span>
        <strong>${officeRoundCases(totalCases+officeStockCases).toLocaleString(undefined,{maximumFractionDigits:2})} / ${Math.round(totalBottles+officeStockBottles).toLocaleString()}</strong>
        <div style="margin-top:6px;font-size:12px;line-height:1.6;color:#94a3b8">
          <div>At LCBO Trillium: ${totalCases.toLocaleString()} / ${totalBottles.toLocaleString()}</div>
          <div>Office/Warehouse: ${officeRoundCases(officeStockCases).toLocaleString(undefined,{maximumFractionDigits:2})} / ${Math.round(officeStockBottles).toLocaleString()}</div>
        </div>
-       <span style="margin-top:8px">POs in Inventory</span>
+       <span style="margin-top:8px">Live POs in Inventory</span>
        <strong>${livePoIds.size}</strong>
-       ${aggregate?`<span style="margin-top:8px">In Stock Transportations</span><strong>${shipments.length}</strong>`:''}
+       ${aggregate?`<span style="margin-top:8px">Live In Stock Transportations</span><strong>${shipments.length}</strong>`:''}
      </div>
      ${retailCard('transportationLiveRetailValues','kpi-col3')}
      <div class="card kpi-col4">
-       <span>Total Amount of Proforma Balance Owing (TAX/HST incl.)</span>
+       <span>Live Total Amount of Proforma Balance Owing (TAX/HST incl.)</span>
        <strong>${inventoryPriceMoney(totalProformaBalanceCents/100)}</strong>
      </div>
      <div class="card kpi-col5">
-       <span>${aggregate?'Selling Period (all transportations)':'Project Selling Period'} / Cases Sold per Month</span>
+       <span>${aggregate?'Live Selling Period (all transportations)':'Live Project Selling Period'} / Cases Sold per Month</span>
        <strong>${projectSellOutMonths===null?'—':projectSellOutMonths.toLocaleString('en-CA',{maximumFractionDigits:2})+' mo'} / ${projectSellOutMonths!==null?projectCasesPerMonth.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong>
        <small style="color:#94a3b8">${projectSellDays===null?'Set "Available for sale since" to count the selling period.':`${projectSellDays} days: ${escapeHtml(projectSellStart)} → ${projectStillSelling?'today (still selling)':escapeHtml(projectSellEnd)}. Total cases sold: ${officeRoundCases(projectSoldCases).toLocaleString()}`}</small>
-       <span style="margin-top:8px">Project Total Profit / Project Monthly Profit</span>
+       <span style="margin-top:8px">Live Project Total Profit / Live Project Monthly Profit</span>
        <strong>${inventoryPriceMoney(actualProfit)} / ${inventoryPriceMoney(!perMonthDivisor?null:actualProfit/perMonthDivisor)}</strong>
        <small style="color:#94a3b8">Actual sale prices − Prime Cost × bottles sold${actualProfitMissing?' (some sales missing a price or prime cost — not counted)':''}${projectSellOutMonths!==null&&projectSellOutMonths<1?'. Period under 1 month: per-month numbers = what was sold so far.':''}</small>
      </div>
@@ -12165,7 +12165,7 @@ function renderTransportationInventory(statisticsCards){
  }
  const total=aggregate?null:document.getElementById('inventoryTotalItemProfit');
  const renderTotalProfit=draft=>{
-   if(total)total.textContent=`(Aprox total profit if all Non-Licensed: ${inventoryPriceMoney(inventoryTotalItemProfit(projectRows,draft,false))} / if all Licensed: ${inventoryPriceMoney(inventoryTotalItemProfit(projectRows,draft,true))})`;
+   if(total)total.innerHTML=`Aprox total profit:<br>if all Non-Licensed: ${inventoryPriceMoney(inventoryTotalItemProfit(projectRows,draft,false))}<br>if all Licensed: ${inventoryPriceMoney(inventoryTotalItemProfit(projectRows,draft,true))}`;
  };
  const renderRetailValues=(element,heading,bottleCount,draft)=>{
    if(!element)return;
@@ -12256,8 +12256,8 @@ window.renderInventoryStockStatistics=()=>{
          ${grey(line('Total Project Budget (POs)',t.budget)+line('+ Prime Cost purchased (by hand)',m.purchased)+line('Revenue made',revenue)+line('− Total Prime Cost / Budget',totalCost)+line('= Net Profit',net))}</div>
        <div class="card"><span>Combined Total Amount of Proforma Balance Owing (TAX/HST incl.)</span><strong>${inventoryPriceMoney(t.balanceOwing||0)}</strong>
          ${grey(line('Proforma Project Balance (all POs)',t.projectBalance||0)+line('Balance Owing — cases still at LCBO Trillium',t.balanceOwing||0)+'All In Stock Transportations together')}</div>
-       <div class="card"><span>Combined Project Potential Profit — Non-Licensed (HST incl.)</span><strong>${inventoryPriceMoney((t.projectPotential?.nl||0)+m.purchasedPotentialNl)}</strong>
-         <span style="margin-top:8px">Combined Project Potential Profit — Licensed (HST incl.)</span><strong>${inventoryPriceMoney((t.projectPotential?.l||0)+m.purchasedPotentialL)}</strong>
+       <div class="card"><span>Combined Project Planned Profit — Non-Licensed (HST incl.)</span><strong>${inventoryPriceMoney((t.projectPotential?.nl||0)+m.purchasedPotentialNl)}</strong>
+         <span style="margin-top:8px">Combined Project Planned Profit — Licensed (HST incl.)</span><strong>${inventoryPriceMoney((t.projectPotential?.l||0)+m.purchasedPotentialL)}</strong>
          ${grey(line('Transportation POs — Non-Licensed',t.projectPotential?.nl||0)+line('Transportation POs — Licensed',t.projectPotential?.l||0)+line('Items added by hand — Non-Licensed',m.purchasedPotentialNl)+line('Items added by hand — Licensed',m.purchasedPotentialL)+'(Retail price − Prime Cost) × original bottles')}</div>
        <div class="card"><span>Combined Potential Profit — Stock in Hand (HST incl.)</span><strong>${inventoryPriceMoney(potential)}</strong>
          ${grey(line('Transportation POs',t.potentialProfit)+line('Items added by hand',m.potentialProfit)+'(Retail price − Prime Cost) × bottles still in stock')}

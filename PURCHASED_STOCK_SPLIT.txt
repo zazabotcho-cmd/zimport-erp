@@ -237,3 +237,9 @@ sales, returns, archive/restore, edit. All totals checked by hand. Fixes:
 - Project Selling Period / Cases Sold per Month / Monthly Profit fixed: period = earliest "Available for sale since" to
   latest "Sold out on" (or today while selling), shown in days with dates. Cases per month and monthly profit use the
   total sold ÷ months; a period under 1 month counts as 1 month (no more huge numbers from a few days).
+- Profit column title: "Aprox total profit:" with "if all Non-Licensed" and "if all Licensed" each on its own line.
+- Live row: every square label now starts with "Live" (Live Project Sales Revenue, Live Project Net Profit,
+  Live Total Cases in Stock, Live POs in Inventory, Live Total Amount of Proforma Balance Owing, Live Project Selling Period,
+  Live Project Total Profit / Live Project Monthly Profit; "Live Total ..." on Statistics).
+- "Project Potential Profit" renamed to "Project Planned Profit" (In Stock Transportation and Statistics).
+- In Stock Transportation: Product Name cell now shows PO# under LCBO Item #.
