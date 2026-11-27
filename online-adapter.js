@@ -83,7 +83,7 @@
   const collectionMap={agencies:'agencies',suppliers:'suppliers',items:'items',tenders:'tenders',purchaseOrders:'purchase_orders',shipments:'shipments'};
   const inventoryStateFields=['inventoryCaseOverrides','inventorySaleAvailability','inventorySalesMetrics',
     'inventoryStockOutDates','officeInventory','archivedLcboInventory','inventoryDeletedPoSnapshots',
-    'manuallyArchivedPurchaseOrders'];
+    'manuallyArchivedPurchaseOrders','trilliumPickupAppointments'];
   function inventoryState(state){
     return Object.fromEntries(inventoryStateFields.filter(field=>state[field]!==undefined)
       .map(field=>[field,state[field]]));
