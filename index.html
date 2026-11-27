@@ -1396,7 +1396,9 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <button type="button" class="invoice-page-tab" data-inventory-statistics-link onclick="activate('inventory-stock-statistics','heads-page')">Inventory Stock Statistics</button>
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory Stock</button>
  </div>
- <div class="section-head"><div><h2>Inventory in stock LCBO Trillium/office/storage</h2><p class="note">Choose a transportation to open its stock.</p></div></div>
+ <div class="section-head"><div><h2>Inventory in stock LCBO Trillium/office/storage</h2><p class="note">Choose a transportation to open its stock.</p></div>
+  <button type="button" onclick="openTrilliumPickupAppointment()">&#128424; Trillium Pick Up Appointment Print</button>
+ </div>
  <div class="invoice-page-row" id="inventoryTransportationPages"></div>
 </div></section>
 <section id="inventory-in-stock-office" class="panel"><div class="box">
@@ -11706,6 +11708,188 @@ function renderOfficeInventory(statisticsCards){
 // Office/Warehouse page is opened from other script blocks (page tabs, startup render).
 window.renderOfficeInventory=renderOfficeInventory;
 window.renderInventoryTransportationPages=renderInventoryTransportationPages;
+
+/* === TRILLIUM PICK UP APPOINTMENT PRINT === */
+// Lists LCBO Trillium warehouse stock (cases in stock on In Stock Transportation pages).
+// The user marks items, enters cases to pick up, allocated Yes/No, date, time and confirmation number, then prints.
+// The draft is kept in this browser so the form is still filled when reopened.
+const TRILLIUM_PICKUP_KEY='winglobalTrilliumPickupDraft';
+function trilliumPickupDraft(){
+ try{const d=JSON.parse(localStorage.getItem(TRILLIUM_PICKUP_KEY)||'{}');return d&&typeof d==='object'?{date:'',time:'',confirmation:'',notes:'',items:{},...d,items:d.items&&typeof d.items==='object'?d.items:{}}:{date:'',time:'',confirmation:'',notes:'',items:{}};}
+ catch{return {date:'',time:'',confirmation:'',notes:'',items:{}};}
+}
+function trilliumPickupSaveDraft(d){try{localStorage.setItem(TRILLIUM_PICKUP_KEY,JSON.stringify(d));}catch{}}
+function trilliumPickupStockRows(){
+ const rows=[];
+ for(const [transportationId,{shipment,pos}] of inventoryTransportationGroups()){
+   const seen=new Set();
+   for(const po of pos){
+     const poId=String(po.originalPoId||po.id);
+     if(seen.has(poId))continue;seen.add(poId);
+     (po.lines||[]).forEach((line,index)=>{
+       const key=inventoryLineKey(po,line,index);
+       if(state.archivedLcboInventory?.[key])return;
+       const cases=inventoryCasesForLine(po,line,index);
+       if(!(cases>0))return;
+       rows.push({key,transportationId,transportation:shipment.name||transportationId,poNumber:po.number||'',
+         vendor:(po.supplierNames||po.vendors||[]).join(', ')||po.vendor||'',itemNo:line.itemNo||'',
+         product:line.yearProductName||'',bpc:num(line.unitsPerCase),cases});
+     });
+   }
+ }
+ return rows;
+}
+let trilliumPickupRows=[];
+window.openTrilliumPickupAppointment=transportationId=>{
+ let modal=document.getElementById('trilliumPickupModal');
+ if(!modal){
+   modal=document.createElement('div');
+   modal.id='trilliumPickupModal';modal.className='modal hidden';modal.style.zIndex='1300';
+   modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','trilliumPickupTitle');
+   modal.innerHTML=`<div class="modal-card" style="max-width:1250px">
+    <div class="modal-head"><div><h2 id="trilliumPickupTitle" style="margin:0">Trillium Pick Up Appointment</h2>
+     <p>Inventory in stock at LCBO Trillium warehouse. Mark the items to pick up, enter the cases, then Print.</p></div>
+     <button type="button" class="icon" aria-label="Close" onclick="closeTrilliumPickupAppointment()">×</button></div>
+    <div class="form-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:12px">
+     <label>Pick up date <input type="date" data-tp-field="date"></label>
+     <label>Pick up time <input type="time" data-tp-field="time"></label>
+     <label>Confirmation number <input type="text" data-tp-field="confirmation" placeholder="Enter confirmation #"></label>
+     <label>Notes <input type="text" data-tp-field="notes" placeholder="Optional"></label>
+    </div>
+    <div class="toolbar" style="flex-wrap:wrap;align-items:center">
+     <input id="trilliumPickupSearch" type="search" placeholder="Search item, item #, PO #, supplier" style="min-width:240px">
+     <select id="trilliumPickupTransport" style="max-width:260px;flex:0 0 auto" aria-label="Filter by transportation"><option value="">All transportations</option></select>
+     <label style="display:flex;align-items:center;gap:6px;margin:0;white-space:nowrap"><input type="checkbox" id="trilliumPickupMarkedOnly" style="width:auto;margin:0"> Marked items only</label>
+     <button type="button" class="secondary small" onclick="trilliumPickupMarkAll(true)">Mark all shown</button>
+     <button type="button" class="secondary small" onclick="trilliumPickupMarkAll(false)">Unmark all</button>
+    </div>
+    <div class="table-wrap" style="max-height:52vh;overflow:auto"><table style="min-width:1050px"><thead><tr>
+     <th style="width:50px">Mark</th><th>Transportation</th><th>PO #</th><th>LCBO Item #</th><th>Item Description / Supplier</th>
+     <th>Bottles / Case</th><th>Cases in Stock (Trillium)</th><th style="width:130px">Cases to Pick Up</th><th style="width:130px">Allocated Cases</th>
+    </tr></thead><tbody id="trilliumPickupRows"></tbody></table></div>
+    <p id="trilliumPickupSummary" class="note" style="margin:10px 0 0"></p>
+    <div class="modal-actions"><button type="button" class="secondary" onclick="trilliumPickupClear()">Clear form</button><span></span>
+     <button type="button" class="secondary" onclick="closeTrilliumPickupAppointment()">Close</button>
+     <button type="button" onclick="printTrilliumPickupAppointment()">Print</button></div>
+   </div>`;
+   document.body.append(modal);
+   modal.addEventListener('click',e=>{if(e.target===modal)closeTrilliumPickupAppointment();});
+   modal.addEventListener('input',trilliumPickupOnInput);
+   modal.addEventListener('change',trilliumPickupOnInput);
+ }
+ trilliumPickupRows=trilliumPickupStockRows();
+ const draft=trilliumPickupDraft();
+ modal.querySelectorAll('[data-tp-field]').forEach(el=>{el.value=draft[el.dataset.tpField]||'';});
+ const sel=modal.querySelector('#trilliumPickupTransport');
+ const names=[...new Map(trilliumPickupRows.map(r=>[r.transportationId,r.transportation])).entries()];
+ sel.innerHTML='<option value="">All transportations</option>'+names.map(([id,n])=>`<option value="${escapeHtml(id)}">${escapeHtml(n)}</option>`).join('');
+ sel.value=transportationId&&names.some(([id])=>id===String(transportationId))?String(transportationId):'';
+ modal.querySelector('#trilliumPickupSearch').value='';
+ modal.querySelector('#trilliumPickupMarkedOnly').checked=false;
+ modal.classList.remove('hidden');
+ renderTrilliumPickupRows();
+};
+window.closeTrilliumPickupAppointment=()=>document.getElementById('trilliumPickupModal')?.classList.add('hidden');
+function trilliumPickupVisibleRows(){
+ const q=(document.getElementById('trilliumPickupSearch')?.value||'').trim().toLowerCase();
+ const t=document.getElementById('trilliumPickupTransport')?.value||'';
+ const markedOnly=document.getElementById('trilliumPickupMarkedOnly')?.checked;
+ const items=trilliumPickupDraft().items;
+ return trilliumPickupRows.filter(r=>(!t||r.transportationId===t)&&(!markedOnly||items[r.key]?.marked)
+   &&(!q||[r.transportation,r.poNumber,r.itemNo,r.product,r.vendor].join(' ').toLowerCase().includes(q)));
+}
+function renderTrilliumPickupRows(){
+ const body=document.getElementById('trilliumPickupRows');if(!body)return;
+ const items=trilliumPickupDraft().items;
+ const rows=trilliumPickupVisibleRows();
+ body.innerHTML=rows.map(r=>{
+   const it=items[r.key]||{};
+   const k=escapeHtml(r.key);
+   return `<tr${it.marked?' style="background:#eef7ee"':''}>
+    <td><input type="checkbox" data-tp-key="${k}" data-tp-item="marked" ${it.marked?'checked':''} style="width:20px;height:20px" aria-label="Mark ${escapeHtml(r.product)}"></td>
+    <td>${escapeHtml(r.transportation)}</td><td>${escapeHtml(r.poNumber||'—')}</td><td>${escapeHtml(r.itemNo||'—')}</td>
+    <td><b>${escapeHtml(r.product||'—')}</b><br><small>${escapeHtml(r.vendor||'')}</small></td>
+    <td>${r.bpc.toLocaleString()}</td><td><b>${r.cases.toLocaleString()}</b></td>
+    <td><input type="number" min="0" step="1" inputmode="numeric" data-tp-key="${k}" data-tp-item="cases" value="${escapeHtml(String(it.cases??''))}" placeholder="0"${num(it.cases)>r.cases?' style="border-color:#b3261e;background:#fde3e1" title="More than cases in stock"':''}></td>
+    <td><select data-tp-key="${k}" data-tp-item="allocated"><option value="">—</option><option value="Yes" ${it.allocated==='Yes'?'selected':''}>Yes</option><option value="No" ${it.allocated==='No'?'selected':''}>No</option></select></td>
+   </tr>`;
+ }).join('')||`<tr><td colspan="9">${trilliumPickupRows.length?'No items match the search / filters.':'No cases in stock at LCBO Trillium warehouse.'}</td></tr>`;
+ trilliumPickupUpdateSummary();
+}
+function trilliumPickupUpdateSummary(){
+ const el=document.getElementById('trilliumPickupSummary');if(!el)return;
+ const items=trilliumPickupDraft().items;
+ const marked=trilliumPickupRows.filter(r=>items[r.key]?.marked);
+ const cases=marked.reduce((t,r)=>t+num(items[r.key].cases),0);
+ el.textContent=`${trilliumPickupRows.length} item(s) in Trillium stock · ${marked.length} marked · ${cases.toLocaleString()} case(s) to pick up`;
+}
+function trilliumPickupOnInput(e){
+ const el=e.target;
+ if(el.id==='trilliumPickupSearch'||el.id==='trilliumPickupTransport'||el.id==='trilliumPickupMarkedOnly'){if(e.type!=='input'||el.id==='trilliumPickupSearch')renderTrilliumPickupRows();return;}
+ const draft=trilliumPickupDraft();
+ if(el.dataset.tpField){draft[el.dataset.tpField]=el.value;trilliumPickupSaveDraft(draft);return;}
+ const key=el.dataset.tpKey,field=el.dataset.tpItem;if(!key||!field)return;
+ const it=draft.items[key]||(draft.items[key]={});
+ if(field==='marked')it.marked=el.checked;
+ else{
+   it[field]=el.value;
+   // Typing a case quantity marks the item.
+   if(field==='cases'&&el.value!==''&&num(el.value)>0)it.marked=true;
+ }
+ trilliumPickupSaveDraft(draft);
+ if(e.type==='change'){
+   const row=trilliumPickupRows.find(r=>r.key===key);
+   const tr=el.closest('tr');
+   if(tr){tr.style.background=it.marked?'#eef7ee':'';const cb=tr.querySelector('[data-tp-item="marked"]');if(cb)cb.checked=!!it.marked;}
+   if(field==='cases'&&row){const over=num(el.value)>row.cases;el.style.borderColor=over?'#b3261e':'';el.style.background=over?'#fde3e1':'';el.title=over?'More than cases in stock':'';}
+ }
+ trilliumPickupUpdateSummary();
+}
+window.trilliumPickupMarkAll=on=>{
+ const draft=trilliumPickupDraft();
+ for(const r of trilliumPickupVisibleRows()){const it=draft.items[r.key]||(draft.items[r.key]={});it.marked=on;}
+ trilliumPickupSaveDraft(draft);renderTrilliumPickupRows();
+};
+window.trilliumPickupClear=()=>{
+ if(!confirm('Clear the date, time, confirmation number and all marked items?'))return;
+ trilliumPickupSaveDraft({date:'',time:'',confirmation:'',notes:'',items:{}});
+ document.querySelectorAll('#trilliumPickupModal [data-tp-field]').forEach(el=>el.value='');
+ renderTrilliumPickupRows();
+};
+window.printTrilliumPickupAppointment=()=>{
+ const draft=trilliumPickupDraft();
+ const marked=trilliumPickupRows.filter(r=>draft.items[r.key]?.marked);
+ if(!marked.length){alert('Mark at least one item to print.');return;}
+ const over=marked.filter(r=>num(draft.items[r.key].cases)>r.cases);
+ if(over.length&&!confirm(over.length+' item(s) have more cases to pick up than cases in stock. Print anyway?'))return;
+ const noQty=marked.filter(r=>!(num(draft.items[r.key].cases)>0));
+ if(noQty.length&&!confirm(noQty.length+' marked item(s) have no case quantity. Print anyway?'))return;
+ const fmtDate=d=>{if(!d)return '';const x=new Date(d+'T12:00:00');return isNaN(x)?d:x.toLocaleDateString('en-CA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});};
+ const fmtTime=t=>{if(!t)return '';const [h,m]=t.split(':').map(Number);if(isNaN(h))return t;return ((h%12)||12)+':'+String(m||0).padStart(2,'0')+' '+(h<12?'AM':'PM');};
+ const totalCases=marked.reduce((t,r)=>t+num(draft.items[r.key].cases),0);
+ const totalBottles=marked.reduce((t,r)=>t+num(draft.items[r.key].cases)*r.bpc,0);
+ const ed='contenteditable="true"';
+ const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Trillium Pick Up Appointment${draft.confirmation?' - '+escapeHtml(draft.confirmation):''}</title>
+ <style>body{font-family:Arial,Helvetica,sans-serif;color:#17202a;margin:28px}h1{margin:0 0 4px;font-size:22px;color:#0b1f3a}.sub{color:#607080;font-size:13px;margin-bottom:18px}
+ .info{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}.info div{border:1px solid #bdc9d6;border-radius:6px;padding:8px 10px}.info span{display:block;font-size:11px;color:#607080;font-weight:700;text-transform:uppercase}.info b{display:block;font-size:16px;min-height:20px;margin-top:4px}
+ table{border-collapse:collapse;width:100%}th,td{border:1px solid #bdc9d6;padding:7px 8px;font-size:12px;text-align:left;vertical-align:top}th{background:#eef3f8}td.n{text-align:right}tfoot td{font-weight:700;background:#f4f7fb}
+ [contenteditable]:hover{outline:1px dashed #2f80ed}.notes{margin-top:14px;font-size:13px}.sign{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px;font-size:12px}.sign div{border-top:1px solid #17202a;padding-top:5px}
+ .print-actions{margin-bottom:16px}.print-actions button{background:#2f80ed;color:#fff;border:0;padding:9px 16px;border-radius:6px;font-weight:700;cursor:pointer}.print-actions small{color:#607080;margin-left:10px}
+ @media print{.print-actions{display:none}body{margin:12mm}[contenteditable]:hover{outline:none}}</style></head><body>
+ <div class="print-actions"><button onclick="window.print()">Print</button><small>You can still click any text below to edit it before printing.</small></div>
+ <h1>Trillium Pick Up Appointment</h1><div class="sub">LCBO Trillium warehouse · Printed ${escapeHtml(new Date().toLocaleString('en-CA'))}</div>
+ <div class="info"><div><span>Pick up date</span><b ${ed}>${escapeHtml(fmtDate(draft.date))}</b></div><div><span>Pick up time</span><b ${ed}>${escapeHtml(fmtTime(draft.time))}</b></div><div><span>Confirmation number</span><b ${ed}>${escapeHtml(draft.confirmation||'')}</b></div></div>
+ <table><thead><tr><th>#</th><th>Transportation</th><th>PO #</th><th>LCBO Item #</th><th>Item Description</th><th>Supplier</th><th>Bottles / Case</th><th>Cases in Stock</th><th>Cases to Pick Up</th><th>Bottles to Pick Up</th><th>Allocated Cases</th></tr></thead>
+ <tbody>${marked.map((r,i)=>{const it=draft.items[r.key];const c=num(it.cases);return `<tr><td>${i+1}</td><td>${escapeHtml(r.transportation)}</td><td>${escapeHtml(r.poNumber)}</td><td>${escapeHtml(r.itemNo)}</td><td><b>${escapeHtml(r.product)}</b></td><td>${escapeHtml(r.vendor)}</td><td class="n">${r.bpc.toLocaleString()}</td><td class="n">${r.cases.toLocaleString()}</td><td class="n" ${ed}><b>${c?c.toLocaleString():''}</b></td><td class="n">${c?(c*r.bpc).toLocaleString():''}</td><td ${ed}>${escapeHtml(it.allocated||'')}</td></tr>`;}).join('')}</tbody>
+ <tfoot><tr><td colspan="8">Total — ${marked.length} item(s)</td><td class="n">${totalCases.toLocaleString()}</td><td class="n">${totalBottles.toLocaleString()}</td><td></td></tr></tfoot></table>
+ <div class="notes"><b>Notes:</b> <span ${ed}>${escapeHtml(draft.notes||'')}</span></div>
+ <div class="sign"><div>Picked up by (name / signature)</div><div>LCBO Trillium warehouse (name / signature)</div></div>
+ </body></html>`;
+ const w=window.open('','_blank');
+ if(!w){alert('The print window was blocked by the browser. Please allow pop-ups and try again.');return;}
+ w.document.open();w.document.write(html);w.document.close();w.focus();
+ setTimeout(()=>{try{w.print()}catch(e){}},300);
+};
 window.renderHeadInventory=()=>{
  if(document.getElementById('inventory-stock-statistics')?.classList.contains('active'))window.renderInventoryStockStatistics();
  renderTransportationInventory();
@@ -11756,7 +11940,7 @@ function renderTransportationInventory(statisticsCards){
    const actions=document.getElementById('inventoryTransportationHeaderActions');
    if(actions){
      const idArg=selected?inventoryActionArg(String(selectedInventoryTransportationId)):'';
-     actions.innerHTML=selected?`<button type="button" class="secondary small" onclick="archiveInventoryTransportation('${idArg}')">Move to Archived Inventory Stock</button><button type="button" class="danger small" onclick="deleteInventoryTransportation('${idArg}')">Delete</button>`:'';
+     actions.innerHTML=selected?`<button type="button" class="small" onclick="openTrilliumPickupAppointment(decodeURIComponent('${idArg}'))">&#128424; Trillium Pick Up Appointment Print</button><button type="button" class="secondary small" onclick="archiveInventoryTransportation('${idArg}')">Move to Archived Inventory Stock</button><button type="button" class="danger small" onclick="deleteInventoryTransportation('${idArg}')">Delete</button>`:'';
    }
    const head=heading.closest('.section-head');
    if(head){
@@ -14279,6 +14463,7 @@ const normalSubPageNamesObserver=new MutationObserver(()=>{
 if(document.body)normalSubPageNamesObserver.observe(document.body,{childList:true,subtree:true});
 setTimeout(applyNormalSubPageNames,0);
 /* === END NORMAL CAPITALIZATION FOR ALL SUB-PAGE NAMES === */
+
 
 </script>
 
