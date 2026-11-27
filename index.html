@@ -1381,7 +1381,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   </div>
 </div></div>
 <section id="inventory-stock" class="panel"><div class="box">
- <div class="section-head"><div><h2>Inventory Stock</h2><p class="note">Select an inventory page below.</p></div></div>
+ <div class="section-head"><div><h2>Inventory Stock</h2><p class="note">Select an inventory page below.</p></div><button type="button" style="background:#2e7d32" onclick="openTrilliumPickupAppointment()">&#128424; Trillium Pick Up Appointment Print</button></div>
  <div class="invoice-page-row">
   <button type="button" class="invoice-page-tab" onclick="activate('total-inventory','heads-page')">Inventory in stock LCBO Trillium/office/storage</button>
   <button type="button" class="invoice-page-tab" data-office-inventory-link onclick="activate('inventory-in-stock-office','heads-page')">Inventory IN STOCK Office/Warehouse</button>
@@ -1397,7 +1397,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory Stock</button>
  </div>
  <div class="section-head"><div><h2>Inventory in stock LCBO Trillium/office/storage</h2><p class="note">Choose a transportation to open its stock.</p></div>
-  <button type="button" onclick="openTrilliumPickupAppointment()">&#128424; Trillium Pick Up Appointment Print</button>
+  <button type="button" style="background:#2e7d32" onclick="openTrilliumPickupAppointment()">&#128424; Trillium Pick Up Appointment Print</button>
  </div>
  <div class="invoice-page-row" id="inventoryTransportationPages"></div>
 </div></section>
@@ -1409,7 +1409,8 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory Stock</button>
  </div>
  <div class="section-head"><div><h2>Inventory IN STOCK Office/Warehouse</h2></div>
-  <button type="button" id="officeInventoryAddButton" onclick="openOfficeInventoryAdd()">+ Add Inventory</button>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" style="background:#2e7d32" onclick="openTrilliumPickupAppointment()">&#128424; Trillium Pick Up Appointment Print</button>
+  <button type="button" id="officeInventoryAddButton" onclick="openOfficeInventoryAdd()">+ Add Inventory</button></div>
  </div>
  <div id="officeInventoryAddModal" class="modal hidden" style="z-index:1200" role="dialog" aria-modal="true" aria-labelledby="officeInventoryAddTitle">
   <form id="officeInventoryAddForm" class="modal-card" style="max-width:620px" onsubmit="addOfficeInventory(event)">
@@ -1451,7 +1452,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
  <div class="table-wrap"><table><thead><tr>
   <th>Item Description / Item # / PO # / Supplier</th><th>Cases in Stock / Bottles per Case</th>
   <th>Prime Cost per Bottle (TAX/HST incl.)</th><th>Item total prime cost (TAX/HST incl.)<br><small>(what was purchased)</small></th><th>Final Retail Price per Bottle (CAD, TAX/HST incl.)</th><th>Item total retail value</th>
-  <th>Sold to</th><th>Revenue (HST incl.) /<br>Profit (HST incl.)</th><th>Sold out on</th><th>ACTIONS</th>
+  <th>Sold to / through</th><th>Revenue (HST incl.) /<br>Profit (HST incl.)</th><th>Sold out on</th><th>ACTIONS</th>
  </tr></thead><tbody id="officeInventoryRows"></tbody></table></div>
 </div></section>
 <section id="inventory-stock-statistics" class="panel"><div class="box">
@@ -1461,7 +1462,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <button type="button" class="invoice-page-tab active" aria-current="page">Inventory Stock Statistics</button>
   <button type="button" class="invoice-page-tab" onclick="activate('inventory-archived','heads-page')">Archived Inventory Stock</button>
  </div>
- <h2>Inventory Stock Statistics</h2>
+ <div class="section-head"><h2>Inventory Stock Statistics</h2><button type="button" style="background:#2e7d32" onclick="openTrilliumPickupAppointment()">&#128424; Trillium Pick Up Appointment Print</button></div>
  <div class="cards" id="combinedInventoryStatistics"></div>
  <h3>All In Stock Transportations</h3>
  <div class="cards" id="transportationInventoryStatistics"></div>
@@ -1475,7 +1476,7 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <button type="button" class="invoice-page-tab" data-inventory-statistics-link onclick="activate('inventory-stock-statistics','heads-page')">Inventory Stock Statistics</button>
   <button type="button" class="invoice-page-tab active" aria-current="page" onclick="activate('inventory-archived','heads-page')">Archived Inventory Stock</button>
  </div>
-<div class="section-head"><div><h2>Archived Inventory Stock</h2><p class="note">Archived LCBO Trillium and office/warehouse inventory. Restore a record to return it to its original inventory page.</p></div></div>
+<div class="section-head"><div><h2>Archived Inventory Stock</h2><p class="note">Archived LCBO Trillium and office/warehouse inventory. Restore a record to return it to its original inventory page.</p></div><button type="button" style="background:#2e7d32" onclick="openTrilliumPickupAppointment()">&#128424; Trillium Pick Up Appointment Print</button></div>
 <div class="toolbar"><input id="archivedInventorySearch" type="search" placeholder="Search location, PO, vendor or product" oninput="renderArchivedInventory()"></div>
 <div class="table-wrap"><table><thead><tr><th>Location</th><th>PO #</th><th>Vendor/Producer</th><th>Item #</th><th>Product</th><th>Cases</th><th>Bottles / Case</th><th>Total Bottles</th><th>Archived Date</th><th>Actions</th></tr></thead><tbody id="archivedInventoryRows"></tbody></table></div>
 </div></section>
@@ -9998,9 +9999,9 @@ function officeCasesBottlesText(cases,bpc){
 }
 // Office/Warehouse "Sold to" channels. Restaurant/Hotels take Licensed stock; Online Store and In Store take Non-Licensed stock.
 function officeSaleChannels(){return [
-  {id:'restaurant',label:'Restaurant/Hotels',licensed:true},
-  {id:'online',label:'Online Store',licensed:false},
-  {id:'inStore',label:'In Store',licensed:false}
+  {id:'restaurant',label:'Restaurant/Hotels',licensed:true,sold:'Sold to'},
+  {id:'online',label:'Online Store',licensed:false,sold:'Sold through'},
+  {id:'inStore',label:'In Store',licensed:false,sold:'Sold through'}
 ];}
 // Which stock group (Non-Licensed / Licensed) the cases sold to a channel actually came from.
 // Older sales without this record count in the channel's own group.
@@ -10033,7 +10034,7 @@ function askOfficeCasesAndBottles({title,note,bpc,channels,sellingPrice}){
   dialog.innerHTML=`<form method="dialog" style="min-width:300px">
     <h3 style="margin-top:0">${escapeHtml(title)}</h3>
     ${note?`<p style="margin:0 0 10px"><small>${escapeHtml(note)}</small></p>`:''}
-    ${channels?`<label style="display:block;margin-bottom:10px">Sold to
+    ${channels?`<label style="display:block;margin-bottom:10px">Sold to / through
       <select name="channel" style="display:block;width:100%">${channels.map(c=>`<option value="${c.id}">${escapeHtml(c.label)}</option>`).join('')}</select></label>`:''}
     ${sellingPrice!==undefined?`<label style="display:block;margin-bottom:12px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:#f8fafc">Selling price per bottle (TAX/HST incl.)
       <span style="display:flex;align-items:center;gap:5px;margin-top:5px">$<input name="price" type="number" min="0" step="0.01" inputmode="decimal" value="${sellingPrice===null?'':sellingPrice}" placeholder="Enter price" style="width:100%"></span>
@@ -10095,7 +10096,7 @@ window.sellOfficeInventoryToChannel=async(encodedKey,channelId)=>{
   if(available<=0){alert('No stock is available for this item.');return;}
   const retail=officeInventoryPricing(records[0]).finalRetailBottle;
   const sellingPrice=retail===''||retail==null||!Number.isFinite(Number(retail))?null:Number(retail);
-  const answer=await askOfficeCasesAndBottles({title:'Sold to '+channel.label,
+  const answer=await askOfficeCasesAndBottles({title:(channel.sold||'Sold to')+' '+channel.label,
     note:'Available: '+officeCasesBottlesText(available,bpc),bpc,sellingPrice});
   if(!answer)return;
   records=officeInventoryRecords(key);
@@ -10144,7 +10145,7 @@ window.returnOfficeChannelSale=async(encodedKey)=>{
   const channel=officeSaleChannels().find(c=>c.id===answer.channel);if(!channel)return;
   const sold=officeChannelSoldCases(metrics,channel.id);
   const qty=officeRoundCases(bpc>0?(answer.cases*bpc+answer.bottles)/bpc:answer.cases);
-  if(qty>sold+1e-6){alert('The return cannot exceed '+officeCasesBottlesText(sold,bpc)+' sold to '+channel.label+'.');return;}
+  if(qty>sold+1e-6){alert('The return cannot exceed '+officeCasesBottlesText(sold,bpc)+' '+(channel.sold||'Sold to').toLowerCase()+' '+channel.label+'.');return;}
   // Put the cases back into the group they were taken from.
   const split=officeChannelStockSplit(metrics,channel);
   let backL,backNl;
@@ -11571,7 +11572,7 @@ function renderOfficeInventory(statisticsCards){
     const soldTo=officeSaleChannels().map(c=>{
       const stock=cases;
       return `<div style="min-width:190px;margin-bottom:10px">${escapeHtml(c.label)}<br><b>${officeCasesBottlesText(officeChannelSoldCases(sales,c.id),bpc)}</b> sold<br>${num(sales.officeChannelRevenue?.[c.id]?.amount)>0?`<small style="color:#94a3b8">Sold for ${inventoryPriceMoney(sales.officeChannelRevenue[c.id].amount)}</small><br>`:''}
-        <button type="button" class="secondary small" onclick="sellOfficeInventoryToChannel('${keyArg}','${c.id}')" ${stock>0?'':'disabled'}>Sold to ${escapeHtml(c.label)}</button></div>`;
+        <button type="button" class="secondary small" onclick="sellOfficeInventoryToChannel('${keyArg}','${c.id}')" ${stock>0?'':'disabled'}>${escapeHtml(c.sold||'Sold to')} ${escapeHtml(c.label)}</button></div>`;
     }).join('');
     const returnButton=`<button type="button" class="secondary small" onclick="returnOfficeChannelSale('${keyArg}')" ${anySold?'':'disabled'}>Return</button>`;
     const groupName=officeGroupName(key,record),[groupBg,groupLine]=officeGroupColor(groupName);
@@ -11696,7 +11697,7 @@ function renderOfficeInventory(statisticsCards){
     ${true?`<div class="card"><span>Total Item Retail Value (TAX/HST incl.)</span><strong>${inventoryPriceMoney(retailTotal.cents/100)}</strong>
       <span style="margin-top:8px">Total Prime Cost Purchased (TAX/HST incl.)</span><strong>${inventoryPriceMoney(purchasedTotal.amount)}</strong>
       ${purchasedTotal.missing?`<small>${purchasedTotal.missing} item(s) without a proforma net price not counted</small>`:''}</div>`:''}
-    ${officeSaleChannels().map((c,i)=>`<div class="card${i===0?' kpi-new-row':''}"><span>Sold to ${escapeHtml(c.label)}</span><strong>${officeRoundCases(channelTotals[c.id].cases).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong><small>${channelTotals[c.id].bottles.toLocaleString()} bottles</small>
+    ${officeSaleChannels().map((c,i)=>`<div class="card${i===0?' kpi-new-row':''}"><span>${escapeHtml(c.sold||'Sold to')} ${escapeHtml(c.label)}</span><strong>${officeRoundCases(channelTotals[c.id].cases).toLocaleString(undefined,{maximumFractionDigits:2})} cases</strong><small>${channelTotals[c.id].bottles.toLocaleString()} bottles</small>
       ${true?`<span style="margin-top:8px">Revenue (HST incl.) / Profit (HST incl.)</span>
       <strong style="font-size:18px">${inventoryPriceMoney(channelMade[c.id].revenue)} / ${inventoryPriceMoney(channelMade[c.id].profit)}</strong>
       ${channelMade[c.id].missing?'<small>Some sales missing a price or prime cost — not counted</small>':''}`:''}</div>`).join('')}`;
@@ -11861,34 +11862,60 @@ window.printTrilliumPickupAppointment=()=>{
  const marked=trilliumPickupRows.filter(r=>draft.items[r.key]?.marked);
  if(!marked.length){alert('Mark at least one item to print.');return;}
  const over=marked.filter(r=>num(draft.items[r.key].cases)>r.cases);
- if(over.length&&!confirm(over.length+' item(s) have more cases to pick up than cases in stock. Print anyway?'))return;
+ if(over.length&&!confirm(over.length+' item(s) have more cases to pick up than cases in stock. Continue?'))return;
  const noQty=marked.filter(r=>!(num(draft.items[r.key].cases)>0));
- if(noQty.length&&!confirm(noQty.length+' marked item(s) have no case quantity. Print anyway?'))return;
+ if(noQty.length&&!confirm(noQty.length+' marked item(s) have no case quantity. Continue?'))return;
  const fmtDate=d=>{if(!d)return '';const x=new Date(d+'T12:00:00');return isNaN(x)?d:x.toLocaleDateString('en-CA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});};
  const fmtTime=t=>{if(!t)return '';const [h,m]=t.split(':').map(Number);if(isNaN(h))return t;return ((h%12)||12)+':'+String(m||0).padStart(2,'0')+' '+(h<12?'AM':'PM');};
  const totalCases=marked.reduce((t,r)=>t+num(draft.items[r.key].cases),0);
  const totalBottles=marked.reduce((t,r)=>t+num(draft.items[r.key].cases)*r.bpc,0);
  const ed='contenteditable="true"';
- const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Trillium Pick Up Appointment${draft.confirmation?' - '+escapeHtml(draft.confirmation):''}</title>
- <style>body{font-family:Arial,Helvetica,sans-serif;color:#17202a;margin:28px}h1{margin:0 0 4px;font-size:22px;color:#0b1f3a}.sub{color:#607080;font-size:13px;margin-bottom:18px}
- .info{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}.info div{border:1px solid #bdc9d6;border-radius:6px;padding:8px 10px}.info span{display:block;font-size:11px;color:#607080;font-weight:700;text-transform:uppercase}.info b{display:block;font-size:16px;min-height:20px;margin-top:4px}
- table{border-collapse:collapse;width:100%}th,td{border:1px solid #bdc9d6;padding:7px 8px;font-size:12px;text-align:left;vertical-align:top}th{background:#eef3f8}td.n{text-align:right}tfoot td{font-weight:700;background:#f4f7fb}
- [contenteditable]:hover{outline:1px dashed #2f80ed}.notes{margin-top:14px;font-size:13px}.sign{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px;font-size:12px}.sign div{border-top:1px solid #17202a;padding-top:5px}
- .print-actions{margin-bottom:16px}.print-actions button{background:#2f80ed;color:#fff;border:0;padding:9px 16px;border-radius:6px;font-weight:700;cursor:pointer}.print-actions small{color:#607080;margin-left:10px}
- @media print{.print-actions{display:none}body{margin:12mm}[contenteditable]:hover{outline:none}}</style></head><body>
- <div class="print-actions"><button onclick="window.print()">Print</button><small>You can still click any text below to edit it before printing.</small></div>
- <h1>Trillium Pick Up Appointment</h1><div class="sub">LCBO Trillium warehouse · Printed ${escapeHtml(new Date().toLocaleString('en-CA'))}</div>
+ const sheet=`<h1>Trillium Pick Up Appointment</h1><div class="sub">LCBO Trillium warehouse · Printed ${escapeHtml(new Date().toLocaleString('en-CA'))}</div>
  <div class="info"><div><span>Pick up date</span><b ${ed}>${escapeHtml(fmtDate(draft.date))}</b></div><div><span>Pick up time</span><b ${ed}>${escapeHtml(fmtTime(draft.time))}</b></div><div><span>Confirmation number</span><b ${ed}>${escapeHtml(draft.confirmation||'')}</b></div></div>
  <table><thead><tr><th>#</th><th>Transportation</th><th>PO #</th><th>LCBO Item #</th><th>Item Description</th><th>Supplier</th><th>Bottles / Case</th><th>Cases in Stock</th><th>Cases to Pick Up</th><th>Bottles to Pick Up</th><th>Allocated Cases</th></tr></thead>
  <tbody>${marked.map((r,i)=>{const it=draft.items[r.key];const c=num(it.cases);return `<tr><td>${i+1}</td><td>${escapeHtml(r.transportation)}</td><td>${escapeHtml(r.poNumber)}</td><td>${escapeHtml(r.itemNo)}</td><td><b>${escapeHtml(r.product)}</b></td><td>${escapeHtml(r.vendor)}</td><td class="n">${r.bpc.toLocaleString()}</td><td class="n">${r.cases.toLocaleString()}</td><td class="n" ${ed}><b>${c?c.toLocaleString():''}</b></td><td class="n">${c?(c*r.bpc).toLocaleString():''}</td><td ${ed}>${escapeHtml(it.allocated||'')}</td></tr>`;}).join('')}</tbody>
  <tfoot><tr><td colspan="8">Total — ${marked.length} item(s)</td><td class="n">${totalCases.toLocaleString()}</td><td class="n">${totalBottles.toLocaleString()}</td><td></td></tr></tfoot></table>
  <div class="notes"><b>Notes:</b> <span ${ed}>${escapeHtml(draft.notes||'')}</span></div>
- <div class="sign"><div>Picked up by (name / signature)</div><div>LCBO Trillium warehouse (name / signature)</div></div>
- </body></html>`;
- const w=window.open('','_blank');
- if(!w){alert('The print window was blocked by the browser. Please allow pop-ups and try again.');return;}
- w.document.open();w.document.write(html);w.document.close();w.focus();
- setTimeout(()=>{try{w.print()}catch(e){}},300);
+ <div class="sign"><div>Picked up by (name / signature)</div><div>LCBO Trillium warehouse (name / signature)</div></div>`;
+ const css=`.tp-sheet{font-family:Arial,Helvetica,sans-serif;color:#17202a}.tp-sheet h1{margin:0 0 4px;font-size:22px;color:#0b1f3a}.tp-sheet .sub{color:#607080;font-size:13px;margin-bottom:18px}
+ .tp-sheet .info{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}.tp-sheet .info div{border:1px solid #bdc9d6;border-radius:6px;padding:8px 10px}.tp-sheet .info span{display:block;font-size:11px;color:#607080;font-weight:700;text-transform:uppercase}.tp-sheet .info b{display:block;font-size:16px;min-height:20px;margin-top:4px}
+ .tp-sheet table{border-collapse:collapse;width:100%;min-width:0}.tp-sheet th,.tp-sheet td{border:1px solid #bdc9d6;padding:6px 7px;font-size:12px;text-align:left;vertical-align:top;position:static}.tp-sheet th{background:#eef3f8}.tp-sheet td.n{text-align:right}.tp-sheet tfoot td{font-weight:700;background:#f4f7fb}
+ .tp-sheet .notes{margin-top:14px;font-size:13px}.tp-sheet .sign{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px;font-size:12px}.tp-sheet .sign div{border-top:1px solid #17202a;padding-top:5px}`;
+ // Preview inside the program (no pop-up window), so the program never gets stuck behind a print window.
+ let ov=document.getElementById('trilliumPickupPreview');
+ if(!ov){
+   ov=document.createElement('div');ov.id='trilliumPickupPreview';ov.className='modal hidden';ov.style.zIndex='3000';
+   ov.innerHTML=`<style>${css} .tp-sheet [contenteditable]:hover,.tp-sheet [contenteditable]:focus{outline:1px dashed #2f80ed}</style>
+   <div class="modal-card" style="max-width:1250px">
+    <div class="modal-actions" style="margin:0 0 14px"><button type="button" class="secondary" onclick="closeTrilliumPickupPreview()">&larr; Back</button><span class="note">Click any text on the page to edit it before printing.</span><button type="button" onclick="trilliumPickupDoPrint()">&#128424; Print</button></div>
+    <div class="tp-sheet" id="trilliumPickupSheet"></div>
+   </div>`;
+   document.body.append(ov);
+ }
+ ov._css=css;
+ ov.querySelector('#trilliumPickupSheet').innerHTML=sheet;
+ ov.classList.remove('hidden');ov.scrollTop=0;
+};
+window.closeTrilliumPickupPreview=()=>document.getElementById('trilliumPickupPreview')?.classList.add('hidden');
+document.addEventListener('keydown',e=>{
+ if(e.key!=='Escape')return;
+ const pv=document.getElementById('trilliumPickupPreview');
+ if(pv&&!pv.classList.contains('hidden')){closeTrilliumPickupPreview();return;}
+ const m=document.getElementById('trilliumPickupModal');
+ if(m&&!m.classList.contains('hidden'))closeTrilliumPickupAppointment();
+});
+// Prints only the sheet through a hidden frame on this page, then removes the frame.
+window.trilliumPickupDoPrint=()=>{
+ const ov=document.getElementById('trilliumPickupPreview');const sheet=document.getElementById('trilliumPickupSheet');if(!ov||!sheet)return;
+ document.getElementById('trilliumPickupFrame')?.remove();
+ const frame=document.createElement('iframe');frame.id='trilliumPickupFrame';
+ frame.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+ document.body.append(frame);
+ const doc=frame.contentDocument;
+ doc.open();doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Trillium Pick Up Appointment</title><style>@page{size:landscape;margin:10mm}body{margin:0}${ov._css}</style></head><body><div class="tp-sheet">${sheet.innerHTML.replace(/ contenteditable="true"/g,'')}</div></body></html>`);doc.close();
+ const cleanup=()=>setTimeout(()=>frame.remove(),500);
+ frame.contentWindow.addEventListener('afterprint',cleanup);
+ setTimeout(()=>{try{frame.contentWindow.focus();frame.contentWindow.print();}catch(e){alert('Printing failed. Please try again.');}setTimeout(()=>frame.isConnected&&frame.remove(),60000);},250);
 };
 window.renderHeadInventory=()=>{
  if(document.getElementById('inventory-stock-statistics')?.classList.contains('active'))window.renderInventoryStockStatistics();
@@ -11940,7 +11967,7 @@ function renderTransportationInventory(statisticsCards){
    const actions=document.getElementById('inventoryTransportationHeaderActions');
    if(actions){
      const idArg=selected?inventoryActionArg(String(selectedInventoryTransportationId)):'';
-     actions.innerHTML=selected?`<button type="button" class="small" onclick="openTrilliumPickupAppointment(decodeURIComponent('${idArg}'))">&#128424; Trillium Pick Up Appointment Print</button><button type="button" class="secondary small" onclick="archiveInventoryTransportation('${idArg}')">Move to Archived Inventory Stock</button><button type="button" class="danger small" onclick="deleteInventoryTransportation('${idArg}')">Delete</button>`:'';
+     actions.innerHTML=selected?`<button type="button" class="small" style="background:#2e7d32" onclick="openTrilliumPickupAppointment(decodeURIComponent('${idArg}'))">&#128424; Trillium Pick Up Appointment Print</button><button type="button" class="secondary small" onclick="archiveInventoryTransportation('${idArg}')">Move to Archived Inventory Stock</button><button type="button" class="danger small" onclick="deleteInventoryTransportation('${idArg}')">Delete</button>`:'';
    }
    const head=heading.closest('.section-head');
    if(head){
