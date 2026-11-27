@@ -1439,7 +1439,8 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   </form>
  </div>
  <div class="toolbar inventory-filter-bar" style="flex-wrap:wrap">
-  <input id="officeInventorySearch" type="search" placeholder="Search item, item #, PO #, supplier or transportation" oninput="renderOfficeInventory()" style="min-width:260px">
+  <input id="officeInventorySearch" type="search" placeholder="Search item, item #, PO #, supplier or transportation" oninput="renderOfficeInventory()" onkeydown="if(event.key==='Enter'){event.preventDefault();renderOfficeInventory()}" style="min-width:260px">
+  <button type="button" class="small" style="flex:0 0 auto" onclick="renderOfficeInventory()">&#128269; Search</button>
   <select id="officeFilterTransportation" style="max-width:220px;flex:0 0 auto" onchange="renderOfficeInventory()" aria-label="Filter by transportation"><option value="">All transportations</option></select>
   <select id="officeFilterSupplier" style="max-width:220px;flex:0 0 auto" onchange="renderOfficeInventory()" aria-label="Filter by supplier"><option value="">All suppliers</option></select>
   <select id="officeFilterPo" style="max-width:220px;flex:0 0 auto" onchange="renderOfficeInventory()" aria-label="Filter by PO"><option value="">All PO #</option></select>
@@ -1495,7 +1496,8 @@ body #profitProjectsApp .pp-currency-rates .pp-rate input{width:100%;min-width:0
   <div id="inventoryTransportationHeaderActions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div>
  </div>
  <div class="toolbar">
-  <input id="headInventorySearch" type="search" placeholder="Search PO, program, vendor/producer, item, product or shipment" oninput="renderHeadInventory()">
+  <input id="headInventorySearch" type="search" placeholder="Search PO, program, vendor/producer, item, product or shipment" oninput="renderHeadInventory()" onkeydown="if(event.key==='Enter'){event.preventDefault();renderHeadInventory()}">
+  <button type="button" class="small" style="flex:0 0 auto" onclick="renderHeadInventory()">&#128269; Search</button>
   <select id="headFilterVendor" style="max-width:220px;flex:0 0 auto" onchange="renderHeadInventory()" aria-label="Filter by vendor/producer"><option value="">All vendors/producers</option></select>
   <select id="headFilterPo" style="max-width:220px;flex:0 0 auto" onchange="renderHeadInventory()" aria-label="Filter by PO"><option value="">All PO #</option></select>
   <select id="headFilterProgram" style="max-width:220px;flex:0 0 auto" onchange="renderHeadInventory()" aria-label="Filter by program"><option value="">All programs</option></select>
@@ -5913,13 +5915,19 @@ function rsoInvoiceStatusClass(v){
   const s=normalizeRsoInvoiceStatus(v);
   return s==='Fully Paid'?'status-paid':s==='Upcoming Payment in Next 14 Days'?'status-upcoming':'status-notpaid';
 }
+function rsoInvoiceAutoStockOutHtml(inv,s){
+  const a=inv.autoStockOut;if(!a?.date||s!=='Upcoming Payment in Next 14 Days')return '';
+  const d=new Date(a.date+'T12:00:00Z');const label=Number.isNaN(d.getTime())?a.date:d.toLocaleDateString('en-GB',{timeZone:'UTC',day:'numeric',month:'long',year:'numeric'});
+  return `<br><small style="color:#2e7d32">${a.createdInvoice?'Invoice created and status changed':'Status changed'} automatically on <b>${escapeHtml(label)}</b> when inventory reached 0</small>`;
+}
 function rsoInvoiceStatusSelect(inv){
   const s=normalizeRsoInvoiceStatus(inv.paidStatus||inv.invoicePaidStatus);
-  return `<select class="rso-status-select ${rsoInvoiceStatusClass(s)}" aria-label="LCBO payment status" onchange="updateRsoInvoiceStatusFromRow('${inv.id}',this.value);this.className='rso-status-select '+rsoInvoiceStatusClass(this.value)"><option value="Not Paid" ${s==='Not Paid'?'selected':''}>Not Paid</option><option value="Upcoming Payment in Next 14 Days" ${s==='Upcoming Payment in Next 14 Days'?'selected':''}>Upcoming Payment in Next 14 Days</option><option value="Fully Paid" ${s==='Fully Paid'?'selected':''}>Fully Paid</option></select>${s==='Upcoming Payment in Next 14 Days'?invoiceApproxPaymentHtml(inv.paymentStatusApproxDate||inv.upcomingPaymentCalculatedDate):''}`;
+  return `<select class="rso-status-select ${rsoInvoiceStatusClass(s)}" aria-label="LCBO payment status" onchange="updateRsoInvoiceStatusFromRow('${inv.id}',this.value);this.className='rso-status-select '+rsoInvoiceStatusClass(this.value)"><option value="Not Paid" ${s==='Not Paid'?'selected':''}>Not Paid</option><option value="Upcoming Payment in Next 14 Days" ${s==='Upcoming Payment in Next 14 Days'?'selected':''}>Upcoming Payment in Next 14 Days</option><option value="Fully Paid" ${s==='Fully Paid'?'selected':''}>Fully Paid</option></select>${s==='Upcoming Payment in Next 14 Days'?invoiceApproxPaymentHtml(inv.paymentStatusApproxDate||inv.upcomingPaymentCalculatedDate):''}${rsoInvoiceAutoStockOutHtml(inv,s)}`;
 }
 function updateRsoInvoiceStatusFromRow(id,status){
   const inv=(state.otherInvoices||[]).find(x=>x.id===id);if(!inv)return;
   stampUpcomingInvoiceDate(inv,normalizeRsoInvoiceStatus(inv.paidStatus||inv.invoicePaidStatus),status,'Upcoming Payment in Next 14 Days',14);
+  if(status!=='Upcoming Payment in Next 14 Days')delete inv.autoStockOut;
   inv.paidStatus=status;
   save();
   try{renderOtherInvoices()}catch(e){}
@@ -9784,6 +9792,15 @@ function renderInventoryTransportationPages(groups=inventoryTransportationGroups
  }
 }
 
+// Inventory search: ignores accents and capitals (rose finds Rosé / ROSÉ) and matches every typed word in any order.
+function inventorySearchText(v){return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+function inventorySearchMatch(text,q){
+  const words=inventorySearchText(q).split(/\s+/).filter(Boolean);
+  if(!words.length)return true;
+  const hay=inventorySearchText(text);
+  return words.every(w=>hay.includes(w));
+}
+window.inventorySearchMatch=inventorySearchMatch;
 function inventoryActionArg(value){
   return encodeURIComponent(value).replace(/'/g,'%27');
 }
@@ -9813,6 +9830,74 @@ function inventoryLinkedRsoInvoices(poId,poNumber){
     return sourceMatch||numberMatch;
   });
 }
+// When an item's cases at LCBO Trillium reach 0 (Purchased, Update, Open / Edit or a sale), its PO's
+// SEAS/REGU/OTHER TO AGENT invoice changes automatically to "Upcoming Payment in Next 14 Days"
+// with the approximate payment date (today + 14 days). If the cases go back above 0, the automatic change is undone.
+function inventoryTorontoToday(){return new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Toronto',dateStyle:'short'}).format(new Date());}
+function inventoryKeyPo(key){
+  const poId=decodeURIComponent(String(key||'').split('::')[0]||'');
+  const po=(state.purchaseOrders||[]).find(p=>String(p.id)===poId)||(state.inventoryDeletedPoSnapshots||[]).find(p=>String(p.originalPoId||p.id)===poId);
+  return {poId,poNumber:po?.number||'',po};
+}
+function inventoryAutoStockOut(key){
+  const {poId,poNumber,po}=inventoryKeyPo(key);
+  const today=inventoryTorontoToday(),due=inventoryDatePlusDays(today,14);
+  if(!state.inventoryStockOutDates||typeof state.inventoryStockOutDates!=='object')state.inventoryStockOutDates={};
+  if(!state.inventoryStockOutDates[key])state.inventoryStockOutDates[key]={stockOutDate:today,paymentDueDate:due,poId,poNumber,updatedAt:new Date().toISOString(),auto:true};
+  let linked=inventoryLinkedRsoInvoices(poId,poNumber);
+  let created=false;
+  if(!linked.length&&po&&typeof ensureReguSeasOtherInvoiceForPo==='function'){
+    try{ensureReguSeasOtherInvoiceForPo(po,receivedRsoShipmentPoIds());}catch(e){console.error(e);}
+    linked=inventoryLinkedRsoInvoices(poId,poNumber);created=linked.length>0;
+  }
+  let changed=0;
+  linked.forEach(inv=>{
+    const current=normalizeRsoInvoiceStatus(inv.paidStatus||inv.invoicePaidStatus);
+    if(current==='Fully Paid')return;
+    const auto=inv.autoStockOut||(inv.autoStockOut={previousStatus:current,keys:[]});
+    if(!auto.keys.includes(key))auto.keys.push(key);
+    if(created)auto.createdInvoice=true;
+    if(current!=='Upcoming Payment in Next 14 Days'){
+      inv.paidStatus='Upcoming Payment in Next 14 Days';
+      inv.paymentStatusApproxDate=due;
+      inv.upcomingPaymentCalculatedDate=due;
+      inv.stockOutDate=today;
+      auto.date=today;
+      changed++;
+    }
+    inv.stockOutTriggered=true;
+  });
+  return {linked:linked.length,changed,created,poNumber,due};
+}
+function inventoryUndoAutoStockOut(key){
+  const so=state.inventoryStockOutDates?.[key];
+  if(!so?.auto)return;
+  delete state.inventoryStockOutDates[key];
+  const {poId,poNumber}=inventoryKeyPo(key);
+  inventoryLinkedRsoInvoices(poId,poNumber).forEach(inv=>{
+    const auto=inv.autoStockOut;if(!auto)return;
+    auto.keys=(auto.keys||[]).filter(k=>k!==key);
+    if(auto.keys.length)return;
+    if(auto.date&&normalizeRsoInvoiceStatus(inv.paidStatus||inv.invoicePaidStatus)==='Upcoming Payment in Next 14 Days'){
+      inv.paidStatus=auto.previousStatus||'Not Paid';
+      delete inv.paymentStatusApproxDate;delete inv.upcomingPaymentCalculatedDate;delete inv.stockOutDate;delete inv.stockOutTriggered;
+    }
+    delete inv.autoStockOut;
+  });
+}
+// Call after the Trillium cases of one item change.
+function inventoryCasesChanged(key,before,after){
+  before=num(before);after=num(after);
+  if(before>0&&after<=0){
+    const r=inventoryAutoStockOut(key);
+    try{renderOtherInvoices()}catch(e){}
+    if(r.changed)setTimeout(()=>alert('Inventory reached 0 cases'+(r.poNumber?' for PO '+r.poNumber:'')+'.\nThe SEAS/REGU/OTHER TO AGENT invoice'+(r.created?' was created automatically and':'')+' is now "Upcoming Payment in Next 14 Days" (approx. '+r.due+').'),0);
+    else if(!r.linked)setTimeout(()=>alert('Inventory reached 0 cases'+(r.poNumber?' for PO '+r.poNumber:'')+', but no SEAS/REGU/OTHER TO AGENT invoice was found for this PO.'),0);
+  }else if(after>0&&before<=0){
+    inventoryUndoAutoStockOut(key);
+    try{renderOtherInvoices()}catch(e){}
+  }
+}
 window.updateInventoryCases=(encodedKey,currentCases)=>{
   const key=decodeURIComponent(String(encodedKey||''));
   const entered=prompt('Update Cases in Stock:',String(currentCases));
@@ -9823,8 +9908,10 @@ window.updateInventoryCases=(encodedKey,currentCases)=>{
     return;
   }
   if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};
+  const casesBefore=num(currentCases);
   state.inventoryCaseOverrides[key]=value;
   if(state.inventorySaleAvailability)state.inventorySaleAvailability[key]=inventoryAvailableForSale(key,value);
+  inventoryCasesChanged(key,casesBefore,value);
   if(value>0&&state.inventoryStockOutDates?.[key])delete state.inventoryStockOutDates[key];
   save();
   renderHeadInventory();
@@ -10228,6 +10315,7 @@ window.moveInventoryBackToTrillium=(encodedKey,trilliumCases)=>{
   state.inventorySaleAvailability??={};
   state.inventoryCaseOverrides[key]=current+qty;
   state.inventorySaleAvailability[key]=available+qty;
+  inventoryCasesChanged(key,current,current+qty);
   save();
   renderHeadInventory();
 };
@@ -10260,6 +10348,7 @@ window.sellInventoryToCustomer=(encodedKey,availableCases,location,licensed)=>{
     state.inventorySaleAvailability[key]=saleAvailable-qty;
     if(!state.inventoryCaseOverrides||typeof state.inventoryCaseOverrides!=='object')state.inventoryCaseOverrides={};
     state.inventoryCaseOverrides[key]=current-qty;
+    inventoryCasesChanged(key,current,current-qty);
   }
   const metrics=(state.inventorySalesMetrics??={})[key]??={};
   const countField=licensed?'licensedCasesSold':'nonLicensedCasesSold';
@@ -10411,6 +10500,7 @@ window.returnOfficeToTransportation=encodedKey=>{
     const before=state.inventoryCaseOverrides[key]!==undefined?num(state.inventoryCaseOverrides[key])
       :(row?inventoryCasesForLine(row.po,row.line,row.index):0);
     state.inventoryCaseOverrides[key]=before+qty;
+    inventoryCasesChanged(key,before,before+qty);
     state.inventorySaleAvailability??={};
     state.inventorySaleAvailability[key]=num(state.inventorySaleAvailability[key])+qty;
     save({inventoryOnly:true});
@@ -10440,6 +10530,7 @@ window.moveInventoryToOffice=async(encodedKey,availableCases,encodedMeta)=>{
   state.inventorySaleAvailability[key]=Math.max(0,saleAvailable-qty);
   state.inventoryCaseOverrides??={};
   state.inventoryCaseOverrides[key]=currentCases-qty;
+  inventoryCasesChanged(key,currentCases,currentCases-qty);
   if(!Array.isArray(state.officeInventory))state.officeInventory=[];
   const existing=state.officeInventory.find(x=>x.inventoryKey===key&&!x.inventoryArchived);
   if(existing){
@@ -10508,6 +10599,7 @@ window.editTransportationInventory=encodedRow=>{
     if(since&&out&&out<since)return fail('Sold out date must be on or after the available for sale date.');
     state.inventoryCaseOverrides??={};
     state.inventoryCaseOverrides[key]=cases;
+    inventoryCasesChanged(key,current,cases);
     state.inventorySaleAvailability??={};
     state.inventorySaleAvailability[key]=Math.min(cases,Math.max(num(state.inventorySaleAvailability[key])+(cases-current),0));
     const metrics=(state.inventorySalesMetrics??={})[key]??={};
@@ -11537,7 +11629,7 @@ function renderOfficeInventory(statisticsCards){
     if(f.stock==='sold'&&!sold)return false;
     if(f.stock==='nosales'&&sold)return false;
     if(f.stock==='noprice'&&!(price===''||price==null))return false;
-    if(f.q&&![record.product,record.itemNo,po,record.vendor,group].join(' ').toLowerCase().includes(f.q))return false;
+    if(f.q&&!inventorySearchMatch([record.product,record.itemNo,po,record.vendor,group,record.poNumber,record.transportationName].join(' '),f.q))return false;
     return true;
   };
   const officeRows=sortedGrouped.map(([key,{record,cases,licensedCases}])=>{
@@ -11722,23 +11814,7 @@ function trilliumPickupDraft(){
  catch{return empty;}
 }
 function trilliumPickupSaveDraft(d){try{localStorage.setItem(TRILLIUM_PICKUP_KEY,JSON.stringify(d));return true;}catch{return false;}}
-// Code 128 barcode as SVG (Code C for even-length numbers, otherwise Code B).
-const TP_CODE128=['212222','222122','222221','121223','121322','131222','122213','122312','132212','221213','221312','231212','112232','122132','122231','113222','123122','123221','223211','221132','221231','213212','223112','312131','311222','321122','321221','312212','322112','322211','212123','212321','232121','111323','131123','131321','112313','132113','132311','211313','231113','231311','112133','112331','132131','113123','113321','133121','313121','211331','231131','213113','213311','213131','311123','311321','331121','312113','312311','332111','314111','221411','431111','111224','111422','121124','121421','141122','141221','112214','112412','122114','122411','142112','142211','241211','221114','413111','241112','134111','111242','121142','121241','114212','124112','124211','411212','421112','421211','212141','214121','412121','111143','111341','131141','114113','114311','411113','411311','113141','114131','311141','411131','211412','211214','211232','2331112'];
-function trilliumBarcodeSvg(text){
- const value=String(text||'').trim().replace(/[^\x20-\x7e]/g,'');
- if(!value)return '';
- let codes;
- if(/^\d+$/.test(value)&&value.length%2===0&&value.length>=4){codes=[105];for(let i=0;i<value.length;i+=2)codes.push(Number(value.slice(i,i+2)));}
- else codes=[104,...[...value].map(ch=>ch.charCodeAt(0)-32)];
- let sum=codes[0];for(let i=1;i<codes.length;i++)sum+=codes[i]*i;
- codes.push(sum%103,106);
- const unit=2,quiet=10;let x=quiet*unit,rects='';
- for(const c of codes){const p=TP_CODE128[c];for(let i=0;i<p.length;i++){const w=Number(p[i])*unit;if(i%2===0)rects+=`<rect x="${x}" y="0" width="${w}" height="70"/>`;x+=w;}}
- const width=x+quiet*unit;
- return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="70" viewBox="0 0 ${width} 70" style="max-width:100%;height:70px;display:block;margin:0 auto" role="img" aria-label="Barcode ${escapeHtml(value)}"><rect width="${width}" height="70" fill="#fff"/><g fill="#000">${rects}</g></svg>`;
-}
-// Each shipment has its own typed pick up barcode and its own wines, each with its own cases and allocated Yes/No.
-// The same wine can be in several shipments (e.g. split cases).
+// Each shipment has its own typed pick up barcode number and its own wines (same wine can be split across shipments).
 function trilliumShipLabel(r){return `${r.product||'—'} · #${r.itemNo||'—'} · PO ${r.poNumber||'—'}`;}
 function trilliumShipTotalsByKey(draft){
  const m=new Map();draft.barcodes.forEach(b=>b.lines.forEach(l=>m.set(l.key,(m.get(l.key)||0)+num(l.cases))));return m;
@@ -11763,10 +11839,7 @@ function renderTrilliumPickupBarcodes(){
    return `<div style="border:1px solid #2e7d32;border-left:6px solid #2e7d32;border-radius:8px;padding:12px;margin-bottom:10px">
    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px"><b>Shipment ${i+1}</b><span class="note" data-tp-ship-total="${i}">${b.lines.length} wine(s) · ${cases.toLocaleString()} case(s)</span>
     <button type="button" class="danger small" onclick="trilliumPickupBarcodeRemove(${i})">Remove shipment</button></div>
-   <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(220px,1fr);gap:12px;align-items:center">
-    <label style="margin:0">Shipment Pick Up Barcode<input type="text" data-tp-barcode="${i}" value="${escapeHtml(b.value||'')}" placeholder="Type the barcode number" autocomplete="off"></label>
-    <div data-tp-barcode-preview="${i}">${trilliumBarcodeSvg(b.value)}</div>
-   </div>
+   <label style="margin:0;display:block;max-width:420px">Shipment Pick Up Barcode<input type="text" data-tp-barcode="${i}" value="${escapeHtml(b.value||'')}" placeholder="Type the barcode number" autocomplete="off"></label>
    <div style="margin-top:10px"><small><b>Wines in this shipment</b></small>
     ${b.lines.length?`<table style="min-width:0;margin-top:6px;border:1px solid var(--line)"><thead><tr><th>Wine</th><th style="width:110px">Cases in Stock</th><th style="width:130px">Cases to Pick Up</th><th style="width:130px">Allocated Cases</th><th style="width:80px"></th></tr></thead><tbody>
      ${b.lines.map((l,j)=>{const r=byKey.get(l.key);const over=r&&(totals.get(l.key)||0)>r.cases;
@@ -11890,7 +11963,7 @@ function trilliumPickupVisibleRows(){
  const markedOnly=document.getElementById('trilliumPickupMarkedOnly')?.checked;
  const items=trilliumPickupDraft().items;
  return trilliumPickupRows.filter(r=>(!t||r.transportationId===t)&&(!markedOnly||items[r.key]?.marked)
-   &&(!q||[r.transportation,r.poNumber,r.itemNo,r.product,r.vendor].join(' ').toLowerCase().includes(q)));
+   &&inventorySearchMatch([r.transportation,r.poNumber,r.itemNo,r.product,r.vendor].join(' '),q));
 }
 function renderTrilliumPickupRows(){
  const body=document.getElementById('trilliumPickupRows');if(!body)return;
@@ -11948,7 +12021,6 @@ function trilliumPickupOnInput(e){
  if(el.dataset.tpBarcode!==undefined){
    const i=Number(el.dataset.tpBarcode);if(!draft.barcodes[i])return;
    draft.barcodes[i].value=el.value;trilliumPickupSaveDraft(draft);
-   const pv=document.querySelector(`[data-tp-barcode-preview="${i}"]`);if(pv)pv.innerHTML=trilliumBarcodeSvg(el.value);
    return;
  }
  const key=el.dataset.tpKey,field=el.dataset.tpItem;if(!key||!field)return;
@@ -12013,7 +12085,7 @@ window.printTrilliumPickupAppointment=()=>{
      return head+`<tbody>${lines.map(({r,cases,allocated},i)=>{const c=num(cases);return `<tr><td>${i+1}</td><td>${escapeHtml(r.poNumber)}</td><td>${escapeHtml(r.itemNo)}</td><td><b>${escapeHtml(r.product)}</b></td><td>${escapeHtml(r.vendor)}</td><td class="n">${r.bpc.toLocaleString()}</td><td class="n">${r.cases.toLocaleString()}</td><td class="n" ${ed}><b>${c?c.toLocaleString():''}</b></td><td class="n">${c?(c*r.bpc).toLocaleString():''}</td><td ${ed}>${escapeHtml(allocated||'')}</td></tr>`;}).join('')}</tbody>
      <tfoot><tr><td colspan="7">${label} — ${lines.length} wine(s)</td><td class="n">${tc.toLocaleString()}</td><td class="n">${tb.toLocaleString()}</td><td></td></tr></tfoot></table>`;};
    if(!ships.length)return table(loose,'Total');
-   return ships.map((x,n)=>`<div class="ship"><div class="ship-head"><div><h2>Shipment ${n+1}</h2><span>Shipment Pick Up Barcode</span><b class="bc-no" ${ed}>${escapeHtml(x.value)}</b></div><div class="bc-img">${trilliumBarcodeSvg(x.value)}</div></div>
+   return ships.map((x,n)=>`<div class="ship"><div class="ship-head"><div><h2>Shipment ${n+1}</h2><span>Shipment Pick Up Barcode</span><b class="bc-no" ${ed}>${escapeHtml(x.value)}</b></div></div>
      ${x.lines.length?table(x.lines,'Shipment '+(n+1)+' total'):'<p class="sub">No wines added to this shipment.</p>'}</div>`).join('')
      +(loose.length?`<div class="ship"><div class="ship-head"><div><h2>Wines without a shipment barcode</h2></div></div>${table(loose,'Total')}</div>`:'')
      +`<p class="grand">All shipments — ${allLines.length} line(s) · ${totalCases.toLocaleString()} case(s) · ${totalBottles.toLocaleString()} bottle(s)</p>`;
@@ -12294,7 +12366,7 @@ function renderTransportationInventory(statisticsCards){
       deletedFromPoPage:!!po.inventoryDeletedFromPoPage
     };
     projectRows.push(row);
-    if((!q||hay.includes(q))&&inventoryHeadRowMatches(row))rows.push(row);
+    if(inventorySearchMatch(hay,q)&&inventoryHeadRowMatches(row))rows.push(row);
    });
   }
  });
