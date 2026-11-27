@@ -11718,7 +11718,7 @@ const TRILLIUM_PICKUP_KEY='winglobalTrilliumPickupDraft';
 function trilliumPickupDraft(){
  const empty={date:'',time:'',confirmation:'',notes:'',items:{},barcodes:[]};
  try{const d=JSON.parse(localStorage.getItem(TRILLIUM_PICKUP_KEY)||'{}');if(!d||typeof d!=='object')return empty;
-   return {...empty,...d,items:d.items&&typeof d.items==='object'?d.items:{},barcodes:Array.isArray(d.barcodes)?d.barcodes.map(b=>({value:String(b?.value||''),items:Array.isArray(b?.items)?b.items:[]})):[]};}
+   return {...empty,...d,items:d.items&&typeof d.items==='object'?d.items:{},barcodes:Array.isArray(d.barcodes)?d.barcodes.map(b=>({value:String(b?.value||''),lines:Array.isArray(b?.lines)?b.lines.filter(l=>l&&l.key):(Array.isArray(b?.items)?b.items.map(k=>({key:k,cases:d.items?.[k]?.cases??'',allocated:d.items?.[k]?.allocated||''})):[])})):[]};}
  catch{return empty;}
 }
 function trilliumPickupSaveDraft(d){try{localStorage.setItem(TRILLIUM_PICKUP_KEY,JSON.stringify(d));return true;}catch{return false;}}
@@ -11737,39 +11737,73 @@ function trilliumBarcodeSvg(text){
  const width=x+quiet*unit;
  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="70" viewBox="0 0 ${width} 70" style="max-width:100%;height:70px;display:block;margin:0 auto" role="img" aria-label="Barcode ${escapeHtml(value)}"><rect width="${width}" height="70" fill="#fff"/><g fill="#000">${rects}</g></svg>`;
 }
-// Each shipment has its own typed pick up barcode and its own items (an item is in one shipment only).
+// Each shipment has its own typed pick up barcode and its own wines, each with its own cases and allocated Yes/No.
+// The same wine can be in several shipments (e.g. split cases).
+function trilliumShipLabel(r){return `${r.product||'—'} · #${r.itemNo||'—'} · PO ${r.poNumber||'—'}`;}
+function trilliumShipTotalsByKey(draft){
+ const m=new Map();draft.barcodes.forEach(b=>b.lines.forEach(l=>m.set(l.key,(m.get(l.key)||0)+num(l.cases))));return m;
+}
 function renderTrilliumPickupBarcodes(){
  const box=document.getElementById('trilliumPickupBarcodes');if(!box)return;
  const draft=trilliumPickupDraft();
- const marked=trilliumPickupRows.filter(r=>draft.items[r.key]?.marked);
- const owner=new Map();draft.barcodes.forEach((b,i)=>(b.items||[]).forEach(k=>owner.set(k,i)));
+ const byKey=new Map(trilliumPickupRows.map(r=>[r.key,r]));
+ const totals=trilliumShipTotalsByKey(draft);
+ const markedKeys=new Set(trilliumPickupRows.filter(r=>draft.items[r.key]?.marked).map(r=>r.key));
+ const usedIn=new Map();draft.barcodes.forEach((b,i)=>b.lines.forEach(l=>{if(!usedIn.has(l.key))usedIn.set(l.key,new Set());usedIn.get(l.key).add(i);}));
+ const sorted=[...trilliumPickupRows].sort((a,b)=>(markedKeys.has(b.key)-markedKeys.has(a.key))||String(a.product).localeCompare(String(b.product)));
+ // Wines already in a shipment are not offered again, except (in a separate group) to split leftover cases.
+ const optionsFor=i=>{
+   const free=sorted.filter(r=>!usedIn.has(r.key));
+   const split=sorted.filter(r=>usedIn.has(r.key)&&!usedIn.get(r.key).has(i)&&r.cases-(totals.get(r.key)||0)>0);
+   return free.map(r=>`<option value="${escapeHtml(r.key)}">${markedKeys.has(r.key)?'★ ':''}${escapeHtml(trilliumShipLabel(r))} · ${r.cases.toLocaleString()} case(s) in stock</option>`).join('')
+     +(split.length?`<optgroup label="Already in another shipment — add only to split the cases left">${split.map(r=>`<option value="${escapeHtml(r.key)}">${escapeHtml(trilliumShipLabel(r))} · in Shipment ${[...usedIn.get(r.key)].map(n=>n+1).join(', ')} · ${(r.cases-(totals.get(r.key)||0)).toLocaleString()} case(s) left</option>`).join('')}</optgroup>`:'');
+ };
  box.innerHTML=draft.barcodes.map((b,i)=>{
-   const mine=marked.filter(r=>owner.get(r.key)===i);
-   const cases=mine.reduce((t,r)=>t+num(draft.items[r.key].cases),0);
+   const cases=b.lines.reduce((t,l)=>t+num(l.cases),0);
    return `<div style="border:1px solid #2e7d32;border-left:6px solid #2e7d32;border-radius:8px;padding:12px;margin-bottom:10px">
-   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px"><b>Shipment ${i+1}</b><span class="note">${mine.length} item(s) · ${cases.toLocaleString()} case(s)</span>
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px"><b>Shipment ${i+1}</b><span class="note" data-tp-ship-total="${i}">${b.lines.length} wine(s) · ${cases.toLocaleString()} case(s)</span>
     <button type="button" class="danger small" onclick="trilliumPickupBarcodeRemove(${i})">Remove shipment</button></div>
    <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(220px,1fr);gap:12px;align-items:center">
     <label style="margin:0">Shipment Pick Up Barcode<input type="text" data-tp-barcode="${i}" value="${escapeHtml(b.value||'')}" placeholder="Type the barcode number" autocomplete="off"></label>
     <div data-tp-barcode-preview="${i}">${trilliumBarcodeSvg(b.value)}</div>
    </div>
-   <div style="margin-top:10px"><small><b>Items in this shipment</b> (tick the items):</small>
-    ${marked.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:4px 14px;margin-top:6px">${marked.map(r=>{const o=owner.get(r.key);const c=num(draft.items[r.key].cases);
-      return `<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:0;padding:4px;border-radius:5px;${o===i?'background:#eef7ee':''}"><input type="checkbox" data-tp-ship="${i}" data-tp-ship-key="${escapeHtml(r.key)}" ${o===i?'checked':''} style="width:18px;height:18px;margin:2px 0 0;flex:0 0 auto"><span><b>${escapeHtml(r.product||'—')}</b> · #${escapeHtml(r.itemNo||'—')} · PO ${escapeHtml(r.poNumber||'—')} · ${c?c.toLocaleString()+' case(s)':'no cases entered'}${o!==undefined&&o!==i?` <small style="color:#a65d00">(now in Shipment ${o+1})</small>`:''}</span></label>`;}).join('')}</div>`
-      :'<p class="note" style="margin:4px 0 0">Mark items in the list above first.</p>'}
+   <div style="margin-top:10px"><small><b>Wines in this shipment</b></small>
+    ${b.lines.length?`<table style="min-width:0;margin-top:6px;border:1px solid var(--line)"><thead><tr><th>Wine</th><th style="width:110px">Cases in Stock</th><th style="width:130px">Cases to Pick Up</th><th style="width:130px">Allocated Cases</th><th style="width:80px"></th></tr></thead><tbody>
+     ${b.lines.map((l,j)=>{const r=byKey.get(l.key);const over=r&&(totals.get(l.key)||0)>r.cases;
+       return `<tr><td>${r?`<b>${escapeHtml(r.product||'—')}</b><br><small>#${escapeHtml(r.itemNo||'—')} · PO ${escapeHtml(r.poNumber||'—')} · ${escapeHtml(r.vendor||'')}</small>`:'<small style="color:#b3261e">This wine is no longer in Trillium stock</small>'}</td>
+       <td>${r?r.cases.toLocaleString():'—'}</td>
+       <td><input type="number" min="0" step="1" inputmode="numeric" data-tp-line="${i}:${j}" data-tp-line-field="cases" value="${escapeHtml(String(l.cases??''))}" placeholder="0"${over?' style="border-color:#b3261e;background:#fde3e1" title="All shipments together take more cases than are in stock"':''}></td>
+       <td><select data-tp-line="${i}:${j}" data-tp-line-field="allocated"><option value="">—</option><option value="Yes" ${l.allocated==='Yes'?'selected':''}>Yes</option><option value="No" ${l.allocated==='No'?'selected':''}>No</option></select></td>
+       <td><button type="button" class="danger small" onclick="trilliumShipLineRemove(${i},${j})">Remove</button></td></tr>`;}).join('')}
+    </tbody></table>`:'<p class="note" style="margin:4px 0 0">No wines yet. Choose a wine below to add it.</p>'}
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
+     <select data-tp-addwine="${i}" style="flex:1 1 380px;max-width:640px" aria-label="Add a wine to Shipment ${i+1}"><option value="">+ Add a wine to this shipment…</option>${optionsFor(i)}</select>
+     ${[...markedKeys].some(k=>!usedIn.has(k))?`<button type="button" class="secondary small" onclick="trilliumShipAddMarked(${i})">+ Add all marked wines</button>`:''}
+    </div>
    </div></div>`;}).join('')
-   ||'<p class="note" style="margin:0 0 8px">No shipment yet. Click "+ Shipment Pick Up Barcode" to add a shipment, type its barcode and tick its items.</p>';
+   ||'<p class="note" style="margin:0 0 8px">No shipment yet. Click "+ Shipment Pick Up Barcode" to add a shipment, type its barcode and add its wines.</p>';
  if(draft.barcodes.length)box.insertAdjacentHTML('beforeend','<button type="button" class="small" style="background:#2e7d32" onclick="trilliumPickupBarcodeAdd()">+ Add another Shipment Pick Up Barcode</button>');
 }
+function trilliumShipNewLine(draft,key){
+ if(draft.barcodes.some(b=>b.lines.some(l=>l.key===key)))return {key,cases:'',allocated:''};
+ const it=draft.items[key]||{};return {key,cases:it.cases??'',allocated:it.allocated||''};
+}
 window.trilliumPickupBarcodeAdd=()=>{
- const d=trilliumPickupDraft();d.barcodes.push({value:'',items:[]});trilliumPickupSaveDraft(d);renderTrilliumPickupBarcodes();
+ const d=trilliumPickupDraft();d.barcodes.push({value:'',lines:[]});trilliumPickupSaveDraft(d);renderTrilliumPickupBarcodes();
  const inputs=document.querySelectorAll('#trilliumPickupBarcodes [data-tp-barcode]');const last=inputs[inputs.length-1];
  if(last){last.focus();last.scrollIntoView({block:'center'});}
 };
 window.trilliumPickupBarcodeRemove=i=>{
  const d=trilliumPickupDraft();const b=d.barcodes[i];
- if((String(b?.value||'').trim()||b?.items?.length)&&!confirm('Remove Shipment '+(i+1)+'? Its items stay marked.'))return;
+ if((String(b?.value||'').trim()||b?.lines?.length)&&!confirm('Remove Shipment '+(i+1)+' and its wine list?'))return;
  d.barcodes.splice(i,1);trilliumPickupSaveDraft(d);renderTrilliumPickupBarcodes();
+};
+window.trilliumShipLineRemove=(i,j)=>{const d=trilliumPickupDraft();d.barcodes[i]?.lines.splice(j,1);trilliumPickupSaveDraft(d);renderTrilliumPickupBarcodes();};
+window.trilliumShipAddMarked=i=>{
+ const d=trilliumPickupDraft();const b=d.barcodes[i];if(!b)return;
+ const used=new Set(d.barcodes.flatMap(x=>x.lines.map(l=>l.key)));
+ for(const r of trilliumPickupRows)if(d.items[r.key]?.marked&&!used.has(r.key))b.lines.push(trilliumShipNewLine(d,r.key));
+ trilliumPickupSaveDraft(d);renderTrilliumPickupBarcodes();
 };
 
 function trilliumPickupStockRows(){
@@ -11888,12 +11922,28 @@ function trilliumPickupOnInput(e){
  if(el.id==='trilliumPickupSearch'||el.id==='trilliumPickupTransport'||el.id==='trilliumPickupMarkedOnly'){if(e.type!=='input'||el.id==='trilliumPickupSearch')renderTrilliumPickupRows();return;}
  const draft=trilliumPickupDraft();
  if(el.dataset.tpField){draft[el.dataset.tpField]=el.value;trilliumPickupSaveDraft(draft);return;}
- if(el.dataset.tpShip!==undefined){
-   if(e.type!=='change')return;
-   const i=Number(el.dataset.tpShip),k=el.dataset.tpShipKey;
-   draft.barcodes.forEach(b=>{b.items=(b.items||[]).filter(x=>x!==k);});
-   if(el.checked&&draft.barcodes[i])draft.barcodes[i].items.push(k);
-   trilliumPickupSaveDraft(draft);renderTrilliumPickupBarcodes();return;
+ if(el.dataset.tpAddwine!==undefined){
+   if(e.type!=='change'||!el.value)return;
+   const i=Number(el.dataset.tpAddwine);if(!draft.barcodes[i])return;
+   draft.barcodes[i].lines.push(trilliumShipNewLine(draft,el.value));
+   trilliumPickupSaveDraft(draft);renderTrilliumPickupBarcodes();
+   const box=document.querySelectorAll('#trilliumPickupBarcodes [data-tp-line-field="cases"]');
+   const mine=[...box].filter(x=>x.dataset.tpLine.startsWith(i+':'));mine[mine.length-1]?.focus();
+   return;
+ }
+ if(el.dataset.tpLine!==undefined){
+   const [i,j]=el.dataset.tpLine.split(':').map(Number);const line=draft.barcodes[i]?.lines[j];if(!line)return;
+   line[el.dataset.tpLineField]=el.value;trilliumPickupSaveDraft(draft);
+   const b=draft.barcodes[i];const t=document.querySelector(`[data-tp-ship-total="${i}"]`);
+   if(t)t.textContent=`${b.lines.length} wine(s) · ${b.lines.reduce((s,l)=>s+num(l.cases),0).toLocaleString()} case(s)`;
+   if(e.type==='change'&&el.dataset.tpLineField==='cases'){
+     const totals=trilliumShipTotalsByKey(draft);
+     document.querySelectorAll('#trilliumPickupBarcodes [data-tp-line-field="cases"]').forEach(inp=>{
+       const [a,c]=inp.dataset.tpLine.split(':').map(Number);const k=draft.barcodes[a]?.lines[c]?.key;const r=trilliumPickupRows.find(x=>x.key===k);
+       const over=r&&(totals.get(k)||0)>r.cases;inp.style.borderColor=over?'#b3261e':'';inp.style.background=over?'#fde3e1':'';inp.title=over?'All shipments together take more cases than are in stock':'';
+     });
+   }
+   return;
  }
  if(el.dataset.tpBarcode!==undefined){
    const i=Number(el.dataset.tpBarcode);if(!draft.barcodes[i])return;
@@ -11937,39 +11987,43 @@ const TP_SHEET_CSS=`.tp-sheet{font-family:Arial,Helvetica,sans-serif;color:#1720
  .tp-sheet .notes{margin-top:14px;font-size:13px}.tp-sheet .ship{margin:0 0 18px;break-inside:avoid;page-break-inside:avoid}.tp-sheet .ship-head{display:flex;justify-content:space-between;align-items:center;gap:16px;border:1px solid #bdc9d6;border-bottom:0;border-radius:6px 6px 0 0;padding:8px 10px;background:#f4f7fb}.tp-sheet .ship-head h2{font-size:16px;margin:0 0 4px;color:#0b1f3a}.tp-sheet .ship-head span{display:block;font-size:11px;color:#607080;font-weight:700;text-transform:uppercase}.tp-sheet .bc-no{display:block;font-size:16px;letter-spacing:1px;min-width:120px}.tp-sheet .bc-img{background:#fff;padding:4px}.tp-sheet .grand{font-weight:700;font-size:14px;margin:6px 0 0}.tp-sheet .sign{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px;font-size:12px}.tp-sheet .sign div{border-top:1px solid #17202a;padding-top:5px}`;
 window.printTrilliumPickupAppointment=()=>{
  const draft=trilliumPickupDraft();
+ const byKey=new Map(trilliumPickupRows.map(r=>[r.key,r]));
  const marked=trilliumPickupRows.filter(r=>draft.items[r.key]?.marked);
- if(!marked.length){alert('Mark at least one item to print.');return;}
- const over=marked.filter(r=>num(draft.items[r.key].cases)>r.cases);
- if(over.length&&!confirm(over.length+' item(s) have more cases to pick up than cases in stock. Continue?'))return;
- const noQty=marked.filter(r=>!(num(draft.items[r.key].cases)>0));
- if(noQty.length&&!confirm(noQty.length+' marked item(s) have no case quantity. Continue?'))return;
+ // Printed lines: {r, cases, allocated}. Shipment wines use the shipment's own cases; marked wines in no shipment are listed separately.
+ const ships=draft.barcodes.map((b,i)=>({i,value:String(b.value||'').trim(),lines:b.lines.map(l=>({r:byKey.get(l.key),cases:l.cases,allocated:l.allocated})).filter(x=>x.r)})).filter(x=>x.value||x.lines.length);
+ const inShip=new Set(ships.flatMap(x=>x.lines.map(l=>l.r.key)));
+ const loose=marked.filter(r=>!inShip.has(r.key)).map(r=>({r,cases:draft.items[r.key].cases,allocated:draft.items[r.key].allocated}));
+ const allLines=[...ships.flatMap(x=>x.lines),...loose];
+ if(!allLines.length){alert('Mark at least one wine, or add wines to a shipment, to print.');return;}
+ const taken=new Map();allLines.forEach(l=>taken.set(l.r.key,(taken.get(l.r.key)||0)+num(l.cases)));
+ const over=[...taken].filter(([k,c])=>c>byKey.get(k).cases);
+ if(over.length&&!confirm(over.length+' wine(s) have more cases to pick up than cases in stock. Continue?'))return;
+ const noQty=allLines.filter(l=>!(num(l.cases)>0));
+ if(noQty.length&&!confirm(noQty.length+' line(s) have no case quantity. Continue?'))return;
  const fmtDate=d=>{if(!d)return '';const x=new Date(d+'T12:00:00');return isNaN(x)?d:x.toLocaleDateString('en-CA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});};
  const fmtTime=t=>{if(!t)return '';const [h,m]=t.split(':').map(Number);if(isNaN(h))return t;return ((h%12)||12)+':'+String(m||0).padStart(2,'0')+' '+(h<12?'AM':'PM');};
- const totalCases=marked.reduce((t,r)=>t+num(draft.items[r.key].cases),0);
- const totalBottles=marked.reduce((t,r)=>t+num(draft.items[r.key].cases)*r.bpc,0);
+ const totalCases=allLines.reduce((t,l)=>t+num(l.cases),0);
+ const totalBottles=allLines.reduce((t,l)=>t+num(l.cases)*l.r.bpc,0);
  const ed='contenteditable="true"';
  const sheet=`<h1>Trillium Pick Up Appointment</h1><div class="sub">LCBO Trillium warehouse · Printed ${escapeHtml(new Date().toLocaleString('en-CA'))}</div>
  <div class="info"><div><span>Pick up date</span><b ${ed}>${escapeHtml(fmtDate(draft.date))}</b></div><div><span>Pick up time</span><b ${ed}>${escapeHtml(fmtTime(draft.time))}</b></div><div><span>Confirmation number</span><b ${ed}>${escapeHtml(draft.confirmation||'')}</b></div></div>
  ${(()=>{
    const head='<table><thead><tr><th>#</th><th>PO #</th><th>LCBO Item #</th><th>Item Description</th><th>Supplier</th><th>Bottles / Case</th><th>Cases in Stock</th><th>Cases to Pick Up</th><th>Bottles to Pick Up</th><th>Allocated Cases</th></tr></thead>';
-   const table=(rows,label)=>{const tc=rows.reduce((t,r)=>t+num(draft.items[r.key].cases),0),tb=rows.reduce((t,r)=>t+num(draft.items[r.key].cases)*r.bpc,0);
-     return head+`<tbody>${rows.map((r,i)=>{const it=draft.items[r.key];const c=num(it.cases);return `<tr><td>${i+1}</td><td>${escapeHtml(r.poNumber)}</td><td>${escapeHtml(r.itemNo)}</td><td><b>${escapeHtml(r.product)}</b></td><td>${escapeHtml(r.vendor)}</td><td class="n">${r.bpc.toLocaleString()}</td><td class="n">${r.cases.toLocaleString()}</td><td class="n" ${ed}><b>${c?c.toLocaleString():''}</b></td><td class="n">${c?(c*r.bpc).toLocaleString():''}</td><td ${ed}>${escapeHtml(it.allocated||'')}</td></tr>`;}).join('')}</tbody>
-     <tfoot><tr><td colspan="7">${label} — ${rows.length} item(s)</td><td class="n">${tc.toLocaleString()}</td><td class="n">${tb.toLocaleString()}</td><td></td></tr></tfoot></table>`;};
-   const owner=new Map();draft.barcodes.forEach((b,i)=>(b.items||[]).forEach(k=>owner.set(k,i)));
-   const ships=draft.barcodes.map((b,i)=>({i,value:String(b.value||'').trim(),rows:marked.filter(r=>owner.get(r.key)===i)})).filter(x=>x.value||x.rows.length);
-   if(!ships.length)return table(marked,'Total');
-   const loose=marked.filter(r=>owner.get(r.key)===undefined||!ships.some(x=>x.i===owner.get(r.key)));
+   const table=(lines,label)=>{const tc=lines.reduce((t,l)=>t+num(l.cases),0),tb=lines.reduce((t,l)=>t+num(l.cases)*l.r.bpc,0);
+     return head+`<tbody>${lines.map(({r,cases,allocated},i)=>{const c=num(cases);return `<tr><td>${i+1}</td><td>${escapeHtml(r.poNumber)}</td><td>${escapeHtml(r.itemNo)}</td><td><b>${escapeHtml(r.product)}</b></td><td>${escapeHtml(r.vendor)}</td><td class="n">${r.bpc.toLocaleString()}</td><td class="n">${r.cases.toLocaleString()}</td><td class="n" ${ed}><b>${c?c.toLocaleString():''}</b></td><td class="n">${c?(c*r.bpc).toLocaleString():''}</td><td ${ed}>${escapeHtml(allocated||'')}</td></tr>`;}).join('')}</tbody>
+     <tfoot><tr><td colspan="7">${label} — ${lines.length} wine(s)</td><td class="n">${tc.toLocaleString()}</td><td class="n">${tb.toLocaleString()}</td><td></td></tr></tfoot></table>`;};
+   if(!ships.length)return table(loose,'Total');
    return ships.map((x,n)=>`<div class="ship"><div class="ship-head"><div><h2>Shipment ${n+1}</h2><span>Shipment Pick Up Barcode</span><b class="bc-no" ${ed}>${escapeHtml(x.value)}</b></div><div class="bc-img">${trilliumBarcodeSvg(x.value)}</div></div>
-     ${x.rows.length?table(x.rows,'Shipment '+(n+1)+' total'):'<p class="sub">No items ticked for this shipment.</p>'}</div>`).join('')
-     +(loose.length?`<div class="ship"><div class="ship-head"><div><h2>Items without a shipment barcode</h2></div></div>${table(loose,'Total')}</div>`:'')
-     +`<p class="grand">All shipments — ${marked.length} item(s) · ${totalCases.toLocaleString()} case(s) · ${totalBottles.toLocaleString()} bottle(s)</p>`;
+     ${x.lines.length?table(x.lines,'Shipment '+(n+1)+' total'):'<p class="sub">No wines added to this shipment.</p>'}</div>`).join('')
+     +(loose.length?`<div class="ship"><div class="ship-head"><div><h2>Wines without a shipment barcode</h2></div></div>${table(loose,'Total')}</div>`:'')
+     +`<p class="grand">All shipments — ${allLines.length} line(s) · ${totalCases.toLocaleString()} case(s) · ${totalBottles.toLocaleString()} bottle(s)</p>`;
  })()}
  <div class="notes"><b>Notes:</b> <span ${ed}>${escapeHtml(draft.notes||'')}</span></div>
  <div class="sign"><div>Picked up by (name / signature)</div></div>`;
 
  // Preview inside the program (no pop-up window), so the program never gets stuck behind a print window.
  const shipValues=draft.barcodes.map(b=>String(b.value||'').trim()).filter(Boolean);
- trilliumOpenPreview(sheet,{date:draft.date,time:draft.time,confirmation:draft.confirmation,items:marked.length,cases:totalCases,shipments:shipValues.length,barcodes:shipValues});
+ trilliumOpenPreview(sheet,{date:draft.date,time:draft.time,confirmation:draft.confirmation,items:allLines.length,cases:totalCases,shipments:shipValues.length,barcodes:shipValues});
 };
 window.closeTrilliumPickupPreview=()=>document.getElementById('trilliumPickupPreview')?.classList.add('hidden');
 // Shows a sheet in the in-program preview. meta.savedId is set when the sheet comes from Saved Appointments.
